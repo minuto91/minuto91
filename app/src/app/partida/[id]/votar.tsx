@@ -142,7 +142,7 @@ export default function Votar() {
       'Voto enviado',
       res.all_voted ? 'Todo mundo votou: o resultado já saiu!' : 'Você pode mudar seu voto até o fim do prazo.',
     );
-    router.back();
+    router.replace({ pathname: '/partida/[id]', params: { id } });
   }
 
   if (!state || !info || !match || !sheet) {

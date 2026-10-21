@@ -197,9 +197,11 @@ export default function Partida() {
           {voting?.is_valid && results.length === 0 && iAmVoter && !iVoted && (
             <Sub>Você não votou, então o resultado detalhado desta partida fica bloqueado para você.</Sub>
           )}
-          {ranked.map((r, i) => (
+          {ranked.map((r) => (
             <Text key={r.membership_id} style={{ color: colors.ink }}>
-              {i + 1}. {nameOf(r.membership_id)} — {fmtRating(Number(r.final_rating))}
+              {/* Empate = mesma posição (1º, 1º, 3º), pelo valor oficial (RN-073). */}
+              {1 + ranked.filter((x) => Number(x.final_rating) > Number(r.final_rating)).length}º {nameOf(r.membership_id)} —{' '}
+              {fmtRating(Number(r.final_rating))}
             </Text>
           ))}
         </Card>

@@ -63,8 +63,10 @@ Sem conta Apple paga, use o Expo Go e pule Apple e Premium (precisam do developm
 - [ ] Nenhuma tela em modo escuro; cores azul/fundo claro conforme a marca.
 
 ## 9. Partida e súmula (admin A)
-Para votar de verdade são precisos **6 jogadores com conta** na pelada. Crie mais contas de e-mail
-(voce+d, +e, +f...), entre na pelada com cada uma pelo convite e saia da conta entre uma e outra.
+Para votar de verdade são precisos **6 jogadores com conta** na pelada. Atalho no banco dev:
+`supabase/dev_seed/01_criar_bots.sql` cria 5 jogadores de teste sem senha na Pelada Teste, e
+`02_bots_votam.sql` faz os 5 votarem na votação aberta (`99_apagar_bots.sql` remove).
+Ou crie contas de e-mail (teste1@..., teste2@...) e entre na pelada com cada uma pelo convite.
 - [ ] Na pelada, "Lançar partida" → abre a súmula em rascunho.
 - [ ] "Ontem" muda a data; a data aparece no topo.
 - [ ] Adicione jogadores com "+ A" e "+ B"; troque um de time pelos botões Time A / Time B; "Tirar" remove.
