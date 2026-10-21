@@ -1,4 +1,4 @@
--- Participantes, convidados e eventos (migração 008). Cole no SQL Editor do Supabase DEV.
+-- Participantes, convidados e eventos (migrações 008 e 008b). Cole no SQL Editor do Supabase DEV.
 -- Termina SEMPRE com o erro proposital "PASS: 005_participants_events" = tudo certo, nada gravado.
 create function pg_temp.uid(n int) returns uuid language sql as
  $$ select ('50000000-0000-4000-8000-' || lpad(n::text,12,'0'))::uuid $$;
@@ -63,8 +63,12 @@ perform pg_temp.assert((select count(*)=1 from public.guests where pelada_id=v_p
 perform pg_temp.as_user(4);
 perform pg_temp.assert((select count(*)=0 from public.guests where pelada_id=v_pid),'não membro não vê convidado');
 
--- ===== Súmula: validações =====
+-- ===== Posição vazia é recusada com a mensagem certa (008b) =====
 perform pg_temp.as_user(1);
+perform pg_temp.expect_error($q$select public.create_pelada('Sem Posicao',null)$q$,'INVALID_POSITION');
+perform pg_temp.expect_error(format('select public.set_my_position(%L,null)',v_pid),'INVALID_POSITION');
+
+-- ===== Súmula: validações =====
 v_x := public.create_match(v_pid,now());
 perform pg_temp.as_user(3);
 perform pg_temp.sheet_error(v_x,'[]','[]','STAFF_REQUIRED');

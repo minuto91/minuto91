@@ -1,4 +1,4 @@
--- Participantes, convidados e eventos (migração 008). Rodar SOMENTE em banco local descartável. Tudo em transação com ROLLBACK.
+-- Participantes, convidados e eventos (migrações 008 e 008b). Rodar SOMENTE em banco local descartável. Tudo em transação com ROLLBACK.
 \set ON_ERROR_STOP on
 begin;
 create function pg_temp.uid(n int) returns uuid language sql as
@@ -64,8 +64,12 @@ perform pg_temp.assert((select count(*)=1 from public.guests where pelada_id=v_p
 perform pg_temp.as_user(4);
 perform pg_temp.assert((select count(*)=0 from public.guests where pelada_id=v_pid),'não membro não vê convidado');
 
--- ===== Súmula: validações =====
+-- ===== Posição vazia é recusada com a mensagem certa (008b) =====
 perform pg_temp.as_user(1);
+perform pg_temp.expect_error($q$select public.create_pelada('Sem Posicao',null)$q$,'INVALID_POSITION');
+perform pg_temp.expect_error(format('select public.set_my_position(%L,null)',v_pid),'INVALID_POSITION');
+
+-- ===== Súmula: validações =====
 v_x := public.create_match(v_pid,now());
 perform pg_temp.as_user(3);
 perform pg_temp.sheet_error(v_x,'[]','[]','STAFF_REQUIRED');
