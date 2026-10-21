@@ -1,18 +1,63 @@
-import { DarkTheme, DefaultTheme, ThemeProvider } from 'expo-router';
-import * as SplashScreen from 'expo-splash-screen';
-import { useColorScheme } from 'react-native';
+import { Stack, useRouter, useSegments } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
+import { ActivityIndicator, View } from 'react-native';
 
-import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
+import { AuthProvider, useAuth } from '../lib/session';
+import { colors } from '../lib/theme';
 
-SplashScreen.preventAutoHideAsync();
+function Gate() {
+  const { session, loading, onboarded } = useAuth();
+  const segments = useSegments();
+  const router = useRouter();
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+  useEffect(() => {
+    if (loading) return;
+    const first = segments[0] as string | undefined;
+    if (!session) {
+      if (first !== 'login' && first !== 'convite') router.replace('/login');
+      return;
+    }
+    if (onboarded === null) return;
+    if (!onboarded) {
+      if (first !== 'onboarding') router.replace('/onboarding');
+      return;
+    }
+    if (first === 'login' || first === 'onboarding') router.replace('/');
+  }, [loading, session, onboarded, segments, router]);
+
+  if (loading) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+        <ActivityIndicator color={colors.blue} />
+      </View>
+    );
+  }
+
   return (
-    <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
-    </ThemeProvider>
+    <Stack
+      screenOptions={{
+        headerTintColor: colors.blue,
+        headerTitleStyle: { color: colors.deepBlue },
+        contentStyle: { backgroundColor: colors.bg },
+      }}>
+      <Stack.Screen name="index" options={{ title: 'Minhas peladas' }} />
+      <Stack.Screen name="login" options={{ headerShown: false }} />
+      <Stack.Screen name="onboarding" options={{ title: 'Seu cadastro', headerBackVisible: false }} />
+      <Stack.Screen name="criar-pelada" options={{ title: 'Criar pelada' }} />
+      <Stack.Screen name="entrar" options={{ title: 'Entrar com convite' }} />
+      <Stack.Screen name="convite/[token]" options={{ title: 'Convite' }} />
+      <Stack.Screen name="pelada/[id]" options={{ title: 'Pelada' }} />
+      <Stack.Screen name="premium" options={{ title: 'Premium' }} />
+    </Stack>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <StatusBar style="dark" />
+      <Gate />
+    </AuthProvider>
   );
 }
