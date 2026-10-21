@@ -27,6 +27,7 @@ export default function Pelada() {
   const [successor, setSuccessor] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [loaded, setLoaded] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -57,6 +58,7 @@ export default function Pelada() {
       .order('played_at', { ascending: false })
       .limit(20);
     setMatches((xs ?? []) as Match[]);
+    setLoaded(true);
   }, [id]);
 
   useFocusEffect(
@@ -129,7 +131,8 @@ export default function Pelada() {
       {isAdmin && <Button title="Convidar" onPress={convidar} loading={busy} />}
       <Text style={{ fontWeight: '700', color: colors.deepBlue, marginTop: 8 }}>Partidas</Text>
       {isStaff && <Button title="Lançar partida" kind="secondary" onPress={lancarPartida} loading={busy} />}
-      {matches.length === 0 && <Sub>Nenhuma partida ainda.</Sub>}
+      {!loaded && <Sub>Carregando...</Sub>}
+      {loaded && matches.length === 0 && <Sub>Nenhuma partida ainda.</Sub>}
       {matches.map((x) => (
         <Pressable key={x.id} onPress={() => router.push({ pathname: '/partida/[id]', params: { id: x.id } })}>
           <Card>
@@ -143,7 +146,7 @@ export default function Pelada() {
         </Pressable>
       ))}
       <Text style={{ fontWeight: '700', color: colors.deepBlue, marginTop: 8 }}>
-        Jogadores ({members.length})
+        Jogadores{loaded ? ` (${members.length})` : ''}
       </Text>
       {members.map((m) => (
         <Card key={m.id}>

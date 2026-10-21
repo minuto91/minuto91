@@ -23,7 +23,7 @@
       "package": "com.minuto91.app"
     },
     "web": {
-      "output": "static",
+      "output": "single",
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
