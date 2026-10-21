@@ -50,20 +50,21 @@ create policy profiles_read_peers on public.profiles for select to authenticated
 create function public.report_content(p_pelada uuid, p_target_type text, p_target_id uuid, p_reason text,
  p_details text default null) returns uuid
 language plpgsql security definer set search_path = '' as $$
-declare v_id uuid; v_details text := nullif(btrim(p_details),'');
+declare v_id uuid; v_details text := nullif(btrim(p_details),''); v_valid boolean;
 begin
  if auth.uid() is null then raise exception 'AUTH_REQUIRED' using errcode='42501'; end if;
  if not private.is_active_member(p_pelada) then raise exception 'PELADA_NOT_FOUND'; end if;
  if p_reason is null or p_reason not in ('offensive','inappropriate_image','spam','impersonation','other') then
   raise exception 'INVALID_REASON'; end if;
  if v_details is not null and length(v_details) > 1000 then raise exception 'INVALID_DETAILS'; end if;
- if not case p_target_type
+ -- (assigned first: inside IF, plpgsql would stop at the CASE's first THEN)
+ v_valid := case p_target_type
    when 'profile' then exists(select 1 from public.pelada_memberships where pelada_id=p_pelada and user_id=p_target_id)
    when 'member_name' then exists(select 1 from public.pelada_memberships where pelada_id=p_pelada and id=p_target_id)
    when 'pelada' then p_target_id=p_pelada
    when 'guest' then exists(select 1 from public.guests where pelada_id=p_pelada and id=p_target_id)
-   else false end then
-  raise exception 'INVALID_REPORT_TARGET'; end if;
+   else false end;
+ if not coalesce(v_valid,false) then raise exception 'INVALID_REPORT_TARGET'; end if;
  select id into v_id from public.content_reports where reporter_user_id=auth.uid() and target_type=p_target_type
   and target_id=p_target_id and status='open';
  if found then return v_id; end if;
