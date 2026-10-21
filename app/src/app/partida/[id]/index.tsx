@@ -2,6 +2,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { ANNUL_REASONS, AnnulMatch } from '../../../lib/annul';
 import { friendly } from '../../../lib/errors';
 import {
   fmtDate,
@@ -33,6 +34,7 @@ type Session = {
 };
 type Result = { membership_id: string; final_rating: number | null; has_valid_rating: boolean; numeric_rating_count: number };
 type Award = { membership_id: string; award_type: string; is_shared: boolean };
+type Annulment = { reason_category: string; description: string; created_at: string };
 
 export default function Partida() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -48,6 +50,7 @@ export default function Partida() {
   const [voted, setVoted] = useState<string[]>([]);
   const [results, setResults] = useState<Result[]>([]);
   const [awards, setAwards] = useState<Award[]>([]);
+  const [annulment, setAnnulment] = useState<Annulment | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -94,6 +97,14 @@ export default function Partida() {
         setResults((rs ?? []) as Result[]);
         setAwards((aw ?? []) as Award[]);
       }
+      if (m.status === 'annulled') {
+        const { data: an } = await supabase
+          .from('match_annulments')
+          .select('reason_category, description, created_at')
+          .eq('match_id', id)
+          .maybeSingle();
+        setAnnulment(an as Annulment | null);
+      }
       setMsg(null);
     } catch (e) {
       setMsg(friendly((e as Error).message));
@@ -127,7 +138,8 @@ export default function Partida() {
   const playerName = (p: SheetPlayer) =>
     p.membership_id ? nameOf(p.membership_id) : (guests.find((g) => g.id === p.guest_id)?.display_name ?? 'Convidado');
   const me = members.find((m) => m.user_id === auth?.user.id);
-  const isStaff = me?.role === 'admin' || me?.role === 'assistant';
+  const isAdmin = me?.role === 'admin';
+  const isStaff = isAdmin || me?.role === 'assistant';
   const open = match.status === 'voting_open' && voting?.status === 'open';
   const expired = open && new Date(voting!.closes_at) <= new Date();
   const iAmVoter = !!me && eligible.includes(me.id);
@@ -207,7 +219,19 @@ export default function Partida() {
         </Card>
       )}
 
-      {match.status === 'annulled' && <Sub>Esta partida foi anulada e não conta para resultados.</Sub>}
+      {match.status === 'finalized' && isAdmin && <AnnulMatch matchId={id} nameOf={nameOf} onDone={load} />}
+
+      {match.status === 'annulled' && (
+        <Card>
+          <Sub>Esta partida foi anulada e não conta para resultados.</Sub>
+          {annulment && (
+            <Sub>
+              Motivo: {ANNUL_REASONS.find((r) => r.value === annulment.reason_category)?.label ?? 'Outro'} —{' '}
+              {annulment.description} ({fmtDate(annulment.created_at)})
+            </Sub>
+          )}
+        </Card>
+      )}
 
       {(['A', 'B'] as Team[]).map((t) => (
         <View key={t} style={{ gap: 6 }}>

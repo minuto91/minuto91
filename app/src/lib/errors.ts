@@ -38,6 +38,11 @@ const MAP: Record<string, string> = {
   INVALID_VOTING_DURATION: 'Prazo de votação inválido.',
   INVALID_CLOSING_TIME: 'O horário de encerramento deve ser entre 1h e 24h a partir de agora.',
   PREMIUM_REQUIRED: 'Recurso do Premium.',
+  // Anulação
+  MATCH_NOT_FINALIZED: 'Só dá para anular partida finalizada.',
+  ANNULMENT_WINDOW_EXPIRED: 'O prazo para anular (7 dias após finalizar) acabou.',
+  INVALID_REASON_CATEGORY: 'Escolha o motivo da anulação.',
+  DESCRIPTION_REQUIRED: 'Explique o motivo (10 caracteres ou mais).',
   // Votação
   VOTING_NOT_OPEN: 'A votação não está aberta.',
   NOT_ELIGIBLE_VOTER: 'Você não vota nesta partida.',
