@@ -93,3 +93,14 @@ Para votar de verdade são precisos **6 jogadores com conta** na pelada. Crie ma
 - [ ] Quem não votou vê "resultado detalhado bloqueado".
 - [ ] Prazo vencido sem todos votarem: aparece "Encerrar votação" (o agendador também fecha a cada 5 minutos).
 - [ ] Menos da metade votou → "Votação inválida", sem notas nem prêmios.
+
+## 12. Carta, rankings e álbum
+- [ ] Na pelada, "Minha carta" abre sua carta: overall grande, Bronze/Prata/Ouro, "Provisória: x de 5 jogos" nos 5 primeiros.
+- [ ] Os 5 atributos (Finalização, Garçom, Presença, Pé Quente, Resenha) aparecem com barras de 0 a 100.
+- [ ] Tocar no nome de outro jogador da lista abre a carta dele.
+- [ ] "Temporada" mostra jogos, V/E/D, gols, assistências, média de nota e sequências.
+- [ ] "Ver álbum de figurinhas": 9 coleções, 48 figurinhas; conquistadas com ★ e data; bloqueadas com progresso (ex.: 2/10).
+- [ ] "Rankings": troque Overall / Gols / Assistências / Média / Jogos / Vitórias; empates aparecem como 1º, 1º, 3º.
+- [ ] Tocar num nome do ranking abre a carta.
+- [ ] Recordes da temporada aparecem (maior goleada, mais gols numa partida etc.).
+- [ ] Depois que um mês fechar com partidas: "Prêmios de <mês>" mostra Rei do Mês, Artilheiro, Garçom e Maior evolução.

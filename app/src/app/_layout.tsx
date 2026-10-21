@@ -47,7 +47,10 @@ function Gate() {
       <Stack.Screen name="criar-pelada" options={{ title: 'Criar pelada' }} />
       <Stack.Screen name="entrar" options={{ title: 'Entrar com convite' }} />
       <Stack.Screen name="convite/[token]" options={{ title: 'Convite' }} />
-      <Stack.Screen name="pelada/[id]" options={{ title: 'Pelada' }} />
+      <Stack.Screen name="pelada/[id]/index" options={{ title: 'Pelada' }} />
+      <Stack.Screen name="pelada/[id]/rankings" options={{ title: 'Rankings' }} />
+      <Stack.Screen name="jogador/[id]/index" options={{ title: 'Carta' }} />
+      <Stack.Screen name="jogador/[id]/album" options={{ title: 'Álbum' }} />
       <Stack.Screen name="partida/[id]/index" options={{ title: 'Partida' }} />
       <Stack.Screen name="partida/[id]/sumula" options={{ title: 'Súmula' }} />
       <Stack.Screen name="partida/[id]/votar" options={{ title: 'Votação' }} />

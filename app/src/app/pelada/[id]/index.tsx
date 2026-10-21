@@ -3,12 +3,12 @@ import { useCallback, useState } from 'react';
 import { Alert, Pressable, Share, Text, View } from 'react-native';
 import * as Linking from 'expo-linking';
 
-import { friendly } from '../../lib/errors';
-import { fmtDate, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../lib/match';
-import { useAuth } from '../../lib/session';
-import { supabase } from '../../lib/supabase';
-import { colors, positionLabel } from '../../lib/theme';
-import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../lib/ui';
+import { friendly } from '../../../lib/errors';
+import { fmtDate, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match';
+import { useAuth } from '../../../lib/session';
+import { supabase } from '../../../lib/supabase';
+import { colors, positionLabel } from '../../../lib/theme';
+import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
 
 type Member = {
   id: string;
@@ -129,6 +129,24 @@ export default function Pelada() {
       {status === 'restricted' && <Sub>Pelada restrita: sem administrador elegível.</Sub>}
       <ErrorText>{msg}</ErrorText>
       {isAdmin && <Button title="Convidar" onPress={convidar} loading={busy} />}
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        <View style={{ flex: 1 }}>
+          <Button
+            title="Rankings"
+            kind="secondary"
+            onPress={() => router.push({ pathname: '/pelada/[id]/rankings', params: { id } })}
+          />
+        </View>
+        {me && (
+          <View style={{ flex: 1 }}>
+            <Button
+              title="Minha carta"
+              kind="secondary"
+              onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: me.id } })}
+            />
+          </View>
+        )}
+      </View>
       <Text style={{ fontWeight: '700', color: colors.deepBlue, marginTop: 8 }}>Partidas</Text>
       {isStaff && <Button title="Lançar partida" kind="secondary" onPress={lancarPartida} loading={busy} />}
       {!loaded && <Sub>Carregando...</Sub>}
@@ -150,10 +168,12 @@ export default function Pelada() {
       </Text>
       {members.map((m) => (
         <Card key={m.id}>
-          <Body>
-            {m.player_name}
-            {m.user_id === session?.user.id ? ' (você)' : ''}
-          </Body>
+          <Pressable onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: m.id } })}>
+            <Body>
+              {m.player_name}
+              {m.user_id === session?.user.id ? ' (você)' : ''} ›
+            </Body>
+          </Pressable>
           <Sub>
             {roleName(m.role)} · {positionLabel(m.preferred_position)}
             {m.id === successor ? ' · sucessor indicado' : ''}
