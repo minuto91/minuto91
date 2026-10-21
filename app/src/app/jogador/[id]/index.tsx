@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import {
@@ -49,31 +49,30 @@ export default function Carta() {
     })().catch((e) => setMsg(friendly((e as Error).message)));
   }, [id]);
 
-  const load = useCallback(async () => {
-    if (!seasonId) return;
-    setLoaded(false);
-    try {
-      const r = await loadCard(id, seasonId);
-      setCard(r.card);
-      setStats(r.stats);
-      const { data: aw } = await supabase
-        .from('awards')
-        .select('award_type')
-        .eq('membership_id', id)
-        .eq('season_id', seasonId)
-        .eq('status', 'active');
-      const count: Record<string, number> = {};
-      for (const a of aw ?? []) count[a.award_type] = (count[a.award_type] ?? 0) + 1;
-      setAwards(count);
-    } catch (e) {
-      setMsg(friendly((e as Error).message));
-    }
-    setLoaded(true);
-  }, [id, seasonId]);
-
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!seasonId) return;
+    let alive = true; // ignora respostas que chegarem depois de trocar a temporada
+    (async () => {
+      try {
+        const [r, { data: aw }] = await Promise.all([
+          loadCard(id, seasonId),
+          supabase.from('awards').select('award_type').eq('membership_id', id).eq('season_id', seasonId).eq('status', 'active'),
+        ]);
+        if (!alive) return;
+        const count: Record<string, number> = {};
+        for (const a of aw ?? []) count[a.award_type] = (count[a.award_type] ?? 0) + 1;
+        setCard(r.card);
+        setStats(r.stats);
+        setAwards(count);
+      } catch (e) {
+        if (alive) setMsg(friendly((e as Error).message));
+      }
+      if (alive) setLoaded(true);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [id, seasonId]);
 
   if (!member) {
     return (
@@ -91,7 +90,7 @@ export default function Carta() {
       <Title>{member.player_name}</Title>
       <Sub>{positionLabel(card?.position ?? member.preferred_position)}</Sub>
       {seasons.length > 1 && (
-        <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={setSeasonId} />
+        <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={(v) => { setLoaded(false); setSeasonId(v); }} />
       )}
       <ErrorText>{msg}</ErrorText>
 

@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { AWARD_LABEL, currentSeason, fmtMonth, loadSeasons, Season } from '../../../lib/career';
@@ -65,28 +65,30 @@ export default function Rankings() {
     })().catch((e) => setMsg(friendly((e as Error).message)));
   }, [id]);
 
-  const load = useCallback(async () => {
-    if (!seasonId) return;
-    setRows(null);
-    setMsg(null);
-    const [{ data: r, error: e1 }, { data: rec, error: e2 }] = await Promise.all([
-      supabase.rpc('get_season_ranking', { p_season: seasonId, p_metric: metric }),
-      supabase.rpc('get_season_records', { p_season: seasonId }),
-    ]);
-    const e = e1 ?? e2;
-    if (e) {
-      setRows([]);
-      setRecords(null);
-      // Grátis: temporada atual e a anterior (RN-083).
-      return setMsg(e.message.includes('PREMIUM_REQUIRED') ? 'Temporadas mais antigas ficam no Premium.' : friendly(e.message));
-    }
-    setRows((r ?? []) as Row[]);
-    setRecords(rec as Records);
-  }, [seasonId, metric]);
-
   useEffect(() => {
-    load();
-  }, [load]);
+    if (!seasonId) return;
+    let alive = true; // ignora respostas que chegarem depois de trocar o filtro
+    (async () => {
+      const [{ data: r, error: e1 }, { data: rec, error: e2 }] = await Promise.all([
+        supabase.rpc('get_season_ranking', { p_season: seasonId, p_metric: metric }),
+        supabase.rpc('get_season_records', { p_season: seasonId }),
+      ]);
+      if (!alive) return;
+      const e = e1 ?? e2;
+      if (e) {
+        setRows([]);
+        setRecords(null);
+        // Grátis: temporada atual e a anterior (RN-083).
+        return setMsg(e.message.includes('PREMIUM_REQUIRED') ? 'Temporadas mais antigas ficam no Premium.' : friendly(e.message));
+      }
+      setMsg(null);
+      setRows((r ?? []) as Row[]);
+      setRecords(rec as Records);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [seasonId, metric]);
 
   const nameOf = (m: string) => members.find((x) => x.id === m)?.player_name ?? 'Jogador';
   const fmt = (v: number) =>
@@ -99,9 +101,9 @@ export default function Rankings() {
     <Screen>
       <Title>Rankings</Title>
       {seasons.length > 1 && (
-        <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={setSeasonId} />
+        <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={(v) => { setRows(null); setSeasonId(v); }} />
       )}
-      <Chips options={METRICS} value={metric} onChange={setMetric} />
+      <Chips options={METRICS} value={metric} onChange={(v) => { setRows(null); setMetric(v); }} />
       <ErrorText>{msg}</ErrorText>
 
       {rows === null ? (

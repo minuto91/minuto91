@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Pressable, Text, View } from 'react-native';
 
 import { friendly } from '../../../lib/errors';
@@ -45,51 +45,57 @@ export default function Votar() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  const load = useCallback(async () => {
-    try {
-      const { data: st, error } = await supabase.rpc('get_my_voting_state', { p_match: id });
-      if (error) throw error;
-      const s = st as VotingState | null;
-      if (!s?.session_id || !s.eligible) return setMsg('Você não vota nesta partida, ou a votação já acabou.');
-      const m = await loadMatch(id);
-      const [{ data: si }, { data: el }, members, guests, sh, { data: ballot, error: e2 }] = await Promise.all([
-        supabase
-          .from('voting_sessions')
-          .select('bola_murcha_required, minimum_numeric_ratings, eligible_voter_count')
-          .eq('id', s.session_id)
-          .single(),
-        supabase.from('voting_eligible_members').select('membership_id').eq('session_id', s.session_id),
-        loadMembers(m!.pelada_id),
-        loadGuests(m!.pelada_id),
-        loadSheet(id),
-        supabase.rpc('get_my_ballot', { p_session: s.session_id }),
-      ]);
-      if (e2) throw e2;
-      const { data: auth } = await supabase.auth.getUser();
-      const meId = members.find((x) => x.user_id === auth.user?.id)?.id;
-      const eligibleIds = new Set((el ?? []).map((x) => x.membership_id));
-      setState(s);
-      setInfo(si as SessionInfo);
-      setMatch(m);
-      setColleagues(members.filter((x) => eligibleIds.has(x.id) && x.id !== meId));
-      setSheet({
-        players: sh.players,
-        names: new Map([...members.map((x) => [x.id, x.player_name] as const), ...guests.map((g) => [g.id, g.display_name] as const)]),
-      });
-      const b = ballot as { status: string; scores: { membership_id: string; rating?: number; not_seen?: boolean }[]; craque?: string; bola_murcha?: string };
-      setScores(Object.fromEntries(b.scores.map((x) => [x.membership_id, x.not_seen ? 'not_seen' : Number(x.rating)])));
-      setCraque(b.craque ?? null);
-      setBola(b.bola_murcha ?? null);
-      setSubmitted(b.status === 'submitted');
-      setMsg(null);
-    } catch (e) {
-      setMsg(friendly((e as Error).message));
-    }
-  }, [id]);
+  const [reload, setReload] = useState(0); // incrementar = buscar de novo
 
   useEffect(() => {
-    load();
-  }, [load]);
+    let alive = true;
+    (async () => {
+      try {
+        const { data: st, error } = await supabase.rpc('get_my_voting_state', { p_match: id });
+        if (error) throw error;
+        if (!alive) return;
+        const s = st as VotingState | null;
+        if (!s?.session_id || !s.eligible) return setMsg('Você não vota nesta partida, ou a votação já acabou.');
+        const m = await loadMatch(id);
+        const [{ data: si }, { data: el }, members, guests, sh, { data: ballot, error: e2 }] = await Promise.all([
+          supabase
+            .from('voting_sessions')
+            .select('bola_murcha_required, minimum_numeric_ratings, eligible_voter_count')
+            .eq('id', s.session_id)
+            .single(),
+          supabase.from('voting_eligible_members').select('membership_id').eq('session_id', s.session_id),
+          loadMembers(m!.pelada_id),
+          loadGuests(m!.pelada_id),
+          loadSheet(id),
+          supabase.rpc('get_my_ballot', { p_session: s.session_id }),
+        ]);
+        if (e2) throw e2;
+        const { data: auth } = await supabase.auth.getUser();
+        if (!alive) return;
+        const meId = members.find((x) => x.user_id === auth.user?.id)?.id;
+        const eligibleIds = new Set((el ?? []).map((x) => x.membership_id));
+        setState(s);
+        setInfo(si as SessionInfo);
+        setMatch(m);
+        setColleagues(members.filter((x) => eligibleIds.has(x.id) && x.id !== meId));
+        setSheet({
+          players: sh.players,
+          names: new Map([...members.map((x) => [x.id, x.player_name] as const), ...guests.map((g) => [g.id, g.display_name] as const)]),
+        });
+        const b = ballot as { status: string; scores: { membership_id: string; rating?: number; not_seen?: boolean }[]; craque?: string; bola_murcha?: string };
+        setScores(Object.fromEntries(b.scores.map((x) => [x.membership_id, x.not_seen ? 'not_seen' : Number(x.rating)])));
+        setCraque(b.craque ?? null);
+        setBola(b.bola_murcha ?? null);
+        setSubmitted(b.status === 'submitted');
+        setMsg(null);
+      } catch (e) {
+        if (alive) setMsg(friendly((e as Error).message));
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [id, reload]);
 
   const payload = () =>
     Object.entries(scores).map(([membership_id, v]) =>
@@ -106,7 +112,7 @@ export default function Votar() {
   }
 
   async function conferir() {
-    if ((await run('confirm_match_sheet', { p_match: id, p_sheet_version: state!.sheet_version })).ok) load();
+    if ((await run('confirm_match_sheet', { p_match: id, p_sheet_version: state!.sheet_version })).ok) setReload((n) => n + 1);
   }
 
   async function salvarRascunho() {
@@ -191,7 +197,7 @@ export default function Votar() {
           : ' Avalie todos os colegas que você viu jogar.'}
       </Sub>
       <Sub>
-        "Não vi jogar": {notSeen} de no máximo {maxNotSeen}.
+        “Não vi jogar”: {notSeen} de no máximo {maxNotSeen}.
       </Sub>
       {submitted && <Sub>Seu voto já foi enviado. Mudanças valem ao enviar de novo.</Sub>}
 

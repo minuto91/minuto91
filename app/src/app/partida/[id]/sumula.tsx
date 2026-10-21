@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { Alert, Pressable, Switch, Text, View } from 'react-native';
 
 import { friendly } from '../../../lib/errors';
@@ -57,25 +57,30 @@ export default function Sumula() {
   const [guestPos, setGuestPos] = useState<Position | null>('midfielder');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
-
-  const load = useCallback(async () => {
-    try {
-      const m = await loadMatch(id);
-      if (!m) return setMsg('Partida não encontrada.');
-      const [ms, gs, sheet] = await Promise.all([loadMembers(m.pelada_id), loadGuests(m.pelada_id), loadSheet(id)]);
-      setMatch(m);
-      setMembers(ms);
-      setGuests(gs);
-      setPlayers(sheet.players);
-      setExtras(sheet.extras);
-    } catch (e) {
-      setMsg(friendly((e as Error).message));
-    }
-  }, [id]);
+  const [reload, setReload] = useState(0); // incrementar = buscar de novo
 
   useEffect(() => {
-    load();
-  }, [load]);
+    let alive = true;
+    (async () => {
+      try {
+        const m = await loadMatch(id);
+        if (!alive) return;
+        if (!m) return setMsg('Partida não encontrada.');
+        const [ms, gs, sheet] = await Promise.all([loadMembers(m.pelada_id), loadGuests(m.pelada_id), loadSheet(id)]);
+        if (!alive) return;
+        setMatch(m);
+        setMembers(ms);
+        setGuests(gs);
+        setPlayers(sheet.players);
+        setExtras(sheet.extras);
+      } catch (e) {
+        if (alive) setMsg(friendly((e as Error).message));
+      }
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [id, reload]);
 
   const isDraft = match?.status === 'draft';
   const isCorrection = match?.status === 'voting_open';
@@ -135,7 +140,7 @@ export default function Sumula() {
   async function mudarData(daysAgo: string) {
     const d = new Date();
     d.setDate(d.getDate() - Number(daysAgo));
-    if ((await call('update_match_draft', { p_match: id, p_played_at: d.toISOString() })).ok) load();
+    if ((await call('update_match_draft', { p_match: id, p_played_at: d.toISOString() })).ok) setReload((n) => n + 1);
   }
 
   const salvarRascunho = () => call('save_match_sheet', { p_match: id, ...asArgs() });
