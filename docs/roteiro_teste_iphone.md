@@ -1,12 +1,14 @@
-# Roteiro de teste no iPhone (development build)
+# Roteiro de teste no iPhone
 
 Marque cada item. Se algo falhar, anote o passo e a mensagem exata da tela.
+Sem conta Apple paga, use o Expo Go e pule Apple e Premium (precisam do development build).
 
 ## 0. Antes de começar
 - [ ] Supabase > Authentication > URL Configuration > Redirect URLs contém `minuto91://**` e `exp://**`.
 - [ ] Supabase > Authentication > Providers: Google ativo (Client ID/Secret do Google Cloud).
-- [ ] Supabase > Authentication > Providers: Apple ativo, com `com.minuto91.app` em "Client IDs".
-- [ ] No PC: `cd $HOME\Documents\minuto91\app; npx expo start --dev-client -c` e abra o app Minuto 91 no iPhone (mesmo Wi-Fi).
+- [ ] Supabase > Authentication > Providers: Apple ativo, com `com.minuto91.app` em "Client IDs" (só no development build).
+- [ ] No PC, com Expo Go: `cd $HOME\Documents\minuto91\app; npx expo start --go -c` e leia o QR code com a câmera do iPhone (mesmo Wi-Fi).
+- [ ] Com development build: `cd $HOME\Documents\minuto91\app; npx expo start --dev-client -c` e abra o app Minuto 91.
 - [ ] Tenha 3 e-mails de teste (ex.: voce+a@gmail.com, voce+b@gmail.com, voce+c@gmail.com). Chamaremos de A, B e C.
 
 ## 1. Cadastro e login
@@ -57,3 +59,37 @@ Marque cada item. Se algo falhar, anote o passo e a mensagem exata da tela.
 ## 8. Geral
 - [ ] "Sair da conta" leva para o login.
 - [ ] Nenhuma tela em modo escuro; cores azul/fundo claro conforme a marca.
+
+## 9. Partida e súmula (admin A)
+Para votar de verdade são precisos **6 jogadores com conta** na pelada. Crie mais contas de e-mail
+(voce+d, +e, +f...), entre na pelada com cada uma pelo convite e saia da conta entre uma e outra.
+- [ ] Na pelada, "Lançar partida" → abre a súmula em rascunho.
+- [ ] "Ontem" muda a data; a data aparece no topo.
+- [ ] Adicione jogadores com "+ A" e "+ B"; troque um de time pelos botões Time A / Time B; "Tirar" remove.
+- [ ] Gols, assistências e vermelho com − e +; o placar do topo acompanha.
+- [ ] "Gol sem autor" e "Gol contra a favor" somam no placar do time.
+- [ ] Mais assistências que gols num time → erro "Um time tem mais assistências do que gols."
+- [ ] Novo convidado: nome + chave 18+ → entra no Time A com a posição escolhida.
+- [ ] "Salvar rascunho" → "Súmula salva". Saia e volte: tudo continua lá.
+- [ ] Entre como jogador comum (B): o rascunho NÃO aparece na lista de partidas.
+- [ ] "Excluir rascunho" (em outra partida de teste) → some da lista.
+
+## 10. Publicar e votar
+- [ ] Com menos de 6 contas na súmula: "Publicar" → aviso "finalizada sem votação"; a partida mostra só os gols.
+- [ ] Com 6 ou mais: escolha o prazo (2h/4h/6h) e "Publicar e abrir votação" → "Votação até HH:MM".
+- [ ] A tela da partida mostra "0 de N já votaram" e quem falta.
+- [ ] Como jogador: "Votar" → primeiro "Confira a súmula" → "Conferi a súmula".
+- [ ] Notas com − e + (de 0,5 em 0,5, começando em 6,0); "Não vi jogar" e "Limpar" funcionam.
+- [ ] Marcar "Não vi jogar" em mais da metade → erro ao enviar.
+- [ ] Sem Craque → "Escolha o Craque da Partida"; sem Bola Murcha (beta = Premium) → pede Bola Murcha.
+- [ ] "Salvar rascunho", sair e voltar: notas continuam. "Enviar voto" → "Voto enviado".
+- [ ] Na partida: "1 de N já votaram"; seu nome sai da lista de quem falta; botão vira "Editar meu voto".
+- [ ] Admin: "Corrigir súmula" (ex.: mais um gol) com motivo → "Versão 2". O jogador precisa conferir de novo para editar o voto.
+- [ ] Admin tira um jogador com conta da súmula na correção → aviso "votação reiniciada".
+- [ ] Quando o último vota → "Todo mundo votou: o resultado já saiu!".
+
+## 11. Resultado
+- [ ] Partida finalizada mostra Craque, Bola Murcha (se houver) e a lista de notas.
+- [ ] Quem não votou vê "resultado detalhado bloqueado".
+- [ ] Prazo vencido sem todos votarem: aparece "Encerrar votação" (o agendador também fecha a cada 5 minutos).
+- [ ] Menos da metade votou → "Votação inválida", sem notas nem prêmios.

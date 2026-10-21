@@ -48,6 +48,9 @@ function Gate() {
       <Stack.Screen name="entrar" options={{ title: 'Entrar com convite' }} />
       <Stack.Screen name="convite/[token]" options={{ title: 'Convite' }} />
       <Stack.Screen name="pelada/[id]" options={{ title: 'Pelada' }} />
+      <Stack.Screen name="partida/[id]/index" options={{ title: 'Partida' }} />
+      <Stack.Screen name="partida/[id]/sumula" options={{ title: 'Súmula' }} />
+      <Stack.Screen name="partida/[id]/votar" options={{ title: 'Votação' }} />
       <Stack.Screen name="premium" options={{ title: 'Premium' }} />
     </Stack>
   );

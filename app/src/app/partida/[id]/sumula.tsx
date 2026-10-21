@@ -1,0 +1,319 @@
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Alert, Pressable, Switch, Text, View } from 'react-native';
+
+import { friendly } from '../../../lib/errors';
+import {
+  emptyExtras,
+  fmtDate,
+  Guest,
+  loadGuests,
+  loadMatch,
+  loadMembers,
+  loadSheet,
+  Match,
+  Member,
+  sheetPayload,
+  SheetPlayer,
+  sheetScore,
+  Team,
+  TeamExtras,
+} from '../../../lib/match';
+import { useAuth } from '../../../lib/session';
+import { supabase } from '../../../lib/supabase';
+import { colors, Position, positionLabel } from '../../../lib/theme';
+import { Body, Button, Card, Chips, ErrorText, Input, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
+
+const TEAMS = [
+  { value: 'A', label: 'Time A' },
+  { value: 'B', label: 'Time B' },
+] as const;
+
+const DURATIONS = [
+  { value: '120', label: '2 horas' },
+  { value: '240', label: '4 horas' },
+  { value: '360', label: '6 horas' },
+] as const;
+
+const DAYS = [
+  { value: '0', label: 'Hoje' },
+  { value: '1', label: 'Ontem' },
+  { value: '2', label: 'Anteontem' },
+] as const;
+
+export default function Sumula() {
+  const { id } = useLocalSearchParams<{ id: string }>();
+  const { session } = useAuth();
+  const router = useRouter();
+  const [match, setMatch] = useState<Match | null>(null);
+  const [members, setMembers] = useState<Member[]>([]);
+  const [guests, setGuests] = useState<Guest[]>([]);
+  const [players, setPlayers] = useState<SheetPlayer[]>([]);
+  const [extras, setExtras] = useState<TeamExtras>(emptyExtras());
+  const [reason, setReason] = useState('');
+  const [duration, setDuration] = useState<'120' | '240' | '360'>('240');
+  const [guestName, setGuestName] = useState('');
+  const [guestAdult, setGuestAdult] = useState(false);
+  const [guestPos, setGuestPos] = useState<Position | null>('midfielder');
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+
+  const load = useCallback(async () => {
+    try {
+      const m = await loadMatch(id);
+      if (!m) return setMsg('Partida não encontrada.');
+      const [ms, gs, sheet] = await Promise.all([loadMembers(m.pelada_id), loadGuests(m.pelada_id), loadSheet(id)]);
+      setMatch(m);
+      setMembers(ms);
+      setGuests(gs);
+      setPlayers(sheet.players);
+      setExtras(sheet.extras);
+    } catch (e) {
+      setMsg(friendly((e as Error).message));
+    }
+  }, [id]);
+
+  useEffect(() => {
+    load();
+  }, [load]);
+
+  const isDraft = match?.status === 'draft';
+  const isCorrection = match?.status === 'voting_open';
+  const editable = isDraft || isCorrection;
+  const score = sheetScore(players, extras);
+  const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
+  const guestById = useMemo(() => new Map(guests.map((g) => [g.id, g])), [guests]);
+  const nameOf = (p: SheetPlayer) =>
+    p.membership_id ? (memberById.get(p.membership_id)?.player_name ?? 'Jogador') : (guestById.get(p.guest_id!)?.display_name ?? 'Convidado');
+  const inSheet = new Set(players.map((p) => p.key));
+  const benchMembers = members.filter((m) => m.status === 'active' && !inSheet.has(`m:${m.id}`));
+  const benchGuests = guests.filter((g) => !inSheet.has(`g:${g.id}`));
+
+  const update = (key: string, patch: Partial<SheetPlayer>) =>
+    setPlayers((ps) => ps.map((p) => (p.key === key ? { ...p, ...patch } : p)));
+  const remove = (key: string) => setPlayers((ps) => ps.filter((p) => p.key !== key));
+  const addMember = (m: Member, team: Team) =>
+    setPlayers((ps) => [
+      ...ps,
+      { key: `m:${m.id}`, membership_id: m.id, team, position: m.preferred_position, goals: 0, assists: 0, reds: 0 },
+    ]);
+  const addGuest = (g: Guest, team: Team) => {
+    if (!guestPos) return setMsg('Escolha a posição do convidado.');
+    setPlayers((ps) => [
+      ...ps,
+      { key: `g:${g.id}`, guest_id: g.id, team, position: guestPos, goals: 0, assists: 0, reds: 0 },
+    ]);
+  };
+  const setExtra = (kind: keyof TeamExtras, team: Team, v: number) =>
+    setExtras((e) => ({ ...e, [kind]: { ...e[kind], [team]: v } }));
+
+  // ok = false quando o servidor recusou (a mensagem já aparece na tela).
+  async function call<T = unknown>(fn: string, args: Record<string, unknown>): Promise<{ ok: boolean; data: T }> {
+    setBusy(true);
+    setMsg(null);
+    const { data, error } = await supabase.rpc(fn, args);
+    setBusy(false);
+    if (error) setMsg(friendly(error.message));
+    return { ok: !error, data: data as T };
+  }
+
+  async function novoConvidado() {
+    if (!guestAdult) return setMsg('Confirme que o convidado tem 18 anos ou mais.');
+    const { ok, data: gid } = await call<string>('create_guest', {
+      p_pelada: match!.pelada_id,
+      p_name: guestName,
+      p_adult_declared: true,
+    });
+    if (!ok) return;
+    const g = { id: gid, display_name: guestName.trim() };
+    setGuests((gs) => [...gs, g]);
+    setGuestName('');
+    setGuestAdult(false);
+    addGuest(g, 'A');
+  }
+
+  async function mudarData(daysAgo: string) {
+    const d = new Date();
+    d.setDate(d.getDate() - Number(daysAgo));
+    if ((await call('update_match_draft', { p_match: id, p_played_at: d.toISOString() })).ok) load();
+  }
+
+  const salvarRascunho = () => call('save_match_sheet', { p_match: id, ...asArgs() });
+  const asArgs = () => {
+    const { participants, events } = sheetPayload(players, extras);
+    return { p_participants: participants, p_events: events };
+  };
+
+  async function salvar() {
+    if ((await salvarRascunho()).ok) Alert.alert('Súmula salva');
+  }
+
+  async function publicar() {
+    if (!(await salvarRascunho()).ok) return;
+    const { ok, data: r } = await call<{ status: string; eligible_voter_count: number }>('publish_match', {
+      p_match: id,
+      p_duration_minutes: Number(duration),
+    });
+    if (!ok) return;
+    if (r.status === 'finalized')
+      Alert.alert(
+        'Partida finalizada sem votação',
+        `Só ${r.eligible_voter_count} jogadores podem votar (mínimo 6). Contam só gols, assistências e presença.`,
+      );
+    router.replace({ pathname: '/partida/[id]', params: { id } });
+  }
+
+  async function corrigir() {
+    const { ok, data: r } = await call<{ sheet_version: number; eligible_voters_changed: boolean }>('correct_match_sheet', {
+      p_match: id,
+      ...asArgs(),
+      p_reason: reason,
+    });
+    if (!ok) return;
+    Alert.alert(
+      'Súmula corrigida',
+      r.eligible_voters_changed
+        ? 'A lista de quem vota mudou: a votação foi reiniciada.'
+        : `Versão ${r.sheet_version}. Todos precisam conferir a súmula de novo.`,
+    );
+    router.replace({ pathname: '/partida/[id]', params: { id } });
+  }
+
+  function descartar() {
+    Alert.alert('Excluir rascunho?', 'A súmula será apagada. Isso não pode ser desfeito.', [
+      { text: 'Cancelar', style: 'cancel' },
+      {
+        text: 'Excluir',
+        style: 'destructive',
+        onPress: async () => {
+          if ((await call('discard_match_draft', { p_match: id })).ok) router.back();
+        },
+      },
+    ]);
+  }
+
+  if (!match) {
+    return (
+      <Screen>
+        <ErrorText>{msg}</ErrorText>
+        {!msg && <Sub>Carregando...</Sub>}
+      </Screen>
+    );
+  }
+
+  const me = members.find((m) => m.user_id === session?.user.id);
+  if (!editable || !(me?.role === 'admin' || me?.role === 'assistant')) {
+    return (
+      <Screen>
+        <Sub>Só admin ou assistentes editam a súmula, e só antes do resultado.</Sub>
+      </Screen>
+    );
+  }
+
+  return (
+    <Screen>
+      <Title>{isCorrection ? 'Corrigir súmula' : 'Súmula'}</Title>
+      <Sub>{fmtDate(match.played_at)}</Sub>
+      {isDraft && <Chips options={DAYS} value={null} onChange={mudarData} />}
+      <Card>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: colors.deepBlue, textAlign: 'center' }}>
+          {match.team_a_name} {score.A} x {score.B} {match.team_b_name}
+        </Text>
+        <Sub>O placar sai dos gols lançados abaixo.</Sub>
+      </Card>
+
+      {(['A', 'B'] as Team[]).map((t) => (
+        <View key={t} style={{ gap: 8 }}>
+          <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 8 }}>
+            {t === 'A' ? match.team_a_name : match.team_b_name}
+          </Text>
+          {players
+            .filter((p) => p.team === t)
+            .map((p) => (
+              <Card key={p.key}>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <Body>
+                    {nameOf(p)}
+                    {p.guest_id ? ' (convidado)' : ''}
+                  </Body>
+                  <Pressable onPress={() => remove(p.key)}>
+                    <Text style={{ color: colors.danger, fontWeight: '600' }}>Tirar</Text>
+                  </Pressable>
+                </View>
+                <Sub>{positionLabel(p.position)}</Sub>
+                <Chips options={TEAMS} value={p.team} onChange={(v) => update(p.key, { team: v })} />
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 4 }}>
+                  <Stepper label="Gols" value={p.goals} onChange={(v) => update(p.key, { goals: v })} />
+                  <Stepper label="Assist." value={p.assists} onChange={(v) => update(p.key, { assists: v })} />
+                  <Stepper label="Vermelho" value={p.reds} max={5} onChange={(v) => update(p.key, { reds: v })} />
+                </View>
+              </Card>
+            ))}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
+            <Stepper label="Gol sem autor" value={extras.unattributed[t]} onChange={(v) => setExtra('unattributed', t, v)} />
+            <Stepper label="Gol contra a favor" value={extras.ownGoals[t]} onChange={(v) => setExtra('ownGoals', t, v)} />
+          </View>
+        </View>
+      ))}
+
+      <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 12 }}>Adicionar quem jogou</Text>
+      {benchMembers.length === 0 && <Sub>Todos os jogadores da pelada já estão na súmula.</Sub>}
+      {benchMembers.map((m) => (
+        <BenchRow key={m.id} name={m.player_name} sub={positionLabel(m.preferred_position)} onAdd={(t) => addMember(m, t)} />
+      ))}
+
+      <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 12 }}>Convidados</Text>
+      <Sub>Posição do convidado ao adicionar:</Sub>
+      <PositionPicker value={guestPos} onChange={setGuestPos} />
+      {benchGuests.map((g) => (
+        <BenchRow key={g.id} name={g.display_name} sub="Convidado" onAdd={(t) => addGuest(g, t)} />
+      ))}
+      <Input autoCapitalize="words" placeholder="nome do novo convidado" value={guestName} onChangeText={setGuestName} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
+        <Switch value={guestAdult} onValueChange={setGuestAdult} trackColor={{ true: colors.blue }} />
+        <Text style={{ flex: 1, color: colors.ink }}>Declaro que o convidado tem 18 anos ou mais.</Text>
+      </View>
+      <Button title="Adicionar convidado" kind="secondary" onPress={novoConvidado} disabled={guestName.trim().length < 1} loading={busy} />
+
+      <View style={{ height: 12 }} />
+      <ErrorText>{msg}</ErrorText>
+      {isDraft ? (
+        <>
+          <Button title="Salvar rascunho" kind="secondary" onPress={salvar} loading={busy} />
+          <Sub>Prazo da votação</Sub>
+          <Chips options={DURATIONS} value={duration} onChange={setDuration} />
+          <Button title="Publicar e abrir votação" onPress={publicar} loading={busy} />
+          <Button title="Excluir rascunho" kind="danger" onPress={descartar} />
+        </>
+      ) : (
+        <>
+          <Input autoCapitalize="sentences" placeholder="motivo da correção (obrigatório)" value={reason} onChangeText={setReason} />
+          <Button title="Salvar correção" onPress={corrigir} loading={busy} disabled={reason.trim().length < 3} />
+        </>
+      )}
+    </Screen>
+  );
+}
+
+function BenchRow({ name, sub, onAdd }: { name: string; sub: string; onAdd: (t: Team) => void }) {
+  return (
+    <Card>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+        <View style={{ flex: 1 }}>
+          <Body>{name}</Body>
+          <Sub>{sub}</Sub>
+        </View>
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {(['A', 'B'] as Team[]).map((t) => (
+            <Pressable
+              key={t}
+              onPress={() => onAdd(t)}
+              style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.blue }}>
+              <Text style={{ color: colors.blue, fontWeight: '700' }}>+ {t}</Text>
+            </Pressable>
+          ))}
+        </View>
+      </View>
+    </Card>
+  );
+}

@@ -1,9 +1,10 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Share, Text, View } from 'react-native';
+import { Alert, Pressable, Share, Text, View } from 'react-native';
 import * as Linking from 'expo-linking';
 
 import { friendly } from '../../lib/errors';
+import { fmtDate, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../lib/match';
 import { useAuth } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, positionLabel } from '../../lib/theme';
@@ -25,6 +26,7 @@ export default function Pelada() {
   const [status, setStatus] = useState('');
   const [successor, setSuccessor] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
+  const [matches, setMatches] = useState<Match[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
@@ -47,6 +49,14 @@ export default function Pelada() {
       .order('joined_at', { ascending: true });
     if (error) setMsg(error.message);
     else setMembers((ms ?? []) as Member[]);
+    // Rascunhos só aparecem para admin e assistentes (regra do banco).
+    const { data: xs } = await supabase
+      .from('matches')
+      .select(MATCH_COLUMNS)
+      .eq('pelada_id', id)
+      .order('played_at', { ascending: false })
+      .limit(20);
+    setMatches((xs ?? []) as Match[]);
   }, [id]);
 
   useFocusEffect(
@@ -57,6 +67,15 @@ export default function Pelada() {
 
   const me = members.find((m) => m.user_id === session?.user.id);
   const isAdmin = me?.role === 'admin';
+  const isStaff = isAdmin || me?.role === 'assistant';
+
+  async function lancarPartida() {
+    const matchId = (await rpc('create_match', {
+      p_pelada: id,
+      p_played_at: new Date().toISOString(),
+    })) as string | null;
+    if (matchId) router.push({ pathname: '/partida/[id]/sumula', params: { id: matchId } });
+  }
 
   async function rpc(name: string, args: Record<string, unknown>) {
     setBusy(true);
@@ -108,6 +127,21 @@ export default function Pelada() {
       {status === 'restricted' && <Sub>Pelada restrita: sem administrador elegível.</Sub>}
       <ErrorText>{msg}</ErrorText>
       {isAdmin && <Button title="Convidar" onPress={convidar} loading={busy} />}
+      <Text style={{ fontWeight: '700', color: colors.deepBlue, marginTop: 8 }}>Partidas</Text>
+      {isStaff && <Button title="Lançar partida" kind="secondary" onPress={lancarPartida} loading={busy} />}
+      {matches.length === 0 && <Sub>Nenhuma partida ainda.</Sub>}
+      {matches.map((x) => (
+        <Pressable key={x.id} onPress={() => router.push({ pathname: '/partida/[id]', params: { id: x.id } })}>
+          <Card>
+            <Body>
+              {x.team_a_name} {x.team_a_score} x {x.team_b_score} {x.team_b_name}
+            </Body>
+            <Sub>
+              {fmtDate(x.played_at)} · {STATUS_LABEL[x.status] ?? x.status}
+            </Sub>
+          </Card>
+        </Pressable>
+      ))}
       <Text style={{ fontWeight: '700', color: colors.deepBlue, marginTop: 8 }}>
         Jogadores ({members.length})
       </Text>
