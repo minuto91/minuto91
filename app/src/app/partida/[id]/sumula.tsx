@@ -67,8 +67,15 @@ export default function Sumula() {
         const m = await loadMatch(id);
         if (!alive) return;
         if (!m) return setMsg('Partida não encontrada.');
-        const [ms, gs, sheet] = await Promise.all([loadMembers(m.pelada_id), loadGuests(m.pelada_id), loadSheet(id)]);
+        const [ms, gs, sheet, { data: st }] = await Promise.all([
+          loadMembers(m.pelada_id),
+          loadGuests(m.pelada_id),
+          loadSheet(id),
+          supabase.from('pelada_settings').select('voting_duration_minutes').eq('pelada_id', m.pelada_id).maybeSingle(),
+        ]);
         if (!alive) return;
+        // Prazo padrão escolhido nas configurações da pelada.
+        if (st) setDuration(String(st.voting_duration_minutes) as '120' | '240' | '360');
         setMatch(m);
         setMembers(ms);
         setGuests(gs);

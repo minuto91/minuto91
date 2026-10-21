@@ -47,9 +47,10 @@ Migrações em `supabase/migrations` (ordem do Doc 04 seção 36):
 014 estatísticas e cartas · 015 rankings/prêmios do mês/destaques/recordes · 016 Seleção da Rodada ·
 017 catálogo de figurinhas · 018 progresso/desbloqueio · 019 Premium/teste grátis/eventos da loja ·
 020 anulação · 020b correção de permissão · 021 exclusão de conta · 022 notificações e agendador (pg_cron) ·
-023 denúncia/bloqueio/índices · 024 transferência de conta por código.
+023 denúncia/bloqueio/índices · 024 transferência de conta por código · 025 configurações da pelada
+(admin: prazo padrão, Bola Murcha só com Premium, mínimo de notas; fuso não editável).
 
-Testes: `supabase/tests_editor/001..017_*.sql` (rodar no SQL Editor; terminam com o erro proposital
+Testes: `supabase/tests_editor/001..018_*.sql` (rodar no SQL Editor; terminam com o erro proposital
 "PASS: ..." = ok e nada gravado). Versões psql em `supabase/tests/`. Cadeia pós-finalização:
 `after_match_finalized` → stats/cartas (014) → `after_cards_updated` → destaques/meses (015) →
 `after_rankings_updated` → Seleção (016) → `after_selection_updated` → figurinhas (018).
@@ -83,7 +84,8 @@ bloqueio para quem não votou), votação (conferir súmula, notas 0–10 em 0,5
 Murcha, rascunho, envio), carta (overall, categoria, provisória, 5 atributos, temporada, prêmios, denunciar,
 bloquear), rankings (overall/gols/assistências/média/jogos/vitórias, prêmios do mês, recordes), álbum
 (9 coleções, 48 figurinhas, progresso), Premium da pelada (estado + teste grátis), Minha conta (código de
-transferência gerar/usar, bloqueados, excluir/recuperar). Também existe `premium.tsx` (teste RevenueCat).
+transferência gerar/usar, bloqueados, excluir/recuperar), anulação de partida (admin, até 7 dias, prévia do
+impacto e motivo), configurações da pelada (admin). Também existe `premium.tsx` (teste RevenueCat).
 Avisos e confirmações: `app/src/lib/dialog.ts` (funciona no celular e na web).
 
 ## 8. Como testar
@@ -127,14 +129,12 @@ Avisos e confirmações: `app/src/lib/dialog.ts` (funciona no celular e na web).
 3. **Documentos**: atualizar regra da Seleção (sem adaptação) nos Docs 02/03/04; levar ao advogado: 30 dias de
    recuperação, retenção do Aposentado e das cédulas, registro do teste grátis (PT-05).
 4. **Lacunas de app ainda não feitas** (confirmar escopo comigo antes):
-   - Configurações da pelada (prazo padrão de votação, ligar/desligar Bola Murcha, mínimo de notas, fuso).
    - Tela de temporadas (personalizar/encerrar, Premium) — banco pronto (006).
    - Nomes personalizados dos times (Premium) — banco pronto (007).
    - Botão de denunciar convidado — banco pronto (023).
    - Foto de perfil, escudo/imagem da pelada (upload).
    - Arte de compartilhamento 9:16 do resultado (bloqueada para quem não votou, RN-098) e da figurinha.
    - Retrospectiva mensal/anual. Destaques (Craque/Garçom da rodada) na tela da pelada.
-   - Anulação de partida no app (banco pronto, 020).
 5. **Apple Developer (US$ 99/ano)** → `eas login`, `eas init` (commitar o projectId), `eas device:create`,
    development build iOS (pedir minha confirmação antes de rodar). Login com Apple é obrigatório na App Store
    (o app oferece Google). Configurar Apple no Supabase (Client ID `com.minuto91.app`).
