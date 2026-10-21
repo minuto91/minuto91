@@ -50,6 +50,7 @@ export default function Login() {
         options: { redirectTo, skipBrowserRedirect: true },
       });
       if (error || !data.url) return error?.message ?? 'Não foi possível iniciar o login com Google.';
+      // No Expo Go o retorno precisa do modo túnel (--tunnel): o Supabase recusa exp:// com IP numérico.
       const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
       if (res.type !== 'success') return null;
       const frag = res.url.split('#')[1] ?? '';

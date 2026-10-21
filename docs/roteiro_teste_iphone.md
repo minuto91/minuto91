@@ -7,7 +7,9 @@ Sem conta Apple paga, use o Expo Go e pule Apple e Premium (precisam do developm
 - [ ] Supabase > Authentication > URL Configuration > Redirect URLs contém `minuto91://**` e `exp://**`.
 - [ ] Supabase > Authentication > Providers: Google ativo (Client ID/Secret do Google Cloud).
 - [ ] Supabase > Authentication > Providers: Apple ativo, com `com.minuto91.app` em "Client IDs" (só no development build).
-- [ ] No PC, com Expo Go: `cd $HOME\Documents\minuto91\app; npx expo start --go -c` e leia o QR code com a câmera do iPhone (mesmo Wi-Fi).
+- [ ] No PC, com Expo Go: `cd $HOME\Documents\minuto91\app; npx expo start --go --tunnel -c` e leia o QR code com a câmera do iPhone.
+      O `--tunnel` é obrigatório para o login com Google no Expo Go: sem ele o endereço de retorno usa o IP do PC
+      (exp://192.168.x.x), que o Supabase recusa e manda para "localhost". Sem testar Google, `--go -c` basta.
 - [ ] Com development build: `cd $HOME\Documents\minuto91\app; npx expo start --dev-client -c` e abra o app Minuto 91.
 - [ ] Tenha 3 e-mails de teste (ex.: voce+a@gmail.com, voce+b@gmail.com, voce+c@gmail.com). Chamaremos de A, B e C.
 
