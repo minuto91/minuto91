@@ -1,6 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Alert, Pressable, Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
+
+import { notify } from '../../../lib/dialog';
 
 import { friendly } from '../../../lib/errors';
 import {
@@ -122,7 +124,7 @@ export default function Votar() {
       p_craque: craque,
       p_bola_murcha: bola,
     });
-    if (r.ok) Alert.alert('Rascunho salvo', 'Você pode terminar até o fim do prazo.');
+    if (r.ok) notify('Rascunho salvo', 'Você pode terminar até o fim do prazo.');
   }
 
   async function enviar() {
@@ -136,7 +138,7 @@ export default function Votar() {
     });
     if (!r.ok) return;
     const res = r.data as { all_voted: boolean };
-    Alert.alert(
+    notify(
       'Voto enviado',
       res.all_voted ? 'Todo mundo votou: o resultado já saiu!' : 'Você pode mudar seu voto até o fim do prazo.',
     );

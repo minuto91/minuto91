@@ -1,7 +1,8 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Alert, Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, Switch, Text, View } from 'react-native';
 
+import { confirm, notify } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import {
   emptyExtras,
@@ -150,7 +151,7 @@ export default function Sumula() {
   };
 
   async function salvar() {
-    if ((await salvarRascunho()).ok) Alert.alert('Súmula salva');
+    if ((await salvarRascunho()).ok) notify('Súmula salva');
   }
 
   async function publicar() {
@@ -161,7 +162,7 @@ export default function Sumula() {
     });
     if (!ok) return;
     if (r.status === 'finalized')
-      Alert.alert(
+      notify(
         'Partida finalizada sem votação',
         `Só ${r.eligible_voter_count} jogadores podem votar (mínimo 6). Contam só gols, assistências e presença.`,
       );
@@ -175,7 +176,7 @@ export default function Sumula() {
       p_reason: reason,
     });
     if (!ok) return;
-    Alert.alert(
+    notify(
       'Súmula corrigida',
       r.eligible_voters_changed
         ? 'A lista de quem vota mudou: a votação foi reiniciada.'
@@ -185,16 +186,10 @@ export default function Sumula() {
   }
 
   function descartar() {
-    Alert.alert('Excluir rascunho?', 'A súmula será apagada. Isso não pode ser desfeito.', [
-      { text: 'Cancelar', style: 'cancel' },
-      {
-        text: 'Excluir',
-        style: 'destructive',
-        onPress: async () => {
-          if ((await call('discard_match_draft', { p_match: id })).ok) router.back();
-        },
-      },
-    ]);
+    confirm('Excluir rascunho?', 'A súmula será apagada. Isso não pode ser desfeito.', 'Excluir', async () => {
+      if ((await call('discard_match_draft', { p_match: id })).ok)
+        router.replace({ pathname: '/pelada/[id]', params: { id: match!.pelada_id } });
+    });
   }
 
   if (!match) {

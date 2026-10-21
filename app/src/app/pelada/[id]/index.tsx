@@ -1,8 +1,9 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Alert, Pressable, Share, Text, View } from 'react-native';
+import { Pressable, Share, Text, View } from 'react-native';
 import * as Linking from 'expo-linking';
 
+import { confirm } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import { fmtDate, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match';
 import { ReportLink } from '../../../lib/report';
@@ -103,22 +104,16 @@ export default function Pelada() {
   }
 
   function sair() {
-    Alert.alert(
+    confirm(
       'Sair da pelada?',
       isAdmin
         ? 'Você é o administrador. A administração passa automaticamente: primeiro o sucessor indicado, depois o assistente mais antigo, depois o jogador mais antigo.'
         : 'Seu histórico fica guardado e você pode voltar por um novo convite.',
-      [
-        { text: 'Cancelar', style: 'cancel' },
-        {
-          text: 'Sair',
-          style: 'destructive',
-          onPress: async () => {
-            const r = await rpc('leave_pelada', { p_pelada: id });
-            if (r) router.replace('/');
-          },
-        },
-      ],
+      'Sair',
+      async () => {
+        const r = await rpc('leave_pelada', { p_pelada: id });
+        if (r) router.replace('/');
+      },
     );
   }
 
