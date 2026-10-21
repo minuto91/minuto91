@@ -1,7 +1,7 @@
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Platform, View } from 'react-native';
 
 import { friendly } from '../lib/errors';
@@ -15,6 +15,25 @@ export default function Login() {
   const [senha, setSenha] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  // Login com Apple só existe no app nativo (development build ou lojas), não no Expo Go.
+  const [appleOk, setAppleOk] = useState(false);
+
+  useEffect(() => {
+    if (Platform.OS !== 'ios') return;
+    let alive = true;
+    (async () => {
+      let ok = false;
+      try {
+        ok = await AppleAuthentication.isAvailableAsync(); // no Expo Go o módulo nativo não existe e dá erro
+      } catch {
+        ok = false;
+      }
+      if (alive) setAppleOk(ok);
+    })();
+    return () => {
+      alive = false;
+    };
+  }, []);
 
   async function run(name: string, fn: () => Promise<string | null | void>) {
     setBusy(name);
@@ -91,7 +110,7 @@ export default function Login() {
       <Button title="Criar conta" kind="secondary" onPress={cadastrar} loading={busy === 'cadastrar'} />
       <View style={{ height: 8 }} />
       <Button title="Continuar com Google" kind="secondary" onPress={google} loading={busy === 'google'} />
-      {Platform.OS === 'ios' && (
+      {appleOk && (
         <Button title="Continuar com Apple" kind="secondary" onPress={apple} loading={busy === 'apple'} />
       )}
     </Screen>
