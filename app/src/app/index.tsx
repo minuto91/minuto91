@@ -1,98 +1,61 @@
-import * as Device from 'expo-device';
-import { Platform, StyleSheet } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import { Button, ScrollView, Text, TextInput, View } from 'react-native';
+import { supabase } from '../lib/supabase';
 
-import { AnimatedIcon } from '@/components/animated-icon';
-import { HintRow } from '@/components/hint-row';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { WebBadge } from '@/components/web-badge';
-import { BottomTabInset, MaxContentWidth, Spacing } from '@/constants/theme';
+export default function Teste() {
+  const [email, setEmail] = useState('');
+  const [senha, setSenha] = useState('');
+  const [nome, setNome] = useState('');
+  const [log, setLog] = useState<string[]>([]);
+  const add = (m: string) => setLog((l) => [m, ...l]);
 
-function getDevMenuHint() {
-  if (Platform.OS === 'web') {
-    return <ThemedText type="small">use browser devtools</ThemedText>;
+  async function cadastrar() {
+    const { error } = await supabase.auth.signUp({ email, password: senha });
+    add(error ? 'cadastro ERRO: ' + error.message : 'cadastro OK');
   }
-  if (Device.isDevice) {
-    return (
-      <ThemedText type="small">
-        shake device or press <ThemedText type="code">m</ThemedText> in terminal
-      </ThemedText>
-    );
+  async function entrar() {
+    const { error } = await supabase.auth.signInWithPassword({ email, password: senha });
+    add(error ? 'login ERRO: ' + error.message : 'login OK');
   }
-  const shortcut = Platform.OS === 'android' ? 'cmd+m (or ctrl+m)' : 'cmd+d';
+  async function onboarding() {
+    const { error } = await supabase.rpc('complete_onboarding', {
+      p_display_name: nome || 'Jogador',
+      p_adult: true,
+      p_terms: true,
+    });
+    add(error ? 'onboarding ERRO: ' + error.message : 'onboarding OK');
+  }
+  async function criarPelada() {
+    const { data, error } = await supabase.rpc('create_pelada', {
+      p_name: 'Pelada Teste',
+      p_position: 'midfielder',
+    });
+    add(error ? 'pelada ERRO: ' + error.message : 'pelada criada: ' + data);
+  }
+  async function sair() {
+    await supabase.auth.signOut();
+    add('saiu');
+  }
+
   return (
-    <ThemedText type="small">
-      press <ThemedText type="code">{shortcut}</ThemedText>
-    </ThemedText>
+    <ScrollView contentContainerStyle={{ padding: 24, paddingTop: 70, gap: 10 }}>
+      <Text style={{ fontSize: 22, fontWeight: '700' }}>Minuto 91 - teste</Text>
+      <TextInput placeholder="e-mail" autoCapitalize="none" keyboardType="email-address"
+        value={email} onChangeText={setEmail}
+        style={{ borderWidth: 1, padding: 10, borderRadius: 6 }} />
+      <TextInput placeholder="senha (6+ caracteres)" secureTextEntry
+        value={senha} onChangeText={setSenha}
+        style={{ borderWidth: 1, padding: 10, borderRadius: 6 }} />
+      <TextInput placeholder="seu apelido" value={nome} onChangeText={setNome}
+        style={{ borderWidth: 1, padding: 10, borderRadius: 6 }} />
+      <Button title="1. Cadastrar" onPress={cadastrar} />
+      <Button title="2. Entrar" onPress={entrar} />
+      <Button title="3. Onboarding (18+ e termos)" onPress={onboarding} />
+      <Button title="4. Criar pelada" onPress={criarPelada} />
+      <Button title="Sair" onPress={sair} />
+      <View style={{ marginTop: 12 }}>
+        {log.map((l, i) => <Text key={i}>{l}</Text>)}
+      </View>
+    </ScrollView>
   );
 }
-
-export default function HomeScreen() {
-  return (
-    <ThemedView style={styles.container}>
-      <SafeAreaView style={styles.safeArea}>
-        <ThemedView style={styles.heroSection}>
-          <AnimatedIcon />
-          <ThemedText type="title" style={styles.title}>
-            Welcome to&nbsp;Expo
-          </ThemedText>
-        </ThemedView>
-
-        <ThemedText type="code" style={styles.code}>
-          get started
-        </ThemedText>
-
-        <ThemedView type="backgroundElement" style={styles.stepContainer}>
-          <HintRow
-            title="Try editing"
-            hint={<ThemedText type="code">src/app/index.tsx</ThemedText>}
-          />
-          <HintRow title="Dev tools" hint={getDevMenuHint()} />
-          <HintRow
-            title="Fresh start"
-            hint={<ThemedText type="code">npm run reset-project</ThemedText>}
-          />
-        </ThemedView>
-
-        {Platform.OS === 'web' && <WebBadge />}
-      </SafeAreaView>
-    </ThemedView>
-  );
-}
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    flexDirection: 'row',
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    alignItems: 'center',
-    gap: Spacing.three,
-    paddingBottom: BottomTabInset + Spacing.three,
-    maxWidth: MaxContentWidth,
-  },
-  heroSection: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    flex: 1,
-    paddingHorizontal: Spacing.four,
-    gap: Spacing.four,
-  },
-  title: {
-    textAlign: 'center',
-  },
-  code: {
-    textTransform: 'uppercase',
-  },
-  stepContainer: {
-    gap: Spacing.three,
-    alignSelf: 'stretch',
-    paddingHorizontal: Spacing.three,
-    paddingVertical: Spacing.four,
-    borderRadius: Spacing.four,
-  },
-});
