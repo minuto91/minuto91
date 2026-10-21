@@ -1,0 +1,4 @@
+# Arquivos binários: nunca converter fim de linha.
+*.pdf binary
+*.png binary
+*.jpg binary
