@@ -56,6 +56,26 @@ const MAP: Record<string, string> = {
   IDEMPOTENCY_KEY_REQUIRED: 'Erro técnico no envio. Tente de novo.',
   VOTING_STILL_OPEN: 'A votação ainda está aberta.',
   SESSION_NOT_FOUND: 'Votação não encontrada.',
+  // Premium
+  PREMIUM_BETA_ACTIVE: 'No beta o Premium já está liberado para todas as peladas.',
+  TRIAL_ALREADY_USED: 'O teste grátis já foi usado (1 por pelada e 1 por conta de administrador).',
+  ALREADY_PREMIUM: 'Esta pelada já tem Premium.',
+  ALREADY_SUBSCRIBED: 'Esta pelada já tem uma assinatura ativa.',
+  BUYER_ALREADY_SUBSCRIBED: 'Sua conta da loja já paga outra pelada.',
+  // Conta
+  CONFIRMATION_REQUIRED: 'Confirme para continuar.',
+  ACCOUNT_DELETION_PENDING: 'Sua conta está em exclusão. Recupere a conta para continuar.',
+  NO_PENDING_DELETION: 'Não há exclusão pendente para recuperar.',
+  ACCOUNT_DEACTIVATED: 'Esta conta foi transferida para outra e está desativada.',
+  DESTINATION_HAS_PELADA: 'Para receber o histórico, esta conta não pode estar em nenhuma pelada.',
+  DESTINATION_CONFLICT: 'Esta conta já participou de uma das peladas do histórico. Use uma conta nova.',
+  TOO_MANY_ATTEMPTS: 'Muitas tentativas. Espere uma hora e tente de novo.',
+  INVALID_TRANSFER_CODE: 'Código inválido, já usado ou vencido.',
+  // Denúncia e bloqueio
+  INVALID_REASON: 'Escolha o motivo da denúncia.',
+  INVALID_REPORT_TARGET: 'Não foi possível denunciar este conteúdo.',
+  INVALID_USER: 'Usuário inválido.',
+  PELADA_NOT_FOUND: 'Pelada não encontrada.',
 };
 
 export function friendly(message?: string | null): string {

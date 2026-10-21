@@ -16,15 +16,26 @@ import {
 } from '../../../lib/career';
 import { friendly } from '../../../lib/errors';
 import { fmtRating } from '../../../lib/match';
+import { ReportLink } from '../../../lib/report';
+import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, positionLabel } from '../../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
 
-type Membership = { id: string; pelada_id: string; player_name: string; preferred_position: string; status: string };
+type Membership = {
+  id: string;
+  pelada_id: string;
+  user_id: string | null;
+  player_name: string;
+  preferred_position: string;
+  status: string;
+};
 
 export default function Carta() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
+  const { session } = useAuth();
+  const [blocked, setBlocked] = useState(false);
   const [member, setMember] = useState<Membership | null>(null);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [seasonId, setSeasonId] = useState<string | null>(null);
@@ -38,11 +49,15 @@ export default function Carta() {
     (async () => {
       const { data: m, error } = await supabase
         .from('pelada_memberships')
-        .select('id, pelada_id, player_name, preferred_position, status')
+        .select('id, pelada_id, user_id, player_name, preferred_position, status')
         .eq('id', id)
         .maybeSingle();
       if (error || !m) return setMsg(error ? friendly(error.message) : 'Jogador não encontrado.');
       setMember(m as Membership);
+      if (m.user_id) {
+        const { data: b } = await supabase.from('user_blocks').select('blocked_user_id').eq('blocked_user_id', m.user_id);
+        setBlocked((b ?? []).length > 0);
+      }
       const ss = await loadSeasons(m.pelada_id);
       setSeasons(ss);
       setSeasonId(currentSeason(ss)?.id ?? null);
@@ -178,6 +193,23 @@ export default function Carta() {
         kind="secondary"
         onPress={() => router.push({ pathname: '/jogador/[id]/album', params: { id } })}
       />
+
+      {member.user_id && member.user_id !== session?.user.id && (
+        <View style={{ gap: 10, marginTop: 12 }}>
+          <ReportLink peladaId={member.pelada_id} targetType="member_name" targetId={member.id} label="Denunciar apelido" />
+          <ReportLink peladaId={member.pelada_id} targetType="profile" targetId={member.user_id} label="Denunciar foto ou perfil" />
+          <Button
+            title={blocked ? 'Desbloquear jogador' : 'Bloquear jogador'}
+            kind="secondary"
+            onPress={async () => {
+              const { error } = await supabase.rpc(blocked ? 'unblock_user' : 'block_user', { p_user: member.user_id });
+              if (error) return setMsg(friendly(error.message));
+              setBlocked(!blocked);
+            }}
+          />
+          {blocked && <Sub>Você não vê mais a foto e o perfil deste jogador. Gols e notas continuam na súmula.</Sub>}
+        </View>
+      )}
     </Screen>
   );
 }

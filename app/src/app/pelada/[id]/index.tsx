@@ -5,6 +5,7 @@ import * as Linking from 'expo-linking';
 
 import { friendly } from '../../../lib/errors';
 import { fmtDate, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match';
+import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, positionLabel } from '../../../lib/theme';
@@ -199,7 +200,9 @@ export default function Pelada() {
         </Card>
       ))}
       <View style={{ height: 8 }} />
+      <Button title="Premium da pelada" kind="secondary" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
       <Button title="Sair da pelada" kind="danger" onPress={sair} />
+      {me && <ReportLink peladaId={id} targetType="pelada" targetId={id} label="Denunciar nome ou imagem da pelada" />}
     </Screen>
   );
 }

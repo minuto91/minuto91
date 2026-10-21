@@ -15,6 +15,7 @@ export default function Home() {
   const router = useRouter();
   const [rows, setRows] = useState<Row[] | null>(null);
   const [err, setErr] = useState<string | null>(null);
+  const [purgeAfter, setPurgeAfter] = useState<string | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -28,6 +29,9 @@ export default function Home() {
           return;
         }
         if (!session) return;
+        const { data: st } = await supabase.rpc('get_account_status');
+        if (!alive) return;
+        setPurgeAfter((st as { purge_after: string | null } | null)?.purge_after ?? null);
         const { data: ms, error } = await supabase
           .from('pelada_memberships')
           .select('role, pelada_id')
@@ -58,6 +62,14 @@ export default function Home() {
   return (
     <Screen>
       <ErrorText>{err}</ErrorText>
+      {purgeAfter && (
+        <Pressable onPress={() => router.push('/conta')}>
+          <Card>
+            <Body>Sua conta será apagada em {new Date(purgeAfter).toLocaleDateString('pt-BR')}.</Body>
+            <Sub>Toque aqui para recuperar a conta e o seu histórico.</Sub>
+          </Card>
+        </Pressable>
+      )}
       {rows === null ? (
         <Sub>Carregando...</Sub>
       ) : rows.length === 0 ? (
@@ -80,6 +92,7 @@ export default function Home() {
       <View style={{ height: 8 }} />
       <Button title="Criar pelada" onPress={() => router.push('/criar-pelada')} />
       <Button title="Entrar com convite" kind="secondary" onPress={() => router.push('/entrar')} />
+      <Button title="Minha conta" kind="secondary" onPress={() => router.push('/conta')} />
       <Button title="Premium" kind="secondary" onPress={() => router.push('/premium')} />
       <Button title="Sair da conta" kind="secondary" onPress={() => supabase.auth.signOut()} />
     </Screen>

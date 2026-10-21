@@ -104,3 +104,16 @@ Para votar de verdade são precisos **6 jogadores com conta** na pelada. Crie ma
 - [ ] Tocar num nome do ranking abre a carta.
 - [ ] Recordes da temporada aparecem (maior goleada, mais gols numa partida etc.).
 - [ ] Depois que um mês fechar com partidas: "Prêmios de <mês>" mostra Rei do Mês, Artilheiro, Garçom e Maior evolução.
+
+## 13. Conta, Premium, denúncia e bloqueio
+- [ ] Na pelada, "Premium da pelada": no beta mostra "Premium liberado"; lista o que o Premium libera.
+- [ ] Início → "Minha conta" abre a tela da conta.
+- [ ] "Gerar código de transferência" mostra um código XXXX-XXXX-XXXX-XXXX e "Guardar o código" abre o compartilhar.
+- [ ] Numa conta NOVA, sem pelada: "Recebi um código" com o código → "Histórico transferido". A conta antiga fica desativada.
+- [ ] Numa conta que já está numa pelada, usar código → recusa explicando o motivo.
+- [ ] Carta de OUTRO jogador: "Denunciar apelido", "Denunciar foto ou perfil", "Bloquear jogador". Na sua carta, nada disso aparece.
+- [ ] Bloquear → o jogador aparece em "Minha conta > Jogadores bloqueados"; "Desbloquear" volta ao normal.
+- [ ] Pelada → "Denunciar nome ou imagem da pelada": sem motivo o botão fica travado; com motivo → "Denúncia enviada".
+- [ ] Excluir conta (use uma conta de TESTE): o botão só destrava com EXCLUIR digitado → a tela vira "Conta em exclusão".
+- [ ] Na pelada, essa conta aparece como "Aposentado"; se era admin, outro virou admin.
+- [ ] Entre de novo com a conta excluída: o início mostra "Sua conta será apagada em ..."; "Recuperar minha conta" devolve as peladas, como jogador.
