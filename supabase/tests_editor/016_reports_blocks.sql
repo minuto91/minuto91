@@ -61,7 +61,8 @@ perform public.block_user(pg_temp.uid(2)); -- repetido
 perform pg_temp.assert((select count(*)=0 from public.profiles where id=pg_temp.uid(2)),'bloqueado some para quem bloqueou');
 perform pg_temp.assert((select count(*)=1 from public.user_blocks),'lista de bloqueios');
 perform pg_temp.as_user(2);
-perform pg_temp.assert((select count(*)=1 from public.profiles where id=pg_temp.uid(1)),'quem bloqueou continua visível');
+-- Desde a 032 o bloqueio vale nos dois sentidos: quem foi bloqueado também deixa de ver quem bloqueou.
+perform pg_temp.assert((select count(*)=0 from public.profiles where id=pg_temp.uid(1)),'quem bloqueou some para o bloqueado (032)');
 perform pg_temp.assert((select count(*)=0 from public.user_blocks),'bloqueado não vê quem o bloqueou');
 perform pg_temp.as_user(1);
 perform public.unblock_user(pg_temp.uid(2));
