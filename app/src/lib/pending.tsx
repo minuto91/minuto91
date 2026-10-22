@@ -16,12 +16,14 @@ type Item = { key: string; title: string; detail: string; action: string; urgent
 const MIN_VOTERS = 3; // votação válida precisa de pelo menos 3 votos (Doc 02)
 
 export function AdminPending({
+  peladaId,
   matches,
   members,
   successor,
   isAdmin,
   onInvite,
 }: {
+  peladaId: string;
   matches: Match[];
   members: { user_id: string | null }[];
   successor: string | null;
@@ -113,7 +115,8 @@ export function AdminPending({
       key: 'successor',
       title: 'Sem sucessor indicado',
       detail: 'Se você sair, a administração passa para o assistente ou o jogador mais antigo.',
-      action: 'Na lista de Jogadores, toque em Gerenciar',
+      action: 'Indicar em Jogadores > Gerenciar',
+      onPress: () => router.push({ pathname: '/pelada/[id]/jogadores', params: { id: peladaId } }),
     });
   }
 

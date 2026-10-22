@@ -51,6 +51,9 @@ function Gate() {
       <Stack.Screen name="pelada/[id]/index" options={{ title: 'Pelada' }} />
       <Stack.Screen name="pelada/[id]/rankings" options={{ title: 'Rankings' }} />
       <Stack.Screen name="pelada/[id]/elenco" options={{ title: 'Elenco' }} />
+      <Stack.Screen name="pelada/[id]/partidas" options={{ title: 'Partidas' }} />
+      <Stack.Screen name="pelada/[id]/jogadores" options={{ title: 'Jogadores' }} />
+      <Stack.Screen name="pelada/[id]/convidar" options={{ title: 'Convidar' }} />
       <Stack.Screen name="pelada/[id]/retrospectiva" options={{ title: 'Retrospectiva' }} />
       <Stack.Screen name="pelada/[id]/premium" options={{ title: 'Premium' }} />
       <Stack.Screen name="pelada/[id]/configuracoes" options={{ title: 'Configurações' }} />
