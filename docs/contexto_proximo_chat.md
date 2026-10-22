@@ -27,7 +27,7 @@ Para ler o PDF: `pdftotext -layout -enc UTF-8 <arquivo> <saida.txt>` (Python nã
 - App: React Native + Expo SDK 57 (Expo Router, TypeScript, React Compiler) em `app/` (rotas em `app/src/app`,
   código de apoio em `app/src/lib`). Leia `app/AGENTS.md` (regras do Expo).
 - Backend: Supabase projeto **minuto91-dev** (ref `lqirpgqrnbsycuowwoie`, São Paulo). RevenueCat (ainda não ligado).
-- Monorepo: `app/`, `supabase/` (migrations, tests, tests_editor, dev_seed), `docs/`.
+- Monorepo: `app/`, `supabase/` (migrations, tests, tests_editor, dev_seed, functions), `docs/`.
 - GitHub privado: github.com/minuto91/minuto91 (branch `main`).
 
 ## 4. Segurança (inegociável)
@@ -141,7 +141,9 @@ Avisos e confirmações: `app/src/lib/dialog.ts` (funciona no celular e na web).
 5. **Apple Developer (US$ 99/ano)** → `eas login`, `eas init` (commitar o projectId), `eas device:create`,
    development build iOS (pedir minha confirmação antes de rodar). Login com Apple é obrigatório na App Store
    (o app oferece Google). Configurar Apple no Supabase (Client ID `com.minuto91.app`).
-6. **Edge Functions**: envio de push (Expo) lendo `claim_notifications` e webhook do RevenueCat chamando
-   `apply_subscription_event` (service role só na Edge Function, nunca no app).
+6. **Edge Functions**: envio de push (Expo) lendo `claim_notifications` (falta). Webhook do RevenueCat FEITO em
+   `supabase/functions/revenuecat-webhook` (deploy pelo painel, JWT desligado, secrets REVENUECAT_WEBHOOK_AUTH e,
+   em produção, REVENUECAT_ENVIRONMENT=PRODUCTION). O banco ainda ignora SUBSCRIPTION_EXTENDED, REFUND_REVERSED e
+   NON_RENEWING_PURCHASE (avaliar antes do lançamento).
 7. **Antes do lançamento**: projeto Supabase de produção, ligar confirmação de e-mail, `premium_beta_open=false`,
    produtos no RevenueCat/lojas, TestFlight.
