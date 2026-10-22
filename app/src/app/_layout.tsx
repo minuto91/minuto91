@@ -39,9 +39,9 @@ function Gate() {
       screenOptions={{
         headerTintColor: colors.blue,
         headerTitleStyle: { color: colors.deepBlue },
-        contentStyle: { backgroundColor: colors.bg },
+        contentStyle: { backgroundColor: colors.white },
       }}>
-      <Stack.Screen name="index" options={{ title: 'Minhas peladas' }} />
+      <Stack.Screen name="index" options={{ title: 'Minuto 91' }} />
       <Stack.Screen name="login" options={{ headerShown: false }} />
       <Stack.Screen name="onboarding" options={{ title: 'Seu cadastro', headerBackVisible: false }} />
       <Stack.Screen name="criar-pelada" options={{ title: 'Criar pelada' }} />

@@ -3,6 +3,7 @@ import { useCallback, useState } from 'react';
 import { Pressable, Share, Text, View } from 'react-native';
 import * as Linking from 'expo-linking';
 
+import { Avatar } from '../../../lib/avatar';
 import { confirm } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import { fmtDate, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match';
@@ -41,6 +42,9 @@ export default function Pelada() {
   const [loaded, setLoaded] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [photos, setPhotos] = useState<Record<string, string | null>>({});
+  const [allMatches, setAllMatches] = useState(false);
+  const [managing, setManaging] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const { data: p } = await supabase
@@ -59,8 +63,16 @@ export default function Pelada() {
       .eq('pelada_id', id)
       .eq('status', 'active')
       .order('joined_at', { ascending: true });
-    if (error) setMsg(error.message);
-    else setMembers((ms ?? []) as Member[]);
+    if (error) setMsg(friendly(error.message));
+    else {
+      setMembers((ms ?? []) as Member[]);
+      // Fotos só de quem o RLS deixa ver (pelada em comum, sem bloqueio).
+      const uids = (ms ?? []).map((m) => m.user_id).filter((u): u is string => !!u);
+      if (uids.length) {
+        const { data: pr } = await supabase.from('profiles').select('id, avatar_path').in('id', uids);
+        setPhotos(Object.fromEntries((pr ?? []).map((p) => [p.id as string, p.avatar_path as string | null])));
+      }
+    }
     // Rascunhos só aparecem para admin e assistentes (regra do banco).
     const { data: xs } = await supabase
       .from('matches')
@@ -135,39 +147,37 @@ export default function Pelada() {
 
   const roleName = (r: string) => (r === 'admin' ? 'Administrador' : r === 'assistant' ? 'Assistente' : 'Jogador');
 
+  const shown = allMatches ? matches : matches.slice(0, 5);
+  const go = (pathname: '/pelada/[id]/rankings' | '/pelada/[id]/configuracoes' | '/pelada/[id]/premium') =>
+    router.push({ pathname, params: { id } });
+
   return (
     <Screen>
       <Title>{nome || 'Pelada'}</Title>
       {status === 'restricted' && <Sub>Pelada restrita: sem administrador elegível.</Sub>}
       <ErrorText>{msg}</ErrorText>
-      {isAdmin && <Button title="Convidar" onPress={convidar} loading={busy} />}
+
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        <View style={{ flex: 1 }}>
-          <Button
-            title="Rankings"
-            kind="secondary"
-            onPress={() => router.push({ pathname: '/pelada/[id]/rankings', params: { id } })}
-          />
-        </View>
         {me && (
           <View style={{ flex: 1 }}>
-            <Button
-              title="Minha carta"
-              kind="secondary"
-              onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: me.id } })}
-            />
+            <Button title="Minha carta" onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: me.id } })} />
           </View>
         )}
+        <View style={{ flex: 1 }}>
+          <Button title="Rankings" kind="secondary" onPress={() => go('/pelada/[id]/rankings')} />
+        </View>
       </View>
+
       {highlights.length > 0 && (
         <Pressable
+          accessibilityRole="button"
           onPress={() => router.push({ pathname: '/partida/[id]', params: { id: highlights[0].match_id } })}>
-          <Card>
-            <Body>Destaques da última rodada</Body>
+          <View style={{ backgroundColor: colors.white, borderRadius: 12, borderWidth: 1.5, borderColor: colors.gold, padding: 14, gap: 6 }}>
+            <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 1, color: colors.darkGold }}>DESTAQUES DA ÚLTIMA RODADA</Text>
             {Object.keys(HIGHLIGHT_LABEL)
               .filter((t) => highlights.some((h) => h.highlight_type === t))
               .map((t) => (
-                <Text key={t} style={{ color: t === 'craque' ? colors.darkGold : colors.ink, fontWeight: '600' }}>
+                <Text key={t} style={{ color: colors.ink, fontWeight: t === 'craque' ? '700' : '500' }}>
                   {HIGHLIGHT_LABEL[t]}:{' '}
                   {highlights
                     .filter((h) => h.highlight_type === t)
@@ -175,71 +185,90 @@ export default function Pelada() {
                     .join(', ')}
                 </Text>
               ))}
-          </Card>
+          </View>
         </Pressable>
       )}
-      <Text style={{ fontWeight: '700', color: colors.deepBlue, marginTop: 8 }}>Partidas</Text>
-      {isStaff && <Button title="Lançar partida" kind="secondary" onPress={lancarPartida} loading={busy} />}
+
+      <Text style={section}>Partidas</Text>
+      {isStaff && <Button title="Lançar partida" onPress={lancarPartida} loading={busy} />}
       {!loaded && <Sub>Carregando...</Sub>}
-      {loaded && matches.length === 0 && <Sub>Nenhuma partida ainda.</Sub>}
-      {matches.map((x) => (
-        <Pressable key={x.id} onPress={() => router.push({ pathname: '/partida/[id]', params: { id: x.id } })}>
+      {loaded && matches.length === 0 && (
+        <Sub>{isStaff ? 'Nenhuma partida ainda. Lance a primeira depois do jogo.' : 'Nenhuma partida ainda.'}</Sub>
+      )}
+      {shown.map((x) => (
+        <Pressable key={x.id} accessibilityRole="button" onPress={() => router.push({ pathname: '/partida/[id]', params: { id: x.id } })}>
           <Card>
             <Body>
               {x.team_a_name} {x.team_a_score} x {x.team_b_score} {x.team_b_name}
             </Body>
-            <Sub>
+            <Text style={{ color: x.status === 'voting_open' ? colors.blue : colors.muted, fontWeight: x.status === 'voting_open' ? '700' : '400' }}>
               {fmtDate(x.played_at)} · {STATUS_LABEL[x.status] ?? x.status}
-            </Sub>
+            </Text>
           </Card>
         </Pressable>
       ))}
-      <Text style={{ fontWeight: '700', color: colors.deepBlue, marginTop: 8 }}>
-        Jogadores{loaded ? ` (${members.length})` : ''}
-      </Text>
+      {matches.length > 5 && (
+        <Button
+          title={allMatches ? 'Mostrar menos' : `Ver todas (${matches.length})`}
+          kind="secondary"
+          onPress={() => setAllMatches(!allMatches)}
+        />
+      )}
+
+      <Text style={section}>Jogadores{loaded ? ` (${members.length})` : ''}</Text>
+      {isAdmin && <Button title="Convidar jogadores" kind="secondary" onPress={convidar} loading={busy} />}
       {members.map((m) => (
         <Card key={m.id}>
-          <Pressable onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: m.id } })}>
-            <Body>
-              {m.player_name}
-              {m.user_id === session?.user.id ? ' (você)' : ''} ›
-            </Body>
-          </Pressable>
-          <Sub>
-            {roleName(m.role)} · {positionLabel(m.preferred_position)}
-            {m.id === successor ? ' · sucessor indicado' : ''}
-          </Sub>
-          {isAdmin && m.role !== 'admin' && m.user_id && (
-            <View style={{ gap: 8, marginTop: 6 }}>
-              <Button
-                kind="secondary"
-                title={m.role === 'assistant' ? 'Remover assistente' : 'Tornar assistente'}
-                onPress={() =>
-                  rpc('set_assistant', { p_pelada: id, p_membership: m.id, p_is_assistant: m.role !== 'assistant' })
-                }
-              />
-              <Button
-                kind="secondary"
-                title={m.id === successor ? 'Remover sucessor' : 'Indicar como sucessor'}
-                onPress={() =>
-                  rpc('set_successor', { p_pelada: id, p_membership: m.id === successor ? null : m.id })
-                }
-              />
+          <Pressable
+            accessibilityRole="button"
+            onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: m.id } })}
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Avatar path={m.user_id ? photos[m.user_id] : null} name={m.player_name} size={40} />
+            <View style={{ flex: 1 }}>
+              <Body>
+                {m.player_name}
+                {m.user_id === session?.user.id ? ' (você)' : ''}
+              </Body>
+              <Sub>
+                {roleName(m.role)} · {positionLabel(m.preferred_position)}
+                {m.id === successor ? ' · sucessor indicado' : ''}
+              </Sub>
             </View>
+            <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+          </Pressable>
+          {isAdmin && m.role !== 'admin' && m.user_id && (
+            managing === m.id ? (
+              <View style={{ gap: 8, marginTop: 6 }}>
+                <Button
+                  kind="secondary"
+                  title={m.role === 'assistant' ? 'Remover assistente' : 'Tornar assistente'}
+                  onPress={() => rpc('set_assistant', { p_pelada: id, p_membership: m.id, p_is_assistant: m.role !== 'assistant' })}
+                />
+                <Button
+                  kind="secondary"
+                  title={m.id === successor ? 'Remover sucessor' : 'Indicar como sucessor'}
+                  onPress={() => rpc('set_successor', { p_pelada: id, p_membership: m.id === successor ? null : m.id })}
+                />
+                <Pressable onPress={() => setManaging(null)} accessibilityRole="button">
+                  <Text style={{ color: colors.muted, textAlign: 'center', paddingVertical: 4 }}>Fechar</Text>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable onPress={() => setManaging(m.id)} accessibilityRole="button">
+                <Text style={{ color: colors.blue, fontWeight: '600', marginTop: 4 }}>Gerenciar</Text>
+              </Pressable>
+            )
           )}
         </Card>
       ))}
-      <View style={{ height: 8 }} />
-      {isAdmin && (
-        <Button
-          title="Configurações da pelada"
-          kind="secondary"
-          onPress={() => router.push({ pathname: '/pelada/[id]/configuracoes', params: { id } })}
-        />
-      )}
-      <Button title="Premium da pelada" kind="secondary" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
+
+      <Text style={section}>Pelada</Text>
+      {isAdmin && <Button title="Configurações da pelada" kind="secondary" onPress={() => go('/pelada/[id]/configuracoes')} />}
+      <Button title="Premium da pelada" kind="secondary" onPress={() => go('/pelada/[id]/premium')} />
       <Button title="Sair da pelada" kind="danger" onPress={sair} />
       {me && <ReportLink peladaId={id} targetType="pelada" targetId={id} label="Denunciar nome ou imagem da pelada" />}
     </Screen>
   );
 }
+
+const section = { fontSize: 13, fontWeight: '800' as const, color: colors.deepBlue, letterSpacing: 0.5, marginTop: 10 };

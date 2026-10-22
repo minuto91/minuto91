@@ -4,7 +4,7 @@ export const colors = {
   deepBlue: '#103675',
   gold: '#D4A63D', // apenas detalhe, nunca texto sobre branco
   darkGold: '#8A6414', // texto e ícones
-  bg: '#F4F7FC',
+  bg: '#F4F7FC', // cinza claro: só superfícies secundárias (o fundo das telas é branco, Brand Book 5.1)
   ink: '#15243B',
   muted: '#5E6E86',
   white: '#FFFFFF',

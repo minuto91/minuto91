@@ -15,7 +15,7 @@ import { colors, POSITIONS, Position } from './theme';
 export function Screen({ children }: { children: ReactNode }) {
   return (
     <ScrollView
-      style={{ backgroundColor: colors.bg }}
+      style={{ backgroundColor: colors.white }}
       contentContainerStyle={{ padding: 20, gap: 12, flexGrow: 1 }}
       keyboardShouldPersistTaps="handled">
       {children}
