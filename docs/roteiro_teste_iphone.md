@@ -121,3 +121,38 @@ Ou crie contas de e-mail (teste1@..., teste2@...) e entre na pelada com cada uma
 - [ ] Excluir conta (use uma conta de TESTE): o botão só destrava com EXCLUIR digitado → a tela vira "Conta em exclusão".
 - [ ] Na pelada, essa conta aparece como "Aposentado"; se era admin, outro virou admin.
 - [ ] Entre de novo com a conta excluída: o início mostra "Sua conta será apagada em ..."; "Recuperar minha conta" devolve as peladas, como jogador.
+
+## 14. Evolução V3 (22/10/2026)
+Antes: o mesmo comando da seção 0 (`--tunnel`). Desde a V3, o que era "Carta" aparece como "Card" em todo o app (ex.: o botão "Minha carta" virou "Meu Card").
+
+**Card novo (Modelo A, escudo)**
+- [ ] "Meu Card": o formato é de escudo (topo com bico, base pontuda), com foto, overall e posição no alto à esquerda, escudo da pelada à direita, nome e FIN/GAR/PRE/PEQ/RES embaixo.
+- [ ] A cor e a moldura batem com a categoria: bronze (contorno simples), prata (contorno duplo) ou ouro (moldura com detalhes no topo e nas laterais).
+- [ ] Sem foto: aparecem as iniciais. Com nome longo: o nome encolhe e não quebra a composição.
+- [ ] Elenco (Cards): os Cards pequenos não têm texto encavalado; dá para ler o overall e os atributos.
+- [ ] "Compartilhar meu Card" → Stories e Post: a imagem no WhatsApp é igual ao Card da tela.
+
+**Escudo (admin)**
+- [ ] Configurações da pelada → "Trocar escudo" → escolha um PNG transparente redondo ou irregular: a imagem NÃO é cortada em quadrado.
+- [ ] A prévia mostra o escudo nos Cards bronze, prata e ouro e no cabeçalho, sem fundo branco. "Salvar escudo" aplica; "Cancelar" não muda nada.
+- [ ] Escolha uma foto JPG: aparece o aviso "não tem fundo transparente".
+
+**Painel de pendências (admin ou assistente)**
+- [ ] Na pelada, com súmula em rascunho: "Súmula em rascunho → Terminar súmula" abre a súmula.
+- [ ] Com votação aberta: mostra quantos votaram e o horário; tocar abre a partida. Depois do prazo, o item fica vermelho ("Encerrar votação").
+- [ ] Um jogador comum NÃO vê o painel.
+
+**Artes da partida e pós-jogo**
+- [ ] Partida finalizada → "Compartilhar meu pós-jogo": foto, vitória/empate/derrota, placar, gols, assistências e nota (se você votou). O selo Craque da Partida aparece só se você foi o Craque.
+- [ ] "Compartilhar resultado": quem NÃO votou consegue gerar, mas sem notas.
+- [ ] Troque entre "Stories 9:16" e "Post 4:5": nada fica cortado e o "MINUTO 91" aparece embaixo.
+- [ ] Compartilhe no Instagram (Stories) e no WhatsApp: a imagem chega inteira.
+
+**Retrospectiva da temporada**
+- [ ] Na pelada, "Retrospectiva da temporada": números da pelada, top 3 (artilharia, garçons, Craque da Partida, presença), Reis do Mês e a sua temporada com o Card.
+- [ ] Bola Murcha aparece só na tela, nunca nas artes.
+- [ ] As artes "Retrospectiva da pelada" e "Minha temporada" geram nos dois formatos. "Rankings da temporada" aparece (beta = Premium para todos).
+
+**Privacidade e bloqueio (precisa de uma segunda conta, criada por você)**
+- [ ] A conta B bloqueia a A. Na conta A, o perfil de B não abre ("Perfil do jogador" sem dados) e a foto de B não aparece. Dentro da pelada, o apelido de B continua na súmula e nos rankings.
+- [ ] Em Meu perfil, numa pelada sem Premium com temporadas antigas, o total diz "Total nas temporadas disponíveis".
