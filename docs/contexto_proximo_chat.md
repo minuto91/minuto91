@@ -171,7 +171,21 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
   `storage-cleanup`, `premium_product_ids`/`store_environment`/`premium_beta_open=false` em produção,
   `EXPO_PUBLIC_PREMIUM_PRODUCT_ID` no app. Termos/Política no app: `app/src/lib/legalText.ts` (trocar junto com
   `private.app_config.legal_versions`).
-- Próxima versão: V4.3 = Financeiro da Pelada Premium (não iniciado).
+- V4.3 feita (ver 10d).
+
+## 10d. V4.3 (22/10)
+- Relatório: `docs/relatorio_v43_2026-10-22.md` (diagnóstico, matriz da auditoria, posições, formações, sorteio,
+  Financeiro, permissões, testes, checklist, riscos). Evidências (dados simulados): `docs/evidencias_v43/`; vitrine `/dev-v43`.
+- Migrações **040–043 NÃO aplicadas no dev** (aplicar na ordem; depois rodar 020, 030–036 no SQL Editor).
+  040 = correções da auditoria V4.2 (nomes fora dos sorteios, escalação revalidada no servidor, Duelo só ativos, semente
+  do servidor, rodadas independentes sem repetição); 041 = dez posições; 042 = formações 4-3-3/4-4-2; 043 = Financeiro.
+- **Posições**: `preferred_position` continua sendo o SETOR (fórmulas inalteradas); a sigla (GOL, ZAG, LD, LE, VOL, MEI,
+  CA, PD, PE, ATA) fica em `position_code`. Goleiro virou GOL; Defensor/Meio-campista/Atacante ficam pendentes até o
+  jogador escolher (aviso discreto). As funções aceitam siglas e setores (gatilho normaliza).
+- **Sorteio**: o app não manda semente (`create_team_draw(p_pelada, p_members, p_mode, p_rounds)`); semente fixa só em
+  `private.create_team_draw_core` (testes). Algoritmo 2.
+- **Financeiro**: só admin e assistentes autorizados (`set_finance_access`), com Pelada Premium; valores em centavos;
+  nada é apagado (cancelamento/estorno com motivo); o app não movimenta dinheiro.
 
 ## 11. Próximas etapas (em ordem sugerida)
 0. **Push** dos commits da Evolução V2 (aguarda confirmação) e rodar `tests_editor/001..019` de novo no dev.
