@@ -143,6 +143,15 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
   Expo com `-c`.
 - Apagar node_modules no Windows: `cmd /c rmdir /s /q node_modules`.
 
+## 10b. V4.1 (22/10)
+- Relatório: `docs/relatorio_v41_2026-10-22.md` (diagnóstico em `docs/v41_fase0_diagnostico_2026-10-22.md`).
+- Migrações novas **ainda não aplicadas no dev**: 033 (evolução do Card), 034 (prévia do convite), 035 (envio de push).
+  Testes 027, 028, 029. Edge Function `push-sender` + `supabase/deploy/push_sender_cron.sql` (não publicadas).
+- Banco local de testes: `cd $HOMEDocumentsminuto91supabaseocal_db; npm install; node run.mjs` (PGlite;
+  roda todas as migrações e `tests_editor`; `node load.mjs` = carga; `node --test` = lógica do push).
+- App: Central da Rodada na página da pelada; telas Partidas, Jogadores e Convidar; Rankings em abas; números e
+  gráfico de evolução no Card; avisos em Minha conta (`lib/push.tsx`).
+
 ## 11. Próximas etapas (em ordem sugerida)
 0. **Push** dos commits da Evolução V2 (aguarda confirmação) e rodar `tests_editor/001..019` de novo no dev.
    Pendências V2: escudo nas artes de resultado e Seleção; publicar `storage-cleanup` (fotos e escudos).
