@@ -8,6 +8,7 @@ import { Crest } from '../../../lib/crest';
 import { confirm } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import { fmtDate, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match';
+import { AdminPending } from '../../../lib/pending';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
@@ -174,6 +175,10 @@ export default function Pelada() {
           <Button title="Rankings" kind="secondary" onPress={() => go('/pelada/[id]/rankings')} />
         </View>
       </View>
+
+      {isStaff && loaded && (
+        <AdminPending matches={matches} members={members} successor={successor} isAdmin={isAdmin} onInvite={convidar} />
+      )}
 
       {highlights.length > 0 && (
         <Pressable
