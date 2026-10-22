@@ -93,7 +93,6 @@ export default function Home() {
       <Button title="Criar pelada" onPress={() => router.push('/criar-pelada')} />
       <Button title="Entrar com convite" kind="secondary" onPress={() => router.push('/entrar')} />
       <Button title="Minha conta" kind="secondary" onPress={() => router.push('/conta')} />
-      <Button title="Premium" kind="secondary" onPress={() => router.push('/premium')} />
       <Button title="Sair da conta" kind="secondary" onPress={() => supabase.auth.signOut()} />
     </Screen>
   );
