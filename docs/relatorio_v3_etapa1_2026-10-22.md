@@ -71,7 +71,7 @@ As Fases 4 a 8 estão planejadas na seção 9 e ainda não foram feitas.
 | `npx expo-doctor` | 21/21 ok |
 | Visual no navegador (web): três categorias, sem foto, nome longo, provisório, escudos redondo/triangular/tradicional/irregular, tamanho do Elenco, prévia do escudo | Ok, após 3 correções (atributos das pontas encostavam na moldura; foto vazava 1–2 px na lateral; brilho aparecia sobre o painel escuro) |
 | Exportação 1080 × 1920 (mesma captura do compartilhar) | Ok após corrigir o escudo esticado; a imagem gerada corresponde à tela |
-| SQL `025_blocks_both_ways` e `016` atualizado | **Não executados**: precisam da 032 aplicada no dev pelo SQL Editor |
+| SQL `025_blocks_both_ways` e `016` atualizado | PASS no dev (rodados pelo fundador no SQL Editor em 22/10, depois de aplicar a 032) |
 | Celular (Expo Go) | **Não testado** nesta etapa |
 | Upload real de escudo | **Não testado** (precisa do login de admin) |
 
@@ -120,7 +120,6 @@ As Fases 4 a 8 estão planejadas na seção 9 e ainda não foram feitas.
 
 ## 11. Pendências externas
 
-- Aplicar a 032 no dev e rodar os testes 025 e 016 (você, no SQL Editor).
 - Atualizar os documentos oficiais:
   - Doc 02 (bloqueio nos dois sentidos, RN-120).
   - Doc 03 (política de perfis).
