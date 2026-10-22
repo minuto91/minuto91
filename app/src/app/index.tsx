@@ -179,14 +179,14 @@ export default function Home() {
               <Text style={{ fontSize: 18, fontWeight: '700', color: colors.deepBlue }}>{r.name}</Text>
               <Sub>{ROLE(r.role)}</Sub>
               {r.last ? (
-                <Pressable onPress={() => openMatch(r.last!.id)} accessibilityRole="button">
+                <View>
                   <Text style={{ color: colors.ink, marginTop: 4 }}>
                     Última: {r.last.team_a_name} {r.last.team_a_score} x {r.last.team_b_score} {r.last.team_b_name}
                   </Text>
                   <Sub>
                     {fmtDate(r.last.played_at)} · {STATUS_LABEL[r.last.status] ?? r.last.status}
                   </Sub>
-                </Pressable>
+                </View>
               ) : (
                 <Sub>Nenhuma partida ainda.</Sub>
               )}
