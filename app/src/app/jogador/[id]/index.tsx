@@ -46,6 +46,7 @@ export default function Carta() {
   const [posBusy, setPosBusy] = useState(false);
   const [posOk, setPosOk] = useState<string | null>(null);
   const [peladaName, setPeladaName] = useState('');
+  const [crestPath, setCrestPath] = useState<string | null>(null);
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [seasonId, setSeasonId] = useState<string | null>(null);
   const [card, setCard] = useState<CardData | null>(null);
@@ -63,8 +64,9 @@ export default function Carta() {
         .maybeSingle();
       if (error || !m) return setMsg(error ? friendly(error.message) : 'Jogador não encontrado.');
       setMember(m as Membership);
-      const { data: p } = await supabase.from('peladas').select('name').eq('id', m.pelada_id).maybeSingle();
+      const { data: p } = await supabase.from('peladas').select('name, crest_path').eq('id', m.pelada_id).maybeSingle();
       setPeladaName(p?.name ?? '');
+      setCrestPath(p?.crest_path ?? null);
       if (m.user_id) {
         // Foto e pé só aparecem se o perfil for visível (pelada em comum, sem bloqueio).
         const { data: pr } = await supabase.from('profiles').select('avatar_path, dominant_foot').eq('id', m.user_id).maybeSingle();
@@ -169,6 +171,7 @@ export default function Carta() {
               playerName={member.player_name}
               photoPath={photoPath}
               peladaName={peladaName}
+              crestPath={crestPath}
               seasonName={seasonName}
             />
           </View>
@@ -194,7 +197,7 @@ export default function Carta() {
           {/* Só a própria carta: compartilhar a de outro jogador fica com ele (privacidade, Doc 03 36.3). */}
           {isMe && (
             <SharePanel label="Compartilhar minha carta" fileName="minuto91-carta" title="Minha carta">
-              <CardArt peladaName={peladaName} seasonName={seasonName} playerName={member.player_name} photoPath={photoPath} card={card} />
+              <CardArt peladaName={peladaName} crestPath={crestPath} seasonName={seasonName} playerName={member.player_name} photoPath={photoPath} card={card} />
             </SharePanel>
           )}
         </>

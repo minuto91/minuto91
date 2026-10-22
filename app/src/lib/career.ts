@@ -44,12 +44,14 @@ export const ATTRIBUTES = [
   { key: 'peer_rating', label: 'Resenha', code: 'RES' },
 ] as const;
 
-// Categoria pelo overall exibido (inteiro), como no servidor.
-// color = texto (contraste AA sobre branco); frame = moldura; tint = fundo suave do topo da carta.
+// Categoria pelo overall exibido (inteiro), como no servidor. Cores só das cartas (a interface segue
+// branco, azul e dourado). color = texto sobre branco (AA); bg = fundo da carta; frame = moldura;
+// deep = texto pequeno sobre o fundo da carta (AA); sheen = opacidade do brilho metálico;
+// level = quanto a moldura é elaborada (1 simples, 2 com filete, 3 com filete e ornamentos).
 export const TIER = {
-  bronze: { label: 'Bronze', color: '#8C5A3C', frame: '#B07C5B', tint: '#FBF5F1' },
-  prata: { label: 'Prata', color: '#5E6E86', frame: '#A3AEBF', tint: '#F4F6F9' },
-  ouro: { label: 'Ouro', color: colors.darkGold, frame: colors.gold, tint: '#FCF7EB' },
+  bronze: { label: 'Bronze', color: '#8C5A3C', bg: '#EBD3BE', frame: '#9C6542', deep: '#5E3920', sheen: 0.18, level: 1 },
+  prata: { label: 'Prata', color: '#5E6E86', bg: '#E4E8EF', frame: '#7F8B9E', deep: '#3A4556', sheen: 0.28, level: 2 },
+  ouro: { label: 'Ouro', color: colors.darkGold, bg: '#F4E4B4', frame: '#B5862A', deep: '#634708', sheen: 0.38, level: 3 },
 } as const;
 
 export const AWARD_LABEL: Record<string, string> = {

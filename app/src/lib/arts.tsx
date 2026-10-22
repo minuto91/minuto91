@@ -6,6 +6,7 @@ import { ReactNode, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { initials, useAvatarUrl } from './avatar';
+import { CrestView, useCrestUrl } from './crest';
 import { ATTRIBUTES, Card as CardData, TIER } from './career';
 import { friendly } from './errors';
 import { fmtRating } from './match';
@@ -180,8 +181,11 @@ export function SelectionArt({ peladaName, date, slots }: { peladaName: string; 
 }
 
 // ---------- Carta do jogador ----------
-// Brand Book 6: branco e azul, categoria só na moldura e no selo, sem brilho nem 3D.
+// Fundo na cor da categoria e moldura que evolui (bronze simples, prata com filete, ouro com filete e
+// ornamentos), brilho metálico discreto, sem partículas nem 3D. A foto é a protagonista e o escudo da
+// pelada fica pequeno ao lado do overall. Mesmo layout nas três categorias.
 // A foto é quadrada (no compartilhamento pela web o html2canvas não respeita "cover").
+// width muda a escala inteira (o Elenco usa cartas menores); textos nunca ficam abaixo de 9 px.
 
 const POS_CODE: Record<string, string> = { goalkeeper: 'GOL', defender: 'DEF', midfielder: 'MEI', attacker: 'ATA' };
 export const CARD_W = 275;
@@ -191,61 +195,128 @@ export function PlayerCard({
   playerName,
   photoPath,
   peladaName,
+  crestPath,
   seasonName,
+  width = CARD_W,
 }: {
   card: CardData;
   playerName: string;
   photoPath: string | null | undefined;
   peladaName: string;
+  crestPath?: string | null;
   seasonName: string;
+  width?: number;
 }) {
-  const tier = TIER[card.tier];
+  const t = TIER[card.tier];
   const photo = useAvatarUrl(photoPath);
+  const crest = useCrestUrl(crestPath);
+  const k = width / CARD_W;
+  const px = (n: number) => Math.round(n * k * 10) / 10;
+  const font = (n: number) => Math.max(9, px(n));
+  const compact = width < 200; // no Elenco: sem rodapé
+  const photoSide = px(168);
+  const overall = Math.round(card.overall);
+  const outer = Math.max(2, px(t.level === 3 ? 4 : 3));
+  const gap = px(t.level === 1 ? 0 : 3);
+
   return (
-    <View style={[s.cardOuter, { borderColor: tier.frame }]}>
-      <View style={[s.cardInner, { borderColor: tier.frame }]}>
-        <View style={[s.cardTop, { backgroundColor: tier.tint }]}>
-          <View style={{ alignItems: 'center', width: 52 }}>
-            <Text style={s.cardOverall}>{Math.round(card.overall)}</Text>
-            <Text style={s.cardPos}>{POS_CODE[card.position] ?? card.position}</Text>
+    <View
+      accessibilityLabel={`Carta ${t.label} de ${playerName}, overall ${overall}, ${positionLabel(card.position)}${card.is_provisional ? ', provisória' : ''}`}
+      style={{ width, borderRadius: px(18), borderWidth: outer, borderColor: t.frame, backgroundColor: t.bg, padding: gap }}>
+      <View
+        style={{
+          borderRadius: px(t.level === 1 ? 15 : 13),
+          borderWidth: t.level === 1 ? 0 : 1,
+          borderColor: t.frame,
+          overflow: 'hidden',
+          backgroundColor: t.bg,
+          paddingBottom: px(compact ? 8 : 12),
+        }}>
+        {/* Brilho metálico: uma faixa clara em diagonal, mais visível conforme a categoria. */}
+        <View
+          pointerEvents="none"
+          style={{
+            position: 'absolute',
+            top: -px(60),
+            left: px(40),
+            width: px(70),
+            height: px(520),
+            backgroundColor: colors.white,
+            opacity: t.sheen,
+            transform: [{ rotate: '24deg' }],
+          }}
+        />
+        {t.level === 3 && (
+          <>
+            <View style={[s.ornament, { top: px(4), left: '50%', marginLeft: -px(5), width: px(10), height: px(10), backgroundColor: t.frame }]} />
+            <View style={[s.ornament, { bottom: px(4), left: '50%', marginLeft: -px(5), width: px(10), height: px(10), backgroundColor: t.frame }]} />
+          </>
+        )}
+
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingTop: px(16), paddingHorizontal: px(10), gap: px(8) }}>
+          <View style={{ alignItems: 'center', width: px(58), gap: px(4) }}>
+            <Text style={{ fontSize: font(38), fontWeight: '800', color: colors.deepBlue, lineHeight: font(42) }}>{overall}</Text>
+            <Text style={{ fontSize: font(13), fontWeight: '800', color: t.deep, letterSpacing: 1 }}>{POS_CODE[card.position] ?? card.position}</Text>
+            <View style={{ height: 1, width: px(30), backgroundColor: t.frame, marginVertical: px(4) }} />
+            <CrestView url={crest} name={peladaName} size={Math.max(18, px(30))} />
           </View>
-          <View style={s.cardPhotoBox}>
+          <View
+            style={{
+              borderRadius: px(14),
+              borderWidth: Math.max(1, px(t.level === 3 ? 2 : 1.5)),
+              borderColor: t.frame,
+              backgroundColor: colors.white,
+              padding: px(3),
+            }}>
             {photo ? (
-              <Image source={{ uri: photo }} style={s.cardPhoto} contentFit="cover" accessibilityLabel={`Foto de ${playerName}`} />
+              <Image
+                source={{ uri: photo }}
+                style={{ width: photoSide, height: photoSide, borderRadius: px(11) }}
+                contentFit="cover"
+                accessibilityLabel={`Foto de ${playerName}`}
+              />
             ) : (
-              <View style={[s.cardPhoto, s.cardNoPhoto]}>
-                <Text style={s.cardInitials}>{initials(playerName)}</Text>
+              <View
+                style={{ width: photoSide, height: photoSide, borderRadius: px(11), backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
+                <Text style={{ fontSize: font(56), fontWeight: '800', color: colors.deepBlue, opacity: 0.85 }}>{initials(playerName)}</Text>
               </View>
             )}
           </View>
-          <View style={{ alignItems: 'center', width: 52 }}>
-            <Text style={[s.cardTier, { color: tier.color }]}>{tier.label.toUpperCase()}</Text>
-          </View>
         </View>
-        <Text style={s.cardName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
+
+        <Text
+          style={{ fontSize: font(22), fontWeight: '800', color: colors.deepBlue, textAlign: 'center', marginTop: px(10), paddingHorizontal: px(12) }}
+          numberOfLines={1}
+          adjustsFontSizeToFit
+          minimumFontScale={0.7}>
           {playerName}
         </Text>
-        <Text style={s.cardPosFull}>
-          {positionLabel(card.position)}
+        <Text style={{ fontSize: font(12), fontWeight: '600', color: t.deep, textAlign: 'center', marginTop: px(2) }} numberOfLines={1}>
+          {compact ? '' : `${positionLabel(card.position)} · `}
+          {t.label.toUpperCase()}
           {card.is_provisional ? ' · provisória' : ''}
         </Text>
-        <View style={[s.cardRule, { backgroundColor: tier.frame }]} />
-        <View style={s.cardAttrs}>
+        <View style={{ height: 1, marginHorizontal: px(22), marginVertical: px(compact ? 8 : 12), backgroundColor: t.frame }} />
+        <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: px(8) }}>
           {ATTRIBUTES.map((a) => (
-            <View key={a.key} style={s.cardAttr} accessibilityLabel={`${a.label} ${Math.round(Number(card[a.key]))}`}>
-              <Text style={s.cardAttrValue}>{Math.round(Number(card[a.key]))}</Text>
-              <Text style={s.cardAttrCode}>{a.code}</Text>
+            <View key={a.key} style={{ alignItems: 'center', minWidth: px(44) }} accessibilityLabel={`${a.label} ${Math.round(Number(card[a.key]))}`}>
+              <Text style={{ fontSize: font(20), fontWeight: '800', color: colors.deepBlue }}>{Math.round(Number(card[a.key]))}</Text>
+              <Text style={{ fontSize: font(10), fontWeight: '700', color: t.deep, letterSpacing: compact ? 0 : 1 }}>{a.code}</Text>
             </View>
           ))}
         </View>
-        <View style={s.cardFoot}>
-          <Text style={s.cardFootText} numberOfLines={1}>
-            {peladaName}
-          </Text>
-          <Text style={s.cardFootText} numberOfLines={1}>
-            {seasonName}
-          </Text>
-        </View>
+        {!compact && (
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: px(8), marginTop: px(14), paddingHorizontal: px(14) }}>
+            <Text style={{ flexShrink: 1, fontSize: font(10), fontWeight: '700', color: t.deep }} numberOfLines={1}>
+              {peladaName}
+            </Text>
+            {!!seasonName && (
+              <Text style={{ flexShrink: 1, fontSize: font(10), fontWeight: '700', color: t.deep }} numberOfLines={1}>
+                {seasonName}
+              </Text>
+            )}
+          </View>
+        )}
       </View>
     </View>
   );
@@ -253,6 +324,7 @@ export function PlayerCard({
 
 export function CardArt(props: {
   peladaName: string;
+  crestPath?: string | null;
   seasonName: string;
   playerName: string;
   photoPath: string | null | undefined;
@@ -366,25 +438,7 @@ const s = StyleSheet.create({
   marker: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.blue, borderWidth: 2, borderColor: colors.blue },
   playerName: { fontSize: 11, fontWeight: '700', color: colors.ink, maxWidth: 64 },
   playerRating: { fontSize: 11, fontWeight: '800', color: colors.deepBlue },
-  cardOuter: { width: CARD_W, borderWidth: 3, borderRadius: 18, padding: 3, backgroundColor: colors.white },
-  cardInner: { borderWidth: 1, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.white, paddingBottom: 12 },
-  cardTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: 14, paddingHorizontal: 6 },
-  cardOverall: { fontSize: 34, fontWeight: '800', color: colors.deepBlue, lineHeight: 38 },
-  cardPos: { fontSize: 12, fontWeight: '800', color: colors.blue, letterSpacing: 1 },
-  cardPhotoBox: { borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.white, padding: 3 },
-  cardPhoto: { width: 136, height: 136, borderRadius: 11 },
-  cardNoPhoto: { backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
-  cardInitials: { fontSize: 48, fontWeight: '800', color: colors.deepBlue, opacity: 0.85 },
-  cardTier: { fontSize: 10, fontWeight: '800', letterSpacing: 1.5, marginTop: 6 },
-  cardName: { fontSize: 22, fontWeight: '800', color: colors.deepBlue, textAlign: 'center', marginTop: 12, paddingHorizontal: 12 },
-  cardPosFull: { fontSize: 12, color: colors.muted, textAlign: 'center', marginTop: 2 },
-  cardRule: { height: 1, marginHorizontal: 22, marginVertical: 12, opacity: 0.8 },
-  cardAttrs: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 8 },
-  cardAttr: { alignItems: 'center', minWidth: 44 },
-  cardAttrValue: { fontSize: 20, fontWeight: '800', color: colors.deepBlue },
-  cardAttrCode: { fontSize: 10, fontWeight: '700', color: colors.muted, letterSpacing: 1 },
-  cardFoot: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginTop: 14, paddingHorizontal: 14 },
-  cardFootText: { flexShrink: 1, fontSize: 10, fontWeight: '600', color: colors.muted },
+  ornament: { position: 'absolute', transform: [{ rotate: '45deg' }] },
   sticker: { alignItems: 'center', gap: 10, paddingVertical: 18, borderRadius: 16, borderWidth: 2, borderColor: colors.gold },
   emblem: {
     width: 110,
