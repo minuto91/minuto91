@@ -1,0 +1,8 @@
+{
+  "name": "minuto91-local-db",
+  "private": true,
+  "type": "module",
+  "description": "Postgres descartável (PGlite) para rodar as migrações e os testes SQL sem tocar no Supabase.",
+  "scripts": { "test": "node run.mjs" },
+  "dependencies": { "@electric-sql/pglite": "0.5.11" }
+}

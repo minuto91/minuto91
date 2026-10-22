@@ -89,7 +89,7 @@ perform public.start_premium_trial(p4);
 v_code := public.create_transfer_code();
 perform pg_temp.as_user(4);
 v_r := public.redeem_transfer_code(v_code);
-perform pg_temp.assert((v_r->>'peladas')::int=2,'histórico transferido para a conta 4');
+perform pg_temp.assert((v_r->>'peladas')::int=1,'histórico (a Pelada Quatro) transferido para a conta 4');
 p5 := public.create_pelada('Pelada Cinco','attacker');
 perform pg_temp.expect_error(pg_temp.trial_sql(p5),'TRIAL_ALREADY_USED');
 perform pg_temp.assert(not (public.get_pelada_entitlement(p5)->>'trial_available')::boolean,'conta nova da mesma pessoa: sem teste');

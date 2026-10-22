@@ -99,8 +99,11 @@ perform pg_temp.assert((pa->'totals'->>'matches_played')::int=2 and (pa->'totals
 perform pg_temp.assert((pg_temp.pelada(c, v_b)->'totals'->>'goals')::int=1,'B: 1 gol');
 perform pg_temp.assert((c->'totals'->>'matches_played')::int=3 and (c->'totals'->>'goals')::int=4
  and (c->'totals'->>'draws')::int=1,'total geral = soma das peladas');
-perform pg_temp.assert(jsonb_array_length(c->'achievements')=1 and c->'achievements'->0->>'type'='match_craque'
- and c->'achievements'->0->>'pelada_name'='Pelada A','só o Craque válido; sem Bola Murcha nem prêmio anulado');
+-- V4.1: o fechamento de jun/2025 concede Artilheiro do mês (1 gol), conquista oficial; o teste antigo não previa.
+perform pg_temp.assert((select count(*) from jsonb_array_elements(c->'achievements') a where a->>'type'='match_craque')=1
+ and not exists(select 1 from jsonb_array_elements(c->'achievements') a where a->>'type'='bola_murcha')
+ and (select a->>'pelada_name' from jsonb_array_elements(c->'achievements') a where a->>'type'='match_craque')='Pelada A',
+ 'só o Craque válido; sem Bola Murcha nem prêmio anulado');
 perform pg_temp.assert((pa->'seasons'->0->'card'->>'tier') is not null,'carta da temporada na carreira');
 perform pg_temp.assert(not exists(select 1 from jsonb_array_elements(c->'peladas') e, jsonb_array_elements(e->'seasons') s
  where (s->>'matches_played')::int = 0),'sem temporada vazia');
