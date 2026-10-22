@@ -15,7 +15,7 @@ import Svg, { ClipPath, Defs, Ellipse, G, Line, LinearGradient, Path, RadialGrad
 import { initials, useAvatarUrl } from './avatar';
 import { ATTRIBUTES, Card as CardData, TIER } from './career';
 import { CrestView, useCrestUrl } from './crest';
-import { positionLabel } from './theme';
+import { positionLabel, positionSector, positionShort } from './theme';
 
 const VB_W = 100;
 const VB_H = 144;
@@ -132,7 +132,11 @@ const ROW_R = 84;
 const ROW_TOP = 108;
 const ROW_BOTTOM = 120.5;
 
-const POS_CODE: Record<string, string> = { goalkeeper: 'GOL', defender: 'DEF', midfielder: 'MEI', attacker: 'ATA' };
+// V4.3: a sigla oficial (GOL, ZAG, LD...) quando a posição atual é do setor do Card; senão, o setor do Card
+// (um Card de temporada antiga não muda de setor). Layout e fórmulas do Modelo A intactos.
+const SECTOR_CODE: Record<string, string> = { goalkeeper: 'GOL', defender: 'DEF', midfielder: 'MEI', attacker: 'ATA' };
+export const cardPosition = (card: CardData) =>
+  card.position_code && positionSector(card.position_code) === card.position ? card.position_code : card.position;
 
 function Back({ tier }: { tier: Tier }) {
   const f = FINISH[tier];
@@ -341,7 +345,7 @@ export function PlayerCard({
 
   return (
     <View
-      accessibilityLabel={`Card ${t.label} de ${playerName}, overall ${overall}, ${positionLabel(card.position)}${card.is_provisional ? ', provisório' : ''}`}
+      accessibilityLabel={`Card ${t.label} de ${playerName}, overall ${overall}, ${positionLabel(cardPosition(card))}${card.is_provisional ? ', provisório' : ''}`}
       style={{ width, height }}>
       <Back tier={tier} />
 
@@ -368,7 +372,7 @@ export function PlayerCard({
       <View style={{ position: 'absolute', left: px(7), top: px(16), width: px(24), alignItems: 'center' }}>
         <Text style={{ fontSize: font(15), lineHeight: font(16), fontWeight: '900', color: f.ink }}>{overall}</Text>
         <Text style={{ fontSize: font(6.2), fontWeight: '800', color: f.ink, letterSpacing: px(0.3) }}>
-          {POS_CODE[card.position] ?? card.position}
+          {SECTOR_CODE[cardPosition(card)] ?? positionShort(cardPosition(card))}
         </Text>
         {card.is_provisional && !compact && (
           <Text style={{ fontSize: font(2.9), fontWeight: '800', color: f.ink, opacity: 0.75, marginTop: px(1) }}>PROVISÓRIO</Text>

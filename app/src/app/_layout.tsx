@@ -19,7 +19,7 @@ function Gate() {
     const open = first === 'termos' || first === 'privacidade' || first === 'redefinir-senha';
     if (!session) {
       // A vitrine de Cards (só em desenvolvimento) abre sem login, para conferir o desenho.
-      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && (first === 'dev-cards' || first === 'dev-v42'))) router.replace('/login');
+      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && (first === 'dev-cards' || first === 'dev-v42' || first === 'dev-v43'))) router.replace('/login');
       return;
     }
     if (onboarded === null) return;
@@ -67,6 +67,11 @@ function Gate() {
         <Stack.Screen name="pelada/[id]/escalacoes" options={{ title: 'Escalações' }} />
         <Stack.Screen name="pelada/[id]/sorteio" options={{ title: 'Sorteio' }} />
         <Stack.Screen name="pelada/[id]/premium" options={{ title: 'Pelada Premium' }} />
+        <Stack.Screen name="pelada/[id]/financeiro/index" options={{ title: 'Financeiro' }} />
+        <Stack.Screen name="pelada/[id]/financeiro/cobrancas" options={{ title: 'Cobranças' }} />
+        <Stack.Screen name="pelada/[id]/financeiro/mensalistas" options={{ title: 'Mensalistas' }} />
+        <Stack.Screen name="pelada/[id]/financeiro/lancamentos" options={{ title: 'Receitas e despesas' }} />
+        <Stack.Screen name="pelada/[id]/financeiro/relatorio" options={{ title: 'Relatórios' }} />
         <Stack.Screen name="conta" options={{ title: 'Minha conta' }} />
         <Stack.Screen name="termos" options={{ title: 'Termos de Uso' }} />
         <Stack.Screen name="privacidade" options={{ title: 'Política de Privacidade' }} />

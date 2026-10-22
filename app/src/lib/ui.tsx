@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import { colors, POSITIONS, Position } from './theme';
+import { colors, POSITIONS, Position, Sector, SECTORS } from './theme';
 
 export function Screen({ children }: { children: ReactNode }) {
   return (
@@ -88,35 +88,50 @@ export function Card({ children }: { children: ReactNode }) {
   return <View style={styles.card}>{children}</View>;
 }
 
+// As dez posições oficiais, agrupadas por setor. `sector` limita a escolha a um setor (atualização de um
+// cadastro antigo: Defensor escolhe entre ZAG, LD e LE, e assim por diante).
 export function PositionPicker({
   value,
   onChange,
+  sector,
 }: {
-  value: Position | null;
+  value: string | null;
   onChange: (p: Position) => void;
+  sector?: Sector | null;
 }) {
   return (
-    <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-      {POSITIONS.map((p) => {
-        const on = value === p.value;
-        return (
-          <Pressable
-            key={p.value}
-            onPress={() => onChange(p.value)}
-            style={{
-              paddingVertical: 10,
-              paddingHorizontal: 16,
-              borderRadius: 20,
-              borderWidth: 1,
-              borderColor: on ? colors.blue : colors.line,
-              backgroundColor: on ? colors.blue : colors.white,
-            }}>
-            <Text style={{ color: on ? colors.white : colors.ink, fontWeight: '600' }}>
-              {p.label}
-            </Text>
-          </Pressable>
-        );
-      })}
+    <View style={{ gap: 10 }}>
+      {SECTORS.filter((s) => !sector || s.value === sector).map((s) => (
+        <View key={s.value} style={{ gap: 6 }}>
+          {!sector && <Text style={{ fontSize: 12, fontWeight: '700', color: colors.muted, letterSpacing: 0.5 }}>{s.label.toUpperCase()}</Text>}
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {POSITIONS.filter((p) => p.sector === s.value).map((p) => {
+              const on = value === p.value;
+              return (
+                <Pressable
+                  key={p.value}
+                  onPress={() => onChange(p.value)}
+                  accessibilityRole="button"
+                  accessibilityState={{ selected: on }}
+                  accessibilityLabel={p.label}
+                  style={{
+                    minHeight: 44,
+                    justifyContent: 'center',
+                    paddingHorizontal: 14,
+                    borderRadius: 22,
+                    borderWidth: 1,
+                    borderColor: on ? colors.blue : colors.line,
+                    backgroundColor: on ? colors.blue : colors.white,
+                  }}>
+                  <Text style={{ color: on ? colors.white : colors.ink, fontWeight: '600' }}>
+                    <Text style={{ fontWeight: '800', color: on ? colors.white : colors.blue }}>{p.value}</Text> {p.label}
+                  </Text>
+                </Pressable>
+              );
+            })}
+          </View>
+        </View>
+      ))}
     </View>
   );
 }

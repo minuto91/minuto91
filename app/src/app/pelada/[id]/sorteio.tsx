@@ -4,10 +4,10 @@ import { Pressable, Text, View } from 'react-native';
 
 import { confirm, notify } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
-import { LineupBoard, LineupPlayer, POS_ORDER } from '../../../lib/lineup';
+import { LineupBoard, LineupPlayer } from '../../../lib/lineup';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { colors, positionLabel } from '../../../lib/theme';
+import { colors, memberPosition, positionLabel, positionRank } from '../../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Input, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
 type DrawPlayer = { membership_id: string; name: string; position: string | null; overall: number; active: boolean };
@@ -19,8 +19,10 @@ type DrawRound = {
   team_b: DrawPlayer[];
   by_position: { position: string; a: number; b: number }[];
 };
-type Draw = { id: string; mode: 'single' | 'independent'; rounds_total: number; status: string; seed: string; warnings: string[]; rounds: DrawRound[] };
-type Member = { id: string; user_id: string | null; player_name: string; preferred_position: string; role: string };
+type Draw = { id: string; mode: 'single' | 'independent'; rounds_total: number; status: string; seed: string; warnings: string[]; rounds: DrawRound[];
+  diversity?: { rounds: number; distinct: number; limited: boolean } | null;
+};
+type Member = { id: string; user_id: string | null; player_name: string; preferred_position: string; position_code?: string | null; role: string };
 
 const MODES = [
   { value: 'single', label: 'Sorteio único' },
@@ -34,12 +36,17 @@ const WARNING: Record<string, string> = {
   PROVISIONAL_OVERALL: 'Alguns jogadores ainda não têm Card definitivo: foi usado o overall provisório oficial.',
   MEMBER_LEFT: 'Alguém deste sorteio saiu da pelada: revise antes de usar.',
   POSITION_CHANGED: 'Alguém mudou de posição depois do sorteio: revise antes de usar.',
+  LEGACY_POSITIONS:
+    'Há jogadores com a posição antiga (Defensor, Meio-campista ou Atacante): eles formam grupos próprios. Quando cada um escolher a posição específica, o sorteio fica mais preciso.',
+  LIMITED_DIVERSITY:
+    'Com estes jogadores não há divisões válidas diferentes para todas as rodadas: algumas rodadas repetem times. O equilíbrio por posição foi mantido.',
 };
 const posName = (p: string) => (p === 'none' ? 'Posição não informada' : positionLabel(p));
 
-// Sorteio automático de times (Pelada Premium, admin e assistentes). Feito no servidor (migração 039):
+// Sorteio automático de times (Pelada Premium, admin e assistentes). Feito no servidor (039; V4.3: 040, dez posições):
 // 1º cada posição fica com diferença máxima de 1 entre os times (goleiros separados), 2º os totais com
 // diferença máxima de 1, 3º só então o overall equilibra a força, trocando jogadores da mesma posição.
+// A semente é sempre gerada pelo servidor; no modo um por rodada, as rodadas evitam repetir times.
 export default function Sorteio() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
@@ -59,7 +66,7 @@ export default function Sorteio() {
     let alive = true;
     (async () => {
       const [{ data: ms, error }, { data: ent }, { data: draws }] = await Promise.all([
-        supabase.from('pelada_memberships').select('id, user_id, player_name, preferred_position, role').eq('pelada_id', id).eq('status', 'active').order('player_name'),
+        supabase.from('pelada_memberships').select('id, user_id, player_name, preferred_position, position_code, role').eq('pelada_id', id).eq('status', 'active').order('player_name'),
         supabase.rpc('get_pelada_entitlement', { p_pelada: id }),
         supabase.rpc('get_team_draws', { p_pelada: id }),
       ]);
@@ -145,7 +152,7 @@ export default function Sorteio() {
     );
   }
 
-  const byPos = [...members].sort((a, b) => POS_ORDER.indexOf(a.preferred_position) - POS_ORDER.indexOf(b.preferred_position) || a.player_name.localeCompare(b.player_name, 'pt-BR'));
+  const byPos = [...members].sort((a, b) => positionRank(memberPosition(a)) - positionRank(memberPosition(b)) || a.player_name.localeCompare(b.player_name, 'pt-BR'));
   const board = (r: DrawRound): LineupPlayer[] => [
     ...r.team_a.map((p) => ({ key: p.membership_id, team: 'A' as const, name: p.name, position: p.position })),
     ...r.team_b.map((p) => ({ key: p.membership_id, team: 'B' as const, name: p.name, position: p.position })),
@@ -187,7 +194,7 @@ export default function Sorteio() {
                 style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44, paddingHorizontal: 8, borderRadius: 8, backgroundColor: on ? colors.bg : colors.white }}>
                 <View style={{ width: 22, height: 22, borderRadius: 6, borderWidth: 2, borderColor: on ? colors.blue : colors.line, backgroundColor: on ? colors.blue : colors.white }} />
                 <Text style={{ flex: 1, color: colors.ink }}>{m.player_name}</Text>
-                <Text style={{ color: colors.muted, fontSize: 12 }}>{positionLabel(m.preferred_position)}</Text>
+                <Text style={{ color: colors.muted, fontSize: 12 }}>{positionLabel(memberPosition(m))}</Text>
               </Pressable>
             );
           })}
@@ -204,7 +211,13 @@ export default function Sorteio() {
                 ? `Sorteio único · ${draft.rounds_total} ${draft.rounds_total === 1 ? 'rodada' : 'rodadas'}`
                 : `${draft.rounds_total} sorteios independentes`}
             </Body>
-            <Sub>Ainda não confirmado. Código do sorteio: {draft.seed.slice(0, 8)} (permite conferir depois).</Sub>
+            <Sub>Ainda não confirmado. Código do sorteio: {draft.seed.slice(0, 8)} (gerado pelo servidor; permite conferir depois).</Sub>
+            {draft.mode === 'independent' && draft.diversity && (
+              <Sub>
+                {draft.diversity.distinct} {draft.diversity.distinct === 1 ? 'composição diferente' : 'composições diferentes'} em {draft.diversity.rounds}{' '}
+                {draft.diversity.rounds === 1 ? 'rodada' : 'rodadas'} (times invertidos contam como a mesma).
+              </Sub>
+            )}
             {draft.warnings.map((w) => (
               <Text key={w} style={{ color: colors.darkGold, fontWeight: '600' }}>
                 {WARNING[w] ?? w}

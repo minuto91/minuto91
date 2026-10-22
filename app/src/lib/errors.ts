@@ -55,6 +55,12 @@ const MAP: Record<string, string> = {
   DRAW_CANCELLED: 'Este sorteio foi cancelado.',
   DRAW_STALE: 'Os jogadores mudaram desde o sorteio. Sorteie de novo.',
   LINEUP_INVALID: 'Escalação inválida: confira os jogadores dos dois times.',
+  LINEUP_NEEDS_REVIEW: 'Alguém mudou de posição depois de montada a escalação. Revise antes de usar.',
+  LINEUP_FORMATION_SIZE: 'As formações 4-3-3 e 4-4-2 são para times com exatamente 11 jogadores.',
+  LINEUP_FORMATION_INVALID: 'Escolha 4-3-3 ou 4-4-2.',
+  LINEUP_SLOTS_INVALID: 'Coloque cada um dos 11 jogadores num lugar do campo.',
+  LINEUP_VERSION_CONFLICT: 'Outra pessoa alterou esta escalação agora. Abra de novo para ver a versão atual.',
+  DRAW_INVALID_INPUT: 'Seleção de jogadores inválida. Tente de novo.',
   DUEL_SAME_PLAYER: 'Escolha dois jogadores diferentes.',
   DUEL_INVALID_PLAYER: 'Jogador não encontrado nesta pelada.',
   // Configurações
@@ -110,11 +116,42 @@ const MAP: Record<string, string> = {
   INVALID_REPORT_TARGET: 'Não foi possível denunciar este conteúdo.',
   INVALID_USER: 'Usuário inválido.',
   PELADA_NOT_FOUND: 'Pelada não encontrada.',
+  // Financeiro (V4.3)
+  FINANCE_FORBIDDEN: 'Você não tem acesso ao Financeiro desta pelada.',
+  FINANCE_ASSISTANT_REQUIRED: 'A permissão financeira só pode ser dada a um assistente.',
+  FINANCE_INVALID_NAME: 'Nome inválido (2 a 60 caracteres).',
+  FINANCE_DUPLICATE_PAYER: 'Já existe uma pessoa com esse nome no Financeiro.',
+  FINANCE_PERSON_REQUIRED: 'Escolha um jogador ou uma pessoa de fora.',
+  FINANCE_INVALID_PERSON: 'Essa pessoa não está ativa nesta pelada.',
+  FINANCE_ALREADY_MONTHLY: 'Essa pessoa já é mensalista.',
+  FINANCE_INVALID_AMOUNT: 'Valor inválido: use um valor maior que zero.',
+  FINANCE_INVALID_DUE_DAY: 'Dia de vencimento inválido (1 a 28).',
+  FINANCE_INVALID_DATE: 'Data inválida (pagamentos e despesas pagas não podem ser no futuro).',
+  FINANCE_INVALID_KIND: 'Tipo de lançamento inválido.',
+  FINANCE_INVALID_STATUS: 'Situação inválida.',
+  FINANCE_INVALID_METHOD: 'Forma de pagamento inválida.',
+  FINANCE_INVALID_CATEGORY: 'Informe a categoria (até 40 caracteres).',
+  FINANCE_INVALID_DESCRIPTION: 'Informe a descrição (até 120 caracteres).',
+  FINANCE_INVALID_MATCH: 'Partida não encontrada nesta pelada.',
+  FINANCE_NOT_FOUND: 'Registro não encontrado.',
+  FINANCE_VERSION_CONFLICT: 'Outra pessoa alterou este registro agora. Abra de novo para ver a versão atual.',
+  FINANCE_CHARGE_CANCELLED: 'Esta cobrança foi cancelada.',
+  FINANCE_CHARGE_HAS_PAYMENTS: 'Há pagamentos nesta cobrança. Estorne os pagamentos antes de cancelar.',
+  FINANCE_AMOUNT_BELOW_PAID: 'O valor não pode ficar menor do que o já pago.',
+  FINANCE_OVERPAYMENT: 'O pagamento é maior do que o valor em aberto.',
+  FINANCE_POSSIBLE_DUPLICATE: 'Um pagamento igual acabou de ser registrado nesta cobrança. Confirme se é outro pagamento.',
+  FINANCE_ALREADY_REVERSED: 'Este pagamento já foi estornado.',
+  FINANCE_REASON_REQUIRED: 'Explique o motivo (3 caracteres ou mais).',
+  FINANCE_REQUEST_ID_REQUIRED: 'Erro técnico no envio. Tente de novo.',
 };
 
 export function friendly(message?: string | null): string {
   if (!message) return 'Algo deu errado. Tente de novo.';
-  for (const key of Object.keys(MAP)) if (message.includes(key)) return MAP[key];
+  // O código mais específico vence (ex.: FINANCE_INVALID_NAME antes de INVALID_NAME).
+  const key = Object.keys(MAP)
+    .filter((k) => message.includes(k))
+    .sort((a, b) => b.length - a.length)[0];
+  if (key) return MAP[key];
   if (/Failed to fetch|Network request failed|NetworkError/i.test(message)) return 'Sem conexão. Verifique a internet e tente de novo.';
   return message;
 }

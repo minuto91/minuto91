@@ -1,6 +1,6 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { Pressable, Text, View } from 'react-native';
 
 import { CardArt, PlayerCard, SharePanel } from '../../../lib/arts';
 import { Avatar } from '../../../lib/avatar';
@@ -23,7 +23,7 @@ import { fmtRating } from '../../../lib/match';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { colors, footLabel, Position, positionLabel } from '../../../lib/theme';
+import { colors, footLabel, memberPosition, needsPositionUpdate, Position, positionLabel, positionSector } from '../../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, PositionPicker, Screen, Sub, Title } from '../../../lib/ui';
 
 type Membership = {
@@ -32,6 +32,7 @@ type Membership = {
   user_id: string | null;
   player_name: string;
   preferred_position: string;
+  position_code: string | null;
   status: string;
 };
 
@@ -47,6 +48,7 @@ export default function Carta() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [newPos, setNewPos] = useState<Position | null>(null);
   const [posBusy, setPosBusy] = useState(false);
+  const [allPos, setAllPos] = useState(false);
   const [posOk, setPosOk] = useState<string | null>(null);
   const [peladaName, setPeladaName] = useState('');
   const [crestPath, setCrestPath] = useState<string | null>(null);
@@ -63,7 +65,7 @@ export default function Carta() {
     (async () => {
       const { data: m, error } = await supabase
         .from('pelada_memberships')
-        .select('id, pelada_id, user_id, player_name, preferred_position, status')
+        .select('id, pelada_id, user_id, player_name, preferred_position, position_code, status')
         .eq('id', id)
         .maybeSingle();
       if (error || !m) return setMsg(error ? friendly(error.message) : 'Jogador não encontrado.');
@@ -128,7 +130,11 @@ export default function Carta() {
   const photoPath = member.status === 'retired' ? null : profile?.avatar_path;
 
   // RN-068: a posição do perfil vale a partir da próxima partida; a carta mostra a da última jogada.
-  const pendingPos = card && card.position !== member.preferred_position ? member.preferred_position : null;
+  // V4.3: a carta mostra a sigla atual quando é do mesmo setor (mudar de ZAG para LD não muda o Card).
+  const current = memberPosition(member);
+  const shownCard = card ? { ...card, position_code: member.position_code } : null;
+  const pendingPos = card && card.position !== member.preferred_position ? current : null;
+  const legacy = needsPositionUpdate(member);
 
   async function salvarPosicao() {
     if (!member || !newPos) return;
@@ -138,7 +144,7 @@ export default function Carta() {
     const { error } = await supabase.rpc('set_my_position', { p_pelada: member.pelada_id, p_position: newPos });
     setPosBusy(false);
     if (error) return setMsg(friendly(error.message));
-    setMember({ ...member, preferred_position: newPos });
+    setMember({ ...member, preferred_position: positionSector(newPos) ?? member.preferred_position, position_code: newPos });
     setNewPos(null);
     setPosOk(`Posição alterada para ${positionLabel(newPos)}. Vale a partir da próxima partida.`);
   }
@@ -151,7 +157,7 @@ export default function Carta() {
         <View style={{ flex: 1, gap: 2 }}>
           <Title>{member.player_name}</Title>
           <Sub>
-            {positionLabel(card?.position ?? member.preferred_position)}
+            {positionLabel(shownCard && !pendingPos ? (shownCard.position_code ?? shownCard.position) : current)}
             {profile?.dominant_foot ? ` · ${footLabel(profile.dominant_foot)}` : ''}
           </Sub>
           {pendingPos && <Sub>Próxima partida: {positionLabel(pendingPos)}</Sub>}
@@ -175,7 +181,7 @@ export default function Carta() {
         <>
           <View style={{ alignItems: 'center' }}>
             <PlayerCard
-              card={card}
+              card={shownCard!}
               playerName={member.player_name}
               photoPath={photoPath}
               peladaName={peladaName}
@@ -205,7 +211,7 @@ export default function Carta() {
           {/* Só a própria carta: compartilhar a de outro jogador fica com ele (privacidade, Doc 03 36.3). */}
           {isMe && (
             <SharePanel label="Compartilhar meu Card" fileName="minuto91-card" title="Meu Card">
-              <CardArt peladaName={peladaName} crestPath={crestPath} seasonName={seasonName} playerName={member.player_name} photoPath={photoPath} card={card} />
+              <CardArt peladaName={peladaName} crestPath={crestPath} seasonName={seasonName} playerName={member.player_name} photoPath={photoPath} card={shownCard!} />
             </SharePanel>
           )}
         </>
@@ -267,12 +273,24 @@ export default function Carta() {
       {isMe && member.status === 'active' && (
         <Card>
           <Body>Minha posição nesta pelada</Body>
+          {legacy ? (
+            <Text style={{ color: colors.darkGold, fontWeight: '600' }}>
+              Atualize sua posição: o Minuto 91 agora tem dez posições. Você está como {positionLabel(member.preferred_position)}; escolha
+              a posição específica abaixo. Seu Card, suas estatísticas e o histórico não mudam.
+            </Text>
+          ) : null}
           <Sub>
-            A posição define os pesos do seu Card. A troca vale a partir da próxima partida: as partidas já jogadas
+            O setor da posição (goleiro, defesa, meio-campo, ataque) define os pesos do seu Card. Trocar dentro do mesmo setor
+            (ex.: ZAG para LD) não muda o Card. Trocar de setor vale a partir da próxima partida: as partidas já jogadas
             continuam com a posição da época, e seu overall pode mudar por causa da nova função, não só do desempenho.
           </Sub>
-          <PositionPicker value={newPos ?? (member.preferred_position as Position)} onChange={setNewPos} />
-          {newPos && newPos !== member.preferred_position && (
+          <PositionPicker value={newPos ?? current} onChange={setNewPos} sector={legacy && !allPos ? positionSector(member.preferred_position) : undefined} />
+          {legacy && !allPos && (
+            <Pressable onPress={() => setAllPos(true)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
+              <Text style={{ color: colors.blue, fontWeight: '600' }}>Mudou de setor? Ver todas as posições</Text>
+            </Pressable>
+          )}
+          {newPos && newPos !== member.position_code && (
             <Button title={`Mudar para ${positionLabel(newPos)}`} onPress={salvarPosicao} loading={posBusy} />
           )}
           {posOk && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{posOk}</Text>}

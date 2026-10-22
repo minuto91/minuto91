@@ -7,7 +7,10 @@ export type Season = { id: string; name: string; starts_on: string; ends_on: str
 
 export type Card = {
   id: string;
+  /** Setor do Card (o que a fórmula oficial usa). */
   position: string;
+  /** V4.3: sigla atual do jogador; o Card mostra a sigla quando ela é do mesmo setor do Card. */
+  position_code?: string | null;
   finishing: number;
   assisting: number;
   attendance: number;

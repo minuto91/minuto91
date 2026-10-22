@@ -12,10 +12,10 @@ import { AdminPending } from '../../../lib/pending';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { colors } from '../../../lib/theme';
+import { colors, needsPositionUpdate } from '../../../lib/theme';
 import { Body, Button, ErrorText, Screen, Sub } from '../../../lib/ui';
 
-type Member = { id: string; user_id: string | null; player_name: string; role: string; preferred_position: string };
+type Member = { id: string; user_id: string | null; player_name: string; role: string; preferred_position: string; position_code?: string | null };
 type Highlight = { match_id: string; membership_id: string; highlight_type: string };
 type MyVote = { matchId: string; closesAt: string };
 
@@ -52,6 +52,7 @@ export default function CentralDaRodada() {
   const [busy, setBusy] = useState(false);
   const [reload, setReload] = useState(0); // incrementar = buscar de novo
   const [premium, setPremium] = useState(false);
+  const [finance, setFinance] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -59,7 +60,7 @@ export default function CentralDaRodada() {
       (async () => {
         void reload; // recarregar (AppState, Tentar de novo)
         const uid = session?.user.id ?? '';
-        const [{ data: p }, { data: ms, error: e1 }, { data: xs, error: e2 }, { data: hs }, ss, { data: vs }, { data: ent }] = await Promise.all([
+        const [{ data: p }, { data: ms, error: e1 }, { data: xs, error: e2 }, { data: hs }, ss, { data: vs }, { data: ent }, { data: fin }] = await Promise.all([
           supabase
             .from('peladas')
             .select('name, status, successor_membership_id, crest_path, recurring_weekday, recurring_time')
@@ -67,7 +68,7 @@ export default function CentralDaRodada() {
             .maybeSingle(),
           supabase
             .from('pelada_memberships')
-            .select('id, user_id, player_name, role, preferred_position')
+            .select('id, user_id, player_name, role, preferred_position, position_code')
             .eq('pelada_id', id)
             .eq('status', 'active')
             .order('joined_at', { ascending: true }),
@@ -79,6 +80,8 @@ export default function CentralDaRodada() {
           // A13: votação vencida (o agendador fecha em até 5 min) não aparece mais como pendência.
           supabase.from('voting_sessions').select('id, match_id, closes_at').eq('pelada_id', id).eq('status', 'open').gt('closes_at', new Date().toISOString()),
           supabase.rpc('get_pelada_entitlement', { p_pelada: id }),
+          // V4.3: o Financeiro só aparece para quem tem acesso (admin ou assistente autorizado); nada financeiro vem aqui.
+          supabase.rpc('get_finance_access', { p_pelada: id }),
         ]);
         if (!alive) return;
         // A21: erro de rede não vira "pelada sem partidas".
@@ -107,6 +110,7 @@ export default function CentralDaRodada() {
         if (!alive) return;
         setPelada(p ?? null);
         setPremium(!!(ent as { is_premium?: boolean } | null)?.is_premium);
+        setFinance(!!(fin as { can_access?: boolean } | null)?.can_access);
         setMembers(list);
         setMatches((xs ?? []) as Match[]);
         setHighlights((hs ?? []) as Highlight[]);
@@ -310,6 +314,16 @@ export default function CentralDaRodada() {
         </View>
       )}
 
+      {/* V4.3: cadastro antigo (Defensor, Meio-campista, Atacante) sem a posição específica. Aviso discreto. */}
+      {me && needsPositionUpdate(me) && (
+        <Pressable
+          accessibilityRole="button"
+          onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: me.id } })}
+          style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.gold }}>
+          <Text style={{ color: colors.darkGold, fontWeight: '600', fontSize: 14 }}>Atualize sua posição: agora são dez posições oficiais ›</Text>
+        </Pressable>
+      )}
+
       {/* Atalhos: grade compacta, 3 por linha. */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {actions.map((a) => (
@@ -392,9 +406,18 @@ export default function CentralDaRodada() {
         </View>
       )}
 
+      {(isAdmin || finance) && (
+        <>
+          <Text style={section}>Administração</Text>
+          {isAdmin && <Row title="Convidar jogadores" onPress={convidar} />}
+          {isAdmin && <Row title="Configurações da pelada" onPress={() => router.push({ pathname: '/pelada/[id]/configuracoes', params: { id } })} />}
+          {/* Financeiro (V4.3): só admin e assistentes com permissão financeira; nenhum valor aparece na Central. */}
+          {finance && (
+            <Row title={premium ? 'Financeiro' : 'Financeiro · Pelada Premium'} onPress={() => router.push({ pathname: '/pelada/[id]/financeiro/index', params: { id } })} />
+          )}
+        </>
+      )}
       <Text style={section}>Pelada</Text>
-      {isAdmin && <Row title="Convidar jogadores" onPress={convidar} />}
-      {isAdmin && <Row title="Configurações da pelada" onPress={() => router.push({ pathname: '/pelada/[id]/configuracoes', params: { id } })} />}
       <Row title="Pelada Premium" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
       <Row title="Sair da pelada" danger onPress={sair} />
       {me && (

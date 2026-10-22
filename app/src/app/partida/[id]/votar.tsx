@@ -18,7 +18,7 @@ import {
   SheetPlayer,
 } from '../../../lib/match';
 import { supabase } from '../../../lib/supabase';
-import { colors, positionLabel } from '../../../lib/theme';
+import { colors, memberPosition, positionLabel } from '../../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
 type VotingState = {
@@ -223,7 +223,7 @@ export default function Votar() {
         return (
           <Card key={c.id}>
             <Body>{c.player_name}</Body>
-            <Sub>{positionLabel(c.preferred_position)}</Sub>
+            <Sub>{positionLabel(memberPosition(c))}</Sub>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
               {v === 'not_seen' ? (
                 <Text style={{ color: colors.muted, fontWeight: '700' }}>Não vi jogar</Text>

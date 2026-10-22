@@ -14,7 +14,8 @@ import {
   SharePanel,
 } from '../../../lib/arts';
 import { friendly } from '../../../lib/errors';
-import { LineupArt, LineupBoard, LineupPlayer } from '../../../lib/lineup';
+import { Formation } from '../../../lib/formation';
+import { LineupArt, LineupBoard, LineupPlayer, TeamFormations } from '../../../lib/lineup';
 import {
   fmtDate,
   fmtRating,
@@ -70,7 +71,7 @@ export default function Partida() {
   const [myPhoto, setMyPhoto] = useState<string | null>(null);
   const [selection, setSelection] = useState<SelectionPlayer[] | null>(null);
   // Escalação depois do jogo (grátis, V4.2): os dois times da súmula oficial.
-  const [lineup, setLineup] = useState<{ team_a_name: string; team_b_name: string; players: LineupPlayer[] } | null>(null);
+  const [lineup, setLineup] = useState<{ team_a_name: string; team_b_name: string; players: LineupPlayer[]; formations: TeamFormations } | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -116,8 +117,24 @@ export default function Partida() {
       }
       if (m.status === 'finalized' || m.status === 'voting_open') {
         const { data: lu } = await supabase.rpc('get_match_lineup', { p_match: id });
-        const l = lu as { team_a_name: string; team_b_name: string; players: { team: 'A' | 'B'; membership_id: string | null; guest: boolean; name: string; position: string | null; avatar_path: string | null }[] } | null;
-        setLineup(l ? { team_a_name: l.team_a_name, team_b_name: l.team_b_name, players: l.players.map((p, i) => ({ key: p.membership_id ?? `g${i}`, team: p.team, name: p.name, position: p.position, avatar_path: p.avatar_path, guest: p.guest })) } : null);
+        // Formação só quando foi registrada e ainda corresponde à súmula oficial (o servidor confere); nunca inventada.
+        const l = lu as {
+          team_a_name: string;
+          team_b_name: string;
+          team_a_formation: Formation | null;
+          team_b_formation: Formation | null;
+          players: { team: 'A' | 'B'; membership_id: string | null; guest: boolean; name: string; position: string | null; avatar_path: string | null; slot: string | null }[];
+        } | null;
+        setLineup(
+          l
+            ? {
+                team_a_name: l.team_a_name,
+                team_b_name: l.team_b_name,
+                formations: { A: l.team_a_formation, B: l.team_b_formation },
+                players: l.players.map((p, i) => ({ key: p.membership_id ?? `g${i}`, team: p.team, name: p.name, position: p.position, avatar_path: p.avatar_path, guest: p.guest, slot: p.slot })),
+              }
+            : null,
+        );
       } else setLineup(null);
       if (m.status === 'finalized') {
         const [{ data: rs }, { data: aw }, { data: sel }] = await Promise.all([
@@ -370,10 +387,10 @@ export default function Partida() {
         <>
           <Text style={{ fontSize: 13, fontWeight: '800', color: colors.deepBlue, letterSpacing: 0.5, marginTop: 10 }}>Escalação</Text>
           <Card>
-            <LineupBoard teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} score={match.status === 'finalized' ? { a: match.team_a_score, b: match.team_b_score } : null} />
+            <LineupBoard teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} formations={lineup.formations} score={match.status === 'finalized' ? { a: match.team_a_score, b: match.team_b_score } : null} />
           </Card>
           <SharePanel label="Compartilhar escalação" fileName="minuto91-escalacao" title="Escalação da partida">
-            <LineupArt peladaName={peladaName} crestPath={crestPath} subtitle={date} teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} score={match.status === 'finalized' ? { a: match.team_a_score, b: match.team_b_score } : null} />
+            <LineupArt peladaName={peladaName} crestPath={crestPath} subtitle={date} teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} formations={lineup.formations} score={match.status === 'finalized' ? { a: match.team_a_score, b: match.team_b_score } : null} />
           </SharePanel>
         </>
       )}

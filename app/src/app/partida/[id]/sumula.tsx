@@ -22,7 +22,7 @@ import {
 } from '../../../lib/match';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { colors, Position, positionLabel } from '../../../lib/theme';
+import { colors, memberPosition, Position, positionLabel } from '../../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Input, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
 const TEAMS = [
@@ -55,7 +55,7 @@ export default function Sumula() {
   const [duration, setDuration] = useState<'120' | '240' | '360'>('240');
   const [guestName, setGuestName] = useState('');
   const [guestAdult, setGuestAdult] = useState(false);
-  const [guestPos, setGuestPos] = useState<Position | null>('midfielder');
+  const [guestPos, setGuestPos] = useState<Position | null>('MEI');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [reload, setReload] = useState(0); // incrementar = buscar de novo
@@ -118,7 +118,7 @@ export default function Sumula() {
   const addMember = (m: Member, team: Team) =>
     setPlayers((ps) => [
       ...ps,
-      { key: `m:${m.id}`, membership_id: m.id, team, position: m.preferred_position, goals: 0, assists: 0, reds: 0 },
+      { key: `m:${m.id}`, membership_id: m.id, team, position: memberPosition(m) ?? m.preferred_position, goals: 0, assists: 0, reds: 0 },
     ]);
   const addGuest = (g: Guest, team: Team) => {
     if (!guestPos) return setMsg('Escolha a posição do convidado.');
@@ -294,7 +294,7 @@ export default function Sumula() {
       <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 12 }}>Adicionar quem jogou</Text>
       {benchMembers.length === 0 && <Sub>Todos os jogadores da pelada já estão na súmula.</Sub>}
       {benchMembers.map((m) => (
-        <BenchRow key={m.id} name={m.player_name} sub={positionLabel(m.preferred_position)} onAdd={(t) => addMember(m, t)} />
+        <BenchRow key={m.id} name={m.player_name} sub={positionLabel(memberPosition(m))} onAdd={(t) => addMember(m, t)} />
       ))}
 
       <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 12 }}>Convidados</Text>

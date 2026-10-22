@@ -8,6 +8,7 @@ export type Member = {
   user_id: string | null;
   player_name: string;
   preferred_position: string;
+  position_code?: string | null;
   role: string;
   status: string;
 };
@@ -72,7 +73,7 @@ export async function loadMatch(id: string) {
 export async function loadMembers(peladaId: string) {
   const { data, error } = await supabase
     .from('pelada_memberships')
-    .select('id, user_id, player_name, preferred_position, role, status')
+    .select('id, user_id, player_name, preferred_position, position_code, role, status')
     .eq('pelada_id', peladaId)
     .order('joined_at', { ascending: true });
   if (error) throw error;
@@ -93,7 +94,7 @@ export async function loadSheet(matchId: string) {
   const [{ data: parts, error: e1 }, { data: events, error: e2 }] = await Promise.all([
     supabase
       .from('match_participants')
-      .select('id, membership_id, guest_id, team, primary_position')
+      .select('id, membership_id, guest_id, team, primary_position, position_code')
       .eq('match_id', matchId),
     supabase.from('match_events').select('participant_id, team, event_type, quantity').eq('match_id', matchId),
   ]);
@@ -106,7 +107,7 @@ export async function loadSheet(matchId: string) {
       membership_id: p.membership_id ?? undefined,
       guest_id: p.guest_id ?? undefined,
       team: p.team as Team,
-      position: p.primary_position,
+      position: p.position_code ?? p.primary_position, // V4.3: sigla registrada na súmula (antigas: só o setor)
       goals: 0,
       assists: 0,
       reds: 0,

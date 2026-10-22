@@ -6,10 +6,10 @@ import { Avatar } from '../../../lib/avatar';
 import { friendly } from '../../../lib/errors';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { colors, positionLabel } from '../../../lib/theme';
+import { colors, memberPosition, positionLabel } from '../../../lib/theme';
 import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
 
-type Member = { id: string; user_id: string | null; player_name: string; role: string; preferred_position: string };
+type Member = { id: string; user_id: string | null; player_name: string; role: string; preferred_position: string; position_code?: string | null };
 
 const roleName = (r: string) => (r === 'admin' ? 'Administrador' : r === 'assistant' ? 'Assistente' : 'Jogador');
 
@@ -33,7 +33,7 @@ export default function Jogadores() {
         supabase.from('peladas').select('successor_membership_id').eq('id', id).maybeSingle(),
         supabase
           .from('pelada_memberships')
-          .select('id, user_id, player_name, role, preferred_position')
+          .select('id, user_id, player_name, role, preferred_position, position_code')
           .eq('pelada_id', id)
           .eq('status', 'active')
           .order('joined_at', { ascending: true }),
@@ -88,7 +88,7 @@ export default function Jogadores() {
                 {m.user_id === session?.user.id ? ' (você)' : ''}
               </Body>
               <Sub>
-                {roleName(m.role)} · {positionLabel(m.preferred_position)}
+                {roleName(m.role)} · {positionLabel(memberPosition(m))}
                 {m.id === successor ? ' · sucessor indicado' : ''}
               </Sub>
             </View>

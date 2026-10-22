@@ -9,10 +9,10 @@ import { Duel, DuelArt, DuelView } from '../../../lib/duel';
 import { friendly } from '../../../lib/errors';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { colors, positionLabel } from '../../../lib/theme';
+import { colors, memberPosition, positionLabel } from '../../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
 
-type Member = { id: string; user_id: string | null; player_name: string; preferred_position: string; avatar_path: string | null };
+type Member = { id: string; user_id: string | null; player_name: string; preferred_position: string; position_code?: string | null; avatar_path: string | null };
 
 // Duelo de Jogadores (Pelada Premium): escolher dois jogadores da pelada e comparar na temporada.
 // O servidor confere tudo (membro, Pelada Premium, mesma pelada, temporada liberada, jogadores diferentes).
@@ -37,7 +37,7 @@ export default function Duelo() {
           supabase.rpc('get_pelada_entitlement', { p_pelada: id }),
           loadReadableSeasons(id),
           supabase.from('peladas').select('name, crest_path').eq('id', id).maybeSingle(),
-          supabase.from('pelada_memberships').select('id, user_id, player_name, preferred_position').eq('pelada_id', id).eq('status', 'active').order('player_name'),
+          supabase.from('pelada_memberships').select('id, user_id, player_name, preferred_position, position_code').eq('pelada_id', id).eq('status', 'active').order('player_name'),
         ]);
         if (error || e2) throw error ?? e2;
         const ids = (ms ?? []).map((m) => m.user_id).filter(Boolean) as string[];
@@ -146,7 +146,7 @@ export default function Duelo() {
             <Avatar path={m.avatar_path} name={m.player_name} size={32} />
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.ink, fontWeight: '600' }}>{m.player_name}</Text>
-              <Text style={{ color: colors.muted, fontSize: 12 }}>{positionLabel(m.preferred_position)}</Text>
+              <Text style={{ color: colors.muted, fontSize: 12 }}>{positionLabel(memberPosition(m))}</Text>
             </View>
           </Pressable>
         );
