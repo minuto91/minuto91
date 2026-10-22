@@ -65,3 +65,26 @@ Resumo das fases e relatórios:
 ## 5. ZIP
 
 ZIP atualizado gerado com `git archive` em `entregas/minuto91_v3_2026-10-22.zip`. Não vai para o GitHub: a pasta está no `.gitignore`.
+
+## 6. Teste simulado de celular (22/10, feito pelo Claude no navegador)
+
+Navegador embutido em modo celular (375 × 812, toque e navegador de celular), com a sua conta e a Pelada Teste do dev.
+
+| Item da seção 14 do roteiro | Resultado |
+|---|---|
+| Card novo: formato, categoria, sem foto, nome longo | Ok (tela do Card, Elenco e vitrine `/dev-cards`) |
+| Elenco com Cards pequenos legíveis | Ok |
+| Exportação da imagem | Ok: a vitrine gerou PNG de 1080 × 1920 no modo celular, igual à tela |
+| Painel de pendências: "Súmula em rascunho" abre a súmula | Ok |
+| Pós-jogo e resultado nos dois formatos, sem cortes | Ok (conferidos na Fase 5) |
+| Retrospectiva: números, Bola Murcha só na tela, três artes | Ok (conferidos na Fase 6) |
+| Prévia do escudo (layout) | Ok na vitrine |
+
+**Não dá para testar daqui (fica para o iPhone):**
+
+- Escolher imagem na galeria (enviar escudo de verdade).
+- Abrir a folha de compartilhar do iOS e enviar ao WhatsApp/Instagram. Na web, o botão baixaria um arquivo no seu computador.
+- Teclado, gestos e aparência do Expo Go.
+- Itens que pedem uma segunda conta real (bloqueio entre contas, exclusão, transferência). O Claude não pode criar contas nem digitar senhas.
+- Jogador comum não vê o painel de pendências. Conferido só no código: o painel exige admin ou assistente, e não há login de bot para ver ao vivo.
+- Votação nova até o fim: depende dos bots votarem pelo SQL Editor (você) e do prazo acabar.
