@@ -135,6 +135,17 @@ const seasons = (await db.query(`select id, name from public.seasons where pelad
 const cur = seasons[0].id;
 const me = (await db.query(`select id from public.pelada_memberships where pelada_id=$1 and user_id=$2`, [pid, uid(2)])).rows[0].id;
 
+// V4.2: sorteio de times no servidor (admin, Pelada Premium liberada no beta).
+await db.exec(`update private.app_config set value='true'::jsonb where key='premium_beta_open';`);
+await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub', '${uid(1)}', false);`);
+const ids30 = (await db.query(`select array_agg(id) a from (select id from public.pelada_memberships where pelada_id=$1 and status='active' order by id limit 30) x`, [pid])).rows[0].a;
+const ids16 = ids30.slice(0, 16);
+console.log('\nSorteio de times:');
+await time('sorteio único, 16 jogadores', `select public.create_team_draw($1, $2::uuid[], 'single', 4)`, [pid, ids16]);
+await time('sorteio único, 30 jogadores', `select public.create_team_draw($1, $2::uuid[], 'single', 4)`, [pid, ids30]);
+await time('sorteios independentes, 16 jogadores x 8 rodadas', `select public.create_team_draw($1, $2::uuid[], 'independent', 8)`, [pid, ids16]);
+await db.exec(`reset role; update private.app_config set value='false'::jsonb where key='premium_beta_open';`);
+
 console.log('\nConsultas (usuário comum, temporada atual):');
 await db.exec(`set role authenticated; select set_config('request.jwt.claim.sub', '${uid(2)}', false);`);
 for (const m of ['goals', 'assists', 'overall', 'avg_rating', 'matches', 'wins'])
