@@ -9,6 +9,7 @@ import { captureRef } from 'react-native-view-shot';
 
 import { CardArt } from '../lib/arts';
 import { Card as CardData } from '../lib/career';
+import { Evolution, EvolutionChart } from '../lib/evolution';
 import { CrestSwatch, PlayerCard } from '../lib/playercard';
 import { colors } from '../lib/theme';
 import { Button } from '../lib/ui';
@@ -56,6 +57,10 @@ export default function DevCards() {
   return (
     <ScrollView contentContainerStyle={{ padding: 16, gap: 24, backgroundColor: colors.white }}>
       <Text style={{ fontSize: 18, fontWeight: '800', color: colors.deepBlue }}>Vitrine de Cards (desenvolvimento)</Text>
+      <Text style={{ fontWeight: '700' }}>Gráfico de evolução (dados simulados)</Text>
+      <View style={{ maxWidth: 520, borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 14 }}>
+        <EvolutionChart evolution={EVOLUTION} />
+      </View>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
         {tiers.map((t) => (
           <PlayerCard
@@ -111,3 +116,24 @@ export default function DevCards() {
     </ScrollView>
   );
 }
+
+// Seis rodadas fictícias (a quinta sem o jogador), só para conferir o desenho do gráfico.
+const EVOLUTION: Evolution = {
+  points: [50, 53, 57, 56, 58, 63].map((overall, i) => ({
+    match_id: `dev-${i}`,
+    played_at: new Date(2026, 8, 2 + i * 7, 20).toISOString(),
+    played: i !== 4,
+    overall,
+    finishing: 30 + i * 6,
+    assisting: 40 + i * 3,
+    attendance: i === 4 ? 80 : 100,
+    winning: 50 + (i % 3) * 10,
+    peer_rating: 60 + i,
+    tier: overall >= 60 ? 'prata' : 'bronze',
+    position: 'attacker',
+    is_provisional: i < 4,
+  })),
+  current: null,
+  monthly_king: [],
+  craque: 0,
+};

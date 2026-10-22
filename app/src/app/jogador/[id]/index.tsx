@@ -9,6 +9,7 @@ import {
   AWARD_LABEL,
   Card as CardData,
   currentSeason,
+  fmtMonth,
   loadCard,
   loadSeasons,
   plural,
@@ -16,6 +17,7 @@ import {
   SeasonStats,
   TIER,
 } from '../../../lib/career';
+import { EvolutionChart, useEvolution } from '../../../lib/evolution';
 import { friendly } from '../../../lib/errors';
 import { fmtRating } from '../../../lib/match';
 import { ReportLink } from '../../../lib/report';
@@ -55,6 +57,7 @@ export default function Carta() {
   const [awards, setAwards] = useState<Record<string, number>>({});
   const [loaded, setLoaded] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const evo = useEvolution(id, seasonId);
 
   useEffect(() => {
     (async () => {
@@ -210,12 +213,25 @@ export default function Carta() {
 
       {stats && member.status !== 'retired' && (
         <Card>
-          <Body>Temporada</Body>
+          <Body>Números da temporada</Body>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            <Stat label="Partidas" value={String(stats.matches_played)} />
+            <Stat label="Gols" value={String(stats.goals)} />
+            <Stat label="Assistências" value={String(stats.assists)} />
+            <Stat label="Gols por partida" value={perMatch(stats.goals, stats.matches_played)} />
+            <Stat label="Assist. por partida" value={perMatch(stats.assists, stats.matches_played)} />
+            <Stat label="Participações em gols" value={String(stats.goals + stats.assists)} />
+            <Stat label="Craque da Partida" value={String(stats.craque_awards)} gold={stats.craque_awards > 0} />
+            <Stat label="Rei do Mês" value={String(evo.data?.monthly_king.length ?? awards.monthly_king ?? 0)} gold={(evo.data?.monthly_king.length ?? awards.monthly_king ?? 0) > 0} />
+          </View>
+          {(evo.data?.monthly_king.length ?? 0) > 0 && (
+            <Sub>Rei do Mês: {evo.data!.monthly_king.map(fmtMonth).join(', ')}</Sub>
+          )}
+          {stats.matches_played > 0 && stats.matches_played < 5 && (
+            <Sub>Amostra pequena: {plural(stats.matches_played, 'partida', 'partidas')}. As médias ficam mais estáveis com mais jogos.</Sub>
+          )}
           <Sub>
-            {plural(stats.matches_played, 'jogo', 'jogos')} · {stats.wins}V {stats.draws}E {stats.losses}D
-          </Sub>
-          <Sub>
-            {plural(stats.goals, 'gol', 'gols')} · {plural(stats.assists, 'assistência', 'assistências')}
+            {stats.wins}V {stats.draws}E {stats.losses}D
             {stats.red_cards ? ` · ${plural(stats.red_cards, 'vermelho', 'vermelhos')}` : ''}
           </Sub>
           <Sub>
@@ -227,6 +243,13 @@ export default function Carta() {
             {plural(stats.current_unbeaten_streak, 'jogo sem perder', 'jogos sem perder')}. Recorde:{' '}
             {plural(stats.best_win_streak, 'vitória seguida', 'vitórias seguidas')}.
           </Sub>
+        </Card>
+      )}
+
+      {card && member.status !== 'retired' && (
+        <Card>
+          <Body>Evolução na temporada</Body>
+          {evo.error ? <Sub>{evo.error}</Sub> : evo.data ? <EvolutionChart evolution={evo.data} /> : <Sub>Carregando...</Sub>}
         </Card>
       )}
 
@@ -291,5 +314,27 @@ export default function Carta() {
         </View>
       )}
     </Screen>
+  );
+}
+
+// Média por partida com duas casas (pt-BR). Correta desde o primeiro jogo; sem jogos, "–".
+const perMatch = (n: number, matches: number) => (matches ? (n / matches).toFixed(2).replace('.', ',') : '–');
+
+function Stat({ label, value, gold }: { label: string; value: string; gold?: boolean }) {
+  return (
+    <View
+      style={{
+        flexBasis: '47%',
+        flexGrow: 1,
+        borderRadius: 10,
+        borderWidth: 1,
+        borderColor: gold ? colors.gold : colors.line,
+        paddingVertical: 8,
+        paddingHorizontal: 10,
+        gap: 2,
+      }}>
+      <Text style={{ fontSize: 20, fontWeight: '800', color: gold ? colors.darkGold : colors.deepBlue, fontVariant: ['tabular-nums'] }}>{value}</Text>
+      <Text style={{ fontSize: 12, color: colors.muted }}>{label}</Text>
+    </View>
   );
 }
