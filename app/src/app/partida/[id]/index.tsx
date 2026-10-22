@@ -1,8 +1,9 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { ANNUL_REASONS, AnnulMatch } from '../../../lib/annul';
+import { FORMATION, ResultArt, ResultArtData, SelectionArt, SelectionSlot, SharePanel } from '../../../lib/arts';
 import { friendly } from '../../../lib/errors';
 import {
   fmtDate,
@@ -20,9 +21,8 @@ import {
   Team,
   TeamExtras,
 } from '../../../lib/match';
-import { ArtData, ResultArt } from '../../../lib/result-art';
+import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
-import { shareViewAsImage } from '../../../lib/share';
 import { supabase } from '../../../lib/supabase';
 import { colors, positionLabel } from '../../../lib/theme';
 import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
@@ -36,6 +36,7 @@ type Session = {
 };
 type Result = { membership_id: string; final_rating: number | null; has_valid_rating: boolean; numeric_rating_count: number };
 type Award = { membership_id: string; award_type: string; is_shared: boolean };
+type SelectionPlayer = { membership_id: string; slot_position: string; rank_order: number };
 type Annulment = { reason_category: string; description: string; created_at: string };
 
 export default function Partida() {
@@ -54,8 +55,7 @@ export default function Partida() {
   const [awards, setAwards] = useState<Award[]>([]);
   const [annulment, setAnnulment] = useState<Annulment | null>(null);
   const [peladaName, setPeladaName] = useState('');
-  const [showArt, setShowArt] = useState(false);
-  const artRef = useRef<View>(null);
+  const [selection, setSelection] = useState<SelectionPlayer[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -94,13 +94,21 @@ export default function Partida() {
         setVoted((rc ?? []).map((x) => x.membership_id));
       }
       if (m.status === 'finalized') {
-        const [{ data: rs }, { data: aw }] = await Promise.all([
+        const [{ data: rs }, { data: aw }, { data: sel }] = await Promise.all([
           supabase
             .from('match_player_results')
             .select('membership_id, final_rating, has_valid_rating, numeric_rating_count')
             .eq('match_id', id),
           supabase.from('awards').select('membership_id, award_type, is_shared').eq('match_id', id).eq('status', 'active'),
+          supabase.from('round_selections').select('id').eq('match_id', id).eq('status', 'published').maybeSingle(),
         ]);
+        if (sel) {
+          const { data: sp } = await supabase
+            .from('round_selection_players')
+            .select('membership_id, slot_position, rank_order')
+            .eq('selection_id', sel.id);
+          setSelection((sp ?? []) as SelectionPlayer[]);
+        } else setSelection(null);
         setResults((rs ?? []) as Result[]);
         setAwards((aw ?? []) as Award[]);
       }
@@ -132,16 +140,6 @@ export default function Partida() {
     load();
   }
 
-  async function compartilhar() {
-    setBusy(true);
-    try {
-      await shareViewAsImage(artRef, 'minuto91-resultado', 'Resultado da partida');
-    } catch (e) {
-      setMsg(friendly((e as Error).message));
-    }
-    setBusy(false);
-  }
-
   if (!match || !extras) {
     return (
       <Screen>
@@ -171,30 +169,48 @@ export default function Partida() {
     .filter((r) => r.has_valid_rating && r.final_rating !== null)
     .sort((a, b) => b.final_rating! - a.final_rating!);
   const posOf = (r: Result) => 1 + ranked.filter((x) => Number(x.final_rating) > Number(r.final_rating)).length;
-  const maxAssists = Math.max(0, ...players.map((p) => p.assists));
+  const ratingOf = (membershipId: string) => {
+    const r = results.find((x) => x.membership_id === membershipId);
+    return r?.has_valid_rating && r.final_rating !== null ? Number(r.final_rating) : null;
+  };
+  // Garçom da rodada como no servidor: só membros, mais assistências (mínimo 1), empate compartilha.
+  const memberPlayers = players.filter((p) => p.membership_id);
+  const maxAssists = Math.max(0, ...memberPlayers.map((p) => p.assists));
+  const date = new Date(match.played_at).toLocaleDateString('pt-BR');
   // Arte oficial: só com notas visíveis (o servidor não as entrega a quem não votou).
-  const art: ArtData | null =
+  const art: ResultArtData | null =
     match.status === 'finalized' && ranked.length > 0
       ? {
           peladaName,
-          date: new Date(match.played_at).toLocaleDateString('pt-BR'),
+          date,
           teamA: match.team_a_name,
           teamB: match.team_b_name,
           scoreA: match.team_a_score,
           scoreB: match.team_b_score,
           craque: awards
             .filter((a) => a.award_type === 'match_craque')
-            .map((a) => {
-              const r = results.find((x) => x.membership_id === a.membership_id);
-              return { name: nameOf(a.membership_id), rating: r?.has_valid_rating ? Number(r.final_rating) : null };
-            }),
+            .map((a) => ({ name: nameOf(a.membership_id), rating: ratingOf(a.membership_id) })),
           garcom:
             maxAssists > 0
-              ? players.filter((p) => p.assists === maxAssists).map((p) => ({ name: playerName(p), assists: maxAssists }))
+              ? memberPlayers.filter((p) => p.assists === maxAssists).map((p) => ({ name: playerName(p), assists: maxAssists }))
               : [],
           top: ranked.slice(0, 5).map((r) => ({ pos: posOf(r), name: nameOf(r.membership_id), rating: Number(r.final_rating) })),
         }
       : null;
+  // Seleção 4-3-3 sem adaptação: cada linha pega os melhores daquela posição; o que faltar fica vago.
+  const bestRank = Math.min(...(selection ?? []).map((x) => x.rank_order));
+  const slots: SelectionSlot[] = FORMATION.flatMap((line) => {
+    const inLine = (selection ?? [])
+      .filter((x) => x.slot_position === line.position)
+      .sort((a, b) => a.rank_order - b.rank_order);
+    return Array.from({ length: line.count }, (_, i) => {
+      const x = inLine[i];
+      return x
+        ? { position: line.position, name: nameOf(x.membership_id), rating: ratingOf(x.membership_id), best: x.rank_order === bestRank }
+        : { position: line.position, name: null, rating: null, best: false };
+    });
+  });
+  const matchGuests = guests.filter((g) => players.some((p) => p.guest_id === g.id));
 
   return (
     <Screen>
@@ -261,15 +277,30 @@ export default function Partida() {
         </Card>
       )}
 
-      {art && !showArt && <Button title="Compartilhar resultado" kind="secondary" onPress={() => setShowArt(true)} />}
-      {art && showArt && (
+      {art && (
+        <SharePanel label="Compartilhar resultado" fileName="minuto91-resultado" title="Resultado da partida">
+          <ResultArt data={art} />
+        </SharePanel>
+      )}
+
+      {selection && (
         <Card>
-          <View style={{ alignItems: 'center' }}>
-            <ResultArt ref={artRef} data={art} />
-          </View>
-          <Button title="Compartilhar imagem" onPress={compartilhar} loading={busy} />
-          <Button title="Fechar" kind="secondary" onPress={() => setShowArt(false)} />
+          <Body>Seleção da Rodada</Body>
+          {FORMATION.map((line) => (
+            <Sub key={line.position}>
+              {positionLabel(line.position)}:{' '}
+              {slots
+                .filter((x) => x.position === line.position)
+                .map((x) => x.name ?? 'vaga')
+                .join(', ')}
+            </Sub>
+          ))}
         </Card>
+      )}
+      {selection && ranked.length > 0 && (
+        <SharePanel label="Compartilhar Seleção da Rodada" fileName="minuto91-selecao" title="Seleção da Rodada">
+          <SelectionArt peladaName={peladaName} date={date} slots={slots} />
+        </SharePanel>
       )}
 
       {match.status === 'finalized' && isAdmin && <AnnulMatch matchId={id} nameOf={nameOf} onDone={load} />}
@@ -305,6 +336,16 @@ export default function Partida() {
           {extras.ownGoals[t] > 0 && <Sub>Gols contra a favor: {extras.ownGoals[t]}</Sub>}
         </View>
       ))}
+      {me &&
+        matchGuests.map((g) => (
+          <ReportLink
+            key={g.id}
+            peladaId={match.pelada_id}
+            targetType="guest"
+            targetId={g.id}
+            label={`Denunciar nome do convidado ${g.display_name}`}
+          />
+        ))}
       {open && iAmVoter && <Sub>Confira a súmula: se houver erro, avise o administrador antes de votar.</Sub>}
     </Screen>
   );

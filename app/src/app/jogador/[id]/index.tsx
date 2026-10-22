@@ -2,6 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { CardArt, SharePanel } from '../../../lib/arts';
 import {
   ATTRIBUTES,
   AWARD_LABEL,
@@ -37,6 +38,7 @@ export default function Carta() {
   const { session } = useAuth();
   const [blocked, setBlocked] = useState(false);
   const [member, setMember] = useState<Membership | null>(null);
+  const [peladaName, setPeladaName] = useState('');
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [seasonId, setSeasonId] = useState<string | null>(null);
   const [card, setCard] = useState<CardData | null>(null);
@@ -54,6 +56,8 @@ export default function Carta() {
         .maybeSingle();
       if (error || !m) return setMsg(error ? friendly(error.message) : 'Jogador não encontrado.');
       setMember(m as Membership);
+      const { data: p } = await supabase.from('peladas').select('name').eq('id', m.pelada_id).maybeSingle();
+      setPeladaName(p?.name ?? '');
       if (m.user_id) {
         const { data: b } = await supabase.from('user_blocks').select('blocked_user_id').eq('blocked_user_id', m.user_id);
         setBlocked((b ?? []).length > 0);
@@ -99,6 +103,8 @@ export default function Carta() {
   }
 
   const tier = card ? TIER[card.tier] : null;
+  const isMe = !!member.user_id && member.user_id === session?.user.id;
+  const seasonName = seasons.find((x) => x.id === seasonId)?.name ?? '';
 
   return (
     <Screen>
@@ -152,6 +158,12 @@ export default function Carta() {
               );
             })}
           </Card>
+          {/* Só a própria carta: compartilhar a de outro jogador fica com ele (privacidade, Doc 03 36.3). */}
+          {isMe && (
+            <SharePanel label="Compartilhar minha carta" fileName="minuto91-carta" title="Minha carta">
+              <CardArt peladaName={peladaName} seasonName={seasonName} playerName={member.player_name} card={card} />
+            </SharePanel>
+          )}
         </>
       )}
 

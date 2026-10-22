@@ -2,7 +2,7 @@
 // na web usa o compartilhamento do navegador quando existe, senão baixa o arquivo.
 import * as Sharing from 'expo-sharing';
 import type { RefObject } from 'react';
-import { Platform, View } from 'react-native';
+import { PixelRatio, Platform, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
 export async function shareViewAsImage(ref: RefObject<View | null>, fileName: string, title: string) {
@@ -21,8 +21,9 @@ export async function shareViewAsImage(ref: RefObject<View | null>, fileName: st
     a.click();
     return;
   }
-  // No celular a captura sai na densidade da tela (360 pontos x 3 = 1080 px no iPhone).
-  const uri = await captureRef(ref, { format: 'png', result: 'tmpfile', fileName });
+  // No celular width/height são divididos pela densidade da tela para sair em 1080 x 1920.
+  const ratio = PixelRatio.get();
+  const uri = await captureRef(ref, { format: 'png', result: 'tmpfile', fileName, width: 1080 / ratio, height: 1920 / ratio });
   if (!(await Sharing.isAvailableAsync())) throw new Error('Compartilhamento indisponível neste aparelho.');
   await Sharing.shareAsync(uri, { mimeType: 'image/png', UTI: 'public.png', dialogTitle: title });
 }

@@ -20,6 +20,14 @@ type Member = {
   preferred_position: string;
 };
 
+type Highlight = { match_id: string; membership_id: string; highlight_type: string };
+
+const HIGHLIGHT_LABEL: Record<string, string> = {
+  craque: 'Craque da Partida',
+  garcom_round: 'Garçom da rodada',
+  bola_murcha: 'Bola Murcha',
+};
+
 export default function Pelada() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
@@ -29,6 +37,7 @@ export default function Pelada() {
   const [successor, setSuccessor] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
+  const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [loaded, setLoaded] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -60,6 +69,13 @@ export default function Pelada() {
       .order('played_at', { ascending: false })
       .limit(20);
     setMatches((xs ?? []) as Match[]);
+    // Destaques da última partida finalizada (somem quando a próxima é finalizada).
+    const { data: hs } = await supabase
+      .from('highlights')
+      .select('match_id, membership_id, highlight_type')
+      .eq('pelada_id', id)
+      .is('expires_at', null);
+    setHighlights((hs ?? []) as Highlight[]);
     setLoaded(true);
   }, [id]);
 
@@ -143,6 +159,25 @@ export default function Pelada() {
           </View>
         )}
       </View>
+      {highlights.length > 0 && (
+        <Pressable
+          onPress={() => router.push({ pathname: '/partida/[id]', params: { id: highlights[0].match_id } })}>
+          <Card>
+            <Body>Destaques da última rodada</Body>
+            {Object.keys(HIGHLIGHT_LABEL)
+              .filter((t) => highlights.some((h) => h.highlight_type === t))
+              .map((t) => (
+                <Text key={t} style={{ color: t === 'craque' ? colors.darkGold : colors.ink, fontWeight: '600' }}>
+                  {HIGHLIGHT_LABEL[t]}:{' '}
+                  {highlights
+                    .filter((h) => h.highlight_type === t)
+                    .map((h) => members.find((m) => m.id === h.membership_id)?.player_name ?? 'Jogador')
+                    .join(', ')}
+                </Text>
+              ))}
+          </Card>
+        </Pressable>
+      )}
       <Text style={{ fontWeight: '700', color: colors.deepBlue, marginTop: 8 }}>Partidas</Text>
       {isStaff && <Button title="Lançar partida" kind="secondary" onPress={lancarPartida} loading={busy} />}
       {!loaded && <Sub>Carregando...</Sub>}

@@ -85,8 +85,10 @@ Murcha, rascunho, envio), carta (overall, categoria, provisória, 5 atributos, t
 bloquear), rankings (overall/gols/assistências/média/jogos/vitórias, prêmios do mês, recordes), álbum
 (9 coleções, 48 figurinhas, progresso), Premium da pelada (estado + teste grátis), Minha conta (código de
 transferência gerar/usar, bloqueados, excluir/recuperar), anulação de partida (admin, até 7 dias, prévia do
-impacto e motivo), configurações da pelada (admin), arte 9:16 do resultado (Craque, Garçom, top 5 notas;
-só para quem vê as notas; `lib/result-art.tsx` + `lib/share.ts` com react-native-view-shot e expo-sharing). Também existe `premium.tsx` (teste RevenueCat).
+impacto e motivo), configurações da pelada (admin), Seleção da Rodada na partida, destaques da última rodada
+na pelada, denunciar convidado (na partida). Artes 9:16 em `lib/arts.tsx` (+ `lib/share.ts`, react-native-view-shot
+e expo-sharing): resultado/Craque e Seleção (só para quem vê as notas), carta e figurinha (só as próprias).
+A arte da Seleção foi vista só com dados simulados (o dev não tem 11 jogadores com nota). Também existe `premium.tsx` (teste RevenueCat).
 Avisos e confirmações: `app/src/lib/dialog.ts` (funciona no celular e na web).
 
 ## 8. Como testar
@@ -134,10 +136,8 @@ Avisos e confirmações: `app/src/lib/dialog.ts` (funciona no celular e na web).
 4. **Lacunas de app ainda não feitas** (confirmar escopo comigo antes):
    - Tela de temporadas (personalizar/encerrar, Premium) — banco pronto (006).
    - Nomes personalizados dos times (Premium) — banco pronto (007).
-   - Botão de denunciar convidado — banco pronto (023).
    - Foto de perfil, escudo/imagem da pelada (upload).
-   - Artes 9:16 que faltam: Seleção da Rodada, carta e figurinha (a do resultado/Craque já existe).
-   - Retrospectiva mensal/anual. Destaques (Craque/Garçom da rodada) na tela da pelada.
+   - Retrospectiva mensal/anual.
 5. **Apple Developer (US$ 99/ano)** → `eas login`, `eas init` (commitar o projectId), `eas device:create`,
    development build iOS (pedir minha confirmação antes de rodar). Login com Apple é obrigatório na App Store
    (o app oferece Google). Configurar Apple no Supabase (Client ID `com.minuto91.app`).
