@@ -1,7 +1,11 @@
 import { useLocalSearchParams } from 'expo-router';
+import { Platform } from 'react-native';
 import { useEffect, useState } from 'react';
+import type { PurchasesPackage } from 'react-native-purchases';
 
 import { friendly } from '../../../lib/errors';
+import { loadPremiumPackage, openManageSubscription, restorePurchases, storeAvailable, subscribePelada } from '../../../lib/purchases';
+import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
 
@@ -26,6 +30,7 @@ const FEATURES = [
 ];
 
 const fmtDay = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 export default function PeladaPremium() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -33,6 +38,24 @@ export default function PeladaPremium() {
   const [reload, setReload] = useState(0);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [pkg, setPkg] = useState<PurchasesPackage | null>(null);
+  const [storeBusy, setStoreBusy] = useState<string | null>(null);
+  const { session } = useAuth();
+  const uid = session?.user.id;
+  // Só o admin de uma pelada sem Premium (e fora do beta) vê a oferta da loja.
+  const canBuy = !!ent && ent.is_admin && !ent.is_premium && ent.source !== 'beta';
+
+  useEffect(() => {
+    if (!canBuy || !storeAvailable || !uid) return;
+    let alive = true;
+    loadPremiumPackage(uid)
+      .then((p) => alive && setPkg(p))
+      .catch(() => alive && setMsg('Não foi possível carregar o preço na loja. Verifique a internet.'));
+    return () => {
+      alive = false;
+    };
+  }, [canBuy, uid]);
 
   useEffect(() => {
     let alive = true;
@@ -54,6 +77,55 @@ export default function PeladaPremium() {
     setBusy(false);
     if (error) return setMsg(friendly(error.message));
     setReload((n) => n + 1);
+  }
+
+  // O banco só vira Premium quando o webhook da loja chega: confere por até ~30 s.
+  async function aguardarConfirmacao() {
+    for (let i = 0; i < 10; i++) {
+      await sleep(3000);
+      const { data } = await supabase.rpc('get_pelada_entitlement', { p_pelada: id });
+      if ((data as Entitlement | null)?.is_premium) {
+        setEnt(data as Entitlement);
+        setInfo('Premium ativo. Obrigado!');
+        return;
+      }
+    }
+    setInfo('Pagamento enviado à loja. O Premium é liberado assim que a loja confirmar (pode levar alguns minutos).');
+  }
+
+  async function assinar() {
+    if (!uid || !pkg) return;
+    setStoreBusy('assinar');
+    setMsg(null);
+    setInfo(null);
+    const r = await subscribePelada(uid, id, pkg);
+    if (r.error) setMsg(r.error);
+    else if (!r.cancelled) {
+      setInfo('Confirmando o pagamento...');
+      await aguardarConfirmacao();
+    }
+    setStoreBusy(null);
+  }
+
+  async function restaurar() {
+    if (!uid) return;
+    setStoreBusy('restaurar');
+    setMsg(null);
+    setInfo(null);
+    const err = await restorePurchases(uid);
+    if (err) setMsg(err);
+    else {
+      setInfo('Compras restauradas. Conferindo a assinatura...');
+      await aguardarConfirmacao();
+    }
+    setStoreBusy(null);
+  }
+
+  async function gerenciar() {
+    if (!uid) return;
+    setMsg(null);
+    const err = await openManageSubscription(uid);
+    if (err) setMsg(err);
   }
 
   if (!ent) {
@@ -96,8 +168,29 @@ export default function PeladaPremium() {
           <Sub>Sem cartão. Vale uma vez por pelada e uma vez por conta de administrador.</Sub>
         </>
       )}
-      {ent.is_admin && !ent.is_premium && !ent.trial_available && (
-        <Sub>A assinatura pela App Store e Google Play chega depois do beta.</Sub>
+      {info && <Body>{info}</Body>}
+
+      {canBuy &&
+        (storeAvailable ? (
+          <Card>
+            <Body>Assinar o Premium para esta pelada</Body>
+            <Sub>
+              {pkg ? `${pkg.product.priceString} por mês` : 'R$ 29,90 por mês'}, cobrado pela sua conta da{' '}
+              {Platform.OS === 'ios' ? 'App Store' : 'Google Play'}. Renova todo mês; cancele quando quiser na loja. Sua
+              conta da loja pode pagar uma pelada por vez.
+            </Sub>
+            <Button title="Assinar Premium" onPress={assinar} loading={storeBusy === 'assinar'} disabled={!pkg || !!storeBusy} />
+            <Button title="Restaurar compras" kind="secondary" onPress={restaurar} loading={storeBusy === 'restaurar'} disabled={!!storeBusy} />
+          </Card>
+        ) : (
+          <Sub>A assinatura é feita no app instalado pela App Store ou Google Play.</Sub>
+        ))}
+
+      {ent.is_admin && ent.source === 'subscription' && storeAvailable && (
+        <Card>
+          <Button title="Gerenciar assinatura na loja" kind="secondary" onPress={gerenciar} />
+          <Sub>Cancelar não apaga nada: o Premium vale até o fim do período pago e depois a pelada volta ao grátis.</Sub>
+        </Card>
       )}
       {!ent.is_admin && !ent.is_premium && <Sub>Só o administrador da pelada pode ativar o Premium.</Sub>}
     </Screen>

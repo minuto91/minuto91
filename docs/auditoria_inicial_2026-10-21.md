@@ -194,6 +194,26 @@ Fase 3 (`PlayerCard` em `lib/arts.tsx`):
 - Conferido pela web: bronze com dados reais; prata e ouro simulando só a resposta na tela (nada gravado);
   arte exportada em 1080×1920 com a foto incluída. Fórmulas e pesos não foram tocados.
 
+## 5d. Fases 4 e 5 — resultado (22/10/2026)
+
+Fase 4 (conferida pela web em 375 px, com a conta do fundador):
+- Início: perfil no topo, "Falta o seu voto" (votação aberta em que sou eleitor e não votei — dado real, não
+  conferido na web porque não havia votação aberta), peladas com a última partida e rascunhos; criar/entrar
+  discretos. Minha conta em seções (perfil, sair, privacidade, trocar de conta, excluir). Fundo branco.
+  Página da pelada: carta e rankings no topo, destaques, até 5 partidas com "ver todas", jogadores com foto e
+  controles de admin recolhidos em "Gerenciar", ações da pelada no fim. Corrigido botão dentro de botão no início.
+
+Fase 5 (`lib/purchases.ts` + `pelada/[id]/premium.tsx`):
+- Compra só na tela da pelada, só para o admin, só fora do beta: `start_premium_purchase` → atributo `pelada_id`
+  → compra na loja → espera o webhook (até ~30 s) e mostra o estado do banco (fonte de verdade).
+- Restaurar compras, gerenciar/cancelar na loja, mensagens para rede, pagamento pendente, compra não permitida e
+  produto já comprado; desistência sem mensagem de erro.
+- O comprador no RevenueCat é sempre o usuário logado (`logIn` ao trocar, `logOut` ao sair da conta).
+- Na web e sem chave do RevenueCat a compra não aparece ("feita no app instalado").
+- Conferido pela web: no beta a tela mostra "Premium liberado" e não oferece compra.
+- **Não testado**: compra, renovação, cancelamento e restauração reais — exigem Apple Developer, development build,
+  produtos nas lojas, chaves do RevenueCat e o webhook publicado. O lado do banco está coberto pelo teste 019.
+
 ## 6. Funcionalidades novas (avaliação, nada será implementado sem aprovação)
 
 | Proposta | Valor | Complexidade | Risco | Retenção | Compartilhamento | Plano |

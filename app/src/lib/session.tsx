@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 
+import { resetPurchasesUser } from './purchases';
 import { supabase } from './supabase';
 
 type AuthState = {
@@ -50,6 +51,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     });
     const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
       setSession(s);
+      if (!s) resetPurchasesUser(); // a próxima conta não herda o comprador da loja
       // Não chamar o Supabase dentro do callback: adia para o próximo ciclo.
       setTimeout(async () => setOnboarded(await fetchOnboarded(s)), 0);
     });
