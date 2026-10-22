@@ -50,9 +50,13 @@ Migrações em `supabase/migrations` (ordem do Doc 04 seção 36):
 023 denúncia/bloqueio/índices · 024 transferência de conta por código · 025 configurações da pelada
 (admin: prazo padrão, Bola Murcha só com Premium, mínimo de notas; fuso não editável) ·
 026 Premium/loja (um pendente por comprador, atributo pelada_id, eventos fora de ordem, reembolso, TRANSFER) ·
-027 foto em bucket privado `avatars`, pé dominante, perfil só por RPC (update_my_profile/set_my_avatar/clear_my_avatar).
+027 foto em bucket privado `avatars`, pé dominante, perfil só por RPC (update_my_profile/set_my_avatar/clear_my_avatar) ·
+028 escudo da pelada (bucket privado `crests`, só o admin; set_pelada_crest/clear_pelada_crest) ·
+029 privacidade do perfil e da carreira (privado/minhas peladas/público; app lê de profiles só id, nome e foto; o resto por
+get_my_profile/get_player_profile) · 030 carreira global (get_player_career, respeita o Premium de cada pelada) ·
+031 proteção do teste grátis (segue a pessoa na transferência, trava por conta, private.premium_trial_grants e private.trial_review).
 
-Testes: `supabase/tests_editor/001..021_*.sql` (020 = invariantes de segurança do banco inteiro) (rodar no SQL Editor; terminam com o erro proposital
+Testes: `supabase/tests_editor/001..024_*.sql` (020 = invariantes de segurança do banco inteiro; 022 escudo, 023 privacidade e carreira, 024 teste grátis) (rodar no SQL Editor; terminam com o erro proposital
 "PASS: ..." = ok e nada gravado). Versões psql em `supabase/tests/`. Cadeia pós-finalização:
 `after_match_finalized` → stats/cartas (014) → `after_cards_updated` → destaques/meses (015) →
 `after_rankings_updated` → Seleção (016) → `after_selection_updated` → figurinhas (018).
@@ -75,6 +79,10 @@ Fórmulas de nota e carta validadas em `docs/simulacao_formulas.xlsx` (aprovada)
 - Exclusão de conta: vira "Aposentado" na hora; 30 dias para recuperar (volta como jogador, sem admin);
   depois apaga perfil e login. Precisa constar na Política/Termos [VALIDAR COM ADVOGADO].
 - Denúncia e bloqueio (RN-120/RF-014) implementados na 023.
+- Evolução V2 (22/10): carreira global respeita o plano de cada pelada (grátis = temporada atual e anterior); "Privado" esconde
+  só a área global (dentro da pelada nome, foto e carta seguem visíveis); padrão "minhas peladas"; bloqueio esconde perfil e
+  carreira nos dois sentidos; Bola Murcha não é conquista; teste grátis com registro e alerta para revisão manual, sem bloqueio.
+  Relatório: `docs/relatorio_evolucao_v2_2026-10-22.md`.
 
 ## 7. App: o que está pronto (tsc, lint e bundle iOS limpos)
 Telas: login (e-mail, Google; Apple só aparece se disponível), onboarding (18+ e termos), início (peladas,
@@ -95,6 +103,9 @@ A arte da Seleção foi vista só com dados simulados (o dev não tem 11 jogador
 carta `PlayerCard` com foto e moldura bronze/prata/ouro, início com "Falta o seu voto", Minha conta em seções,
 fundo branco, assinatura só na tela Premium da pelada (`lib/purchases.ts`). Tela Premium geral e template do Expo removidos.
 Avisos e confirmações: `app/src/lib/dialog.ts` (funciona no celular e na web).
+Evolução V2: cartas com fundo e moldura da categoria e escudo (`lib/arts.tsx`, `lib/crest.tsx`); Meu Perfil em seções
+(visão geral, carreira, peladas, conquistas, cartas, privacidade; `lib/profile.tsx`); perfil de outro jogador (`atleta/[id]`);
+Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
 
 ## 8. Como testar
 - **Web (mais rápido)**: `cd $HOME\Documents\minuto91\app; npx expo start --go --tunnel -c`, depois tecla `w`
@@ -133,6 +144,8 @@ Avisos e confirmações: `app/src/lib/dialog.ts` (funciona no celular e na web).
 - Apagar node_modules no Windows: `cmd /c rmdir /s /q node_modules`.
 
 ## 11. Próximas etapas (em ordem sugerida)
+0. **Push** dos commits da Evolução V2 (aguarda confirmação) e rodar `tests_editor/001..019` de novo no dev.
+   Pendências V2: escudo nas artes de resultado e Seleção; publicar `storage-cleanup` (fotos e escudos).
 1. **Testes que precisam de uma segunda conta real** (eu crio no navegador): bloquear jogador, excluir e
    recuperar conta, usar código de transferência numa conta nova.
 2. **Passada no iPhone** (Expo Go com `--tunnel`): aparência, teclado, compartilhar convite.
@@ -141,7 +154,7 @@ Avisos e confirmações: `app/src/lib/dialog.ts` (funciona no celular e na web).
 4. **Lacunas de app ainda não feitas** (confirmar escopo comigo antes):
    - Tela de temporadas (personalizar/encerrar, Premium) — banco pronto (006).
    - Nomes personalizados dos times (Premium) — banco pronto (007).
-   - Foto de perfil, escudo/imagem da pelada (upload).
+   - Imagem de capa da pelada (upload; o escudo já existe).
    - Retrospectiva mensal/anual.
 5. **Apple Developer (US$ 99/ano)** → `eas login`, `eas init` (commitar o projectId), `eas device:create`,
    development build iOS (pedir minha confirmação antes de rodar). Login com Apple é obrigatório na App Store
