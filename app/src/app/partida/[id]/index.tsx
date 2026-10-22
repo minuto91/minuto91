@@ -1,5 +1,5 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { ANNUL_REASONS, AnnulMatch } from '../../../lib/annul';
@@ -20,7 +20,9 @@ import {
   Team,
   TeamExtras,
 } from '../../../lib/match';
+import { ArtData, ResultArt } from '../../../lib/result-art';
 import { useAuth } from '../../../lib/session';
+import { shareViewAsImage } from '../../../lib/share';
 import { supabase } from '../../../lib/supabase';
 import { colors, positionLabel } from '../../../lib/theme';
 import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
@@ -51,6 +53,9 @@ export default function Partida() {
   const [results, setResults] = useState<Result[]>([]);
   const [awards, setAwards] = useState<Award[]>([]);
   const [annulment, setAnnulment] = useState<Annulment | null>(null);
+  const [peladaName, setPeladaName] = useState('');
+  const [showArt, setShowArt] = useState(false);
+  const artRef = useRef<View>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -58,7 +63,7 @@ export default function Partida() {
     try {
       const m = await loadMatch(id);
       if (!m) return setMsg('Partida não encontrada.');
-      const [ms, gs, sheet, { data: ss }] = await Promise.all([
+      const [ms, gs, sheet, { data: ss }, { data: pl }] = await Promise.all([
         loadMembers(m.pelada_id),
         loadGuests(m.pelada_id),
         loadSheet(id),
@@ -69,7 +74,9 @@ export default function Partida() {
           .neq('status', 'cancelled')
           .order('created_at', { ascending: false })
           .limit(1),
+        supabase.from('peladas').select('name').eq('id', m.pelada_id).maybeSingle(),
       ]);
+      setPeladaName(pl?.name ?? '');
       const s = (ss?.[0] ?? null) as Session | null;
       setMatch(m);
       setMembers(ms);
@@ -125,6 +132,16 @@ export default function Partida() {
     load();
   }
 
+  async function compartilhar() {
+    setBusy(true);
+    try {
+      await shareViewAsImage(artRef, 'minuto91-resultado', 'Resultado da partida');
+    } catch (e) {
+      setMsg(friendly((e as Error).message));
+    }
+    setBusy(false);
+  }
+
   if (!match || !extras) {
     return (
       <Screen>
@@ -153,6 +170,31 @@ export default function Partida() {
   const ranked = results
     .filter((r) => r.has_valid_rating && r.final_rating !== null)
     .sort((a, b) => b.final_rating! - a.final_rating!);
+  const posOf = (r: Result) => 1 + ranked.filter((x) => Number(x.final_rating) > Number(r.final_rating)).length;
+  const maxAssists = Math.max(0, ...players.map((p) => p.assists));
+  // Arte oficial: só com notas visíveis (o servidor não as entrega a quem não votou).
+  const art: ArtData | null =
+    match.status === 'finalized' && ranked.length > 0
+      ? {
+          peladaName,
+          date: new Date(match.played_at).toLocaleDateString('pt-BR'),
+          teamA: match.team_a_name,
+          teamB: match.team_b_name,
+          scoreA: match.team_a_score,
+          scoreB: match.team_b_score,
+          craque: awards
+            .filter((a) => a.award_type === 'match_craque')
+            .map((a) => {
+              const r = results.find((x) => x.membership_id === a.membership_id);
+              return { name: nameOf(a.membership_id), rating: r?.has_valid_rating ? Number(r.final_rating) : null };
+            }),
+          garcom:
+            maxAssists > 0
+              ? players.filter((p) => p.assists === maxAssists).map((p) => ({ name: playerName(p), assists: maxAssists }))
+              : [],
+          top: ranked.slice(0, 5).map((r) => ({ pos: posOf(r), name: nameOf(r.membership_id), rating: Number(r.final_rating) })),
+        }
+      : null;
 
   return (
     <Screen>
@@ -212,10 +254,21 @@ export default function Partida() {
           {ranked.map((r) => (
             <Text key={r.membership_id} style={{ color: colors.ink }}>
               {/* Empate = mesma posição (1º, 1º, 3º), pelo valor oficial (RN-073). */}
-              {1 + ranked.filter((x) => Number(x.final_rating) > Number(r.final_rating)).length}º {nameOf(r.membership_id)} —{' '}
+              {posOf(r)}º {nameOf(r.membership_id)} —{' '}
               {fmtRating(Number(r.final_rating))}
             </Text>
           ))}
+        </Card>
+      )}
+
+      {art && !showArt && <Button title="Compartilhar resultado" kind="secondary" onPress={() => setShowArt(true)} />}
+      {art && showArt && (
+        <Card>
+          <View style={{ alignItems: 'center' }}>
+            <ResultArt ref={artRef} data={art} />
+          </View>
+          <Button title="Compartilhar imagem" onPress={compartilhar} loading={busy} />
+          <Button title="Fechar" kind="secondary" onPress={() => setShowArt(false)} />
         </Card>
       )}
 
