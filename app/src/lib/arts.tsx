@@ -1,17 +1,16 @@
 // Artes oficiais 9:16 (Brand Book 11: fundo branco, azul nos títulos, dourado só nas conquistas,
 // logo discreta) e o painel que mostra a arte e compartilha como imagem 1080 x 1920.
 // Quem monta cada arte decide se pode: o resultado e a Seleção só para quem vê as notas (RN-098).
-import { Image } from 'expo-image';
 import { ReactNode, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { initials, useAvatarUrl } from './avatar';
-import { CrestView, useCrestUrl } from './crest';
-import { ATTRIBUTES, Card as CardData, TIER } from './career';
+import { Crest } from './crest';
+import { Card as CardData } from './career';
 import { friendly } from './errors';
 import { fmtRating } from './match';
+import { CARD_W, PlayerCard } from './playercard';
 import { shareViewAsImage } from './share';
-import { colors, positionLabel } from './theme';
+import { colors } from './theme';
 import { Button, ErrorText } from './ui';
 
 // 9:16 que cabe na tela de um iPhone pequeno (375 - 2 x 20 de margem).
@@ -62,9 +61,11 @@ export function SharePanel({
   );
 }
 
-function Header({ title, subtitle }: { title: string; subtitle: string }) {
+// Com escudo (028), ele vem no topo; sem escudo, o escudo padrão com as iniciais.
+function Header({ title, subtitle, crestPath }: { title: string; subtitle: string; crestPath?: string | null }) {
   return (
     <View style={{ alignItems: 'center', gap: 2 }}>
+      {crestPath !== undefined && <Crest path={crestPath} name={title} size={44} />}
       <Text style={s.pelada} numberOfLines={1}>
         {title}
       </Text>
@@ -77,6 +78,7 @@ function Header({ title, subtitle }: { title: string; subtitle: string }) {
 
 export type ResultArtData = {
   peladaName: string;
+  crestPath?: string | null;
   date: string;
   teamA: string;
   teamB: string;
@@ -90,7 +92,7 @@ export type ResultArtData = {
 export function ResultArt({ data }: { data: ResultArtData }) {
   return (
     <>
-      <Header title={data.peladaName} subtitle={data.date} />
+      <Header title={data.peladaName} subtitle={data.date} crestPath={data.crestPath} />
       <View style={s.scoreRow}>
         <Text style={s.team} numberOfLines={1}>
           {data.teamA}
@@ -146,10 +148,20 @@ export const FORMATION: { position: string; count: number }[] = [
   { position: 'goalkeeper', count: 1 },
 ];
 
-export function SelectionArt({ peladaName, date, slots }: { peladaName: string; date: string; slots: SelectionSlot[] }) {
+export function SelectionArt({
+  peladaName,
+  crestPath,
+  date,
+  slots,
+}: {
+  peladaName: string;
+  crestPath?: string | null;
+  date: string;
+  slots: SelectionSlot[];
+}) {
   return (
     <>
-      <Header title={peladaName} subtitle={date} />
+      <Header title={peladaName} subtitle={date} crestPath={crestPath} />
       <Text style={[s.goldLabel, { textAlign: 'center', color: colors.blue }]}>SELEÇÃO DA RODADA</Text>
       <View style={s.field}>
         <View style={s.midline} />
@@ -180,150 +192,9 @@ export function SelectionArt({ peladaName, date, slots }: { peladaName: string; 
   );
 }
 
-// ---------- Carta do jogador ----------
-// Fundo na cor da categoria e moldura que evolui (bronze simples, prata com filete, ouro com filete e
-// ornamentos), brilho metálico discreto, sem partículas nem 3D. A foto é a protagonista e o escudo da
-// pelada fica pequeno ao lado do overall. Mesmo layout nas três categorias.
-// A foto é quadrada (no compartilhamento pela web o html2canvas não respeita "cover").
-// width muda a escala inteira (o Elenco usa cartas menores); textos nunca ficam abaixo de 9 px.
+// ---------- Card do jogador (desenho em playercard.tsx) ----------
 
-const POS_CODE: Record<string, string> = { goalkeeper: 'GOL', defender: 'DEF', midfielder: 'MEI', attacker: 'ATA' };
-export const CARD_W = 275;
-
-export function PlayerCard({
-  card,
-  playerName,
-  photoPath,
-  peladaName,
-  crestPath,
-  seasonName,
-  width = CARD_W,
-}: {
-  card: CardData;
-  playerName: string;
-  photoPath: string | null | undefined;
-  peladaName: string;
-  crestPath?: string | null;
-  seasonName: string;
-  width?: number;
-}) {
-  const t = TIER[card.tier];
-  const photo = useAvatarUrl(photoPath);
-  const crest = useCrestUrl(crestPath);
-  const k = width / CARD_W;
-  const px = (n: number) => Math.round(n * k * 10) / 10;
-  const font = (n: number) => Math.max(9, px(n));
-  const compact = width < 200; // no Elenco: sem rodapé
-  const photoSide = px(168);
-  const overall = Math.round(card.overall);
-  const outer = Math.max(2, px(t.level === 3 ? 4 : 3));
-  const gap = px(t.level === 1 ? 0 : 3);
-
-  return (
-    <View
-      accessibilityLabel={`Carta ${t.label} de ${playerName}, overall ${overall}, ${positionLabel(card.position)}${card.is_provisional ? ', provisória' : ''}`}
-      style={{ width, borderRadius: px(18), borderWidth: outer, borderColor: t.frame, backgroundColor: t.bg, padding: gap }}>
-      <View
-        style={{
-          borderRadius: px(t.level === 1 ? 15 : 13),
-          borderWidth: t.level === 1 ? 0 : 1,
-          borderColor: t.frame,
-          overflow: 'hidden',
-          backgroundColor: t.bg,
-          paddingBottom: px(compact ? 8 : 12),
-        }}>
-        {/* Brilho metálico: uma faixa clara em diagonal, mais visível conforme a categoria. */}
-        <View
-          pointerEvents="none"
-          style={{
-            position: 'absolute',
-            top: -px(60),
-            left: px(40),
-            width: px(70),
-            height: px(520),
-            backgroundColor: colors.white,
-            opacity: t.sheen,
-            transform: [{ rotate: '24deg' }],
-          }}
-        />
-        {t.level === 3 && (
-          <>
-            <View style={[s.ornament, { top: px(4), left: '50%', marginLeft: -px(5), width: px(10), height: px(10), backgroundColor: t.frame }]} />
-            {/* Na carta pequena não há rodapé: o ornamento de baixo encostaria nos atributos. */}
-            {!compact && (
-              <View style={[s.ornament, { bottom: px(4), left: '50%', marginLeft: -px(5), width: px(10), height: px(10), backgroundColor: t.frame }]} />
-            )}
-          </>
-        )}
-
-        <View style={{ flexDirection: 'row', alignItems: 'flex-start', paddingTop: px(16), paddingHorizontal: px(10), gap: px(8) }}>
-          <View style={{ alignItems: 'center', width: px(58), gap: px(4) }}>
-            <Text style={{ fontSize: font(38), fontWeight: '800', color: colors.deepBlue, lineHeight: font(42) }}>{overall}</Text>
-            <Text style={{ fontSize: font(13), fontWeight: '800', color: t.deep, letterSpacing: 1 }}>{POS_CODE[card.position] ?? card.position}</Text>
-            <View style={{ height: 1, width: px(30), backgroundColor: t.frame, marginVertical: px(4) }} />
-            <CrestView url={crest} name={peladaName} size={Math.max(18, px(30))} />
-          </View>
-          <View
-            style={{
-              borderRadius: px(14),
-              borderWidth: Math.max(1, px(t.level === 3 ? 2 : 1.5)),
-              borderColor: t.frame,
-              backgroundColor: colors.white,
-              padding: px(3),
-            }}>
-            {photo ? (
-              <Image
-                source={{ uri: photo }}
-                style={{ width: photoSide, height: photoSide, borderRadius: px(11) }}
-                contentFit="cover"
-                accessibilityLabel={`Foto de ${playerName}`}
-              />
-            ) : (
-              <View
-                style={{ width: photoSide, height: photoSide, borderRadius: px(11), backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' }}>
-                <Text style={{ fontSize: font(56), fontWeight: '800', color: colors.deepBlue, opacity: 0.85 }}>{initials(playerName)}</Text>
-              </View>
-            )}
-          </View>
-        </View>
-
-        <Text
-          style={{ fontSize: font(22), fontWeight: '800', color: colors.deepBlue, textAlign: 'center', marginTop: px(10), paddingHorizontal: px(12) }}
-          numberOfLines={1}
-          adjustsFontSizeToFit
-          minimumFontScale={0.7}>
-          {playerName}
-        </Text>
-        <Text style={{ fontSize: font(12), fontWeight: '600', color: t.deep, textAlign: 'center', marginTop: px(2) }} numberOfLines={1}>
-          {compact ? '' : `${positionLabel(card.position)} · `}
-          {t.label.toUpperCase()}
-          {card.is_provisional ? ' · provisória' : ''}
-        </Text>
-        <View style={{ height: 1, marginHorizontal: px(22), marginVertical: px(compact ? 8 : 12), backgroundColor: t.frame }} />
-        <View style={{ flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: px(8) }}>
-          {ATTRIBUTES.map((a) => (
-            <View key={a.key} style={{ alignItems: 'center', minWidth: px(44) }} accessibilityLabel={`${a.label} ${Math.round(Number(card[a.key]))}`}>
-              <Text style={{ fontSize: font(20), fontWeight: '800', color: colors.deepBlue }}>{Math.round(Number(card[a.key]))}</Text>
-              <Text style={{ fontSize: font(10), fontWeight: '700', color: t.deep, letterSpacing: compact ? 0 : 1 }}>{a.code}</Text>
-            </View>
-          ))}
-        </View>
-        {!compact && (
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: px(8), marginTop: px(14), paddingHorizontal: px(14) }}>
-            <Text style={{ flexShrink: 1, fontSize: font(10), fontWeight: '700', color: t.deep }} numberOfLines={1}>
-              {peladaName}
-            </Text>
-            {!!seasonName && (
-              <Text style={{ flexShrink: 1, fontSize: font(10), fontWeight: '700', color: t.deep }} numberOfLines={1}>
-                {seasonName}
-              </Text>
-            )}
-          </View>
-        )}
-      </View>
-    </View>
-  );
-}
+export { CARD_W, PlayerCard };
 
 export function CardArt(props: {
   peladaName: string;
@@ -332,12 +203,14 @@ export function CardArt(props: {
   playerName: string;
   photoPath: string | null | undefined;
   card: CardData;
+  photoUrl?: string | null;
+  crestUrl?: string | null;
 }) {
   return (
     <>
-      {/* Centraliza a carta na altura da arte (o painel põe um espaço flexível antes da logo). */}
+      {/* Centraliza o Card na altura da arte (o painel põe um espaço flexível antes da logo). */}
       <View style={{ flex: 1 }} />
-      <Text style={[s.goldLabel, { textAlign: 'center', color: colors.blue }]}>CARTA DA TEMPORADA</Text>
+      <Text style={[s.goldLabel, { textAlign: 'center', color: colors.blue }]}>CARD DA TEMPORADA</Text>
       <View style={{ alignItems: 'center' }}>
         <PlayerCard {...props} />
       </View>
@@ -416,7 +289,7 @@ const s = StyleSheet.create({
   rowValue: { fontSize: 14, fontWeight: '800', color: colors.deepBlue },
   // Campo abstrato: linhas azul-claro, sem gramado (Brand Book 7.3).
   field: {
-    height: 370,
+    height: 336, // cabe com o escudo no topo
     borderWidth: 2,
     borderColor: '#DCE7FA',
     borderRadius: 10,
@@ -441,7 +314,6 @@ const s = StyleSheet.create({
   marker: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.blue, borderWidth: 2, borderColor: colors.blue },
   playerName: { fontSize: 11, fontWeight: '700', color: colors.ink, maxWidth: 64 },
   playerRating: { fontSize: 11, fontWeight: '800', color: colors.deepBlue },
-  ornament: { position: 'absolute', transform: [{ rotate: '45deg' }] },
   sticker: { alignItems: 'center', gap: 10, paddingVertical: 18, borderRadius: 16, borderWidth: 2, borderColor: colors.gold },
   emblem: {
     width: 110,

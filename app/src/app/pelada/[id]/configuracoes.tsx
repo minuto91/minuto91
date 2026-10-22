@@ -1,12 +1,14 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 
-import { Crest, pickAndUploadCrest, removeCrest } from '../../../lib/crest';
+import { Crest, CrestDraft, CrestView, pickCrest, removeCrest, uploadCrest } from '../../../lib/crest';
 import { confirm, notify } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
+import { CrestSwatch } from '../../../lib/playercard';
 import { supabase } from '../../../lib/supabase';
-import { View } from 'react-native';
+import { Text, View } from 'react-native';
 
+import { colors } from '../../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
 const DURATIONS = [
@@ -41,6 +43,7 @@ export default function Configuracoes() {
   const [nome, setNome] = useState('');
   const [crest, setCrest] = useState<string | null>(null);
   const [crestBusy, setCrestBusy] = useState(false);
+  const [draft, setDraft] = useState<CrestDraft | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -74,8 +77,22 @@ export default function Configuracoes() {
     setCrestBusy(true);
     setMsg(null);
     try {
-      const path = await pickAndUploadCrest(id);
-      if (path) setCrest(path);
+      const d = await pickCrest();
+      if (d) setDraft(d);
+    } catch (e) {
+      setMsg((e as Error).message);
+    } finally {
+      setCrestBusy(false);
+    }
+  }
+
+  async function salvarEscudo() {
+    if (!draft) return;
+    setCrestBusy(true);
+    setMsg(null);
+    try {
+      setCrest(await uploadCrest(id, draft));
+      setDraft(null);
     } catch (e) {
       setMsg((e as Error).message);
     } finally {
@@ -129,14 +146,41 @@ export default function Configuracoes() {
 
       <Card>
         <Body>Escudo da pelada</Body>
-        <Sub>Aparece no topo da pelada, nas cartas e nas artes. Imagem quadrada, PNG ou JPG.</Sub>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          <Crest path={crest} name={nome} size={64} />
-          <View style={{ flex: 1, gap: 8 }}>
-            <Button title={crest ? 'Trocar escudo' : 'Enviar escudo'} kind="secondary" onPress={trocarEscudo} loading={crestBusy} />
-            {crest && <Button title="Remover escudo" kind="danger" onPress={removerEscudo} />}
+        <Sub>Aparece no topo da pelada, nos Cards e nas artes. Prefira PNG com fundo transparente; o formato do escudo é mantido.</Sub>
+        {draft ? (
+          <View style={{ gap: 10 }}>
+            <Body>Prévia: confira antes de salvar</Body>
+            <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
+              {(['bronze', 'prata', 'ouro'] as const).map((t) => (
+                <CrestSwatch key={t} tier={t} crestUrl={draft.uri} peladaName={nome} width={92} />
+              ))}
+            </View>
+            {/* Cabeçalho da pelada (fundo branco, como na tela da pelada). */}
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderWidth: 1, borderColor: colors.line, borderRadius: 12 }}>
+              <CrestView url={draft.uri} name={nome} size={44} />
+              <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: colors.deepBlue }} numberOfLines={1}>
+                {nome}
+              </Text>
+            </View>
+            {draft.transparent === false && (
+              <Sub>
+                Esta imagem não tem fundo transparente: o fundo dela aparece nos Cards e nas artes. Para um resultado melhor, use um
+                PNG sem fundo.
+              </Sub>
+            )}
+            <Button title="Salvar escudo" onPress={salvarEscudo} loading={crestBusy} />
+            <Button title="Escolher outra imagem" kind="secondary" onPress={trocarEscudo} disabled={crestBusy} />
+            <Button title="Cancelar" kind="secondary" onPress={() => setDraft(null)} disabled={crestBusy} />
           </View>
-        </View>
+        ) : (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+            <Crest path={crest} name={nome} size={64} />
+            <View style={{ flex: 1, gap: 8 }}>
+              <Button title={crest ? 'Trocar escudo' : 'Enviar escudo'} kind="secondary" onPress={trocarEscudo} loading={crestBusy} />
+              {crest && <Button title="Remover escudo" kind="danger" onPress={removerEscudo} />}
+            </View>
+          </View>
+        )}
       </Card>
 
       <Card>

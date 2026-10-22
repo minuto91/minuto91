@@ -55,6 +55,7 @@ export default function Partida() {
   const [awards, setAwards] = useState<Award[]>([]);
   const [annulment, setAnnulment] = useState<Annulment | null>(null);
   const [peladaName, setPeladaName] = useState('');
+  const [crestPath, setCrestPath] = useState<string | null>(null);
   const [selection, setSelection] = useState<SelectionPlayer[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -74,9 +75,10 @@ export default function Partida() {
           .neq('status', 'cancelled')
           .order('created_at', { ascending: false })
           .limit(1),
-        supabase.from('peladas').select('name').eq('id', m.pelada_id).maybeSingle(),
+        supabase.from('peladas').select('name, crest_path').eq('id', m.pelada_id).maybeSingle(),
       ]);
       setPeladaName(pl?.name ?? '');
+      setCrestPath(pl?.crest_path ?? null);
       const s = (ss?.[0] ?? null) as Session | null;
       setMatch(m);
       setMembers(ms);
@@ -182,6 +184,7 @@ export default function Partida() {
     match.status === 'finalized' && ranked.length > 0
       ? {
           peladaName,
+          crestPath,
           date,
           teamA: match.team_a_name,
           teamB: match.team_b_name,
@@ -299,7 +302,7 @@ export default function Partida() {
       )}
       {selection && ranked.length > 0 && (
         <SharePanel label="Compartilhar Seleção da Rodada" fileName="minuto91-selecao" title="Seleção da Rodada">
-          <SelectionArt peladaName={peladaName} date={date} slots={slots} />
+          <SelectionArt peladaName={peladaName} crestPath={crestPath} date={date} slots={slots} />
         </SharePanel>
       )}
 
