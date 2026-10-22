@@ -30,11 +30,17 @@ export const useAuth = () => useContext(AuthContext);
 
 async function fetchOnboarded(s: Session | null): Promise<boolean | null> {
   if (!s) return null;
-  const { data } = await supabase
-    .from('profiles')
-    .select('adult_declared_at, terms_accepted_at')
-    .eq('id', s.user.id)
-    .maybeSingle();
+  // Desde a 029 só id, nome e foto são lidos direto de profiles; o resto vem por RPC.
+  const { data, error } = await supabase.rpc('get_my_profile');
+  if (error) {
+    // Banco ainda sem a 029: leitura antiga.
+    const { data: old } = await supabase
+      .from('profiles')
+      .select('adult_declared_at, terms_accepted_at')
+      .eq('id', s.user.id)
+      .maybeSingle();
+    return !!(old?.adult_declared_at && old?.terms_accepted_at);
+  }
   return !!(data?.adult_declared_at && data?.terms_accepted_at);
 }
 

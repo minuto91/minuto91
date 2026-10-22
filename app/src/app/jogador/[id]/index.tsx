@@ -40,6 +40,7 @@ export default function Carta() {
   const router = useRouter();
   const { session } = useAuth();
   const [blocked, setBlocked] = useState(false);
+  const [globalVisible, setGlobalVisible] = useState(false);
   const [member, setMember] = useState<Membership | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [newPos, setNewPos] = useState<Position | null>(null);
@@ -68,9 +69,13 @@ export default function Carta() {
       setPeladaName(p?.name ?? '');
       setCrestPath(p?.crest_path ?? null);
       if (m.user_id) {
-        // Foto e pé só aparecem se o perfil for visível (pelada em comum, sem bloqueio).
-        const { data: pr } = await supabase.from('profiles').select('avatar_path, dominant_foot').eq('id', m.user_id).maybeSingle();
-        setProfile(pr as Profile | null);
+        // Foto: pelada em comum, sem bloqueio (RLS). Pé: só se o perfil global for visível (029).
+        const [{ data: pr }, { data: gp }] = await Promise.all([
+          supabase.from('profiles').select('avatar_path').eq('id', m.user_id).maybeSingle(),
+          supabase.rpc('get_player_profile', { p_user: m.user_id }),
+        ]);
+        if (pr) setProfile({ avatar_path: pr.avatar_path, dominant_foot: gp?.visible ? gp.dominant_foot : null });
+        setGlobalVisible(!!gp?.visible);
         const { data: b } = await supabase.from('user_blocks').select('blocked_user_id').eq('blocked_user_id', m.user_id);
         setBlocked((b ?? []).length > 0);
       }
@@ -249,6 +254,18 @@ export default function Carta() {
           )}
           {posOk && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{posOk}</Text>}
         </Card>
+      )}
+
+      {member.user_id && member.status !== 'retired' && (isMe || globalVisible) && (
+        <Button
+          title={isMe ? 'Meu perfil e carreira' : 'Ver perfil e carreira'}
+          kind="secondary"
+          onPress={() =>
+            isMe
+              ? router.push('/perfil')
+              : router.push({ pathname: '/atleta/[id]', params: { id: member.user_id!, name: member.player_name } })
+          }
+        />
       )}
 
       <Button

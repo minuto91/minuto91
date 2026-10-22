@@ -93,10 +93,10 @@ perform pg_temp.assert(not pg_temp.visible(pg_temp.photo(1,2)),'foto do Aposenta
 -- ===== Perfil: nome e pé dominante =====
 perform pg_temp.as_user(3);
 perform public.update_my_profile('  Goleirão  ','left');
-perform pg_temp.assert((select display_name='Goleirão' and dominant_foot='left' from public.profiles where id=pg_temp.uid(3)),'perfil salvo');
+perform pg_temp.assert(public.get_my_profile()->>'display_name'='Goleirão' and public.get_my_profile()->>'dominant_foot'='left','perfil salvo');
 perform pg_temp.assert((select player_name='Goleirão' from public.pelada_memberships where user_id=pg_temp.uid(3)),'nome atualizado na pelada');
 perform public.update_my_profile('Goleirão',null);
-perform pg_temp.assert((select dominant_foot is null from public.profiles where id=pg_temp.uid(3)),'pé é opcional');
+perform pg_temp.assert(public.get_my_profile()->>'dominant_foot' is null,'pé é opcional');
 perform pg_temp.expect_error('select public.update_my_profile(''Goleirão'',''canhoto'')','INVALID_DOMINANT_FOOT');
 perform pg_temp.expect_error('select public.update_my_profile(''   '',''right'')','INVALID_NAME');
 perform pg_temp.expect_error('update public.profiles set dominant_foot=''right''','permission denied');

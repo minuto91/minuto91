@@ -138,6 +138,8 @@ export function Chips<T extends string>({
         return (
           <Pressable
             key={o.value}
+            accessibilityRole="button"
+            accessibilityState={{ selected: on }}
             onPress={() => onChange(o.value)}
             style={{
               paddingVertical: 8,

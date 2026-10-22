@@ -5,20 +5,49 @@ import { Text, View } from 'react-native';
 import { Avatar, pickAndUploadAvatar, removeAvatar } from '../lib/avatar';
 import { confirm } from '../lib/dialog';
 import { friendly } from '../lib/errors';
+import {
+  AchievementsList,
+  CardsList,
+  Career,
+  CareerByPelada,
+  CareerSummary,
+  loadMyProfile,
+  loadPlayer,
+  MyProfile,
+  PeladasList,
+  PlayerProfile,
+  VISIBILITY,
+  Visibility,
+} from '../lib/profile';
 import { useAuth } from '../lib/session';
 import { supabase } from '../lib/supabase';
-import { colors, FEET, Foot } from '../lib/theme';
+import { colors, FEET, Foot, footLabel } from '../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
 
-type Profile = { display_name: string; avatar_path: string | null; dominant_foot: Foot | null };
+const TABS = [
+  { value: 'geral', label: 'Visão geral' },
+  { value: 'carreira', label: 'Carreira' },
+  { value: 'peladas', label: 'Peladas' },
+  { value: 'conquistas', label: 'Conquistas' },
+  { value: 'cartas', label: 'Cartas' },
+  { value: 'privacidade', label: 'Privacidade' },
+] as const;
+type Tab = (typeof TABS)[number]['value'];
 
-// Meu perfil: dados da pessoa, iguais em todas as peladas (a posição fica em cada pelada, na carta).
+// Meu Perfil: a identidade da pessoa no Minuto 91 (igual em todas as peladas). A carta é o
+// desempenho em cada pelada; a posição também é de cada pelada.
 export default function Perfil() {
   const router = useRouter();
   const { session } = useAuth();
-  const [profile, setProfile] = useState<Profile | null>(null);
+  const [tab, setTab] = useState<Tab>('geral');
+  const [me, setMe] = useState<MyProfile | null>(null);
+  const [player, setPlayer] = useState<PlayerProfile | null>(null);
+  const [career, setCareer] = useState<Career | null>(null);
+  const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
   const [foot, setFoot] = useState<Foot | null>(null);
+  const [profileVis, setProfileVis] = useState<Visibility>('peladas');
+  const [careerVis, setCareerVis] = useState<Visibility>('peladas');
   const [reload, setReload] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -28,16 +57,20 @@ export default function Perfil() {
     if (!session) return;
     let alive = true;
     (async () => {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('display_name, avatar_path, dominant_foot')
-        .eq('id', session.user.id)
-        .maybeSingle();
-      if (!alive) return;
-      if (error || !data) return setMsg(error ? friendly(error.message) : 'Perfil não encontrado.');
-      setProfile(data as Profile);
-      setName(data.display_name);
-      setFoot((data.dominant_foot as Foot | null) ?? null);
+      try {
+        const [mine, other] = await Promise.all([loadMyProfile(), loadPlayer(session.user.id)]);
+        if (!alive) return;
+        if (!mine) return setMsg('Perfil não encontrado.');
+        setMe(mine);
+        setName(mine.display_name);
+        setFoot((mine.dominant_foot as Foot | null) ?? null);
+        setProfileVis(mine.profile_visibility);
+        setCareerVis(mine.career_visibility);
+        setPlayer(other.profile);
+        setCareer(other.career);
+      } catch (e) {
+        if (alive) setMsg(friendly((e as Error).message));
+      }
     })();
     return () => {
       alive = false;
@@ -84,10 +117,22 @@ export default function Perfil() {
     setBusy(null);
     if (error) return setMsg(friendly(error.message));
     setOk('Perfil salvo.');
+    setEditing(false);
     setReload((n) => n + 1);
   }
 
-  if (!profile) {
+  async function salvarPrivacidade() {
+    setBusy('privacidade');
+    setMsg(null);
+    setOk(null);
+    const { error } = await supabase.rpc('set_my_privacy', { p_profile: profileVis, p_career: careerVis });
+    setBusy(null);
+    if (error) return setMsg(friendly(error.message));
+    setOk('Privacidade salva. Vale na hora para o perfil e a carreira.');
+    setReload((n) => n + 1);
+  }
+
+  if (!me || !career || !player) {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
@@ -96,43 +141,103 @@ export default function Perfil() {
     );
   }
 
-  const changed = name.trim() !== profile.display_name || foot !== profile.dominant_foot;
+  const changed = name.trim() !== me.display_name || foot !== me.dominant_foot;
+  const privacyChanged = profileVis !== me.profile_visibility || careerVis !== me.career_visibility;
+  const visLabel = (v: Visibility) => VISIBILITY.find((x) => x.value === v)?.label ?? v;
 
   return (
     <Screen>
-      <Title>Meu perfil</Title>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <Avatar path={me.avatar_path} name={me.display_name} size={72} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Title>{me.display_name}</Title>
+          <Sub>{me.dominant_foot ? footLabel(me.dominant_foot) : 'Meu perfil'}</Sub>
+        </View>
+      </View>
+      <Chips options={TABS} value={tab} onChange={(v) => { setOk(null); setTab(v); }} />
       <ErrorText>{msg}</ErrorText>
       {ok && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{ok}</Text>}
 
-      <Card>
-        <View style={{ alignItems: 'center', gap: 10, paddingVertical: 6 }}>
-          <Avatar path={profile.avatar_path} name={profile.display_name} size={120} />
-          <Sub>Aparece no seu perfil e nas suas cartas, só para quem joga com você.</Sub>
-        </View>
-        <Button
-          title={profile.avatar_path ? 'Trocar foto' : 'Escolher foto'}
-          kind="secondary"
-          onPress={trocarFoto}
-          loading={busy === 'foto'}
-          disabled={!!busy}
-        />
-        {profile.avatar_path && (
-          <Button title="Remover foto" kind="danger" onPress={tirarFoto} loading={busy === 'remover'} disabled={!!busy} />
-        )}
-      </Card>
+      {tab === 'geral' && (
+        <>
+          {career.visible && <CareerSummary career={career} />}
+          {!editing ? (
+            <Button title="Editar foto, nome e pé" kind="secondary" onPress={() => setEditing(true)} />
+          ) : (
+            <>
+              <Card>
+                <View style={{ alignItems: 'center', gap: 10, paddingVertical: 6 }}>
+                  <Avatar path={me.avatar_path} name={me.display_name} size={120} />
+                  <Sub>Aparece no seu perfil e nas suas cartas, para quem joga com você (e para todos, se o perfil for público).</Sub>
+                </View>
+                <Button
+                  title={me.avatar_path ? 'Trocar foto' : 'Escolher foto'}
+                  kind="secondary"
+                  onPress={trocarFoto}
+                  loading={busy === 'foto'}
+                  disabled={!!busy}
+                />
+                {me.avatar_path && (
+                  <Button title="Remover foto" kind="danger" onPress={tirarFoto} loading={busy === 'remover'} disabled={!!busy} />
+                )}
+              </Card>
+              <Card>
+                <Body>Nome</Body>
+                <Sub>É o nome que aparece nas suas peladas.</Sub>
+                <Input value={name} onChangeText={setName} maxLength={80} autoCapitalize="words" placeholder="Seu apelido" />
+                <Body>Pé dominante</Body>
+                <Sub>Opcional. Só informativo: não muda nota nem carta.</Sub>
+                <Chips options={FEET} value={foot} onChange={(v) => setFoot(v === foot ? null : v)} />
+              </Card>
+              <Button title="Salvar" onPress={salvar} loading={busy === 'salvar'} disabled={!changed || !name.trim() || !!busy} />
+              <Button title="Cancelar" kind="secondary" onPress={() => setEditing(false)} />
+            </>
+          )}
+          <Sub>A posição é escolhida em cada pelada: abra a sua carta na pelada para mudar.</Sub>
+          <Button title="Minha conta" kind="secondary" onPress={() => router.push('/conta')} />
+        </>
+      )}
 
-      <Card>
-        <Body>Nome</Body>
-        <Sub>É o nome que aparece nas suas peladas.</Sub>
-        <Input value={name} onChangeText={setName} maxLength={80} autoCapitalize="words" placeholder="Seu apelido" />
-        <Body>Pé dominante</Body>
-        <Sub>Opcional. Só informativo: não muda nota nem carta.</Sub>
-        <Chips options={FEET} value={foot} onChange={(v) => setFoot(v === foot ? null : v)} />
-      </Card>
+      {tab === 'carreira' && career.visible && (
+        <>
+          <CareerSummary career={career} />
+          <CareerByPelada career={career} />
+        </>
+      )}
 
-      <Button title="Salvar" onPress={salvar} loading={busy === 'salvar'} disabled={!changed || !name.trim() || !!busy} />
-      <Sub>A posição é escolhida em cada pelada: abra a sua carta na pelada para mudar.</Sub>
-      <Button title="Minha conta" kind="secondary" onPress={() => router.push('/conta')} />
+      {tab === 'peladas' && player.visible && <PeladasList peladas={player.peladas} isMe />}
+
+      {tab === 'conquistas' && career.visible && <AchievementsList items={career.achievements} />}
+
+      {tab === 'cartas' && career.visible && <CardsList career={career} playerName={me.display_name} photoPath={me.avatar_path} />}
+
+      {tab === 'privacidade' && (
+        <>
+          <Card>
+            <Body>Quem vê meu perfil</Body>
+            <Sub>Pé dominante, suas peladas e conquistas. Agora: {visLabel(me.profile_visibility)}.</Sub>
+            <Chips options={VISIBILITY} value={profileVis} onChange={setProfileVis} />
+            <Sub>{VISIBILITY.find((x) => x.value === profileVis)?.hint}</Sub>
+          </Card>
+          <Card>
+            <Body>Quem vê minha carreira</Body>
+            <Sub>Totais e histórico de todas as peladas. Agora: {visLabel(me.career_visibility)}.</Sub>
+            <Chips options={VISIBILITY} value={careerVis} onChange={setCareerVis} />
+            <Sub>{VISIBILITY.find((x) => x.value === careerVis)?.hint}</Sub>
+          </Card>
+          <Button title="Salvar privacidade" onPress={salvarPrivacidade} loading={busy === 'privacidade'} disabled={!privacyChanged || !!busy} />
+          <Card>
+            <Sub>
+              Dentro de cada pelada, seu nome, foto, carta e estatísticas continuam visíveis para os colegas: a súmula, a votação e
+              os rankings precisam deles. Quem você bloqueia (ou quem bloqueou você) não vê seu perfil nem sua carreira.
+            </Sub>
+            <Sub>
+              Uma foto já aberta por alguém pode continuar na tela dele por até 15 minutos. Imagens que você compartilhou fora do
+              app (cartas e artes) não podem ser apagadas ou recuperadas pelo Minuto 91 depois do envio.
+            </Sub>
+          </Card>
+        </>
+      )}
     </Screen>
   );
 }
