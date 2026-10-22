@@ -1,6 +1,6 @@
 # Minuto 91 — Relatório da Evolução V2 (22/10/2026)
 
-Base: `cfd0b3c` (relatório final da auditoria). 8 commits locais na `main` (push aguardando confirmação).
+Base: `cfd0b3c` (relatório final da auditoria). 8 commits locais na `main`, contando este relatório (push aguardando confirmação).
 Nenhum segredo neste documento. Nada aqui é conclusão jurídica.
 
 ## 1. Plano inicial e decisões tomadas
