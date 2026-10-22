@@ -1,6 +1,8 @@
 -- V4.2 (migração 039): sorteio de times equilibrado por posição, escalações e Duelo de Jogadores.
 -- Inclui o teste de propriedade (1.500 combinações aleatórias de posições e quantidades).
 -- Cole no SQL Editor do Supabase DEV. Termina SEMPRE com o erro proposital "PASS: 032_draws_duel_lineups".
+-- V4.3 (040/041): o app não escolhe mais a semente; os sorteios com semente fixa deste teste usam a função interna
+-- private.create_team_draw_core (só o dono do banco executa). Goleiros viram GOL (041).
 create function pg_temp.uid(n int) returns uuid language sql as
  $$ select ('96000000-0000-4000-8000-' || lpad(n::text,12,'0'))::uuid $$;
 create function pg_temp.as_user(n int) returns void language plpgsql as
@@ -15,6 +17,11 @@ create function pg_temp.expect_error(p_sql text, p_msg text) returns void langua
  end $$;
 create function pg_temp.assert(p_ok boolean, p_msg text) returns void language plpgsql as
  $$ begin if not coalesce(p_ok,false) then raise exception 'FALHOU: %', p_msg; end if; end $$;
+-- Sorteio com semente fixa (reprodução/auditoria): só pelo dono do banco, como o mesmo usuário (auth.uid()).
+create function pg_temp.draw(p uuid, s uuid[], m text, r int, seed text) returns jsonb language plpgsql as
+ $$ declare v jsonb; begin
+  reset role; v := private.create_team_draw_core(p, s, m, r, seed);
+  perform set_config('role','authenticated',true); return v; end $$;
 create function pg_temp.mem(p_pelada uuid, n int) returns uuid language sql as
  $$ select id from public.pelada_memberships where pelada_id=p_pelada and user_id=pg_temp.uid(n) $$;
 -- Contagem (A, B) de uma posição numa rodada do sorteio.
@@ -65,30 +72,30 @@ v_gk := array[pg_temp.mem(v_p,1),pg_temp.mem(v_p,2),pg_temp.mem(v_p,3),pg_temp.m
 
 -- 1) Dois goleiros e 14 de linha (16): 8x8, um goleiro em cada time.
 v_sel := v_gk[1:2] || (select array_agg(pg_temp.mem(v_p,i)) from generate_series(5,18) i);
-v_d := public.create_team_draw(v_p, v_sel, 'single', 4, 'semente-1');
+v_d := pg_temp.draw(v_p, v_sel, 'single', 4, 'semente-1');
 perform pg_temp.assert(pg_temp.valid(v_d,1,v_sel),'16 jogadores: regras obrigatórias');
-perform pg_temp.assert(pg_temp.cnt(v_d,1,'goalkeeper')=array[1,1],'dois goleiros separados');
+perform pg_temp.assert(pg_temp.cnt(v_d,1,'GOL')=array[1,1],'dois goleiros separados');
 perform pg_temp.assert(pg_temp.sizes(v_d,1)=array[8,8],'8 x 8');
 perform pg_temp.assert(v_d->>'status'='draft' and (v_d->>'rounds_total')::int=4 and jsonb_array_length(v_d->'rounds')=1,
  'sorteio único: uma divisão para 4 rodadas');
 -- 9) total ímpar e 6) posições ímpares: 15 jogadores -> 8x7.
 v_sel := v_gk[1:2] || (select array_agg(pg_temp.mem(v_p,i)) from generate_series(5,17) i);
-v_d := public.create_team_draw(v_p, v_sel, 'single', 1, 'semente-2');
+v_d := pg_temp.draw(v_p, v_sel, 'single', 1, 'semente-2');
 perform pg_temp.assert(pg_temp.valid(v_d,1,v_sel) and (select array_agg(x order by x) from unnest(pg_temp.sizes(v_d,1)) x)=array[7,8],'15 -> 8 x 7');
 -- 2) um goleiro: 1x0 com aviso.
 v_sel := v_gk[1:1] || (select array_agg(pg_temp.mem(v_p,i)) from generate_series(5,12) i);
-v_d := public.create_team_draw(v_p, v_sel, 'single', 1, 'semente-3');
+v_d := pg_temp.draw(v_p, v_sel, 'single', 1, 'semente-3');
 perform pg_temp.assert(pg_temp.valid(v_d,1,v_sel) and (v_d->'warnings') ? 'ONE_GOALKEEPER','um goleiro: aviso explícito');
-perform pg_temp.assert((select sum(x) from unnest(pg_temp.cnt(v_d,1,'goalkeeper')) x)=1,'nenhum goleiro inventado');
+perform pg_temp.assert((select sum(x) from unnest(pg_temp.cnt(v_d,1,'GOL')) x)=1,'nenhum goleiro inventado');
 -- 3) três goleiros: 2x1 com aviso.
 v_sel := v_gk[1:3] || (select array_agg(pg_temp.mem(v_p,i)) from generate_series(5,13) i);
-v_d := public.create_team_draw(v_p, v_sel, 'single', 1, 'semente-4');
+v_d := pg_temp.draw(v_p, v_sel, 'single', 1, 'semente-4');
 perform pg_temp.assert(pg_temp.valid(v_d,1,v_sel) and (v_d->'warnings') ? 'ODD_GOALKEEPERS'
- and (select array_agg(x order by x) from unnest(pg_temp.cnt(v_d,1,'goalkeeper')) x)=array[1,2],'três goleiros: 2 x 1');
+ and (select array_agg(x order by x) from unnest(pg_temp.cnt(v_d,1,'GOL')) x)=array[1,2],'três goleiros: 2 x 1');
 -- 4) quatro goleiros: 2x2. 5) posições pares.
 v_sel := v_gk || (select array_agg(pg_temp.mem(v_p,i)) from generate_series(5,16) i);
-v_d := public.create_team_draw(v_p, v_sel, 'single', 1, 'semente-5');
-perform pg_temp.assert(pg_temp.cnt(v_d,1,'goalkeeper')=array[2,2] and pg_temp.cnt(v_d,1,'defender')=array[3,3]
+v_d := pg_temp.draw(v_p, v_sel, 'single', 1, 'semente-5');
+perform pg_temp.assert(pg_temp.cnt(v_d,1,'GOL')=array[2,2] and pg_temp.cnt(v_d,1,'defender')=array[3,3]
  and pg_temp.cnt(v_d,1,'midfielder')=array[3,3],'quatro goleiros 2 x 2 e pares divididos ao meio');
 -- 10) total par.
 perform pg_temp.assert(pg_temp.sizes(v_d,1)=array[8,8],'total par: 8 x 8');
@@ -99,15 +106,15 @@ perform pg_temp.assert((select bool_and((x->>'overall')::numeric=50) from jsonb_
  'sem Card: base oficial 50 (nada inventado)');
 
 -- 11) sorteios repetidos: mesma semente = mesmo resultado; sementes diferentes variam.
-v_d := public.create_team_draw(v_p, v_sel, 'single', 1, 'semente-repetida');
-v_d2 := public.create_team_draw(v_p, v_sel, 'single', 1, 'semente-repetida');
+v_d := pg_temp.draw(v_p, v_sel, 'single', 1, 'semente-repetida');
+v_d2 := pg_temp.draw(v_p, v_sel, 'single', 1, 'semente-repetida');
 perform pg_temp.assert(v_d->'rounds' = v_d2->'rounds','reproduzível pela semente');
 execute 'reset role';
 perform pg_temp.assert((select count(*) from public.team_draws where pelada_id=v_p and status='draft')=1,
  'um rascunho por pelada (sem duplicados)');
 perform set_config('role','authenticated',true);
 for i in 1..8 loop
- v_d2 := public.create_team_draw(v_p, v_sel, 'single', 1, 'variando-'||i);
+ v_d2 := pg_temp.draw(v_p, v_sel, 'single', 1, 'variando-'||i);
  if v_d2->'rounds'->0->'team_a' = v_d->'rounds'->0->'team_a' then v_same := v_same + 1; end if;
 end loop;
 perform pg_temp.assert(v_same < 8,'aleatoriedade entre soluções válidas');
@@ -120,7 +127,7 @@ select v_p, v_s, m.id, m.preferred_position, 50,50,50,50,50, 40 + (row_number() 
 from public.pelada_memberships m where m.pelada_id=v_p and m.status='active';
 perform set_config('role','authenticated',true);
 perform pg_temp.as_user(1);
-v_d := public.create_team_draw(v_p, v_sel, 'single', 1, 'semente-overall');
+v_d := pg_temp.draw(v_p, v_sel, 'single', 1, 'semente-overall');
 perform pg_temp.assert(pg_temp.valid(v_d,1,v_sel),'otimização respeita as regras');
 perform pg_temp.assert(abs((v_d->'rounds'->0->>'overall_a')::numeric - (v_d->'rounds'->0->>'overall_b')::numeric) <= 5,
  'diferença de overall pequena: '||(v_d->'rounds'->0->>'overall_a')||' x '||(v_d->'rounds'->0->>'overall_b'));
@@ -138,7 +145,7 @@ perform set_config('role','authenticated',true);
 
 -- 12) sorteios independentes: 4 rodadas, cada uma válida, distribuições não todas iguais.
 perform pg_temp.as_user(1);
-v_d := public.create_team_draw(v_p, v_sel, 'independent', 4, 'semente-indep');
+v_d := pg_temp.draw(v_p, v_sel, 'independent', 4, 'semente-indep');
 perform pg_temp.assert(jsonb_array_length(v_d->'rounds')=4,'4 rodadas independentes');
 for r in 1..4 loop perform pg_temp.assert(pg_temp.valid(v_d,r,v_sel),'rodada '||r||' válida'); end loop;
 perform pg_temp.assert((select count(distinct x->'team_a') from jsonb_array_elements(v_d->'rounds') x) > 1,'divisões independentes');
@@ -154,7 +161,7 @@ perform pg_temp.assert((select count(*) from public.team_draw_players where draw
  'resultado persistido por rodada');
 perform set_config('role','authenticated',true);
 -- 13) sorteio reutilizável: confirmação gera uma escalação válida por 3 rodadas.
-v_d := public.create_team_draw(v_p, v_sel, 'single', 3, 'semente-unico');
+v_d := pg_temp.draw(v_p, v_sel, 'single', 3, 'semente-unico');
 perform public.confirm_team_draw((v_d->>'id')::uuid);
 v_l := (select x from jsonb_array_elements(public.get_lineups(v_p)) x where x->>'draw_id'=v_d->>'id');
 perform pg_temp.assert((v_l->>'rounds_total')::int=3 and v_l->>'label' like 'Sorteio único%','mesma composição por 3 rodadas');
@@ -176,7 +183,7 @@ perform pg_temp.assert((v_l->>'needs_review')::boolean,'escalação precisa de r
 perform pg_temp.assert(jsonb_array_length(v_l->'players')=cardinality(v_sel),'composição não mudou sozinha');
 perform pg_temp.expect_error(format('select public.use_lineup_in_match(%L)',v_l->>'id'),'DRAW_STALE');
 -- Rascunho com quem saiu não pode ser confirmado.
-v_d := public.create_team_draw(v_p, v_gk || (select array_agg(pg_temp.mem(v_p,i)) from generate_series(5,11) i), 'single', 1, 'x');
+v_d := pg_temp.draw(v_p, v_gk || (select array_agg(pg_temp.mem(v_p,i)) from generate_series(5,11) i), 'single', 1, 'x');
 perform pg_temp.as_user(7); perform public.leave_pelada(v_p);
 perform pg_temp.as_user(1);
 perform pg_temp.expect_error(format('select public.confirm_team_draw(%L)',v_d->>'id'),'DRAW_STALE');
@@ -189,7 +196,7 @@ perform pg_temp.assert(not exists(select 1 from public.planned_lineup_players wh
 perform set_config('role','authenticated',true);
 -- 16) alteração de posição depois do sorteio: sinalizada.
 v_sel := v_gk[1:2] || (select array_agg(pg_temp.mem(v_p,i)) from generate_series(13,20) i);
-v_d := public.create_team_draw(v_p, v_sel, 'single', 1, 'pos');
+v_d := pg_temp.draw(v_p, v_sel, 'single', 1, 'pos');
 perform public.confirm_team_draw((v_d->>'id')::uuid);
 perform pg_temp.as_user(14); perform public.set_my_position(v_p,'attacker');
 perform pg_temp.as_user(1);
@@ -217,7 +224,7 @@ perform pg_temp.expect_error('insert into public.team_draws(pelada_id,mode,round
 perform pg_temp.expect_error('select * from public.team_draw_players','permission denied');
 perform pg_temp.expect_error('select private.draw_split(array[''a'',''b''],array[1,2]::numeric[],''x'')','permission denied');
 -- Sorteio adulterado no banco é recusado na confirmação.
-v_d := public.create_team_draw(v_p, v_sel, 'single', 1, 'adulterado');
+v_d := pg_temp.draw(v_p, v_sel, 'single', 1, 'adulterado');
 execute 'reset role';
 update public.team_draw_players set team='A' where draw_id=(v_d->>'id')::uuid;
 perform set_config('role','authenticated',true);

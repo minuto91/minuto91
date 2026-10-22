@@ -1,7 +1,8 @@
 // Testes de concorrência com um PostgreSQL REAL (embedded-postgres, binário oficial do Postgres 17)
 // e duas conexões simultâneas (V4.2, seção 8.1). Nada aqui conecta ao Supabase.
 // Uso: cd supabase/local_db; npm install; node concurrency.mjs
-// Roda duas vezes: com as migrações até a 035 (V4.1) e com todas (V4.2), e compara.
+// Roda duas vezes: com as migrações até a 035 (V4.1) e com todas, e compara.
+// V4.3: também disputa o Financeiro (043) com admin e assistente ao mesmo tempo (invariantes contábeis).
 import EmbeddedPostgres from 'embedded-postgres';
 import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -183,9 +184,97 @@ async function suite(label, files, v42) {
   return { deadlocks, broken };
 }
 
+// ===== V4.3: Financeiro (043) com duas pessoas autorizadas (admin e assistente) ao mesmo tempo =====
+const FIN_SETUP = `
+create function cc.fin_setup(p_run int) returns jsonb language plpgsql as $$
+declare v_p uuid; v_tok text; v_m uuid; v_a uuid; v_c jsonb; v_today date;
+begin
+ perform cc.as_user(1);
+ v_p := public.create_pelada('Caixa '||p_run,'GOL');
+ v_tok := public.create_pelada_invite(v_p);
+ for i in 2..4 loop perform cc.as_user(i); perform public.join_pelada(v_tok,'MEI'); end loop;
+ perform cc.as_user(1);
+ v_a := (select id from public.pelada_memberships where pelada_id=v_p and user_id=cc.uid(2));
+ perform public.set_assistant(v_p, v_a, true);
+ perform public.set_finance_access(v_p, v_a, true);
+ v_m := (select id from public.pelada_memberships where pelada_id=v_p and user_id=cc.uid(3));
+ v_today := private.pelada_today(v_p);
+ perform public.save_monthly_member(v_p, null, v_m, null, 10000, 28, date_trunc('month', v_today)::date);
+ v_c := public.create_charge(v_p, 'extra', v_m, null, null, 'Rateio', 10000, v_today, gen_random_uuid());
+ return jsonb_build_object('pelada', v_p, 'charge', v_c->>'id', 'today', v_today);
+end $$;
+`;
+
+async function finSuite(files) {
+  const db = await startDb('V4.3 Financeiro (todas)', files);
+  let deadlocks = 0;
+  const tally = new Map();
+  const note = (k) => tally.set(k, (tally.get(k) ?? 0) + 1);
+  const run = (c, sql, args) => c.query(sql, args).then(() => 'ok', (e) => outcome(e).replace(/^.*?(FINANCE_[A-Z_]+).*$/, '$1'));
+  try {
+    await db.admin.query(FIN_SETUP);
+    const t0 = Date.now();
+    for (let i = 1; i <= ITER; i++) {
+      const r = (await db.admin.query('select cc.fin_setup($1) r', [i])).rows[0].r;
+      const A = await client(db.cfg);
+      const B = await client(db.cfg);
+      try {
+        await A.query('select cc.as_user(1)');
+        await B.query('select cc.as_user(2)');
+        // 1) o mesmo pagamento enviado pelos dois (mesmo request_id): um só registro
+        const rid = crypto.randomUUID();
+        const pay = 'select public.register_payment($1,3000,$2,null,null,$3)';
+        const s1 = await Promise.all([run(A, pay, [r.charge, r.today, rid]), run(B, pay, [r.charge, r.today, rid])]);
+        note(`mesmo request_id: ${s1.sort().join(' / ')}`);
+        // 2) os dois registram 6.000 ao mesmo tempo onde faltam 7.000: só um entra
+        const pay2 = 'select public.register_payment($1,6000,$2,null,null,$3,true)';
+        const s2 = await Promise.all([run(A, pay2, [r.charge, r.today, crypto.randomUUID()]), run(B, pay2, [r.charge, r.today, crypto.randomUUID()])]);
+        note(`dois pagamentos que estouram a dívida: ${s2.sort().join(' / ')}`);
+        // 3) os dois geram as mensalidades do mês ao mesmo tempo
+        const gen = 'select public.generate_monthly_charges($1)';
+        const s3 = await Promise.all([run(A, gen, [r.pelada]), run(B, gen, [r.pelada])]);
+        // 4) estorno e novo pagamento ao mesmo tempo
+        const p1 = (await db.admin.query('select id from public.finance_payments where charge_id=$1 and reversed_at is null order by created_at limit 1', [r.charge])).rows[0].id;
+        const s4 = await Promise.all([
+          run(A, 'select public.reverse_payment($1,$2)', [p1, 'estorno concorrente']),
+          run(B, 'select public.register_payment($1,1000,$2,null,null,$3,true)', [r.charge, r.today, crypto.randomUUID()]),
+        ]);
+        note(`estorno x pagamento: ${s4.sort().join(' / ')}`);
+        for (const x of [...s1, ...s2, ...s3, ...s4]) if (x === 'DEADLOCK') deadlocks++;
+      } finally {
+        await A.end();
+        await B.end();
+      }
+    }
+    // Invariantes contábeis em todas as cobranças.
+    const inv = (
+      await db.admin.query(`select
+        count(*) filter (where c.amount_paid_cents <> coalesce((select sum(p.amount_cents) from public.finance_payments p
+          where p.charge_id=c.id and p.reversed_at is null),0)) mismatch,
+        count(*) filter (where c.amount_paid_cents > c.amount_due_cents) over_paid,
+        (select count(*) from (select finance_member_id, reference_month from public.finance_charges where kind='monthly' group by 1,2 having count(*)>1) d) dup_monthly,
+        (select count(*) from (select pelada_id, request_id from public.finance_payments group by 1,2 having count(*)>1) d) dup_request,
+        (select count(*) from public.finance_charges where kind='monthly') monthly
+        from public.finance_charges c`)
+    ).rows[0];
+    console.log(`  ${ITER} rodadas com duas conexões (${((Date.now() - t0) / 1000).toFixed(1)}s):`);
+    for (const [k, n] of tally) console.log(`    ${n}× ${k}`);
+    console.log(
+      `  deadlocks: ${deadlocks}; pago ≠ soma dos pagamentos: ${inv.mismatch}; pago acima do devido: ${inv.over_paid}; ` +
+        `mensalidade duplicada: ${inv.dup_monthly} (${inv.monthly} geradas); request_id duplicado: ${inv.dup_request}`,
+    );
+    return deadlocks === 0 && [inv.mismatch, inv.over_paid, inv.dup_monthly, inv.dup_request].every((x) => Number(x) === 0) && Number(inv.monthly) === ITER;
+  } finally {
+    await db.admin.end();
+    await db.server.stop();
+    rmSync(db.dir, { recursive: true, force: true });
+  }
+}
+
 const old = await suite('V4.1 (até 035)', migrations.filter((f) => f < '036'), false);
-const cur = await suite('V4.2 (todas)', migrations, true);
-const ok = cur.deadlocks === 0 && cur.broken === 0;
-console.log(ok ? 'PASS: V4.2 sem deadlock e sem voto de versão antiga' : 'FAIL: V4.2 ainda tem deadlock ou voto antigo');
+const cur = await suite('Atual (todas)', migrations, true);
+const finOk = await finSuite(migrations);
+const ok = cur.deadlocks === 0 && cur.broken === 0 && finOk;
+console.log(ok ? 'PASS: sem deadlock, sem voto de versão antiga e Financeiro íntegro sob concorrência' : 'FAIL: deadlock, voto antigo ou Financeiro inconsistente');
 console.log(`(V4.1 no mesmo roteiro: ${old.deadlocks} deadlock(s), ${old.broken} apuração(ões) com voto de versão antiga)`);
 process.exit(ok ? 0 : 1);
