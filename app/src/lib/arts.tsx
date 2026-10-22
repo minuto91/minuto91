@@ -484,10 +484,10 @@ export function RetroRankingsArt({
         {blocks.map((b) => (
           <View key={b.title} style={{ width: '47%', gap: 2 }}>
             <Text style={s.section}>{b.title}</Text>
-            {b.rows.slice(0, 3).map((r, i) => (
+            {b.rows.slice(0, 3).map((r) => (
               <View key={r.membershipId} style={s.row}>
                 <Text style={[s.rowName, { fontSize: 12 }]} numberOfLines={1}>
-                  {i + 1}. {r.name}
+                  {r.rank}. {r.name}
                 </Text>
                 <Text style={[s.rowValue, { fontSize: 12 }]}>{r.value}</Text>
               </View>

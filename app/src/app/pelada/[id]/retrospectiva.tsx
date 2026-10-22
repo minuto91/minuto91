@@ -211,9 +211,9 @@ function TopCard({ title, rows, unit }: { title: string; rows: Top[]; unit: [str
   return (
     <Card>
       <Body>{title}</Body>
-      {rows.map((r, i) => (
+      {rows.map((r) => (
         <Sub key={r.membershipId}>
-          {i + 1}. {r.name}: {plural(r.value, unit[0], unit[1])}
+          {r.rank}. {r.name}: {plural(r.value, unit[0], unit[1])}
         </Sub>
       ))}
     </Card>

@@ -4,7 +4,8 @@
 import { Card as CardData } from './career';
 import { supabase } from './supabase';
 
-export type Top = { membershipId: string; name: string; value: number };
+// rank: posição com empate compartilhado (1, 1, 3), como nos rankings do servidor (V4.1).
+export type Top = { membershipId: string; name: string; value: number; rank: number };
 export type RetroMatch = { id: string; played_at: string; team_a_name: string; team_b_name: string; team_a_score: number; team_b_score: number };
 
 export type PeladaRetro = {
@@ -34,12 +35,13 @@ export type PlayerRetro = {
 
 export type Retro = { pelada: PeladaRetro; me: PlayerRetro | null };
 
-const top = (rows: { membership_id: string; v: number }[], nameOf: (id: string) => string, n = 3): Top[] =>
-  rows
+const top = (rows: { membership_id: string; v: number }[], nameOf: (id: string) => string, n = 3): Top[] => {
+  const all = rows
     .filter((r) => r.v > 0)
-    .sort((a, b) => b.v - a.v)
-    .slice(0, n)
-    .map((r) => ({ membershipId: r.membership_id, name: nameOf(r.membership_id), value: r.v }));
+    .map((r) => ({ membershipId: r.membership_id, name: nameOf(r.membership_id), value: r.v }))
+    .sort((a, b) => b.value - a.value || a.name.localeCompare(b.name, 'pt-BR')); // empatados em ordem alfabética
+  return all.slice(0, n).map((t) => ({ ...t, rank: 1 + all.filter((x) => x.value > t.value).length }));
+};
 
 const count = (ids: string[]) => {
   const m = new Map<string, number>();
