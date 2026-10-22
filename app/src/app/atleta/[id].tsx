@@ -21,7 +21,7 @@ const TABS = [
   { value: 'carreira', label: 'Carreira' },
   { value: 'peladas', label: 'Peladas' },
   { value: 'conquistas', label: 'Conquistas' },
-  { value: 'cartas', label: 'Cartas' },
+  { value: 'cartas', label: 'Cards' },
 ] as const;
 type Tab = (typeof TABS)[number]['value'];
 
@@ -65,7 +65,7 @@ export default function Atleta() {
       <Screen>
         <Title>{displayName}</Title>
         <Card>
-          <Sub>Este jogador deixou o perfil e a carreira privados. A carta dele continua na pelada de vocês.</Sub>
+          <Sub>Este jogador deixou o perfil e a carreira privados. O Card dele continua na pelada de vocês.</Sub>
         </Card>
       </Screen>
     );

@@ -89,7 +89,7 @@ export function AnnulMatch({
     <Card>
       <Body>Anular esta partida</Body>
       <Sub>
-        Ela não é apagada, mas deixa de contar. Rankings, cartas, prêmios e figurinhas são recalculados. Os votos não
+        Ela não é apagada, mas deixa de contar. Rankings, Cards, prêmios e figurinhas são recalculados. Os votos não
         voltam e não dá para desfazer: se preciso, registre a partida de novo.
       </Sub>
       <Sub>

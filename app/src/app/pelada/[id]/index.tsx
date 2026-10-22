@@ -165,7 +165,7 @@ export default function Pelada() {
       {status === 'restricted' && <Sub>Pelada restrita: sem administrador elegível.</Sub>}
       <ErrorText>{msg}</ErrorText>
 
-      {me && <Button title="Minha carta" onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: me.id } })} />}
+      {me && <Button title="Meu Card" onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: me.id } })} />}
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>
           <Button title="Elenco" kind="secondary" onPress={() => go('/pelada/[id]/elenco')} />

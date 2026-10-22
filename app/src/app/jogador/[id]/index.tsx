@@ -160,13 +160,13 @@ export default function Carta() {
       <ErrorText>{msg}</ErrorText>
 
       {member.status === 'retired' ? (
-        <Sub>Aposentado: este registro não tem carta.</Sub>
+        <Sub>Aposentado: este registro não tem Card.</Sub>
       ) : !loaded ? (
         <Sub>Carregando...</Sub>
       ) : !card || !tier ? (
         <Card>
-          <Body>Ainda sem carta nesta temporada.</Body>
-          <Sub>A carta aparece depois da primeira partida finalizada.</Sub>
+          <Body>Ainda sem Card nesta temporada.</Body>
+          <Sub>O Card aparece depois da primeira partida finalizada.</Sub>
         </Card>
       ) : (
         <>
@@ -181,7 +181,7 @@ export default function Carta() {
             />
           </View>
           {card.is_provisional && (
-            <Sub>Carta provisória: {card.matches_played} de 5 jogos na temporada.</Sub>
+            <Sub>Card provisório: {card.matches_played} de 5 jogos na temporada.</Sub>
           )}
           <Card>
             {ATTRIBUTES.map((a) => {
@@ -201,7 +201,7 @@ export default function Carta() {
           </Card>
           {/* Só a própria carta: compartilhar a de outro jogador fica com ele (privacidade, Doc 03 36.3). */}
           {isMe && (
-            <SharePanel label="Compartilhar minha carta" fileName="minuto91-carta" title="Minha carta">
+            <SharePanel label="Compartilhar meu Card" fileName="minuto91-card" title="Meu Card">
               <CardArt peladaName={peladaName} crestPath={crestPath} seasonName={seasonName} playerName={member.player_name} photoPath={photoPath} card={card} />
             </SharePanel>
           )}
@@ -245,7 +245,7 @@ export default function Carta() {
         <Card>
           <Body>Minha posição nesta pelada</Body>
           <Sub>
-            A posição define os pesos da sua carta. A troca vale a partir da próxima partida: as partidas já jogadas
+            A posição define os pesos do seu Card. A troca vale a partir da próxima partida: as partidas já jogadas
             continuam com a posição da época, e seu overall pode mudar por causa da nova função, não só do desempenho.
           </Sub>
           <PositionPicker value={newPos ?? (member.preferred_position as Position)} onChange={setNewPos} />

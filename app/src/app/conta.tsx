@@ -108,7 +108,7 @@ export default function Conta() {
       <Pressable onPress={() => router.push('/perfil')} accessibilityRole="button">
         <Card>
           <Body>Meu perfil ›</Body>
-          <Sub>Foto, nome e pé dominante. A posição e a carta ficam em cada pelada.</Sub>
+          <Sub>Foto, nome e pé dominante. A posição e o Card ficam em cada pelada.</Sub>
         </Card>
       </Pressable>
       <Button title="Sair da conta" kind="secondary" onPress={() => supabase.auth.signOut()} />

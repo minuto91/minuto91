@@ -29,7 +29,7 @@ const TABS = [
   { value: 'carreira', label: 'Carreira' },
   { value: 'peladas', label: 'Peladas' },
   { value: 'conquistas', label: 'Conquistas' },
-  { value: 'cartas', label: 'Cartas' },
+  { value: 'cartas', label: 'Cards' },
   { value: 'privacidade', label: 'Privacidade' },
 ] as const;
 type Tab = (typeof TABS)[number]['value'];
@@ -94,7 +94,7 @@ export default function Perfil() {
   }
 
   function tirarFoto() {
-    confirm('Remover foto', 'Sua foto sai do perfil e das cartas. Você pode pôr outra depois.', 'Remover', async () => {
+    confirm('Remover foto', 'Sua foto sai do perfil e dos Cards. Você pode pôr outra depois.', 'Remover', async () => {
       setBusy('remover');
       setMsg(null);
       setOk(null);
@@ -168,7 +168,7 @@ export default function Perfil() {
               <Card>
                 <View style={{ alignItems: 'center', gap: 10, paddingVertical: 6 }}>
                   <Avatar path={me.avatar_path} name={me.display_name} size={120} />
-                  <Sub>Aparece no seu perfil e nas suas cartas, para quem joga com você (e para todos, se o perfil for público).</Sub>
+                  <Sub>Aparece no seu perfil e nos seus Cards, para quem joga com você (e para todos, se o perfil for público).</Sub>
                 </View>
                 <Button
                   title={me.avatar_path ? 'Trocar foto' : 'Escolher foto'}
@@ -186,14 +186,14 @@ export default function Perfil() {
                 <Sub>É o nome que aparece nas suas peladas.</Sub>
                 <Input value={name} onChangeText={setName} maxLength={80} autoCapitalize="words" placeholder="Seu apelido" />
                 <Body>Pé dominante</Body>
-                <Sub>Opcional. Só informativo: não muda nota nem carta.</Sub>
+                <Sub>Opcional. Só informativo: não muda nota nem Card.</Sub>
                 <Chips options={FEET} value={foot} onChange={(v) => setFoot(v === foot ? null : v)} />
               </Card>
               <Button title="Salvar" onPress={salvar} loading={busy === 'salvar'} disabled={!changed || !name.trim() || !!busy} />
               <Button title="Cancelar" kind="secondary" onPress={() => setEditing(false)} />
             </>
           )}
-          <Sub>A posição é escolhida em cada pelada: abra a sua carta na pelada para mudar.</Sub>
+          <Sub>A posição é escolhida em cada pelada: abra o seu Card na pelada para mudar.</Sub>
           <Button title="Minha conta" kind="secondary" onPress={() => router.push('/conta')} />
         </>
       )}
@@ -228,12 +228,12 @@ export default function Perfil() {
           <Button title="Salvar privacidade" onPress={salvarPrivacidade} loading={busy === 'privacidade'} disabled={!privacyChanged || !!busy} />
           <Card>
             <Sub>
-              Dentro de cada pelada, seu nome, foto, carta e estatísticas continuam visíveis para os colegas: a súmula, a votação e
+              Dentro de cada pelada, seu nome, foto, Card e estatísticas continuam visíveis para os colegas: a súmula, a votação e
               os rankings precisam deles. Quem você bloqueia (ou quem bloqueou você) não vê seu perfil nem sua carreira.
             </Sub>
             <Sub>
               Uma foto já aberta por alguém pode continuar na tela dele por até 15 minutos. Imagens que você compartilhou fora do
-              app (cartas e artes) não podem ser apagadas ou recuperadas pelo Minuto 91 depois do envio.
+              app (Cards e artes) não podem ser apagadas ou recuperadas pelo Minuto 91 depois do envio.
             </Sub>
           </Card>
         </>

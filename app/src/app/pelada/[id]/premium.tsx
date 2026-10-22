@@ -158,7 +158,7 @@ export default function PeladaPremium() {
         {FEATURES.map((f) => (
           <Sub key={f}>• {f}</Sub>
         ))}
-        <Sub>Cartas, votação, Craque, rankings e álbum continuam grátis.</Sub>
+        <Sub>Cards, votação, Craque da Partida, rankings e álbum continuam grátis.</Sub>
       </Card>
 
       <ErrorText>{msg}</ErrorText>

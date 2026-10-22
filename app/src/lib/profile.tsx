@@ -156,12 +156,17 @@ const anyHidden = (c: Extract<Career, { visible: true }>) => c.peladas.some((p) 
 /** Total geral + nota do que ficou de fora pelo plano. */
 export function CareerSummary({ career }: { career: Extract<Career, { visible: true }> }) {
   const selections = career.achievements.filter((a) => a.type === 'round_selection').length;
+  const partial = anyHidden(career);
+  // Total parcial nunca aparece como se fosse a carreira inteira.
   return (
     <Card>
-      <Body>Total na carreira</Body>
+      <Body>{partial ? 'Total nas temporadas disponíveis' : 'Total na carreira'}</Body>
       <TotalsGrid totals={career.totals} selections={selections} />
-      {anyHidden(career) && (
-        <Sub>Peladas sem Premium mostram só a temporada atual e a anterior. O histórico completo é do Premium da pelada.</Sub>
+      {partial && (
+        <Sub>
+          Este total não inclui temporadas antigas de peladas sem Premium (elas mostram só a temporada atual e a anterior). O
+          histórico completo é do Premium de cada pelada.
+        </Sub>
       )}
     </Card>
   );
@@ -184,6 +189,7 @@ export function CareerByPelada({ career }: { career: Extract<Career, { visible: 
               </Sub>
             </View>
           </View>
+          {p.hidden_seasons > 0 && <Sub>Total das temporadas disponíveis</Sub>}
           <TotalsGrid totals={p.totals} />
           {p.seasons.length === 0 && <Sub>Sem partidas finalizadas nas temporadas disponíveis.</Sub>}
           {p.seasons.map((s) => (
@@ -191,7 +197,7 @@ export function CareerByPelada({ career }: { career: Extract<Career, { visible: 
               <Text style={{ fontWeight: '700', color: colors.ink }}>
                 {s.name}
                 {s.card ? ` · overall ${Math.round(Number(s.card.overall))} ${TIER[s.card.tier].label}` : ''}
-                {s.card?.is_provisional ? ' (provisória)' : ''}
+                {s.card?.is_provisional ? ' (provisório)' : ''}
               </Text>
               <Sub>
                 {plural(s.matches_played, 'jogo', 'jogos')} · {s.wins}V {s.draws}E {s.losses}D · {plural(s.goals, 'gol', 'gols')} ·{' '}
@@ -250,7 +256,7 @@ export function CardsList({
     .filter((p) => p.status === 'active')
     .map((p) => ({ p, s: p.seasons.find((s) => s.card) }))
     .filter((x): x is { p: CareerPelada; s: CareerSeason & { card: CareerCard } } => !!x.s?.card);
-  if (cards.length === 0) return <Sub>As cartas aparecem depois da primeira partida finalizada em cada pelada.</Sub>;
+  if (cards.length === 0) return <Sub>Os Cards aparecem depois da primeira partida finalizada em cada pelada.</Sub>;
   return (
     <View style={{ gap: 16, alignItems: 'center' }}>
       {cards.map(({ p, s }) => (

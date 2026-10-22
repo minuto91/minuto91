@@ -15,7 +15,8 @@ function Gate() {
     if (loading) return;
     const first = segments[0] as string | undefined;
     if (!session) {
-      if (first !== 'login' && first !== 'convite') router.replace('/login');
+      // A vitrine de Cards (só em desenvolvimento) abre sem login, para conferir o desenho.
+      if (first !== 'login' && first !== 'convite' && !(__DEV__ && first === 'dev-cards')) router.replace('/login');
       return;
     }
     if (onboarded === null) return;
@@ -55,7 +56,7 @@ function Gate() {
       <Stack.Screen name="conta" options={{ title: 'Minha conta' }} />
       <Stack.Screen name="perfil" options={{ title: 'Meu perfil' }} />
       <Stack.Screen name="atleta/[id]" options={{ title: 'Perfil do jogador' }} />
-      <Stack.Screen name="jogador/[id]/index" options={{ title: 'Carta' }} />
+      <Stack.Screen name="jogador/[id]/index" options={{ title: 'Card' }} />
       <Stack.Screen name="jogador/[id]/album" options={{ title: 'Álbum' }} />
       <Stack.Screen name="partida/[id]/index" options={{ title: 'Partida' }} />
       <Stack.Screen name="partida/[id]/sumula" options={{ title: 'Súmula' }} />

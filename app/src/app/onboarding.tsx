@@ -34,7 +34,7 @@ export default function Onboarding() {
   return (
     <Screen>
       <Title>Como te chamam na pelada?</Title>
-      <Sub>Esse apelido aparece nas suas cartas e rankings.</Sub>
+      <Sub>Esse apelido aparece nos seus Cards e rankings.</Sub>
       <Input autoCapitalize="words" placeholder="seu apelido" value={nome} onChangeText={setNome} />
       <Row value={adulto} onChange={setAdulto} label="Declaro que tenho 18 anos ou mais." />
       <Row value={termos} onChange={setTermos} label="Li e aceito os Termos de Uso e a Política de Privacidade." />

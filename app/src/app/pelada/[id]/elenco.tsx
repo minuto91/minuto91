@@ -14,7 +14,7 @@ import { Body, Button, Chips, ErrorText, Input, Screen, Sub, Title } from '../..
 type Row = { card: CardData; membershipId: string; name: string; userId: string | null };
 
 const VIEWS = [
-  { value: 'cartas', label: 'Cartas' },
+  { value: 'cartas', label: 'Cards' },
   { value: 'lista', label: 'Lista' },
 ] as const;
 const SORTS = [
@@ -125,8 +125,8 @@ export default function Elenco() {
         !msg && <Sub>Carregando...</Sub>
       ) : rows.length === 0 ? (
         <View style={{ paddingVertical: 24, gap: 8, alignItems: 'center' }}>
-          <Body>Ainda não há cartas nesta temporada.</Body>
-          <Sub>As cartas dos jogadores aparecerão aqui após as primeiras avaliações.</Sub>
+          <Body>Ainda não há Cards nesta temporada.</Body>
+          <Sub>Os Cards dos jogadores aparecerão aqui após as primeiras avaliações.</Sub>
         </View>
       ) : (
         <>
@@ -137,7 +137,7 @@ export default function Elenco() {
             <Chips options={SORTS} value={sort} onChange={setSort} />
           </View>
           <Sub>
-            {shown.length} de {rows.length} com carta. Quem ainda não tem carta continua na pelada normalmente.
+            {shown.length} de {rows.length} com Card. Quem ainda não tem Card continua na pelada normalmente.
           </Sub>
 
           {shown.length === 0 && <Sub>Nenhum jogador com esse filtro.</Sub>}
@@ -145,7 +145,7 @@ export default function Elenco() {
           {view === 'cartas' ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>
               {shown.slice(0, limit).map((r) => (
-                <Pressable key={r.membershipId} accessibilityRole="button" accessibilityHint="Abre a carta do jogador nesta pelada" onPress={() => open(r)}>
+                <Pressable key={r.membershipId} accessibilityRole="button" accessibilityHint="Abre o Card do jogador nesta pelada" onPress={() => open(r)}>
                   <PlayerCard
                     card={r.card}
                     playerName={r.name}
@@ -172,7 +172,7 @@ export default function Elenco() {
                     <Body>{r.name}</Body>
                     <Sub>
                       {positionLabel(r.card.position)}
-                      {r.card.is_provisional ? ' · provisória' : ''}
+                      {r.card.is_provisional ? ' · provisório' : ''}
                     </Sub>
                   </View>
                   <View style={{ alignItems: 'center', minWidth: 52, paddingVertical: 4, borderRadius: 8, borderWidth: 2, borderColor: t.frame, backgroundColor: t.bg }}>
