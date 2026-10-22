@@ -9,10 +9,11 @@ import { StyleSheet, Text, View } from 'react-native';
 
 import { Avatar } from './avatar';
 import { Crest } from './crest';
-import { Card as CardData } from './career';
+import { Card as CardData, plural } from './career';
 import { friendly } from './errors';
 import { fmtRating } from './match';
 import { CARD_W, PlayerCard } from './playercard';
+import type { PeladaRetro, PlayerRetro } from './retro';
 import { shareViewAsImage } from './share';
 import { colors } from './theme';
 import { Button, Chips, ErrorText, Sub } from './ui';
@@ -373,6 +374,179 @@ export function StickerArt({
         </Text>
         <Text style={s.muted}>Conquistada em {date}</Text>
       </View>
+    </>
+  );
+}
+
+// ---------- Retrospectiva da temporada ----------
+// Básica (grátis): capa da pelada e "minha temporada". Especial (Premium da pelada): os rankings da
+// temporada. Bola Murcha nunca entra nas artes (não é conquista). Temporada em andamento = "parcial".
+
+function RetroCover({ peladaName, crestPath, seasonName, partial }: { peladaName: string; crestPath?: string | null; seasonName: string; partial: boolean }) {
+  return (
+    <>
+      <Header title={peladaName} subtitle={seasonName} crestPath={crestPath} />
+      <Text style={[s.goldLabel, { textAlign: 'center', color: colors.blue }]}>
+        RETROSPECTIVA{partial ? ' (PARCIAL)' : ''}
+      </Text>
+    </>
+  );
+}
+
+function BigNumbers({ items }: { items: { label: string; value: string }[] }) {
+  const post = useArtFormat() === 'post';
+  return (
+    <View style={s.statsRow}>
+      {items.map((x) => (
+        <View key={x.label} style={[s.stat, post && { paddingVertical: 6 }]}>
+          <Text style={s.statValue}>{x.value}</Text>
+          <Text style={s.statLabel}>{x.label}</Text>
+        </View>
+      ))}
+    </View>
+  );
+}
+
+export function RetroPeladaArt({
+  peladaName,
+  crestPath,
+  seasonName,
+  partial,
+  retro,
+}: {
+  peladaName: string;
+  crestPath?: string | null;
+  seasonName: string;
+  partial: boolean;
+  retro: PeladaRetro;
+}) {
+  const post = useArtFormat() === 'post';
+  const avg = retro.matches ? (retro.goals / retro.matches).toFixed(1).replace('.', ',') : '0';
+  const lines = [
+    retro.scorers[0] && { label: 'Artilheiro', text: `${retro.scorers[0].name} (${retro.scorers[0].value})` },
+    retro.craques[0] && { label: 'Mais vezes Craque da Partida', text: `${retro.craques[0].name} (${retro.craques[0].value})` },
+    retro.kings.length > 0 && { label: 'Reis do Mês', text: plural(retro.kings.length, 'mês', 'meses') + ' com Rei' },
+    retro.biggestWin && {
+      label: 'Maior placar',
+      text: `${retro.biggestWin.team_a_name} ${retro.biggestWin.team_a_score} x ${retro.biggestWin.team_b_score} ${retro.biggestWin.team_b_name}`,
+    },
+  ]
+    .filter(Boolean)
+    .slice(0, post ? 3 : 4) as { label: string; text: string }[];
+  return (
+    <>
+      <RetroCover peladaName={peladaName} crestPath={crestPath} seasonName={seasonName} partial={partial} />
+      <BigNumbers
+        items={[
+          { label: 'Partidas', value: String(retro.matches) },
+          { label: 'Gols', value: String(retro.goals) },
+          { label: 'Gols/jogo', value: avg },
+        ]}
+      />
+      <View style={{ gap: 8 }}>
+        {lines.map((l) => (
+          <View key={l.label} style={{ alignItems: 'center' }}>
+            <Text style={s.section}>{l.label}</Text>
+            <Text style={s.center} numberOfLines={2}>
+              {l.text}
+            </Text>
+          </View>
+        ))}
+      </View>
+    </>
+  );
+}
+
+export function RetroRankingsArt({
+  peladaName,
+  crestPath,
+  seasonName,
+  partial,
+  retro,
+}: {
+  peladaName: string;
+  crestPath?: string | null;
+  seasonName: string;
+  partial: boolean;
+  retro: PeladaRetro;
+}) {
+  const post = useArtFormat() === 'post';
+  const blocks = [
+    { title: 'Artilharia', rows: retro.scorers },
+    { title: 'Garçons', rows: retro.assisters },
+    { title: 'Craque da Partida', rows: retro.craques },
+    { title: 'Mais presentes', rows: retro.presence },
+  ].filter((b) => b.rows.length > 0);
+  return (
+    <>
+      <RetroCover peladaName={peladaName} crestPath={post ? undefined : crestPath} seasonName={seasonName} partial={partial} />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+        {blocks.map((b) => (
+          <View key={b.title} style={{ width: '47%', gap: 2 }}>
+            <Text style={s.section}>{b.title}</Text>
+            {b.rows.slice(0, 3).map((r, i) => (
+              <View key={r.membershipId} style={s.row}>
+                <Text style={[s.rowName, { fontSize: 12 }]} numberOfLines={1}>
+                  {i + 1}. {r.name}
+                </Text>
+                <Text style={[s.rowValue, { fontSize: 12 }]}>{r.value}</Text>
+              </View>
+            ))}
+          </View>
+        ))}
+      </View>
+    </>
+  );
+}
+
+export function RetroPlayerArt({
+  peladaName,
+  crestPath,
+  seasonName,
+  partial,
+  playerName,
+  photoPath,
+  me,
+}: {
+  peladaName: string;
+  crestPath?: string | null;
+  seasonName: string;
+  partial: boolean;
+  playerName: string;
+  photoPath: string | null | undefined;
+  me: PlayerRetro;
+}) {
+  const post = useArtFormat() === 'post';
+  const honors = [
+    me.craque > 0 && plural(me.craque, 'vez Craque da Partida', 'vezes Craque da Partida'),
+    me.kings > 0 && plural(me.kings, 'vez Rei do Mês', 'vezes Rei do Mês'),
+  ].filter(Boolean) as string[];
+  return (
+    <>
+      <RetroCover peladaName={peladaName} crestPath={post ? undefined : crestPath} seasonName={seasonName} partial={partial} />
+      <View style={post ? { flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 12 } : { alignItems: 'center', gap: 6 }}>
+        <View style={[s.photoRing, honors.length > 0 && { borderColor: colors.gold }]}>
+          <Avatar path={photoPath} name={playerName} size={post ? 56 : 96} />
+        </View>
+        <Text style={s.bigName} numberOfLines={1}>
+          {playerName}
+        </Text>
+      </View>
+      <BigNumbers
+        items={[
+          { label: me.matches === 1 ? 'Jogo' : 'Jogos', value: String(me.matches) },
+          { label: me.goals === 1 ? 'Gol' : 'Gols', value: String(me.goals) },
+          { label: me.assists === 1 ? 'Assist.' : 'Assists.', value: String(me.assists) },
+        ]}
+      />
+      <Text style={[s.center, { color: colors.muted }]}>
+        {plural(me.wins, 'vitória', 'vitórias')} · {plural(me.draws, 'empate', 'empates')} · {plural(me.losses, 'derrota', 'derrotas')}
+      </Text>
+      {honors.map((h) => (
+        <View key={h} style={[s.badge, { alignSelf: 'center' }]}>
+          <Text style={s.badgeText}>{h.toUpperCase()}</Text>
+        </View>
+      ))}
     </>
   );
 }

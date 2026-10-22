@@ -152,7 +152,14 @@ export default function Pelada() {
   const roleName = (r: string) => (r === 'admin' ? 'Administrador' : r === 'assistant' ? 'Assistente' : 'Jogador');
 
   const shown = allMatches ? matches : matches.slice(0, 5);
-  const go = (pathname: '/pelada/[id]/rankings' | '/pelada/[id]/elenco' | '/pelada/[id]/configuracoes' | '/pelada/[id]/premium') =>
+  const go = (
+    pathname:
+      | '/pelada/[id]/rankings'
+      | '/pelada/[id]/elenco'
+      | '/pelada/[id]/configuracoes'
+      | '/pelada/[id]/premium'
+      | '/pelada/[id]/retrospectiva',
+  ) =>
     router.push({ pathname, params: { id } });
 
   return (
@@ -175,6 +182,7 @@ export default function Pelada() {
           <Button title="Rankings" kind="secondary" onPress={() => go('/pelada/[id]/rankings')} />
         </View>
       </View>
+      <Button title="Retrospectiva da temporada" kind="secondary" onPress={() => go('/pelada/[id]/retrospectiva')} />
 
       {isStaff && loaded && (
         <AdminPending matches={matches} members={members} successor={successor} isAdmin={isAdmin} onInvite={convidar} />
