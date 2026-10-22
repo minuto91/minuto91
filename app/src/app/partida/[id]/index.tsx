@@ -14,6 +14,7 @@ import {
   SharePanel,
 } from '../../../lib/arts';
 import { friendly } from '../../../lib/errors';
+import { LineupArt, LineupBoard, LineupPlayer } from '../../../lib/lineup';
 import {
   fmtDate,
   fmtRating,
@@ -68,6 +69,8 @@ export default function Partida() {
   const [crestPath, setCrestPath] = useState<string | null>(null);
   const [myPhoto, setMyPhoto] = useState<string | null>(null);
   const [selection, setSelection] = useState<SelectionPlayer[] | null>(null);
+  // Escalação depois do jogo (grátis, V4.2): os dois times da súmula oficial.
+  const [lineup, setLineup] = useState<{ team_a_name: string; team_b_name: string; players: LineupPlayer[] } | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
@@ -111,6 +114,11 @@ export default function Partida() {
         setEligible((el ?? []).map((x) => x.membership_id));
         setVoted((rc ?? []).map((x) => x.membership_id));
       }
+      if (m.status === 'finalized' || m.status === 'voting_open') {
+        const { data: lu } = await supabase.rpc('get_match_lineup', { p_match: id });
+        const l = lu as { team_a_name: string; team_b_name: string; players: { team: 'A' | 'B'; membership_id: string | null; guest: boolean; name: string; position: string | null; avatar_path: string | null }[] } | null;
+        setLineup(l ? { team_a_name: l.team_a_name, team_b_name: l.team_b_name, players: l.players.map((p, i) => ({ key: p.membership_id ?? `g${i}`, team: p.team, name: p.name, position: p.position, avatar_path: p.avatar_path, guest: p.guest })) } : null);
+      } else setLineup(null);
       if (m.status === 'finalized') {
         const [{ data: rs }, { data: aw }, { data: sel }] = await Promise.all([
           supabase
@@ -356,6 +364,18 @@ export default function Partida() {
         <SharePanel label="Compartilhar Seleção da Rodada" fileName="minuto91-selecao" title="Seleção da Rodada">
           <SelectionArt peladaName={peladaName} crestPath={crestPath} date={date} slots={slots} />
         </SharePanel>
+      )}
+
+      {lineup && lineup.players.length > 0 && (
+        <>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.deepBlue, letterSpacing: 0.5, marginTop: 10 }}>Escalação</Text>
+          <Card>
+            <LineupBoard teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} score={match.status === 'finalized' ? { a: match.team_a_score, b: match.team_b_score } : null} />
+          </Card>
+          <SharePanel label="Compartilhar escalação" fileName="minuto91-escalacao" title="Escalação da partida">
+            <LineupArt peladaName={peladaName} crestPath={crestPath} subtitle={date} teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} score={match.status === 'finalized' ? { a: match.team_a_score, b: match.team_b_score } : null} />
+          </SharePanel>
+        </>
       )}
 
       {match.status === 'finalized' && isAdmin && <AnnulMatch matchId={id} nameOf={nameOf} onDone={load} />}

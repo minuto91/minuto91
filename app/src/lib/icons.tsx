@@ -4,7 +4,19 @@ import Svg, { Circle, Path, Rect } from 'react-native-svg';
 
 import { colors } from './theme';
 
-export type IconName = 'elenco' | 'rankings' | 'card' | 'partidas' | 'retro' | 'jogadores' | 'config' | 'convite';
+export type IconName =
+  | 'elenco'
+  | 'rankings'
+  | 'card'
+  | 'partidas'
+  | 'retro'
+  | 'jogadores'
+  | 'config'
+  | 'convite'
+  | 'duelo'
+  | 'escalacao'
+  | 'sorteio'
+  | 'temporadas';
 
 export function Icon({ name, size = 24, color = colors.blue }: { name: IconName; size?: number; color?: string }) {
   const p = { stroke: color, strokeWidth: 1.8, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -64,6 +76,35 @@ export function Icon({ name, size = 24, color = colors.blue }: { name: IconName;
           <Circle cx={10} cy={8} r={3.2} {...p} />
           <Path d="M4 19c.6-3.4 3-5 6-5 1.4 0 2.6.3 3.6 1" {...p} />
           <Path d="M18 13v6M15 16h6" {...p} />
+        </>
+      )}
+      {name === 'duelo' && (
+        <>
+          <Path d="M4 4l7 7M4 4h4M4 4v4" {...p} />
+          <Path d="M20 4l-7 7M20 4h-4M20 4v4" {...p} />
+          <Path d="M7 17l3 3M14 20l3-3M9 15l-3 3M15 15l3 3" {...p} />
+        </>
+      )}
+      {name === 'escalacao' && (
+        <>
+          <Rect x={3} y={4} width={18} height={16} rx={2} {...p} />
+          <Path d="M12 4v16M3 12h3M18 12h3" {...p} />
+          <Circle cx={12} cy={12} r={2.5} {...p} />
+        </>
+      )}
+      {name === 'sorteio' && (
+        <>
+          <Rect x={4} y={4} width={16} height={16} rx={3} {...p} />
+          <Circle cx={9} cy={9} r={1.2} {...p} />
+          <Circle cx={15} cy={15} r={1.2} {...p} />
+          <Circle cx={15} cy={9} r={1.2} {...p} />
+          <Circle cx={9} cy={15} r={1.2} {...p} />
+        </>
+      )}
+      {name === 'temporadas' && (
+        <>
+          <Rect x={4} y={5} width={16} height={15} rx={2} {...p} />
+          <Path d="M4 10h16M8 3v4M16 3v4" {...p} />
         </>
       )}
     </Svg>

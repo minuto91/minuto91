@@ -296,6 +296,13 @@ export default function Carta() {
         kind="secondary"
         onPress={() => router.push({ pathname: '/jogador/[id]/album', params: { id } })}
       />
+      {member.status !== 'retired' && (
+        <Button
+          title="Comparar no Duelo"
+          kind="secondary"
+          onPress={() => router.push({ pathname: '/pelada/[id]/duelo', params: { id: member.pelada_id, a: member.id } })}
+        />
+      )}
 
       {member.user_id && member.user_id !== session?.user.id && (
         <View style={{ gap: 10, marginTop: 12 }}>

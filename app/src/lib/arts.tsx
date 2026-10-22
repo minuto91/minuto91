@@ -92,7 +92,7 @@ export function SharePanel({
 }
 
 // Com escudo (028), ele vem no topo; sem escudo, o escudo padrão com as iniciais.
-function Header({ title, subtitle, crestPath }: { title: string; subtitle: string; crestPath?: string | null }) {
+export function Header({ title, subtitle, crestPath }: { title: string; subtitle: string; crestPath?: string | null }) {
   const post = useArtFormat() === 'post';
   return (
     <View style={{ alignItems: 'center', gap: 2 }}>

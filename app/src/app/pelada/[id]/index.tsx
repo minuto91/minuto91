@@ -51,6 +51,7 @@ export default function CentralDaRodada() {
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
   const [reload, setReload] = useState(0); // incrementar = buscar de novo
+  const [premium, setPremium] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -58,7 +59,7 @@ export default function CentralDaRodada() {
       (async () => {
         void reload; // recarregar (AppState, Tentar de novo)
         const uid = session?.user.id ?? '';
-        const [{ data: p }, { data: ms, error: e1 }, { data: xs, error: e2 }, { data: hs }, ss, { data: vs }] = await Promise.all([
+        const [{ data: p }, { data: ms, error: e1 }, { data: xs, error: e2 }, { data: hs }, ss, { data: vs }, { data: ent }] = await Promise.all([
           supabase
             .from('peladas')
             .select('name, status, successor_membership_id, crest_path, recurring_weekday, recurring_time')
@@ -77,6 +78,7 @@ export default function CentralDaRodada() {
           loadSeasons(id).catch(() => []),
           // A13: votação vencida (o agendador fecha em até 5 min) não aparece mais como pendência.
           supabase.from('voting_sessions').select('id, match_id, closes_at').eq('pelada_id', id).eq('status', 'open').gt('closes_at', new Date().toISOString()),
+          supabase.rpc('get_pelada_entitlement', { p_pelada: id }),
         ]);
         if (!alive) return;
         // A21: erro de rede não vira "pelada sem partidas".
@@ -104,6 +106,7 @@ export default function CentralDaRodada() {
         }
         if (!alive) return;
         setPelada(p ?? null);
+        setPremium(!!(ent as { is_premium?: boolean } | null)?.is_premium);
         setMembers(list);
         setMatches((xs ?? []) as Match[]);
         setHighlights((hs ?? []) as Highlight[]);
@@ -168,6 +171,15 @@ export default function CentralDaRodada() {
     { icon: 'partidas', label: 'Partidas', onPress: () => router.push({ pathname: '/pelada/[id]/partidas', params: { id } }) },
     { icon: 'retro', label: 'Retrospectiva', onPress: () => router.push({ pathname: '/pelada/[id]/retrospectiva', params: { id } }) },
     { icon: 'jogadores', label: 'Jogadores', onPress: () => router.push({ pathname: '/pelada/[id]/jogadores', params: { id } }) },
+  ];
+
+  // Organização (V4.2): escalações, sorteio, Duelo e temporadas num grupo só, para não lotar a Central.
+  // Recursos da Pelada Premium levam a marca dourada quando a pelada ainda está no Básico.
+  const organize: { icon: IconName; label: string; premium?: boolean; onPress: () => void }[] = [
+    { icon: 'escalacao', label: 'Escalações', onPress: () => router.push({ pathname: '/pelada/[id]/escalacoes', params: { id } }) },
+    ...(isStaff ? [{ icon: 'sorteio' as const, label: 'Sorteio', premium: true, onPress: () => router.push({ pathname: '/pelada/[id]/sorteio', params: { id } }) }] : []),
+    { icon: 'duelo', label: 'Duelo', premium: true, onPress: () => router.push({ pathname: '/pelada/[id]/duelo', params: { id } }) },
+    { icon: 'temporadas', label: 'Temporadas', onPress: () => router.push({ pathname: '/pelada/[id]/temporadas', params: { id } }) },
   ];
 
   // Dia habitual (004), se o admin tiver definido. Não é uma partida agendada.
@@ -320,6 +332,33 @@ export default function CentralDaRodada() {
             <Text style={{ fontSize: 13, fontWeight: '600', color: colors.ink }} numberOfLines={1}>
               {a.label}
             </Text>
+          </Pressable>
+        ))}
+      </View>
+
+      <Text style={section}>Organização</Text>
+      <View style={{ flexDirection: 'row', gap: 8 }}>
+        {organize.map((a) => (
+          <Pressable
+            key={a.label}
+            accessibilityRole="button"
+            accessibilityLabel={a.premium && !premium ? `${a.label}, recurso da Pelada Premium` : a.label}
+            onPress={a.onPress}
+            style={({ pressed }) => ({
+              flex: 1,
+              alignItems: 'center',
+              gap: 4,
+              paddingVertical: 10,
+              borderRadius: 12,
+              borderWidth: 1,
+              borderColor: a.premium && !premium ? colors.gold : colors.line,
+              backgroundColor: pressed ? colors.bg : colors.white,
+            })}>
+            <Icon name={a.icon} size={22} />
+            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.ink }} numberOfLines={1}>
+              {a.label}
+            </Text>
+            {a.premium && !premium && <Text style={{ fontSize: 9, fontWeight: '800', letterSpacing: 1, color: colors.darkGold }}>PREMIUM</Text>}
           </Pressable>
         ))}
       </View>
