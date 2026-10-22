@@ -62,7 +62,8 @@ where n.nspname in ('public','private') and p.prosecdef
 perform pg_temp.assert(v_bad is null, 'security definer sem search_path: '||coalesce(v_bad,''));
 select string_agg(f, ', ') into v_bad from unnest(array[
  'public.apply_subscription_event(jsonb)','public.claim_notifications(integer)',
- 'public.resolve_content_report(uuid,boolean)']) f
+ 'public.resolve_content_report(uuid,boolean)','public.avatar_paths_in_use(text[])',
+ 'public.crest_paths_in_use(text[])']) f
 where has_function_privilege('authenticated', f::regprocedure, 'EXECUTE');
 perform pg_temp.assert(v_bad is null, 'função de serviço liberada ao app: '||coalesce(v_bad,''));
 
