@@ -3,7 +3,16 @@ import { useCallback, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { ANNUL_REASONS, AnnulMatch } from '../../../lib/annul';
-import { FORMATION, ResultArt, ResultArtData, SelectionArt, SelectionSlot, SharePanel } from '../../../lib/arts';
+import {
+  FORMATION,
+  PostGameArt,
+  PostGameArtData,
+  ResultArt,
+  ResultArtData,
+  SelectionArt,
+  SelectionSlot,
+  SharePanel,
+} from '../../../lib/arts';
 import { friendly } from '../../../lib/errors';
 import {
   fmtDate,
@@ -42,6 +51,7 @@ type Annulment = { reason_category: string; description: string; created_at: str
 export default function Partida() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session: auth } = useAuth();
+  const uid = auth?.user.id;
   const router = useRouter();
   const [match, setMatch] = useState<Match | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
@@ -56,6 +66,7 @@ export default function Partida() {
   const [annulment, setAnnulment] = useState<Annulment | null>(null);
   const [peladaName, setPeladaName] = useState('');
   const [crestPath, setCrestPath] = useState<string | null>(null);
+  const [myPhoto, setMyPhoto] = useState<string | null>(null);
   const [selection, setSelection] = useState<SelectionPlayer[] | null>(null);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -79,6 +90,11 @@ export default function Partida() {
       ]);
       setPeladaName(pl?.name ?? '');
       setCrestPath(pl?.crest_path ?? null);
+      // Foto da própria pessoa, para a arte pós-jogo.
+      if (uid) {
+        const { data: pr } = await supabase.from('profiles').select('avatar_path').eq('id', uid).maybeSingle();
+        setMyPhoto(pr?.avatar_path ?? null);
+      }
       const s = (ss?.[0] ?? null) as Session | null;
       setMatch(m);
       setMembers(ms);
@@ -126,7 +142,7 @@ export default function Partida() {
     } catch (e) {
       setMsg(friendly((e as Error).message));
     }
-  }, [id]);
+  }, [id, uid]);
 
   useFocusEffect(
     useCallback(() => {
@@ -179,9 +195,10 @@ export default function Partida() {
   const memberPlayers = players.filter((p) => p.membership_id);
   const maxAssists = Math.max(0, ...memberPlayers.map((p) => p.assists));
   const date = new Date(match.played_at).toLocaleDateString('pt-BR');
-  // Arte oficial: só com notas visíveis (o servidor não as entrega a quem não votou).
+  // Arte da partida: só finalizada (nada provisório). Qualquer membro pode gerar; as notas só aparecem
+  // para quem as vê (o servidor não as entrega a quem não votou), então ranked fica vazio para os outros.
   const art: ResultArtData | null =
-    match.status === 'finalized' && ranked.length > 0
+    match.status === 'finalized'
       ? {
           peladaName,
           crestPath,
@@ -190,14 +207,40 @@ export default function Partida() {
           teamB: match.team_b_name,
           scoreA: match.team_a_score,
           scoreB: match.team_b_score,
+          players: players.length,
           craque: awards
             .filter((a) => a.award_type === 'match_craque')
             .map((a) => ({ name: nameOf(a.membership_id), rating: ratingOf(a.membership_id) })),
+          scorers: players
+            .filter((p) => p.goals > 0)
+            .sort((a, b) => b.goals - a.goals)
+            .map((p) => ({ name: playerName(p), goals: p.goals })),
           garcom:
             maxAssists > 0
               ? memberPlayers.filter((p) => p.assists === maxAssists).map((p) => ({ name: playerName(p), assists: maxAssists }))
               : [],
           top: ranked.slice(0, 5).map((r) => ({ pos: posOf(r), name: nameOf(r.membership_id), rating: Number(r.final_rating) })),
+        }
+      : null;
+  // Arte pós-jogo: só a própria, de quem jogou a partida finalizada. Nota só se oficial e visível.
+  const mySheet = me ? players.find((p) => p.membership_id === me.id) : undefined;
+  const postGame: PostGameArtData | null =
+    match.status === 'finalized' && me && mySheet
+      ? {
+          peladaName,
+          crestPath,
+          date,
+          playerName: me.player_name,
+          photoPath: myPhoto,
+          teamA: match.team_a_name,
+          teamB: match.team_b_name,
+          scoreA: match.team_a_score,
+          scoreB: match.team_b_score,
+          myTeam: mySheet.team,
+          goals: mySheet.goals,
+          assists: mySheet.assists,
+          rating: ratingOf(me.id),
+          craque: awards.some((a) => a.award_type === 'match_craque' && a.membership_id === me.id),
         }
       : null;
   // Seleção 4-3-3 sem adaptação: cada linha pega os melhores daquela posição; o que faltar fica vago.
@@ -280,6 +323,11 @@ export default function Partida() {
         </Card>
       )}
 
+      {postGame && (
+        <SharePanel label="Compartilhar meu pós-jogo" fileName="minuto91-pos-jogo" title="Meu pós-jogo">
+          <PostGameArt data={postGame} />
+        </SharePanel>
+      )}
       {art && (
         <SharePanel label="Compartilhar resultado" fileName="minuto91-resultado" title="Resultado da partida">
           <ResultArt data={art} />
