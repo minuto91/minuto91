@@ -19,7 +19,7 @@ function Gate() {
     const open = first === 'termos' || first === 'privacidade' || first === 'redefinir-senha';
     if (!session) {
       // A vitrine de Cards (só em desenvolvimento) abre sem login, para conferir o desenho.
-      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && first === 'dev-cards')) router.replace('/login');
+      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && (first === 'dev-cards' || first === 'dev-v42'))) router.replace('/login');
       return;
     }
     if (onboarded === null) return;

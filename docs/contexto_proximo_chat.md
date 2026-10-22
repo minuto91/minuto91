@@ -155,6 +155,24 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
 - App: Central da Rodada na página da pelada; telas Partidas, Jogadores e Convidar; Rankings em abas; números e
   gráfico de evolução no Card; avisos em Minha conta (`lib/push.tsx`).
 
+## 10c. V4.2 (22/10)
+- Relatório: `docs/relatorio_v42_2026-10-22.md` (matriz A01–A27, testes, implantação, checklist). Diagnóstico:
+  `docs/v42_fase0_diagnostico_2026-10-22.md`. Evidências: `docs/evidencias_v42/` (Duelo/sorteio com dados simulados).
+- Migrações **036–039 ainda NÃO aplicadas no dev** (aplicar em ordem e rodar `tests_editor/030`, `031`, `032`, `020`).
+  036 = correções P1 (votos de súmula antiga, exclusão, assinatura, retenção, eventos da loja) e ordem de travas;
+  037 = histórico Premium por RLS, Card cronológico, figurinha do mês, onboarding, `get_my_home`, aceite versionado,
+  retrospectiva no servidor; 038 = estatísticas incrementais; 039 = Duelo, escalações, sorteio por posição.
+- Nome comercial: **Pelada Premium** (nunca "Premium da pelada"). Posições do cadastro: Goleiro, Defensor,
+  Meio-campista, Atacante (não existe "Lateral").
+- Sorteio: regra no servidor (diferença ≤ 1 por posição e no total; overall só por troca na mesma posição);
+  modos "único" (N rodadas) e "um por rodada"; confirmado nunca muda; escalação vira só rascunho de súmula.
+- Novos testes locais: `node concurrency.mjs` (Postgres 17 real, duas conexões); `node --test` inclui o Storage.
+- Pendências externas: Redirect URL `…/redefinir-senha` no Auth, republicar `revenuecat-webhook` e
+  `storage-cleanup`, `premium_product_ids`/`store_environment`/`premium_beta_open=false` em produção,
+  `EXPO_PUBLIC_PREMIUM_PRODUCT_ID` no app. Termos/Política no app: `app/src/lib/legalText.ts` (trocar junto com
+  `private.app_config.legal_versions`).
+- Próxima versão: V4.3 = Financeiro da Pelada Premium (não iniciado).
+
 ## 11. Próximas etapas (em ordem sugerida)
 0. **Push** dos commits da Evolução V2 (aguarda confirmação) e rodar `tests_editor/001..019` de novo no dev.
    Pendências V2: escudo nas artes de resultado e Seleção; publicar `storage-cleanup` (fotos e escudos).

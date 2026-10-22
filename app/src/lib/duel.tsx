@@ -52,49 +52,78 @@ export function duelRows(d: Duel): Row[] {
   ];
 }
 
-function Head({ s, align }: { s: Side; align: 'flex-start' | 'flex-end' }) {
+function Head({ s, align, dense }: { s: Side; align: 'flex-start' | 'flex-end'; dense?: boolean }) {
   const tier = s.card ? TIER[s.card.tier] : null;
   return (
-    <View style={{ flex: 1, alignItems: align, gap: 4 }}>
+    <View style={{ flex: 1, alignItems: align, gap: dense ? 1 : 4 }}>
       <View style={{ borderRadius: 999, borderWidth: 3, borderColor: tier?.frame ?? colors.line, padding: 2 }}>
-        <Avatar path={s.avatar_path} name={s.name} size={56} />
+        <Avatar path={s.avatar_path} name={s.name} size={dense ? 38 : 56} />
       </View>
-      <Text style={{ fontSize: 15, fontWeight: '800', color: colors.deepBlue, textAlign: align === 'flex-end' ? 'right' : 'left' }} numberOfLines={2}>
+      <Text style={{ fontSize: dense ? 13 : 15, fontWeight: '800', color: colors.deepBlue, textAlign: align === 'flex-end' ? 'right' : 'left' }} numberOfLines={dense ? 1 : 2}>
         {s.name}
       </Text>
-      <Text style={{ fontSize: 12, color: colors.muted }}>{positionLabel(s.position)}</Text>
-      <Text style={{ fontSize: 12, fontWeight: '800', color: tier?.color ?? colors.muted }}>
-        {tier ? `${tier.label}${s.card?.is_provisional ? ' · provisório' : ''}` : 'Sem Card na temporada'}
+      {/* Na arte, posição e categoria dividem a linha (cabe na moldura). */}
+      <Text style={{ fontSize: dense ? 11 : 12, color: colors.muted }} numberOfLines={1}>
+        {positionLabel(s.position)}
+        {dense && ' · '}
+        {dense && (
+          <Text style={{ fontWeight: '800', color: tier?.color ?? colors.muted }}>
+            {tier ? `${tier.label}${s.card?.is_provisional ? ' (prov.)' : ''}` : 'sem Card'}
+          </Text>
+        )}
       </Text>
+      {!dense && (
+        <Text style={{ fontSize: 12, fontWeight: '800', color: tier?.color ?? colors.muted }}>
+          {tier ? `${tier.label}${s.card?.is_provisional ? ' · provisório' : ''}` : 'Sem Card na temporada'}
+        </Text>
+      )}
     </View>
   );
 }
 
-/** Comparação lado a lado: o maior valor de cada linha fica em destaque (azul forte e barra dourada). */
-export function DuelView({ duel, compact }: { duel: Duel; compact?: boolean }) {
-  const rows = duelRows(duel);
+/**
+ * Comparação lado a lado: o maior valor de cada linha fica em destaque (azul forte e barra dourada).
+ * dense = artes (cabem na moldura); only = linhas a mostrar (o 4:5 leva overall, FIN, GAR, RES, gols, assistências e Craque).
+ */
+export function DuelView({ duel, dense, only }: { duel: Duel; dense?: boolean; only?: string[] }) {
+  const rows = duelRows(duel).filter((r) => !only || only.includes(r.label));
   return (
-    <View style={{ gap: compact ? 6 : 10 }}>
-      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
-        <Head s={duel.a} align="flex-start" />
+    <View style={{ gap: dense ? 3 : 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8, marginBottom: dense ? 4 : 0 }}>
+        <Head s={duel.a} align="flex-start" dense={dense} />
         <Text style={{ alignSelf: 'center', fontSize: 16, fontWeight: '900', color: colors.darkGold }}>VS</Text>
-        <Head s={duel.b} align="flex-end" />
+        <Head s={duel.b} align="flex-end" dense={dense} />
       </View>
       {rows.map((r) => {
         const max = Math.max(r.a ?? 0, r.b ?? 0, 1);
         const lead = r.a !== null && r.b !== null && r.a !== r.b ? (r.a > r.b ? 'a' : 'b') : null;
         const val = (v: number | null) => (v === null ? '–' : r.fmt ? r.fmt(v) : String(v));
         const bar = (v: number | null, win: boolean, dir: 'row' | 'row-reverse') => (
-          <View style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: colors.bg, flexDirection: dir }}>
+          <View style={{ flex: 1, height: dense ? 4 : 6, borderRadius: 3, backgroundColor: colors.bg, flexDirection: dir }}>
             <View style={{ width: `${((v ?? 0) / max) * 100}%`, borderRadius: 3, backgroundColor: win ? colors.gold : '#C9D6EE' }} />
           </View>
         );
+        const a11y = `${r.label}: ${duel.a.name} ${val(r.a)}, ${duel.b.name} ${val(r.b)}`;
+        if (dense) {
+          // Arte: tudo numa linha (valor, barra, rótulo, barra, valor) para caber na moldura.
+          return (
+            <View key={r.label} accessible accessibilityLabel={a11y} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Text style={[num, { width: 30, fontSize: 13 }, lead === 'a' && lead_]}>{val(r.a)}</Text>
+              {bar(r.a, lead === 'a', 'row-reverse')}
+              <Text style={{ width: 72, textAlign: 'center', fontSize: 10, fontWeight: '700', color: colors.muted }} numberOfLines={1}>
+                {r.label === 'Craque da Partida' ? 'Craques' : r.label}
+              </Text>
+              {bar(r.b, lead === 'b', 'row')}
+              <Text style={[num, { width: 30, fontSize: 13, textAlign: 'right' }, lead === 'b' && lead_]}>{val(r.b)}</Text>
+            </View>
+          );
+        }
         return (
-          <View key={r.label} accessible accessibilityLabel={`${r.label}: ${duel.a.name} ${val(r.a)}, ${duel.b.name} ${val(r.b)}`} style={{ gap: 3 }}>
+          <View key={r.label} accessible accessibilityLabel={a11y} style={{ gap: 3 }}>
             <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-              <Text style={[num, lead === 'a' && lead_]}>{val(r.a)}</Text>
-              <Text style={{ flex: 1, textAlign: 'center', fontSize: compact ? 11 : 12, fontWeight: '700', color: colors.muted }}>{r.label}</Text>
-              <Text style={[num, { textAlign: 'right' }, lead === 'b' && lead_]}>{val(r.b)}</Text>
+              <Text style={[num, dense && { fontSize: 13 }, lead === 'a' && lead_]}>{val(r.a)}</Text>
+              <Text style={{ flex: 1, textAlign: 'center', fontSize: dense ? 10 : 12, fontWeight: '700', color: colors.muted }}>{r.label}</Text>
+              <Text style={[num, dense && { fontSize: 13 }, { textAlign: 'right' }, lead === 'b' && lead_]}>{val(r.b)}</Text>
             </View>
             <View style={{ flexDirection: 'row', gap: 6 }}>
               {bar(r.a, lead === 'a', 'row-reverse')}
@@ -117,7 +146,7 @@ export function DuelArt({ duel, peladaName, crestPath }: { duel: Duel; peladaNam
     <>
       <Header title={peladaName} subtitle={duel.season_name} crestPath={crestPath} />
       <Text style={{ textAlign: 'center', fontSize: 11, fontWeight: '800', letterSpacing: 2, color: colors.darkGold }}>DUELO</Text>
-      <DuelView duel={duel} compact={post} />
+      <DuelView duel={duel} dense only={post ? ['Overall', 'FIN', 'GAR', 'RES', 'Gols', 'Assistências', 'Craque da Partida'] : undefined} />
     </>
   );
 }

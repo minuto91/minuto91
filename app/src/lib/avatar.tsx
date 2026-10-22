@@ -132,8 +132,9 @@ export const initials = (name: string) =>
   name
     .trim()
     .split(/\s+/)
+    .map((w) => w.match(/[\p{L}\p{N}]/u)?.[0]?.toUpperCase() ?? '') // ignora aspas e pontuação ("Paredão")
+    .filter(Boolean)
     .slice(0, 2)
-    .map((w) => w[0]?.toUpperCase() ?? '')
     .join('') || '?';
 
 /** Foto redonda; sem foto (ou carregando), mostra as iniciais. */
