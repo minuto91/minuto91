@@ -150,6 +150,31 @@ atualização dos docs (pé dominante, Seleção sem adaptação, foto).
 - Pendências já conhecidas: Seleção sem adaptação (Docs 02/03/04), retenção 30 dias e cédulas (advogado, PT-05).
 Nada aqui é conclusão jurídica; validar com advogado.
 
+## 5b. Fase 1 — resultado (21/10/2026)
+
+Feito:
+- `026_premium_store_events.sql`: PR-3 a PR-7 (detalhes no cabeçalho da migração). O app, na Fase 5, deve chamar
+  `start_premium_purchase` e gravar o atributo `pelada_id` no RevenueCat (`Purchases.setAttributes`) antes de comprar.
+  A Edge Function não precisou mudar (o evento inteiro, com `subscriber_attributes`, já chega ao banco).
+- Testes novos: `019_premium_store_events.sql` (beta, não admin, anon, duas peladas, duplicado, fora de ordem,
+  cobrança pendente, troca de admin, TRANSFER, reembolso, expiração, reativação, reprocessamento, atributo forjado)
+  e `020_security_invariants.sql` (RLS em toda tabela pública, nenhuma escrita direta além de nome/foto do perfil,
+  nada executável por anon, `search_path` em toda função definer, funções de serviço fora do app).
+- Removidos: `explore.tsx`, `premium.tsx` (geral), componentes/hooks/imagens do template, script `reset-project`.
+  Conferido pela web: `/explore` dá "rota não encontrada" e a tela inicial abre sem o botão Premium.
+
+Revisão de autorização de 005–025 (políticas, grants e entrada de cada função pública):
+- Toda função pública passa por um verificador (`lock_match_draft`, `lock_voter`, `lock_annullable_match`,
+  `check_season_access`, `is_active_*`) ou é só de `service_role`. Cédulas sem grant; recibos expõem só quem votou.
+- Nenhum defeito novo de autorização encontrado.
+- RISCO P3: `player_season_stats` (média da temporada) é legível por quem não votou; comparando antes/depois de uma
+  partida dá para estimar a nota daquela partida. Mudar exige decisão de produto (RN-098 só fala da arte).
+- Não revisado nesta fase: a lógica esportiva (fórmulas, prêmios, figurinhas) linha a linha — já coberta pelos
+  testes 009–013 e pela planilha aprovada; não foi alterada.
+
+**Pendente de você**: aplicar a 026 no Supabase dev e rodar no SQL Editor `012_premium`, `019_premium_store_events`
+e `020_security_invariants` (todos devem terminar com "PASS"). Eu não tenho acesso ao banco.
+
 ## 6. Funcionalidades novas (avaliação, nada será implementado sem aprovação)
 
 | Proposta | Valor | Complexidade | Risco | Retenção | Compartilhamento | Plano |
