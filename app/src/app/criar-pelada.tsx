@@ -20,7 +20,8 @@ export default function CriarPelada() {
     const { data, error } = await supabase.rpc('create_pelada', { p_name: nome, p_position: pos });
     setBusy(false);
     if (error) return setMsg(friendly(error.message));
-    router.replace({ pathname: '/pelada/[id]', params: { id: String(data) } });
+    // Logo depois de criar, o próximo passo é chamar a turma (a tela tem o atalho para a pelada).
+    router.replace({ pathname: '/pelada/[id]/convidar', params: { id: String(data), novo: '1' } });
   }
 
   return (
