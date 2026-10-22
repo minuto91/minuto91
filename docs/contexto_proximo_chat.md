@@ -123,7 +123,7 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
 ## 9. Configurações externas já feitas
 - Supabase Auth: confirmação de e-mail DESLIGADA (só dev). Google ativo (OAuth do Google Cloud, app em modo
   teste com meu Gmail como usuário de teste). Redirect URLs: `exp://**`, `minuto91://**`, `http://localhost:8081/**`.
-- pg_cron ativo (agendador a cada 5 min: fecha votações vencidas, fecha meses, apaga contas após 30 dias,
+- pg_cron e pg_net ativos desde 22/10 (antes o pg_cron estava desligado). Agendador a cada 5 min: fecha votações vencidas, fecha meses, apaga contas após 30 dias,
   limpa fim de temporada).
 - Apple Developer: **ainda não pago** (login com Apple, push e RevenueCat dependem do development build).
 
@@ -145,8 +145,11 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
 
 ## 10b. V4.1 (22/10)
 - Relatório: `docs/relatorio_v41_2026-10-22.md` (diagnóstico em `docs/v41_fase0_diagnostico_2026-10-22.md`).
-- Migrações novas **ainda não aplicadas no dev**: 033 (evolução do Card), 034 (prévia do convite), 035 (envio de push).
-  Testes 027, 028, 029. Edge Function `push-sender` + `supabase/deploy/push_sender_cron.sql` (não publicadas).
+- Migrações 033 (evolução do Card), 034 (prévia do convite) e 035 (envio de push) **aplicadas no dev em 22/10**;
+  testes 020, 027, 028 e 029 com PASS no dev. Edge Function `push-sender` e `supabase/deploy/push_sender_cron.sql`
+  ainda não publicadas (esperam o development build).
+- 22/10: o pg_cron **não estava ligado** no dev (o agendador da 022 nunca rodou). Ligados pg_cron e pg_net e criado
+  o job `minuto91-tasks` (a cada 5 min). pg_net fica pronto para o push.
 - Banco local de testes: `cd $HOME\Documents\minuto91\supabase\local_db; npm install; node run.mjs` (PGlite;
   roda todas as migrações e `tests_editor`; `node load.mjs` = carga; `node --test` = lógica do push).
 - App: Central da Rodada na página da pelada; telas Partidas, Jogadores e Convidar; Rankings em abas; números e
