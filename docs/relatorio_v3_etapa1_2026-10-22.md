@@ -79,7 +79,7 @@ As Fases 4 a 8 estão planejadas na seção 9 e ainda não foram feitas.
 
 - Na web, o nome longo é cortado com reticências (o ajuste automático de fonte só funciona no celular).
 - A prévia não detecta transparência de PNG no celular. Remoção de fundo foi só estudada: as opções estáveis são serviço pago (remove.bg e afins) ou modelo no aparelho (precisa de development build). Não foi implementado, como pedido.
-- **Premiações a confirmar**: o banco tem `top_scorer` (Artilheiro do mês), `top_assist` (Garçom do mês) e `most_improved` (Maior Evolução), vindos do Doc 02 (prêmios do mês, migração 015), além dos três confirmados (Craque da Partida, Rei do Mês, Bola Murcha). Nada foi apagado nem renomeado. Preciso da sua decisão.
+- **Premiações a confirmar**: o banco tem `top_scorer` (Artilheiro do mês), `top_assist` (Garçom do mês) e `most_improved` (Maior Evolução), vindos do Doc 02 (prêmios do mês, migração 015), além dos três confirmados (Craque da Partida, Rei do Mês, Bola Murcha). Nada foi apagado nem renomeado. **Decisão do fundador (22/10): manter os três**, além dos confirmados.
 - Artes 4:5, arte pós-jogo individual, retrospectivas e jornadas multi-pelada ainda não foram feitas (seção 9).
 
 ## 8. Checklist de homologação (esta etapa)
@@ -121,7 +121,6 @@ As Fases 4 a 8 estão planejadas na seção 9 e ainda não foram feitas.
 ## 11. Pendências externas
 
 - Aplicar a 032 no dev e rodar os testes 025 e 016 (você, no SQL Editor).
-- Decidir sobre Artilheiro do mês, Garçom do mês e Maior Evolução.
 - Atualizar os documentos oficiais:
   - Doc 02 (bloqueio nos dois sentidos, RN-120).
   - Doc 03 (política de perfis).
