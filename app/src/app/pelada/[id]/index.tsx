@@ -151,7 +151,7 @@ export default function Pelada() {
   const roleName = (r: string) => (r === 'admin' ? 'Administrador' : r === 'assistant' ? 'Assistente' : 'Jogador');
 
   const shown = allMatches ? matches : matches.slice(0, 5);
-  const go = (pathname: '/pelada/[id]/rankings' | '/pelada/[id]/configuracoes' | '/pelada/[id]/premium') =>
+  const go = (pathname: '/pelada/[id]/rankings' | '/pelada/[id]/elenco' | '/pelada/[id]/configuracoes' | '/pelada/[id]/premium') =>
     router.push({ pathname, params: { id } });
 
   return (
@@ -165,12 +165,11 @@ export default function Pelada() {
       {status === 'restricted' && <Sub>Pelada restrita: sem administrador elegível.</Sub>}
       <ErrorText>{msg}</ErrorText>
 
+      {me && <Button title="Minha carta" onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: me.id } })} />}
       <View style={{ flexDirection: 'row', gap: 8 }}>
-        {me && (
-          <View style={{ flex: 1 }}>
-            <Button title="Minha carta" onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: me.id } })} />
-          </View>
-        )}
+        <View style={{ flex: 1 }}>
+          <Button title="Elenco" kind="secondary" onPress={() => go('/pelada/[id]/elenco')} />
+        </View>
         <View style={{ flex: 1 }}>
           <Button title="Rankings" kind="secondary" onPress={() => go('/pelada/[id]/rankings')} />
         </View>
