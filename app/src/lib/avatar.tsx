@@ -16,7 +16,8 @@ const SIDE = 800; // px do arquivo final
 const MIN_SIDE = 200; // foto menor que isso fica borrada na carta
 const MAX_PICK_BYTES = 20 * 1024 * 1024; // antes de reduzir
 const MAX_UPLOAD_BYTES = 2 * 1024 * 1024; // limite do bucket
-const URL_TTL = 3600; // segundos
+const URL_TTL = 900; // segundos: link curto, porque um link assinado não pode ser revogado
+const CACHE_SECONDS = '300'; // cache da CDN: foto trocada ou removida some em até 5 min
 
 // Nome aleatório do arquivo (não é segredo: o acesso é controlado pelas políticas do bucket).
 function uuid() {
@@ -59,7 +60,7 @@ export async function pickAndUploadAvatar(userId: string): Promise<boolean> {
   if (body.byteLength > MAX_UPLOAD_BYTES) throw new Error('Não foi possível reduzir a foto para 2 MB. Tente outra.');
 
   const path = `${userId}/${uuid()}.jpg`;
-  const up = await supabase.storage.from(BUCKET).upload(path, body, { contentType: 'image/jpeg', upsert: false });
+  const up = await supabase.storage.from(BUCKET).upload(path, body, { contentType: 'image/jpeg', upsert: false, cacheControl: CACHE_SECONDS });
   if (up.error) throw new Error('Não foi possível enviar a foto. Verifique a internet e tente de novo.');
   const { data: old, error } = await supabase.rpc('set_my_avatar', { p_path: path });
   if (error) {
@@ -91,7 +92,7 @@ export function useAvatarUrl(path: string | null | undefined) {
     (async () => {
       const { data } = await supabase.storage.from(BUCKET).createSignedUrl(path, URL_TTL);
       if (!alive || !data?.signedUrl) return;
-      cache.set(path, { url: data.signedUrl, until: Date.now() + (URL_TTL - 300) * 1000 });
+      cache.set(path, { url: data.signedUrl, until: Date.now() + (URL_TTL - 120) * 1000 });
       setUrl({ path, url: data.signedUrl });
     })();
     return () => {
