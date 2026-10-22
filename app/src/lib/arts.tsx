@@ -249,7 +249,10 @@ export function PlayerCard({
         {t.level === 3 && (
           <>
             <View style={[s.ornament, { top: px(4), left: '50%', marginLeft: -px(5), width: px(10), height: px(10), backgroundColor: t.frame }]} />
-            <View style={[s.ornament, { bottom: px(4), left: '50%', marginLeft: -px(5), width: px(10), height: px(10), backgroundColor: t.frame }]} />
+            {/* Na carta pequena não há rodapé: o ornamento de baixo encostaria nos atributos. */}
+            {!compact && (
+              <View style={[s.ornament, { bottom: px(4), left: '50%', marginLeft: -px(5), width: px(10), height: px(10), backgroundColor: t.frame }]} />
+            )}
           </>
         )}
 

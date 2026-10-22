@@ -49,10 +49,12 @@ function Gate() {
       <Stack.Screen name="convite/[token]" options={{ title: 'Convite' }} />
       <Stack.Screen name="pelada/[id]/index" options={{ title: 'Pelada' }} />
       <Stack.Screen name="pelada/[id]/rankings" options={{ title: 'Rankings' }} />
+      <Stack.Screen name="pelada/[id]/elenco" options={{ title: 'Elenco' }} />
       <Stack.Screen name="pelada/[id]/premium" options={{ title: 'Premium' }} />
       <Stack.Screen name="pelada/[id]/configuracoes" options={{ title: 'Configurações' }} />
       <Stack.Screen name="conta" options={{ title: 'Minha conta' }} />
       <Stack.Screen name="perfil" options={{ title: 'Meu perfil' }} />
+      <Stack.Screen name="atleta/[id]" options={{ title: 'Perfil do jogador' }} />
       <Stack.Screen name="jogador/[id]/index" options={{ title: 'Carta' }} />
       <Stack.Screen name="jogador/[id]/album" options={{ title: 'Álbum' }} />
       <Stack.Screen name="partida/[id]/index" options={{ title: 'Partida' }} />
