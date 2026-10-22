@@ -5,6 +5,7 @@ import { Pressable, Text, View } from 'react-native';
 
 import { Avatar } from '../lib/avatar';
 import { fmtDate, fmtTime, STATUS_LABEL } from '../lib/match';
+import { PushPrompt } from '../lib/push';
 import { useAuth } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors } from '../lib/theme';
@@ -158,6 +159,8 @@ export default function Home() {
           ))}
         </>
       )}
+
+      {rows !== null && rows.length > 0 && <PushPrompt />}
 
       <Text style={section}>Minhas peladas</Text>
       {rows === null ? (

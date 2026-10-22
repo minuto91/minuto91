@@ -3,6 +3,8 @@ import { useEffect, useState } from 'react';
 import { Pressable, Share, Text } from 'react-native';
 
 import { friendly } from '../lib/errors';
+import { NotificationSettings } from '../lib/push';
+import { signOut } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors } from '../lib/theme';
 import { Body, Button, Card, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
@@ -94,7 +96,7 @@ export default function Conta() {
         </Card>
         <ErrorText>{msg}</ErrorText>
         <Button title="Recuperar minha conta" onPress={recuperar} loading={busy === 'recuperar'} />
-        <Button title="Sair da conta" kind="secondary" onPress={() => supabase.auth.signOut()} />
+        <Button title="Sair da conta" kind="secondary" onPress={signOut} />
       </Screen>
     );
   }
@@ -111,7 +113,12 @@ export default function Conta() {
           <Sub>Foto, nome e pé dominante. A posição e o Card ficam em cada pelada.</Sub>
         </Card>
       </Pressable>
-      <Button title="Sair da conta" kind="secondary" onPress={() => supabase.auth.signOut()} />
+      <Button title="Sair da conta" kind="secondary" onPress={signOut} />
+
+      <Text style={section}>Notificações</Text>
+      <Card>
+        <NotificationSettings />
+      </Card>
 
       <Text style={section}>Privacidade</Text>
       <Card>

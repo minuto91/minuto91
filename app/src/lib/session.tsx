@@ -8,6 +8,7 @@ import {
   useState,
 } from 'react';
 
+import { refreshPushRegistration, unregisterPush } from './push';
 import { resetPurchasesUser } from './purchases';
 import { supabase } from './supabase';
 
@@ -27,6 +28,12 @@ const AuthContext = createContext<AuthState>({
 });
 
 export const useAuth = () => useContext(AuthContext);
+
+/** Sair da conta: antes, este aparelho deixa de receber os avisos dela (035). Sem rede, sai assim mesmo. */
+export async function signOut() {
+  await unregisterPush().catch(() => {});
+  await supabase.auth.signOut();
+}
 
 async function fetchOnboarded(s: Session | null): Promise<boolean | null> {
   if (!s) return null;
@@ -55,9 +62,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setOnboarded(await fetchOnboarded(data.session));
       setLoading(false);
     });
-    const { data: sub } = supabase.auth.onAuthStateChange((_event, s) => {
+    const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
       setSession(s);
       if (!s) resetPurchasesUser(); // a próxima conta não herda o comprador da loja
+      // Com permissão já dada, mantém o aparelho registrado para esta conta (não pergunta nada).
+      else if (event === 'SIGNED_IN' || event === 'INITIAL_SESSION') setTimeout(() => refreshPushRegistration().catch(() => {}), 0);
       // Não chamar o Supabase dentro do callback: adia para o próximo ciclo.
       setTimeout(async () => setOnboarded(await fetchOnboarded(s)), 0);
     });

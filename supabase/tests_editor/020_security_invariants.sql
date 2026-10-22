@@ -63,7 +63,8 @@ perform pg_temp.assert(v_bad is null, 'security definer sem search_path: '||coal
 select string_agg(f, ', ') into v_bad from unnest(array[
  'public.apply_subscription_event(jsonb)','public.claim_notifications(integer)',
  'public.resolve_content_report(uuid,boolean)','public.avatar_paths_in_use(text[])',
- 'public.crest_paths_in_use(text[])']) f
+ 'public.crest_paths_in_use(text[])','public.complete_notifications(jsonb)','public.claim_push_receipts(integer)',
+ 'public.record_push_receipts(jsonb)']) f
 where has_function_privilege('authenticated', f::regprocedure, 'EXECUTE');
 perform pg_temp.assert(v_bad is null, 'função de serviço liberada ao app: '||coalesce(v_bad,''));
 

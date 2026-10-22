@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Switch, Text, View } from 'react-native';
 
 import { friendly } from '../lib/errors';
-import { useAuth } from '../lib/session';
+import { signOut, useAuth } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors } from '../lib/theme';
 import { Button, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
@@ -40,7 +40,7 @@ export default function Onboarding() {
       <Row value={termos} onChange={setTermos} label="Li e aceito os Termos de Uso e a Política de Privacidade." />
       <ErrorText>{msg}</ErrorText>
       <Button title="Continuar" onPress={concluir} loading={busy} disabled={!adulto || !termos} />
-      <Button title="Sair" kind="secondary" onPress={() => supabase.auth.signOut()} />
+      <Button title="Sair" kind="secondary" onPress={signOut} />
     </Screen>
   );
 }
