@@ -87,6 +87,14 @@ export async function subscribePelada(
     await Purchases.purchasePackage(pkg);
     return { error: null, cancelled: false };
   } catch (e) {
+    // Compra não concluída: apaga o atributo para um evento futuro (renovação de outra pelada feita
+    // direto na loja, por exemplo) não ser ligado a esta pelada por um atributo antigo. Quem chegou até
+    // aqui não tem outra assinatura com período pago (start_premium_purchase recusaria).
+    try {
+      await Purchases.setAttributes({ pelada_id: '' });
+    } catch {
+      // melhor esforço
+    }
     const msg = storeMessage(e);
     return { error: msg, cancelled: msg === null };
   }
