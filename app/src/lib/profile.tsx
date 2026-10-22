@@ -165,7 +165,7 @@ export function CareerSummary({ career }: { career: Extract<Career, { visible: t
       {partial && (
         <Sub>
           Este total não inclui temporadas antigas de peladas sem Premium (elas mostram só a temporada atual e a anterior). O
-          histórico completo é do Premium de cada pelada.
+          histórico completo é da Pelada Premium (de cada pelada).
         </Sub>
       )}
     </Card>
@@ -211,7 +211,7 @@ export function CareerByPelada({ career }: { career: Extract<Career, { visible: 
           ))}
           {p.hidden_seasons > 0 && (
             <Sub>
-              + {plural(p.hidden_seasons, 'temporada anterior', 'temporadas anteriores')} no histórico completo (Premium da pelada).
+              + {plural(p.hidden_seasons, 'temporada anterior', 'temporadas anteriores')} no histórico completo (Pelada Premium).
             </Sub>
           )}
         </Card>

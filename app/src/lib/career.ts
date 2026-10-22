@@ -1,4 +1,5 @@
 // Temporadas, carta, estatísticas e álbum (dados calculados pelo servidor).
+import { todayIn } from './dates';
 import { supabase } from './supabase';
 import { colors } from './theme';
 
@@ -80,9 +81,17 @@ export async function loadSeasons(peladaId: string) {
   return (data ?? []) as Season[];
 }
 
+// A06: só as temporadas que o plano da pelada libera (grátis: atual e anterior; Pelada Premium: todas).
+// Banco sem a migração 037: cai na lista completa (o servidor continua bloqueando os números).
+export async function loadReadableSeasons(peladaId: string) {
+  const { data, error } = await supabase.rpc('get_readable_seasons', { p_pelada: peladaId });
+  if (error) return loadSeasons(peladaId);
+  return (data ?? []) as Season[];
+}
+
 // Temporada em andamento (ou a mais recente que já começou).
 export function currentSeason(seasons: Season[]) {
-  const today = new Date().toISOString().slice(0, 10);
+  const today = todayIn();
   return seasons.find((s) => s.starts_on <= today && s.ends_on >= today) ?? seasons.find((s) => s.starts_on <= today) ?? seasons[0] ?? null;
 }
 

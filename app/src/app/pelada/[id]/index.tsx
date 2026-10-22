@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState, Pressable, Text, View } from 'react-native';
 
 import { currentSeason, loadSeasons } from '../../../lib/career';
 import { Crest } from '../../../lib/crest';
@@ -50,13 +50,15 @@ export default function CentralDaRodada() {
   const [loaded, setLoaded] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [reload, setReload] = useState(0); // incrementar = buscar de novo
 
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       (async () => {
+        void reload; // recarregar (AppState, Tentar de novo)
         const uid = session?.user.id ?? '';
-        const [{ data: p }, { data: ms, error }, { data: xs }, { data: hs }, ss, { data: vs }] = await Promise.all([
+        const [{ data: p }, { data: ms, error: e1 }, { data: xs, error: e2 }, { data: hs }, ss, { data: vs }] = await Promise.all([
           supabase
             .from('peladas')
             .select('name, status, successor_membership_id, crest_path, recurring_weekday, recurring_time')
@@ -73,9 +75,12 @@ export default function CentralDaRodada() {
           // Destaques da última partida finalizada (os anteriores expiram quando outra é finalizada).
           supabase.from('highlights').select('match_id, membership_id, highlight_type').eq('pelada_id', id).is('expires_at', null),
           loadSeasons(id).catch(() => []),
-          supabase.from('voting_sessions').select('id, match_id, closes_at').eq('pelada_id', id).eq('status', 'open'),
+          // A13: votação vencida (o agendador fecha em até 5 min) não aparece mais como pendência.
+          supabase.from('voting_sessions').select('id, match_id, closes_at').eq('pelada_id', id).eq('status', 'open').gt('closes_at', new Date().toISOString()),
         ]);
         if (!alive) return;
+        // A21: erro de rede não vira "pelada sem partidas".
+        const error = e1 ?? e2;
         if (error) {
           setMsg(friendly(error.message));
           setLoaded(true);
@@ -110,8 +115,14 @@ export default function CentralDaRodada() {
       return () => {
         alive = false;
       };
-    }, [id, session]),
+    }, [id, session, reload]),
   );
+
+  // A13: recarrega ao voltar para o app.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (st) => st === 'active' && setReload((n) => n + 1));
+    return () => sub.remove();
+  }, []);
 
   const me = members.find((m) => m.user_id === session?.user.id);
   const isAdmin = me?.role === 'admin';
@@ -120,7 +131,7 @@ export default function CentralDaRodada() {
   const lastFinal = matches.find((m) => m.status === 'finalized') ?? null;
   const inVoting = matches.filter((m) => m.status === 'voting_open' || m.status === 'finalizing');
   const recent = matches.filter((m) => m.status !== 'draft').slice(0, 3);
-  const empty = loaded && !matches.some((m) => m.status !== 'draft');
+  const empty = loaded && !msg && !matches.some((m) => m.status !== 'draft');
   const lastHighlights = lastFinal ? highlights.filter((h) => h.match_id === lastFinal.id) : [];
 
   const openMatch = (mid: string) => router.push({ pathname: '/partida/[id]', params: { id: mid } });
@@ -195,6 +206,7 @@ export default function CentralDaRodada() {
       </View>
       {pelada?.status === 'restricted' && <Sub>Pelada restrita: sem administrador elegível.</Sub>}
       <ErrorText>{msg}</ErrorText>
+      {msg && <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />}
 
       {/* Pendência pessoal: o meu voto. */}
       {myVotes.map((v) => {
@@ -344,7 +356,7 @@ export default function CentralDaRodada() {
       <Text style={section}>Pelada</Text>
       {isAdmin && <Row title="Convidar jogadores" onPress={convidar} />}
       {isAdmin && <Row title="Configurações da pelada" onPress={() => router.push({ pathname: '/pelada/[id]/configuracoes', params: { id } })} />}
-      <Row title="Premium da pelada" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
+      <Row title="Pelada Premium" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
       <Row title="Sair da pelada" danger onPress={sair} />
       {me && (
         <View style={{ marginTop: 6 }}>

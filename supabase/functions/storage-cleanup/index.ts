@@ -7,6 +7,8 @@
 // - "Em uso" vem de avatar_paths_in_use (027) e crest_paths_in_use (028), que só o service_role executa.
 import { createClient, SupabaseClient } from 'npm:@supabase/supabase-js@2';
 
+import { candidates as listCandidates } from './logic.ts';
+
 // Pastas = id do usuário (avatars) ou da pelada (crests); arquivos = <id>/<uuid>.<ext>.
 const BUCKETS = [
   { bucket: 'avatars', inUse: 'avatar_paths_in_use' },
@@ -33,20 +35,16 @@ async function cleanBucket(supabase: SupabaseClient, bucket: string, inUseRpc: s
   const storage = supabase.storage.from(bucket);
   const cutoff = Date.now() - MIN_AGE_MS;
 
-  const candidates: string[] = [];
-  for (let offset = 0; ; offset += PAGE) {
-    const { data: folders, error } = await storage.list('', { limit: PAGE, offset });
-    if (error) throw new Error(`${bucket} list: ${error.message}`);
-    for (const folder of folders ?? []) {
-      const { data: files, error: e2 } = await storage.list(folder.name, { limit: PAGE });
-      if (e2) throw new Error(`${bucket} list ${folder.name}: ${e2.message}`);
-      for (const f of files ?? []) {
-        const created = Date.parse(f.created_at ?? '');
-        if (f.id && Number.isFinite(created) && created < cutoff) candidates.push(`${folder.name}/${f.name}`);
-      }
-    }
-    if ((folders ?? []).length < PAGE) break;
-  }
+  // A24: pastas e arquivos paginados por completo (logic.ts).
+  const candidates = await listCandidates(
+    async (prefix, offset, limit) => {
+      const { data, error } = await storage.list(prefix, { limit, offset, sortBy: { column: 'name', order: 'asc' } });
+      if (error) throw new Error(`${bucket} list ${prefix || '/'}: ${error.message}`);
+      return data ?? [];
+    },
+    PAGE,
+    cutoff,
+  );
 
   let removed = 0;
   for (let i = 0; i < candidates.length; i += 100) {

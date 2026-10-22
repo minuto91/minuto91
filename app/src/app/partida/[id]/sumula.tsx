@@ -59,6 +59,12 @@ export default function Sumula() {
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [reload, setReload] = useState(0); // incrementar = buscar de novo
+  // A19 (Pelada Premium): nomes dos times e horário fixo para encerrar a votação (1 a 24 h).
+  const [premium, setPremium] = useState(false);
+  const [teamA, setTeamA] = useState('');
+  const [teamB, setTeamB] = useState('');
+  const [closeMode, setCloseMode] = useState<'duration' | 'fixed'>('duration');
+  const [fixedHours, setFixedHours] = useState(3);
 
   useEffect(() => {
     let alive = true;
@@ -67,15 +73,19 @@ export default function Sumula() {
         const m = await loadMatch(id);
         if (!alive) return;
         if (!m) return setMsg('Partida não encontrada.');
-        const [ms, gs, sheet, { data: st }] = await Promise.all([
+        const [ms, gs, sheet, { data: st }, { data: ent }] = await Promise.all([
           loadMembers(m.pelada_id),
           loadGuests(m.pelada_id),
           loadSheet(id),
           supabase.from('pelada_settings').select('voting_duration_minutes').eq('pelada_id', m.pelada_id).maybeSingle(),
+          supabase.rpc('get_pelada_entitlement', { p_pelada: m.pelada_id }),
         ]);
         if (!alive) return;
         // Prazo padrão escolhido nas configurações da pelada.
         if (st) setDuration(String(st.voting_duration_minutes) as '120' | '240' | '360');
+        setPremium(!!(ent as { is_premium?: boolean } | null)?.is_premium);
+        setTeamA(m.team_a_name);
+        setTeamB(m.team_b_name);
         setMatch(m);
         setMembers(ms);
         setGuests(gs);
@@ -148,7 +158,15 @@ export default function Sumula() {
   async function mudarData(daysAgo: string) {
     const d = new Date();
     d.setDate(d.getDate() - Number(daysAgo));
-    if ((await call('update_match_draft', { p_match: id, p_played_at: d.toISOString() })).ok) setReload((n) => n + 1);
+    if ((await call('update_match_draft', { p_match: id, p_played_at: d.toISOString(), p_team_a_name: match!.team_a_name, p_team_b_name: match!.team_b_name })).ok)
+      setReload((n) => n + 1);
+  }
+
+  async function salvarNomes() {
+    if ((await call('update_match_draft', { p_match: id, p_played_at: match!.played_at, p_team_a_name: teamA.trim() || null, p_team_b_name: teamB.trim() || null })).ok) {
+      notify('Nomes dos times salvos');
+      setReload((n) => n + 1);
+    }
   }
 
   const salvarRascunho = () => call('save_match_sheet', { p_match: id, ...asArgs() });
@@ -163,10 +181,12 @@ export default function Sumula() {
 
   async function publicar() {
     if (!(await salvarRascunho()).ok) return;
-    const { ok, data: r } = await call<{ status: string; eligible_voter_count: number }>('publish_match', {
-      p_match: id,
-      p_duration_minutes: Number(duration),
-    });
+    const { ok, data: r } = await call<{ status: string; eligible_voter_count: number }>(
+      'publish_match',
+      closeMode === 'fixed'
+        ? { p_match: id, p_closes_at: new Date(Date.now() + fixedHours * 3600_000).toISOString() }
+        : { p_match: id, p_duration_minutes: Number(duration) },
+    );
     if (!ok) return;
     if (r.status === 'finalized')
       notify(
@@ -222,6 +242,14 @@ export default function Sumula() {
       <Title>{isCorrection ? 'Corrigir súmula' : 'Súmula'}</Title>
       <Sub>{fmtDate(match.played_at)}</Sub>
       {isDraft && <Chips options={DAYS} value={null} onChange={mudarData} />}
+      {isDraft && premium && (
+        <Card>
+          <Body>Nomes dos times</Body>
+          <Input autoCapitalize="words" placeholder="Time A" value={teamA} onChangeText={setTeamA} maxLength={40} />
+          <Input autoCapitalize="words" placeholder="Time B" value={teamB} onChangeText={setTeamB} maxLength={40} />
+          <Button title="Salvar nomes" kind="secondary" onPress={salvarNomes} loading={busy} disabled={teamA === match.team_a_name && teamB === match.team_b_name} />
+        </Card>
+      )}
       <Card>
         <Text style={{ fontSize: 22, fontWeight: '800', color: colors.deepBlue, textAlign: 'center' }}>
           {match.team_a_name} {score.A} x {score.B} {match.team_b_name}
@@ -288,7 +316,24 @@ export default function Sumula() {
         <>
           <Button title="Salvar rascunho" kind="secondary" onPress={salvar} loading={busy} />
           <Sub>Prazo da votação</Sub>
-          <Chips options={DURATIONS} value={duration} onChange={setDuration} />
+          {premium && (
+            <Chips
+              options={[
+                { value: 'duration', label: 'Duração' },
+                { value: 'fixed', label: 'Horário fixo' },
+              ]}
+              value={closeMode}
+              onChange={setCloseMode}
+            />
+          )}
+          {closeMode === 'duration' || !premium ? (
+            <Chips options={DURATIONS} value={duration} onChange={setDuration} />
+          ) : (
+            <>
+              <Stepper label="Encerra em (horas)" value={fixedHours} onChange={setFixedHours} min={1} max={24} />
+              <Sub>A votação fecha {fixedHours === 1 ? '1 hora' : `${fixedHours} horas`} depois de publicar, no horário exato.</Sub>
+            </>
+          )}
           <Button title="Publicar e abrir votação" onPress={publicar} loading={busy} />
           <Button title="Excluir rascunho" kind="danger" onPress={descartar} />
         </>

@@ -41,11 +41,26 @@ export async function resetPurchasesUser() {
   }
 }
 
+// A23: só o produto mensal da Pelada Premium. EXPO_PUBLIC_PREMIUM_PRODUCT_ID = id do produto na loja (o
+// mesmo cadastrado em private.app_config.premium_product_ids, que o banco confere). Sem ele, só um pacote
+// do tipo mensal com período de 1 mês é aceito. Nunca cai em "o primeiro pacote que vier".
+const PRODUCT_ID = process.env.EXPO_PUBLIC_PREMIUM_PRODUCT_ID;
+
 export async function loadPremiumPackage(userId: string): Promise<PurchasesPackage | null> {
   await ensurePurchases(userId);
   const offerings = await Purchases.getOfferings();
   const pkgs = offerings.current?.availablePackages ?? [];
-  return pkgs.find((p) => p.packageType === PACKAGE_TYPE.MONTHLY) ?? pkgs[0] ?? null;
+  // No Android o identificador vem como "produto:plano"; compara a parte do produto.
+  const sameProduct = (p: PurchasesPackage) => !PRODUCT_ID || p.product.identifier.split(':')[0] === PRODUCT_ID;
+  const monthly = (p: PurchasesPackage) => p.packageType === PACKAGE_TYPE.MONTHLY && (p.product.subscriptionPeriod ?? 'P1M') === 'P1M';
+  return pkgs.find((p) => sameProduct(p) && monthly(p)) ?? null;
+}
+
+/** "R$ 29,90 por mês", com o preço e o período que a loja devolveu (nada fixo). */
+export function priceLabel(pkg: PurchasesPackage): string {
+  const period = pkg.product.subscriptionPeriod;
+  const per = period === 'P1M' ? 'por mês' : period ? `a cada ${period}` : 'por período';
+  return `${pkg.product.priceString} ${per}`;
 }
 
 function storeMessage(e: unknown): string | null {

@@ -7,6 +7,7 @@ import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
+import { useArtImage } from './artload';
 import { friendly } from './errors';
 import { supabase } from './supabase';
 import { colors } from './theme';
@@ -80,32 +81,51 @@ export async function removeAvatar() {
 // URLs assinadas ficam em memória até perto de vencer (chave: bucket + caminho).
 const cache = new Map<string, { url: string; until: number }>();
 
-/** URL assinada curta de um arquivo de bucket privado (fotos e escudos). */
-export function useSignedUrl(bucket: string, path: string | null | undefined) {
+/**
+ * URL assinada curta de um arquivo de bucket privado (fotos e escudos). A16: a URL é renovada antes de
+ * vencer enquanto a tela fica aberta, e `retry()` pede uma nova na hora (imagem que falhou ao carregar).
+ */
+export function useSignedUrlState(bucket: string, path: string | null | undefined) {
   const key = path ? `${bucket}/${path}` : null;
-  const cached = key ? cache.get(key)?.url : undefined;
   const [url, setUrl] = useState<{ path: string; url: string } | null>(null);
+  const [round, setRound] = useState(0); // incrementar = assinar de novo
 
   useEffect(() => {
     if (!path || !key) return;
-    const hit = cache.get(key);
-    if (hit && hit.until > Date.now()) return;
     let alive = true;
-    (async () => {
-      const { data } = await supabase.storage.from(bucket).createSignedUrl(path, URL_TTL);
-      if (!alive || !data?.signedUrl) return;
-      cache.set(key, { url: data.signedUrl, until: Date.now() + (URL_TTL - 120) * 1000 });
-      setUrl({ path, url: data.signedUrl });
-    })();
+    let timer: ReturnType<typeof setTimeout> | undefined;
+    // Renova 2 minutos antes de vencer, sem recarregar a tela.
+    const schedule = (until: number) => {
+      timer = setTimeout(() => alive && setRound((n) => n + 1), Math.max(5_000, until - Date.now()));
+    };
+    const hit = cache.get(key);
+    if (hit && hit.until > Date.now()) {
+      schedule(hit.until); // a URL em cache já é devolvida abaixo
+    } else {
+      (async () => {
+        const { data } = await supabase.storage.from(bucket).createSignedUrl(path, URL_TTL);
+        if (!alive || !data?.signedUrl) return;
+        const until = Date.now() + (URL_TTL - 120) * 1000;
+        cache.set(key, { url: data.signedUrl, until });
+        setUrl({ path, url: data.signedUrl });
+        schedule(until);
+      })();
+    }
     return () => {
       alive = false;
+      if (timer) clearTimeout(timer);
     };
-  }, [bucket, key, path]);
+  }, [bucket, key, path, round]);
 
-  if (!path) return null;
-  return url?.path === path ? url.url : (cached ?? null);
+  const retry = () => {
+    if (key) cache.delete(key);
+    setRound((n) => n + 1);
+  };
+  const cached = key ? cache.get(key)?.url : undefined;
+  return { url: !path ? null : url?.path === path ? url.url : (cached ?? null), retry };
 }
 
+export const useSignedUrl = (bucket: string, path: string | null | undefined) => useSignedUrlState(bucket, path).url;
 export const useAvatarUrl = (path: string | null | undefined) => useSignedUrl(BUCKET, path);
 
 export const initials = (name: string) =>
@@ -118,10 +138,26 @@ export const initials = (name: string) =>
 
 /** Foto redonda; sem foto (ou carregando), mostra as iniciais. */
 export function Avatar({ path, name, size = 56 }: { path: string | null | undefined; name: string; size?: number }) {
-  const url = useAvatarUrl(path);
+  const { url, retry } = useSignedUrlState(BUCKET, path);
+  const [failed, setFailed] = useState<string | null>(null); // URL que falhou (uma nova tentativa por URL)
   const box = { width: size, height: size, borderRadius: size / 2 };
-  if (url) {
-    return <Image source={{ uri: url }} style={box} contentFit="cover" accessibilityLabel={`Foto de ${name}`} />;
+  // A25: dentro de uma arte, a captura espera esta foto carregar (ou cair nas iniciais).
+  const art = useArtImage(url && failed !== url ? url : null);
+  if (url && failed !== url) {
+    return (
+      <Image
+        source={{ uri: url }}
+        style={box}
+        contentFit="cover"
+        accessibilityLabel={`Foto de ${name}`}
+        onLoad={art.done}
+        onError={() => {
+          art.done();
+          setFailed(url);
+          retry(); // URL vencida ou recusada: assina de novo
+        }}
+      />
+    );
   }
   return (
     <View

@@ -127,7 +127,7 @@ export default function Rankings() {
       if (error) {
         setRows([]);
         // Grátis: temporada atual e a anterior (RN-083).
-        return setMsg(error.message.includes('PREMIUM_REQUIRED') ? 'Temporadas mais antigas ficam no Premium da pelada.' : friendly(error.message));
+        return setMsg(error.message.includes('PREMIUM_REQUIRED') ? 'Temporadas mais antigas ficam na Pelada Premium.' : friendly(error.message));
       }
       setMsg(null);
       setRows((r ?? []) as Row[]);

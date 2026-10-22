@@ -6,6 +6,7 @@
 // sobre os Cards bronze, prata e ouro e no cabeçalho (pickCrest → prévia → uploadCrest).
 // Exibido só por URL temporária assinada; sem escudo, o escudo padrão com as iniciais da pelada.
 import { Image } from 'expo-image';
+import { useArtImage } from './artload';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
@@ -124,6 +125,7 @@ export const crestInitials = (name: string) => {
 /** Imagem do escudo já resolvida (para quem precisa da URL, como a arte exportada). */
 export function CrestView({ url, name, size }: { url: string | null; name: string; size: number }) {
   const [loaded, setLoaded] = useState<{ url: string; aspect: number } | null>(null);
+  const art = useArtImage(url); // A25: a arte espera o escudo
   // Forma de escudo simples: topo quase reto, base arredondada.
   const shape = {
     width: size,
@@ -144,7 +146,11 @@ export function CrestView({ url, name, size }: { url: string | null; name: strin
           source={{ uri: url }}
           style={{ width: w, height: h }}
           contentFit="contain"
-          onLoad={(e) => e.source.width > 0 && e.source.height > 0 && setLoaded({ url, aspect: e.source.width / e.source.height })}
+          onLoad={(e) => {
+            art.done();
+            if (e.source.width > 0 && e.source.height > 0) setLoaded({ url, aspect: e.source.width / e.source.height });
+          }}
+          onError={art.done}
           accessibilityLabel={`Escudo de ${name}`}
         />
       </View>

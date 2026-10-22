@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import type { PurchasesPackage } from 'react-native-purchases';
 
 import { friendly } from '../../../lib/errors';
-import { loadPremiumPackage, openManageSubscription, restorePurchases, storeAvailable, subscribePelada } from '../../../lib/purchases';
+import { loadPremiumPackage, openManageSubscription, priceLabel, restorePurchases, storeAvailable, subscribePelada } from '../../../lib/purchases';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
@@ -20,13 +20,28 @@ type Entitlement = {
   has_open_subscription: boolean;
 };
 
-const FEATURES = [
+// O que é de cada plano (V4.2, 12.3). Benefícios coletivos valem para todos da pelada; os administrativos
+// são usados pelo admin (e assistentes, quando a função permite). Só o que existe no app.
+const FREE = [
+  'Partidas, times montados à mão, gols e assistências',
+  'Votação, notas, Craque da Partida e Cards Bronze, Prata e Ouro',
+  'Rankings, estatísticas, premiações e álbum',
+  'Escalação visual depois do jogo e artes básicas',
+  'Temporada atual e a anterior',
+];
+const PREMIUM_ALL = [
+  'Duelo de Jogadores (comparação lado a lado, com arte)',
+  'Histórico completo, carreira e recordes de todas as temporadas',
+  'Arte especial com os rankings da temporada',
   'Bola Murcha na votação',
-  'Até 3 assistentes (grátis: 1)',
+];
+const PREMIUM_ADMIN = [
+  'Sorteio automático de times equilibrado por posição (único ou por rodada)',
+  'Escalação antes do jogo',
   'Nomes dos times personalizados',
   'Votação com horário fixo para encerrar',
-  'Histórico completo, carreira e recordes de todas as temporadas',
   'Temporadas personalizadas',
+  'Até 3 assistentes (grátis: 1)',
 ];
 
 const fmtDay = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
@@ -86,11 +101,11 @@ export default function PeladaPremium() {
       const { data } = await supabase.rpc('get_pelada_entitlement', { p_pelada: id });
       if ((data as Entitlement | null)?.is_premium) {
         setEnt(data as Entitlement);
-        setInfo('Premium ativo. Obrigado!');
+        setInfo('Pelada Premium ativa. Obrigado!');
         return;
       }
     }
-    setInfo('Pagamento enviado à loja. O Premium é liberado assim que a loja confirmar (pode levar alguns minutos).');
+    setInfo('Pagamento enviado à loja. A Pelada Premium é liberada assim que a loja confirmar (pode levar alguns minutos).');
   }
 
   async function assinar() {
@@ -139,26 +154,35 @@ export default function PeladaPremium() {
 
   return (
     <Screen>
-      <Title>Premium da pelada</Title>
+      <Title>Pelada Premium</Title>
       <Card>
-        {ent.source === 'beta' && <Body>Premium liberado: estamos no beta, sem cobrança.</Body>}
+        {ent.source === 'beta' && <Body>Pelada Premium liberada: estamos no beta, sem cobrança.</Body>}
         {ent.source === 'trial' && ent.trial_ends_at && <Body>Teste grátis até {fmtDay(ent.trial_ends_at)}.</Body>}
         {ent.source === 'subscription' && ent.premium_until && (
           <Body>
-            Premium ativo até {fmtDay(ent.premium_until)}
+            Pelada Premium ativa até {fmtDay(ent.premium_until)}
             {ent.status === 'cancelled' ? ' (renovação cancelada)' : ''}.
           </Body>
         )}
-        {!ent.is_premium && <Body>Esta pelada está no plano grátis.</Body>}
-        <Sub>R$ 29,90 por mês, por pelada. Só o administrador contrata, e vale para todos os jogadores.</Sub>
+        {!ent.is_premium && <Body>Esta pelada está no plano Básico (grátis).</Body>}
+        <Sub>Uma assinatura por pelada: só o administrador contrata, e vale para todos os jogadores dela. Não passa para outras peladas.</Sub>
       </Card>
 
       <Card>
-        <Body>O que o Premium libera</Body>
-        {FEATURES.map((f) => (
+        <Body>Básico (grátis)</Body>
+        {FREE.map((f) => (
           <Sub key={f}>• {f}</Sub>
         ))}
-        <Sub>Cards, votação, Craque da Partida, rankings e álbum continuam grátis.</Sub>
+      </Card>
+      <Card>
+        <Body>Pelada Premium: para todos da pelada</Body>
+        {PREMIUM_ALL.map((f) => (
+          <Sub key={f}>• {f}</Sub>
+        ))}
+        <Body>Pelada Premium: para quem organiza</Body>
+        {PREMIUM_ADMIN.map((f) => (
+          <Sub key={f}>• {f}</Sub>
+        ))}
       </Card>
 
       <ErrorText>{msg}</ErrorText>
@@ -173,13 +197,13 @@ export default function PeladaPremium() {
       {canBuy &&
         (storeAvailable ? (
           <Card>
-            <Body>Assinar o Premium para esta pelada</Body>
+            <Body>Assinar a Pelada Premium</Body>
             <Sub>
-              {pkg ? `${pkg.product.priceString} por mês` : 'R$ 29,90 por mês'}, cobrado pela sua conta da{' '}
+              {pkg ? priceLabel(pkg) : 'Preço indisponível na loja agora'}, cobrado pela sua conta da{' '}
               {Platform.OS === 'ios' ? 'App Store' : 'Google Play'}. Renova todo mês; cancele quando quiser na loja. Sua
               conta da loja pode pagar uma pelada por vez.
             </Sub>
-            <Button title="Assinar Premium" onPress={assinar} loading={storeBusy === 'assinar'} disabled={!pkg || !!storeBusy} />
+            <Button title="Assinar" onPress={assinar} loading={storeBusy === 'assinar'} disabled={!pkg || !!storeBusy} />
             <Button title="Restaurar compras" kind="secondary" onPress={restaurar} loading={storeBusy === 'restaurar'} disabled={!!storeBusy} />
           </Card>
         ) : (
@@ -189,10 +213,10 @@ export default function PeladaPremium() {
       {ent.is_admin && ent.source === 'subscription' && storeAvailable && (
         <Card>
           <Button title="Gerenciar assinatura na loja" kind="secondary" onPress={gerenciar} />
-          <Sub>Cancelar não apaga nada: o Premium vale até o fim do período pago e depois a pelada volta ao grátis.</Sub>
+          <Sub>Cancelar não apaga nada: a Pelada Premium vale até o fim do período pago e depois a pelada volta ao Básico.</Sub>
         </Card>
       )}
-      {!ent.is_admin && !ent.is_premium && <Sub>Só o administrador da pelada pode ativar o Premium.</Sub>}
+      {!ent.is_admin && !ent.is_premium && <Sub>Só o administrador da pelada pode assinar a Pelada Premium.</Sub>}
     </Screen>
   );
 }

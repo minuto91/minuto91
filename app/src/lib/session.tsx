@@ -35,8 +35,18 @@ export async function signOut() {
   await supabase.auth.signOut();
 }
 
+// Cadastro completo = 18+ e termos declarados no perfil E aceite da versão vigente de Termos e Privacidade
+// (A18, migração 037). Banco sem a 037: vale só o perfil.
 async function fetchOnboarded(s: Session | null): Promise<boolean | null> {
   if (!s) return null;
+  const profileOk = await fetchProfileOnboarded(s);
+  if (!profileOk) return false;
+  const { data, error } = await supabase.rpc('get_legal_status');
+  if (error) return true;
+  return !!(data as { accepted: boolean } | null)?.accepted;
+}
+
+async function fetchProfileOnboarded(s: Session): Promise<boolean> {
   // Desde a 029 só id, nome e foto são lidos direto de profiles; o resto vem por RPC.
   const { data, error } = await supabase.rpc('get_my_profile');
   if (error) {

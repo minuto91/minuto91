@@ -3,7 +3,8 @@ import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { RetroPeladaArt, RetroPlayerArt, RetroRankingsArt, SharePanel } from '../../../lib/arts';
-import { fmtMonth, loadSeasons, plural, Season } from '../../../lib/career';
+import { fmtMonth, loadReadableSeasons, plural, Season } from '../../../lib/career';
+import { todayIn } from '../../../lib/dates';
 import { friendly } from '../../../lib/errors';
 import { fmtDate } from '../../../lib/match';
 import { PlayerCard } from '../../../lib/playercard';
@@ -30,15 +31,17 @@ export default function Retrospectiva() {
   const [pelada, setPelada] = useState<{ name: string; crest_path: string | null } | null>(null);
   const [me, setMe] = useState<{ id: string; player_name: string } | null>(null);
   const [photo, setPhoto] = useState<string | null>(null);
-  const [retro, setRetro] = useState<Retro | null>(null);
+  // A14: o resultado guarda a temporada a que pertence; ao trocar de temporada, nada da anterior aparece
+  // (nem na tela nem na arte) até a nova chegar.
+  const [loadedRetro, setLoadedRetro] = useState<{ seasonId: string; data: Retro } | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const today = new Date().toISOString().slice(0, 10);
+      const today = todayIn();
       const [ss, { data: ent }, { data: p }, { data: m }, { data: pr }] = await Promise.all([
-        loadSeasons(id),
+        loadReadableSeasons(id),
         supabase.rpc('get_pelada_entitlement', { p_pelada: id }),
         supabase.from('peladas').select('name, crest_path').eq('id', id).maybeSingle(),
         supabase.from('pelada_memberships').select('id, player_name').eq('pelada_id', id).eq('user_id', uid ?? '').maybeSingle(),
@@ -47,7 +50,7 @@ export default function Retrospectiva() {
       if (!alive) return;
       const started = ss.filter((s) => s.starts_on <= today);
       setPremium(!!ent?.is_premium);
-      // Sem Premium: só a atual e a anterior (as duas mais recentes que já começaram).
+      // O servidor já devolve só as liberadas (grátis: atual e anterior); o corte fica como segurança.
       const visible = ent?.is_premium ? started : started.slice(0, 2);
       setSeasons(visible);
       setSeasonId(visible[0]?.id ?? null);
@@ -65,7 +68,7 @@ export default function Retrospectiva() {
     let alive = true;
     (async () => {
       const r = await loadRetro(id, seasonId, me?.id ?? null);
-      if (alive) setRetro(r);
+      if (alive) setLoadedRetro({ seasonId, data: r });
     })().catch((e) => alive && setMsg(friendly((e as Error).message)));
     return () => {
       alive = false;
@@ -73,7 +76,8 @@ export default function Retrospectiva() {
   }, [id, seasonId, me?.id]);
 
   const season = seasons.find((s) => s.id === seasonId);
-  const today = new Date().toISOString().slice(0, 10);
+  const retro = loadedRetro && loadedRetro.seasonId === seasonId ? loadedRetro.data : null;
+  const today = todayIn();
   const partial = !!season && season.ends_on >= today;
   const name = pelada?.name ?? '';
   const p = retro?.pelada;
@@ -83,9 +87,9 @@ export default function Retrospectiva() {
       <Title>Retrospectiva</Title>
       <ErrorText>{msg}</ErrorText>
       {seasons.length > 1 && (
-        <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId ?? ''} onChange={(v) => setSeasonId(v)} />
+        <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId ?? ''} onChange={(v) => { setMsg(null); setSeasonId(v); }} />
       )}
-      {!premium && <Sub>Temporadas mais antigas aparecem com o Premium da pelada.</Sub>}
+      {!premium && <Sub>Temporadas mais antigas aparecem na Pelada Premium.</Sub>}
       {season && (
         <Sub>
           {fmtDay(season.starts_on)} a {fmtDay(season.ends_on)}
@@ -155,7 +159,7 @@ export default function Retrospectiva() {
               <RetroRankingsArt peladaName={name} crestPath={pelada?.crest_path} seasonName={season?.name ?? ''} partial={partial} retro={p} />
             </SharePanel>
           ) : (
-            <Sub>A arte especial com os rankings da temporada é do Premium da pelada.</Sub>
+            <Sub>A arte especial com os rankings da temporada é da Pelada Premium.</Sub>
           )}
 
           <Text style={section}>Sua temporada</Text>

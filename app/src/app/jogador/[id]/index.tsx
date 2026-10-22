@@ -11,7 +11,7 @@ import {
   currentSeason,
   fmtMonth,
   loadCard,
-  loadSeasons,
+  loadReadableSeasons,
   plural,
   Season,
   SeasonStats,
@@ -82,7 +82,7 @@ export default function Carta() {
         const { data: b } = await supabase.from('user_blocks').select('blocked_user_id').eq('blocked_user_id', m.user_id);
         setBlocked((b ?? []).length > 0);
       }
-      const ss = await loadSeasons(m.pelada_id);
+      const ss = await loadReadableSeasons(m.pelada_id); // A06: só as temporadas que o plano libera
       setSeasons(ss);
       setSeasonId(currentSeason(ss)?.id ?? null);
     })().catch((e) => setMsg(friendly((e as Error).message)));

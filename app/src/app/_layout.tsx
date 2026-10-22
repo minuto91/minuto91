@@ -15,14 +15,16 @@ function Gate() {
   useEffect(() => {
     if (loading) return;
     const first = segments[0] as string | undefined;
+    // Telas abertas sem login e sem cadastro completo: documentos legais (A18) e nova senha (A17).
+    const open = first === 'termos' || first === 'privacidade' || first === 'redefinir-senha';
     if (!session) {
       // A vitrine de Cards (só em desenvolvimento) abre sem login, para conferir o desenho.
-      if (first !== 'login' && first !== 'convite' && !(__DEV__ && first === 'dev-cards')) router.replace('/login');
+      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && first === 'dev-cards')) router.replace('/login');
       return;
     }
     if (onboarded === null) return;
     if (!onboarded) {
-      if (first !== 'onboarding') router.replace('/onboarding');
+      if (first !== 'onboarding' && !open) router.replace('/onboarding');
       return;
     }
     if (first === 'login' || first === 'onboarding') router.replace('/');
@@ -61,7 +63,11 @@ function Gate() {
         <Stack.Screen name="pelada/[id]/retrospectiva" options={{ title: 'Retrospectiva' }} />
         <Stack.Screen name="pelada/[id]/premium" options={{ title: 'Premium' }} />
         <Stack.Screen name="pelada/[id]/configuracoes" options={{ title: 'Configurações' }} />
+        <Stack.Screen name="pelada/[id]/temporadas" options={{ title: 'Temporadas' }} />
         <Stack.Screen name="conta" options={{ title: 'Minha conta' }} />
+        <Stack.Screen name="termos" options={{ title: 'Termos de Uso' }} />
+        <Stack.Screen name="privacidade" options={{ title: 'Política de Privacidade' }} />
+        <Stack.Screen name="redefinir-senha" options={{ title: 'Nova senha' }} />
         <Stack.Screen name="perfil" options={{ title: 'Meu perfil' }} />
         <Stack.Screen name="atleta/[id]" options={{ title: 'Perfil do jogador' }} />
         <Stack.Screen name="jogador/[id]/index" options={{ title: 'Card' }} />

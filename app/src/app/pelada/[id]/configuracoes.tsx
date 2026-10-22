@@ -194,7 +194,7 @@ export default function Configuracoes() {
         {premium ? (
           <Chips options={ON_OFF} value={bolaMurcha} onChange={setBolaMurcha} />
         ) : (
-          <Sub>Recurso do Premium. Sem Premium, a votação não tem Bola Murcha.</Sub>
+          <Sub>Recurso da Pelada Premium. Sem ela, a votação não tem Bola Murcha.</Sub>
         )}
       </Card>
 

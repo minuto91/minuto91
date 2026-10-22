@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState, Pressable, Text, View } from 'react-native';
 
 import { Avatar } from '../lib/avatar';
 import { fmtDate, fmtTime, STATUS_LABEL } from '../lib/match';
@@ -23,6 +23,10 @@ type LastMatch = {
 type Row = { id: string; name: string; role: string; last: LastMatch | null; drafts: number };
 type Pending = { matchId: string; pelada: string; closesAt: string; match: LastMatch | null };
 type Me = { display_name: string; avatar_path: string | null };
+type HomeData = {
+  peladas: { id: string; name: string; role: string; last: LastMatch | null; drafts: number }[];
+  pending: { match_id: string; pelada_name: string; closes_at: string; team_a_name: string; team_b_name: string; team_a_score: number; team_b_score: number }[];
+};
 
 const ROLE = (r: string) => (r === 'admin' ? 'Administrador' : r === 'assistant' ? 'Assistente' : 'Jogador');
 
@@ -35,6 +39,7 @@ export default function Home() {
   const [pending, setPending] = useState<Pending[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [purgeAfter, setPurgeAfter] = useState<string | null>(null);
+  const [reload, setReload] = useState(0); // incrementar = buscar de novo
 
   useFocusEffect(
     useCallback(() => {
@@ -48,68 +53,54 @@ export default function Home() {
           return;
         }
         if (!session) return;
+        void reload; // recarregar (AppState, prazo, Tentar de novo)
         const uid = session.user.id;
-        const [{ data: st }, { data: pr }, { data: ms, error }] = await Promise.all([
+        // A12: o servidor devolve a última partida e os rascunhos de CADA pelada (sem limite global) e as
+        // votações em que falta o meu voto, já sem as vencidas (A13).
+        const [{ data: st }, { data: pr }, { data: home, error }] = await Promise.all([
           supabase.rpc('get_account_status'),
           supabase.from('profiles').select('display_name, avatar_path').eq('id', uid).maybeSingle(),
-          supabase.from('pelada_memberships').select('id, role, pelada_id').eq('user_id', uid).eq('status', 'active'),
+          supabase.rpc('get_my_home'),
         ]);
         if (!alive) return;
         setPurgeAfter((st as { purge_after: string | null } | null)?.purge_after ?? null);
         setMe(pr as Me | null);
-        if (error) return setErr('Não foi possível carregar suas peladas. Verifique a internet e abra a tela de novo.');
-        const mine = ms ?? [];
-        const ids = mine.map((m) => m.pelada_id as string);
-        if (!ids.length) {
-          setPending([]);
-          return setRows([]);
-        }
-        const myMemberships = mine.map((m) => m.id as string);
-        const [{ data: ps }, { data: xs }, { data: vs }, { data: el }, { data: rc }] = await Promise.all([
-          supabase.from('peladas').select('id, name').in('id', ids),
-          supabase
-            .from('matches')
-            .select('id, pelada_id, played_at, status, team_a_name, team_b_name, team_a_score, team_b_score')
-            .in('pelada_id', ids)
-            .order('played_at', { ascending: false })
-            .limit(100),
-          supabase.from('voting_sessions').select('id, match_id, pelada_id, closes_at').in('pelada_id', ids).eq('status', 'open'),
-          supabase.from('voting_eligible_members').select('session_id').in('membership_id', myMemberships),
-          supabase.from('vote_receipts').select('session_id').in('membership_id', myMemberships),
-        ]);
-        if (!alive) return;
-        const matches = (xs ?? []) as (LastMatch & { pelada_id: string })[];
-        const nameOf = (pid: string) => ps?.find((p) => p.id === pid)?.name ?? 'Pelada';
+        // A21: falha de rede não vira "nenhuma pelada".
+        if (error || !home) return setErr('Não foi possível carregar suas peladas. Verifique a internet e tente de novo.');
+        const h = home as HomeData;
         setErr(null);
         setRows(
-          ids
-            .map((pid) => ({
-              id: pid,
-              name: nameOf(pid),
-              role: mine.find((m) => m.pelada_id === pid)?.role ?? 'player',
-              last: matches.find((x) => x.pelada_id === pid && x.status !== 'draft') ?? null,
-              drafts: matches.filter((x) => x.pelada_id === pid && x.status === 'draft').length,
-            }))
+          h.peladas
+            .map((p) => ({ id: p.id, name: p.name, role: p.role, last: p.last, drafts: p.drafts }))
             .sort((a, b) => (b.last?.played_at ?? '').localeCompare(a.last?.played_at ?? '') || a.name.localeCompare(b.name)),
         );
-        const eligible = new Set((el ?? []).map((e) => e.session_id as string));
-        const voted = new Set((rc ?? []).map((r) => r.session_id as string));
         setPending(
-          (vs ?? [])
-            .filter((v) => eligible.has(v.id) && !voted.has(v.id))
-            .map((v) => ({
-              matchId: v.match_id,
-              pelada: nameOf(v.pelada_id),
-              closesAt: v.closes_at,
-              match: matches.find((x) => x.id === v.match_id) ?? null,
-            })),
+          h.pending.map((v) => ({
+            matchId: v.match_id,
+            pelada: v.pelada_name,
+            closesAt: v.closes_at,
+            match: { id: v.match_id, played_at: '', status: 'voting_open', team_a_name: v.team_a_name, team_b_name: v.team_b_name,
+              team_a_score: v.team_a_score, team_b_score: v.team_b_score },
+          })),
         );
       })();
       return () => {
         alive = false;
       };
-    }, [session, router]),
+    }, [session, router, reload]),
   );
+
+  // A13: pendências se atualizam ao voltar para o app e quando o prazo da próxima votação vence.
+  useEffect(() => {
+    const sub = AppState.addEventListener('change', (s) => s === 'active' && setReload((n) => n + 1));
+    return () => sub.remove();
+  }, []);
+  useEffect(() => {
+    const next = pending.map((p) => new Date(p.closesAt).getTime()).filter((t) => t > Date.now()).sort((a, b) => a - b)[0];
+    if (!next) return;
+    const timer = setTimeout(() => setReload((n) => n + 1), Math.min(next - Date.now() + 1000, 2 ** 31 - 1));
+    return () => clearTimeout(timer);
+  }, [pending]);
 
   const openMatch = (id: string) => router.push({ pathname: '/partida/[id]', params: { id } });
 
@@ -130,6 +121,7 @@ export default function Home() {
       </Pressable>
 
       <ErrorText>{err}</ErrorText>
+      {err && <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />}
       {purgeAfter && (
         <Pressable onPress={() => router.push('/conta')}>
           <Card>
@@ -164,7 +156,7 @@ export default function Home() {
 
       <Text style={section}>Minhas peladas</Text>
       {rows === null ? (
-        <Sub>Carregando...</Sub>
+        !err && <Sub>Carregando...</Sub>
       ) : rows.length === 0 ? (
         <Card>
           <Body>Você ainda não está em nenhuma pelada.</Body>

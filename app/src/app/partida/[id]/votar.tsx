@@ -1,5 +1,5 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { notify } from '../../../lib/dialog';
@@ -48,6 +48,9 @@ export default function Votar() {
   const [msg, setMsg] = useState<string | null>(null);
 
   const [reload, setReload] = useState(0); // incrementar = buscar de novo
+  // A10: a mesma chave em todas as tentativas do mesmo envio (rede caiu, toque duplo): o servidor responde
+  // "repetido" em vez de erro, mesmo se o envio já tiver fechado a votação.
+  const sendKey = useRef<string | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -110,7 +113,7 @@ export default function Votar() {
     const { data, error } = await supabase.rpc(fn, args);
     setBusy(false);
     if (error) setMsg(friendly(error.message));
-    return { ok: !error, data };
+    return { ok: !error, data, error: error?.message };
   }
 
   async function conferir() {
@@ -134,9 +137,14 @@ export default function Votar() {
       p_scores: payload(),
       p_craque: craque,
       p_bola_murcha: bola,
-      p_idempotency_key: newKey(),
+      p_idempotency_key: (sendKey.current ??= newKey()),
     });
-    if (!r.ok) return;
+    if (!r.ok) {
+      // Recusa do servidor (nota faltando etc.): o próximo envio é outro conteúdo, com chave nova.
+      if (!/conexão|internet/i.test(friendly(String(r.error ?? '')))) sendKey.current = null;
+      return;
+    }
+    sendKey.current = null;
     const res = r.data as { all_voted: boolean };
     notify(
       'Voto enviado',
@@ -228,13 +236,22 @@ export default function Votar() {
                   step={0.5}
                   start={6}
                   format={fmtRating}
+                  a11yName={`Nota de ${c.player_name}`}
                 />
               )}
-              <Pressable onPress={() => set(v === 'not_seen' ? undefined : 'not_seen')}>
+              <Pressable
+                onPress={() => set(v === 'not_seen' ? undefined : 'not_seen')}
+                accessibilityRole="button"
+                accessibilityLabel={v === 'not_seen' ? `Vi ${c.player_name} jogar` : `Não vi ${c.player_name} jogar`}
+                style={linkBtn}>
                 <Text style={{ color: colors.blue, fontWeight: '600' }}>{v === 'not_seen' ? 'Vi jogar' : 'Não vi jogar'}</Text>
               </Pressable>
               {typeof v === 'number' && (
-                <Pressable onPress={() => set(undefined)}>
+                <Pressable
+                  onPress={() => set(undefined)}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Limpar nota de ${c.player_name}`}
+                  style={linkBtn}>
                   <Text style={{ color: colors.muted }}>Limpar</Text>
                 </Pressable>
               )}
@@ -258,3 +275,6 @@ export default function Votar() {
     </Screen>
   );
 }
+
+// A26: alvo de toque de pelo menos 44 px para os botões de texto.
+const linkBtn = { minHeight: 44, justifyContent: 'center' as const, paddingHorizontal: 6 };

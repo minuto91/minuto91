@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, Share, Text } from 'react-native';
 
 import { friendly } from '../lib/errors';
+import { LEGAL_VERSIONS } from '../lib/legalText';
 import { NotificationSettings } from '../lib/push';
 import { signOut } from '../lib/session';
 import { supabase } from '../lib/supabase';
@@ -128,6 +129,13 @@ export default function Conta() {
         {blocked.map((b) => (
           <Button key={b.user_id} title={`Desbloquear ${b.name}`} kind="secondary" onPress={() => desbloquear(b.user_id)} />
         ))}
+      </Card>
+      {/* A18: documentos oficiais sempre acessíveis depois do aceite. */}
+      <Card>
+        <Body>Documentos</Body>
+        <Button title="Termos de Uso" kind="secondary" onPress={() => router.push('/termos')} />
+        <Button title="Política de Privacidade" kind="secondary" onPress={() => router.push('/privacidade')} />
+        <Sub>Versões aceitas: Termos {LEGAL_VERSIONS.terms}, Política {LEGAL_VERSIONS.privacy}.</Sub>
       </Card>
 
       <Text style={section}>Trocar de conta</Text>

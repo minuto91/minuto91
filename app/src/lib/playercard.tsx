@@ -8,6 +8,7 @@
 // quadrada também é feito à mão, com overflow).
 // Tudo é desenhado em unidades de uma caixa 100 x 144; width muda a escala inteira.
 import { Image } from 'expo-image';
+import { useArtImage } from './artload';
 import { Text, View } from 'react-native';
 import Svg, { ClipPath, Defs, Ellipse, G, Line, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
@@ -323,6 +324,7 @@ export function PlayerCard({
   const signedPhoto = useAvatarUrl(photoPath);
   const signedCrest = useCrestUrl(crestPath);
   const photo = photoUrl !== undefined ? photoUrl : signedPhoto;
+  const art = useArtImage(photo ?? null); // A25: a arte espera a foto
   const crest = crestUrl !== undefined ? crestUrl : signedCrest;
   const u = width / VB_W; // px por unidade
   const height = Math.round(width * CARD_RATIO);
@@ -350,6 +352,8 @@ export function PlayerCard({
             style={{ position: 'absolute', left: 0, top: -Math.round((side - areaH) * 0.2), width: side, height: side }}
             contentFit="cover"
             accessibilityLabel={`Foto de ${playerName}`}
+            onLoad={art.done}
+            onError={art.done}
           />
         ) : (
           <View style={{ flex: 1, alignItems: 'center', paddingTop: px(16) }}>

@@ -167,8 +167,11 @@ export function Stepper({
   step = 1,
   start,
   format = (v: number) => String(v),
+  a11yName,
 }: {
   label?: string;
+  /** Nome lido pelo leitor de tela (ex.: "Nota de João"); padrão = label. */
+  a11yName?: string;
   value: number | null;
   onChange: (v: number) => void;
   min?: number;
@@ -182,16 +185,27 @@ export function Stepper({
     const next = Math.round((base + d) * 10) / 10;
     if (next >= min && next <= max) onChange(next);
   };
+  const name = a11yName ?? label ?? 'Valor';
+  const shown = value === null ? 'sem valor' : format(value);
+  // A26: alvos de 44 px (diretriz de acessibilidade das lojas), nome e valor lidos pelo leitor de tela, e
+  // o conjunto ajustável por gesto (deslizar para cima/baixo no VoiceOver/TalkBack).
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+    <View
+      accessible
+      accessibilityRole="adjustable"
+      accessibilityLabel={name}
+      accessibilityValue={{ text: shown }}
+      accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
+      onAccessibilityAction={(e) => bump(e.nativeEvent.actionName === 'increment' ? step : -step)}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
       {label ? <Text style={{ color: colors.muted, fontSize: 13 }}>{label}</Text> : null}
-      <Pressable onPress={() => bump(-step)} style={styles.stepBtn}>
+      <Pressable onPress={() => bump(-step)} style={styles.stepBtn} hitSlop={4} accessibilityLabel={`Diminuir ${name}`}>
         <Text style={styles.stepTxt}>−</Text>
       </Pressable>
-      <Text style={{ minWidth: 34, textAlign: 'center', fontWeight: '700', color: colors.ink }}>
+      <Text style={{ minWidth: 38, textAlign: 'center', fontWeight: '700', fontSize: 16, color: colors.ink }}>
         {value === null ? '–' : format(value)}
       </Text>
-      <Pressable onPress={() => bump(step)} style={styles.stepBtn}>
+      <Pressable onPress={() => bump(step)} style={styles.stepBtn} hitSlop={4} accessibilityLabel={`Aumentar ${name}`}>
         <Text style={styles.stepTxt}>+</Text>
       </Pressable>
     </View>
@@ -212,16 +226,16 @@ const styles = StyleSheet.create({
     color: colors.ink,
   },
   stepBtn: {
-    width: 32,
-    height: 32,
-    borderRadius: 16,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.white,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepTxt: { fontSize: 18, fontWeight: '700', color: colors.blue },
+  stepTxt: { fontSize: 20, fontWeight: '700', color: colors.blue },
   card: {
     backgroundColor: colors.white,
     borderRadius: 12,

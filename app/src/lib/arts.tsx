@@ -7,6 +7,7 @@
 import { createContext, ReactNode, useContext, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { ArtImagesProvider, useArtTracker } from './artload';
 import { Avatar } from './avatar';
 import { Crest } from './crest';
 import { Card as CardData, plural } from './career';
@@ -50,11 +51,15 @@ export function SharePanel({
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [format, setFormat] = useState<ArtFormat>('story');
+  const images = useArtTracker();
 
   async function compartilhar() {
     setBusy(true);
     setMsg(null);
     try {
+      // A25: espera foto e escudo (até 5 s; o que não carregar sai com iniciais ou o escudo padrão).
+      await new Promise((r) => setTimeout(r, 250));
+      await images.idle(5000);
       await shareViewAsImage(ref, `${fileName}-${format === 'story' ? '9x16' : '4x5'}`, title, SIZE[format]);
     } catch (e) {
       setMsg(friendly((e as Error).message));
@@ -71,7 +76,9 @@ export function SharePanel({
           ref={ref}
           collapsable={false}
           style={[s.frame, { height: SIZE[format].h, paddingVertical: format === 'story' ? 26 : 18, gap: format === 'story' ? 16 : 10 }]}>
-          <FormatContext.Provider value={format}>{children}</FormatContext.Provider>
+          <ArtImagesProvider tracker={images}>
+            <FormatContext.Provider value={format}>{children}</FormatContext.Provider>
+          </ArtImagesProvider>
           <View style={{ flex: 1 }} />
           <Text style={s.logo}>MINUTO 91</Text>
         </View>

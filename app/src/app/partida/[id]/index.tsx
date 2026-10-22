@@ -306,7 +306,11 @@ export default function Partida() {
         <Card>
           {!voting && <Sub>Finalizada sem votação (menos de 6 jogadores com conta). Contam gols, assistências e presença.</Sub>}
           {voting && voting.is_valid === false && (
-            <Sub>Votação inválida: menos da metade votou. Sem notas oficiais nem prêmios nesta partida.</Sub>
+            // A27: mesma regra do servidor (013/036): válida com pelo menos metade dos eleitores E pelo menos 3 votos.
+            <Sub>
+              Votação inválida: {voted.length} de {voting.eligible_voter_count} votaram. Para valer, precisa de pelo menos metade dos
+              eleitores e de no mínimo 3 votos. Sem notas oficiais nem prêmios nesta partida.
+            </Sub>
           )}
           {awardNames('match_craque') !== '' && <Body>Craque da Partida: {awardNames('match_craque')}</Body>}
           {awardNames('bola_murcha') !== '' && <Body>Bola Murcha: {awardNames('bola_murcha')}</Body>}

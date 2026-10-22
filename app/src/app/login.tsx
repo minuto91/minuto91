@@ -2,19 +2,24 @@ import * as AppleAuthentication from 'expo-apple-authentication';
 import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Platform, View } from 'react-native';
+import { useRouter } from 'expo-router';
+import { Platform, Pressable, Text, View } from 'react-native';
 
 import { friendly } from '../lib/errors';
 import { supabase } from '../lib/supabase';
-import { Button, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
+import { colors } from '../lib/theme';
+import { Body, Button, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
+  const router = useRouter();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [forgot, setForgot] = useState(false); // A17: modo "esqueci minha senha"
   // Login com Apple só existe no app nativo (development build ou lojas), não no Expo Go.
   const [appleOk, setAppleOk] = useState(false);
 
@@ -61,6 +66,19 @@ export default function Login() {
       return data.session ? null : 'Enviamos um e-mail de confirmação. Confirme e depois entre.';
     });
 
+  // A17: o Supabase manda um link que abre /redefinir-senha (precisa estar nas Redirect URLs do Auth).
+  // A resposta é a mesma exista ou não a conta, para não revelar quem tem cadastro.
+  const recuperar = () =>
+    run('recuperar', async () => {
+      const mail = email.trim();
+      if (!/^\S+@\S+\.\S+$/.test(mail)) return 'Digite o e-mail da sua conta.';
+      const { error } = await supabase.auth.resetPasswordForEmail(mail, { redirectTo: Linking.createURL('redefinir-senha') });
+      if (error && /rate|security purposes/i.test(error.message)) return 'Aguarde um minuto antes de pedir outro e-mail.';
+      if (error) return friendly(error.message);
+      setInfo('Se houver uma conta com esse e-mail, enviamos um link para criar uma nova senha. Ele vale por 1 hora; confira também o spam.');
+      return null;
+    });
+
   const google = () =>
     run('google', async () => {
       const redirectTo = Linking.createURL('auth-callback');
@@ -101,15 +119,35 @@ export default function Login() {
     <Screen>
       <View style={{ height: 40 }} />
       <Title>Minuto 91</Title>
-      <Sub>Mais que pelada. História.</Sub>
+      <Sub>O jogo acaba. A resenha começa.</Sub>
       <View style={{ height: 12 }} />
       <Input placeholder="e-mail" keyboardType="email-address" value={email} onChangeText={setEmail} />
-      <Input placeholder="senha (6 ou mais caracteres)" secureTextEntry value={senha} onChangeText={setSenha} />
-      <ErrorText>{msg}</ErrorText>
-      <Button title="Entrar" onPress={entrar} loading={busy === 'entrar'} />
-      <Button title="Criar conta" kind="secondary" onPress={cadastrar} loading={busy === 'cadastrar'} />
+      {forgot ? (
+        <>
+          <Sub>Digite o e-mail da conta. Vamos mandar um link para criar uma senha nova.</Sub>
+          <ErrorText>{msg}</ErrorText>
+          {info && <Body>{info}</Body>}
+          <Button title="Enviar link" onPress={recuperar} loading={busy === 'recuperar'} />
+          <Button title="Voltar para entrar" kind="secondary" onPress={() => { setForgot(false); setMsg(null); setInfo(null); }} />
+        </>
+      ) : (
+        <>
+          <Input placeholder="senha (6 ou mais caracteres)" secureTextEntry value={senha} onChangeText={setSenha} />
+          <ErrorText>{msg}</ErrorText>
+          <Button title="Entrar" onPress={entrar} loading={busy === 'entrar'} />
+          <Button title="Criar conta" kind="secondary" onPress={cadastrar} loading={busy === 'cadastrar'} />
+          <Pressable accessibilityRole="button" onPress={() => { setForgot(true); setMsg(null); }} style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'center' }}>
+            <Text style={{ color: colors.blue, fontWeight: '600' }}>Esqueci minha senha</Text>
+          </Pressable>
+        </>
+      )}
       <View style={{ height: 8 }} />
       <Button title="Continuar com Google" kind="secondary" onPress={google} loading={busy === 'google'} />
+      <Text style={{ color: colors.muted, fontSize: 13, textAlign: 'center' }}>
+        Ao continuar você poderá ler os{' '}
+        <Text style={{ color: colors.blue }} onPress={() => router.push('/termos')}>Termos de Uso</Text> e a{' '}
+        <Text style={{ color: colors.blue }} onPress={() => router.push('/privacidade')}>Política de Privacidade</Text> antes de aceitar.
+      </Text>
       {appleOk && (
         <Button title="Continuar com Apple" kind="secondary" onPress={apple} loading={busy === 'apple'} />
       )}

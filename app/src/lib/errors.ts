@@ -19,7 +19,7 @@ const MAP: Record<string, string> = {
   // Partidas e súmula
   STAFF_REQUIRED: 'Só o administrador ou um assistente pode fazer isso.',
   INVALID_MATCH_DATE: 'A data da partida não pode ser no futuro.',
-  TEAM_NAMES_PREMIUM: 'Nomes de times personalizados são do Premium.',
+  TEAM_NAMES_PREMIUM: 'Nomes de times personalizados são da Pelada Premium.',
   INVALID_TEAM_NAME: 'Nome de time inválido.',
   MATCH_NOT_DRAFT: 'Essa partida já foi publicada.',
   MATCH_IS_DRAFT: 'Essa partida ainda é rascunho.',
@@ -37,7 +37,26 @@ const MAP: Record<string, string> = {
   TEAMS_INCOMPLETE: 'Coloque jogadores nos dois times antes de publicar.',
   INVALID_VOTING_DURATION: 'Prazo de votação inválido.',
   INVALID_CLOSING_TIME: 'O horário de encerramento deve ser entre 1h e 24h a partir de agora.',
-  PREMIUM_REQUIRED: 'Recurso do Premium.',
+  PREMIUM_REQUIRED: 'Recurso da Pelada Premium.',
+  // Temporadas
+  INVALID_SEASON_MODE: 'Escolha o que fazer com a temporada atual.',
+  INVALID_SEASON_DATES: 'Datas inválidas: o fim não pode ser antes do início nem no passado.',
+  SEASON_OVERLAP: 'O período escolhido cruza outra temporada.',
+  SEASON_HAS_MATCHES_OUTSIDE: 'Há partidas da temporada atual fora do novo período.',
+  // Sorteio e escalação
+  DRAW_TOO_FEW_PLAYERS: 'Escolha pelo menos 2 jogadores para formar dois times.',
+  DRAW_DUPLICATE_PLAYER: 'Há um jogador repetido na seleção.',
+  DRAW_INVALID_PLAYER: 'Há um jogador que não está ativo na pelada.',
+  DRAW_INVALID_MODE: 'Escolha o tipo de sorteio.',
+  DRAW_INVALID_ROUNDS: 'Número de rodadas inválido (1 a 12).',
+  DRAW_UNBALANCED: 'Os times não respeitam o equilíbrio por posição. Sorteie de novo.',
+  DRAW_NOT_FOUND: 'Sorteio não encontrado.',
+  DRAW_ALREADY_CONFIRMED: 'Este sorteio já foi confirmado.',
+  DRAW_CANCELLED: 'Este sorteio foi cancelado.',
+  DRAW_STALE: 'Os jogadores mudaram desde o sorteio. Sorteie de novo.',
+  LINEUP_INVALID: 'Escalação inválida: confira os jogadores dos dois times.',
+  DUEL_SAME_PLAYER: 'Escolha dois jogadores diferentes.',
+  DUEL_INVALID_PLAYER: 'Jogador não encontrado nesta pelada.',
   // Configurações
   INVALID_MINIMUM_RATINGS: 'Mínimo de notas inválido (1 a 99).',
   INVALID_SETTINGS: 'Configuração inválida.',
@@ -51,6 +70,7 @@ const MAP: Record<string, string> = {
   NOT_ELIGIBLE_VOTER: 'Você não vota nesta partida.',
   SHEET_VERSION_OUTDATED: 'A súmula mudou. Confira a versão nova.',
   SHEET_NOT_CONFIRMED: 'Confira a súmula antes de enviar o voto.',
+  VOTING_EXPIRED: 'O prazo da votação acabou: a súmula não pode mais ser corrigida.',
   INVALID_RATING_TARGET: 'Nota para um jogador inválido.',
   INVALID_RATING: 'As notas vão de 0 a 10, com uma casa decimal.',
   DUPLICATE_RATING: 'Nota repetida para o mesmo jogador.',
@@ -65,12 +85,13 @@ const MAP: Record<string, string> = {
   VOTING_STILL_OPEN: 'A votação ainda está aberta.',
   SESSION_NOT_FOUND: 'Votação não encontrada.',
   // Premium
-  PREMIUM_BETA_ACTIVE: 'No beta o Premium já está liberado para todas as peladas.',
+  PREMIUM_BETA_ACTIVE: 'No beta a Pelada Premium já está liberada para todas as peladas.',
   TRIAL_ALREADY_USED: 'O teste grátis já foi usado (1 por pelada e 1 por conta de administrador).',
-  ALREADY_PREMIUM: 'Esta pelada já tem Premium.',
+  ALREADY_PREMIUM: 'Esta pelada já é Pelada Premium.',
   ALREADY_SUBSCRIBED: 'Esta pelada já tem uma assinatura ativa.',
   BUYER_ALREADY_SUBSCRIBED: 'Sua conta da loja já paga outra pelada.',
   // Conta
+  LEGAL_VERSION_OUTDATED: 'Os documentos foram atualizados. Abra a tela de novo para ler a versão nova.',
   CONFIRMATION_REQUIRED: 'Confirme para continuar.',
   ACCOUNT_DELETION_PENDING: 'Sua conta está em exclusão. Recupere a conta para continuar.',
   NO_PENDING_DELETION: 'Não há exclusão pendente para recuperar.',
@@ -94,5 +115,6 @@ const MAP: Record<string, string> = {
 export function friendly(message?: string | null): string {
   if (!message) return 'Algo deu errado. Tente de novo.';
   for (const key of Object.keys(MAP)) if (message.includes(key)) return MAP[key];
+  if (/Failed to fetch|Network request failed|NetworkError/i.test(message)) return 'Sem conexão. Verifique a internet e tente de novo.';
   return message;
 }

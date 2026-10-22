@@ -28,7 +28,7 @@ export function useEvolution(membershipId: string, seasonId: string | null) {
         setData(null);
         setError(
           e.message.includes('PREMIUM_REQUIRED')
-            ? 'O histórico de temporadas mais antigas fica no Premium da pelada.'
+            ? 'O histórico de temporadas mais antigas fica na Pelada Premium.'
             : e.code === 'PGRST202'
               ? 'Histórico ainda indisponível neste servidor (falta a migração 033).'
               : friendly(e.message),
