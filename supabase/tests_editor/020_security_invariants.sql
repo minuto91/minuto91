@@ -17,7 +17,7 @@ create function pg_temp.assert(p_ok boolean, p_msg text) returns void language p
  $$ begin if not coalesce(p_ok,false) then raise exception 'FALHOU: %', p_msg; end if; end $$;
 
 do $test$
-declare v_bad text; v_n int;
+declare v_bad text;
 begin
 -- ===== Catálogo =====
 select string_agg(c.relname, ', ') into v_bad from pg_class c join pg_namespace n on n.oid=c.relnamespace
@@ -33,11 +33,11 @@ where n.nspname in ('public','private') and c.relkind in ('r','p','v','m')
  and not (r.rolname='authenticated' and n.nspname='public' and p.priv='SELECT');
 perform pg_temp.assert(v_bad is null, 'escrita direta (ou leitura anon/private) liberada: '||coalesce(v_bad,''));
 
--- Única exceção de escrita direta: nome e foto no próprio perfil (002).
+-- Desde a 027 nenhuma coluna de profiles é editável direto (nome, pé e foto só por RPC).
 select string_agg(a.attname, ', ') into v_bad from pg_attribute a
 where a.attrelid='public.profiles'::regclass and a.attnum>0 and not a.attisdropped
  and has_column_privilege('authenticated', 'public.profiles', a.attname, 'UPDATE')
- and a.attname not in ('display_name','avatar_path');
+ ;
 perform pg_temp.assert(v_bad is null, 'coluna de profiles editável pelo cliente: '||coalesce(v_bad,''));
 select string_agg(c.relname||'.'||a.attname, ', ') into v_bad
 from pg_class c join pg_namespace n on n.oid=c.relnamespace join pg_attribute a on a.attrelid=c.oid
@@ -73,9 +73,7 @@ select pg_temp.uid(n),'00000000-0000-0000-0000-000000000000','authenticated','au
 perform set_config('role','authenticated',true);
 for i in 1..2 loop perform pg_temp.as_user(i); perform public.complete_onboarding('Jogador '||i,true,true); end loop;
 perform pg_temp.as_user(1);
-update public.profiles set display_name='Invasor' where id=pg_temp.uid(2);
-get diagnostics v_n = row_count;
-perform pg_temp.assert(v_n=0, 'não altera perfil de outro');
+perform pg_temp.expect_error(format('update public.profiles set display_name=''Invasor'' where id=%L',pg_temp.uid(2)),'permission denied');
 perform pg_temp.assert((select count(*)=0 from public.profiles where id=pg_temp.uid(2)), 'não vê perfil de quem não divide pelada');
 perform pg_temp.expect_error(format('update public.profiles set adult_declared_at=null where id=%L',pg_temp.uid(1)),'permission denied');
 perform pg_temp.expect_error('insert into public.peladas(name) values(''Pirata'')','permission denied');
