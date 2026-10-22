@@ -29,7 +29,9 @@ create function pg_temp.ev(p_id text, p_type text, n int, p_pelada uuid, p_tx te
   perform set_config('role','service_role',true);
   r := public.apply_subscription_event(jsonb_build_object('id',p_id,'type',p_type,'app_user_id',pg_temp.uid(n)::text,
    'product_id','premium_mensal','original_transaction_id',p_tx,
-   'expiration_at_ms',extract(epoch from now()+interval '30 days')*1000,
+   -- Na expiração a loja manda a data em que o período acabou (já passou); nos outros, o fim do novo período.
+   'expiration_at_ms',extract(epoch from case when p_type='EXPIRATION' then now()-interval '1 minute'
+    else now()+interval '30 days' end)*1000,
    'event_timestamp_ms',extract(epoch from now())*1000,
    'subscriber_attributes',jsonb_build_object('pelada_id',jsonb_build_object('value',p_pelada::text))));
   execute 'reset role';
