@@ -4,6 +4,7 @@ import { Pressable, Share, Text, View } from 'react-native';
 import * as Linking from 'expo-linking';
 
 import { Avatar } from '../../../lib/avatar';
+import { Crest } from '../../../lib/crest';
 import { confirm } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import { fmtDate, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match';
@@ -35,6 +36,7 @@ export default function Pelada() {
   const router = useRouter();
   const [nome, setNome] = useState('');
   const [status, setStatus] = useState('');
+  const [crest, setCrest] = useState<string | null>(null);
   const [successor, setSuccessor] = useState<string | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [matches, setMatches] = useState<Match[]>([]);
@@ -49,12 +51,13 @@ export default function Pelada() {
   const load = useCallback(async () => {
     const { data: p } = await supabase
       .from('peladas')
-      .select('name, status, successor_membership_id')
+      .select('name, status, successor_membership_id, crest_path')
       .eq('id', id)
       .maybeSingle();
     if (p) {
       setNome(p.name);
       setStatus(p.status);
+      setCrest(p.crest_path);
       setSuccessor(p.successor_membership_id);
     }
     const { data: ms, error } = await supabase
@@ -153,7 +156,12 @@ export default function Pelada() {
 
   return (
     <Screen>
-      <Title>{nome || 'Pelada'}</Title>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        {nome ? <Crest path={crest} name={nome} size={48} /> : null}
+        <View style={{ flex: 1 }}>
+          <Title>{nome || 'Pelada'}</Title>
+        </View>
+      </View>
       {status === 'restricted' && <Sub>Pelada restrita: sem administrador elegível.</Sub>}
       <ErrorText>{msg}</ErrorText>
 

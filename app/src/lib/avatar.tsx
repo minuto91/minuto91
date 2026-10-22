@@ -20,7 +20,7 @@ const URL_TTL = 900; // segundos: link curto, porque um link assinado não pode 
 const CACHE_SECONDS = '300'; // cache da CDN: foto trocada ou removida some em até 5 min
 
 // Nome aleatório do arquivo (não é segredo: o acesso é controlado pelas políticas do bucket).
-function uuid() {
+export function uuid() {
   const h = Array.from({ length: 32 }, () => Math.floor(Math.random() * 16).toString(16));
   h[12] = '4';
   h[16] = ((parseInt(h[16], 16) & 0x3) | 0x8).toString(16);
@@ -77,32 +77,36 @@ export async function removeAvatar() {
   await removeFile(old as string | null);
 }
 
-// URLs assinadas ficam em memória até perto de vencer.
+// URLs assinadas ficam em memória até perto de vencer (chave: bucket + caminho).
 const cache = new Map<string, { url: string; until: number }>();
 
-export function useAvatarUrl(path: string | null | undefined) {
-  const cached = path ? cache.get(path)?.url : undefined;
+/** URL assinada curta de um arquivo de bucket privado (fotos e escudos). */
+export function useSignedUrl(bucket: string, path: string | null | undefined) {
+  const key = path ? `${bucket}/${path}` : null;
+  const cached = key ? cache.get(key)?.url : undefined;
   const [url, setUrl] = useState<{ path: string; url: string } | null>(null);
 
   useEffect(() => {
-    if (!path) return;
-    const hit = cache.get(path);
+    if (!path || !key) return;
+    const hit = cache.get(key);
     if (hit && hit.until > Date.now()) return;
     let alive = true;
     (async () => {
-      const { data } = await supabase.storage.from(BUCKET).createSignedUrl(path, URL_TTL);
+      const { data } = await supabase.storage.from(bucket).createSignedUrl(path, URL_TTL);
       if (!alive || !data?.signedUrl) return;
-      cache.set(path, { url: data.signedUrl, until: Date.now() + (URL_TTL - 120) * 1000 });
+      cache.set(key, { url: data.signedUrl, until: Date.now() + (URL_TTL - 120) * 1000 });
       setUrl({ path, url: data.signedUrl });
     })();
     return () => {
       alive = false;
     };
-  }, [path]);
+  }, [bucket, key, path]);
 
   if (!path) return null;
   return url?.path === path ? url.url : (cached ?? null);
 }
+
+export const useAvatarUrl = (path: string | null | undefined) => useSignedUrl(BUCKET, path);
 
 export const initials = (name: string) =>
   name

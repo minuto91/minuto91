@@ -1,9 +1,12 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 
-import { notify } from '../../../lib/dialog';
+import { Crest, pickAndUploadCrest, removeCrest } from '../../../lib/crest';
+import { confirm, notify } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import { supabase } from '../../../lib/supabase';
+import { View } from 'react-native';
+
 import { Body, Button, Card, Chips, ErrorText, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
 const DURATIONS = [
@@ -35,17 +38,21 @@ export default function Configuracoes() {
   const [minimum, setMinimum] = useState(5);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
+  const [nome, setNome] = useState('');
+  const [crest, setCrest] = useState<string | null>(null);
+  const [crestBusy, setCrestBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [{ data: st, error }, { data: ent }] = await Promise.all([
+      const [{ data: st, error }, { data: ent }, { data: p }] = await Promise.all([
         supabase
           .from('pelada_settings')
           .select('voting_duration_minutes, bola_murcha_enabled, minimum_numeric_ratings')
           .eq('pelada_id', id)
           .maybeSingle(),
         supabase.rpc('get_pelada_entitlement', { p_pelada: id }),
+        supabase.from('peladas').select('name, crest_path').eq('id', id).maybeSingle(),
       ]);
       if (!alive) return;
       if (error || !st) return setMsg(friendly(error?.message ?? 'PELADA_NOT_FOUND'));
@@ -54,12 +61,42 @@ export default function Configuracoes() {
       setMinMode(st.minimum_numeric_ratings === null ? 'all' : 'custom');
       if (st.minimum_numeric_ratings !== null) setMinimum(st.minimum_numeric_ratings);
       setPremium(!!ent?.is_premium);
+      setNome(p?.name ?? '');
+      setCrest(p?.crest_path ?? null);
       setLoaded(true);
     })();
     return () => {
       alive = false;
     };
   }, [id]);
+
+  async function trocarEscudo() {
+    setCrestBusy(true);
+    setMsg(null);
+    try {
+      const path = await pickAndUploadCrest(id);
+      if (path) setCrest(path);
+    } catch (e) {
+      setMsg((e as Error).message);
+    } finally {
+      setCrestBusy(false);
+    }
+  }
+
+  function removerEscudo() {
+    confirm('Remover o escudo?', 'A pelada volta a usar o escudo padrão com as iniciais.', 'Remover', async () => {
+      setCrestBusy(true);
+      setMsg(null);
+      try {
+        await removeCrest(id);
+        setCrest(null);
+      } catch (e) {
+        setMsg((e as Error).message);
+      } finally {
+        setCrestBusy(false);
+      }
+    });
+  }
 
   async function salvar() {
     setBusy(true);
@@ -89,6 +126,18 @@ export default function Configuracoes() {
     <Screen>
       <Title>Configurações da pelada</Title>
       <Sub>As mudanças valem para as próximas votações. Uma votação já aberta continua como estava.</Sub>
+
+      <Card>
+        <Body>Escudo da pelada</Body>
+        <Sub>Aparece no topo da pelada, nas cartas e nas artes. Imagem quadrada, PNG ou JPG.</Sub>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+          <Crest path={crest} name={nome} size={64} />
+          <View style={{ flex: 1, gap: 8 }}>
+            <Button title={crest ? 'Trocar escudo' : 'Enviar escudo'} kind="secondary" onPress={trocarEscudo} loading={crestBusy} />
+            {crest && <Button title="Remover escudo" kind="danger" onPress={removerEscudo} />}
+          </View>
+        </View>
+      </Card>
 
       <Card>
         <Body>Prazo padrão da votação</Body>

@@ -82,6 +82,7 @@ const MAP: Record<string, string> = {
   // Perfil
   INVALID_DOMINANT_FOOT: 'Escolha o pé dominante.',
   INVALID_AVATAR_PATH: 'Foto inválida. Escolha a foto de novo.',
+  INVALID_CREST_PATH: 'Escudo inválido. Escolha a imagem de novo.',
   ACTIVE_MEMBERSHIP_REQUIRED: 'Você não está ativo nesta pelada.',
   // Denúncia e bloqueio
   INVALID_REASON: 'Escolha o motivo da denúncia.',
