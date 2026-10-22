@@ -2,22 +2,44 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { AWARD_LABEL, currentSeason, fmtMonth, loadSeasons, Season } from '../../../lib/career';
+import { Avatar } from '../../../lib/avatar';
+import { AWARD_LABEL, currentSeason, fmtMonth, loadSeasons, Season, TIER } from '../../../lib/career';
 import { friendly } from '../../../lib/errors';
 import { fmtRating, loadMembers, Member } from '../../../lib/match';
 import { supabase } from '../../../lib/supabase';
 import { colors } from '../../../lib/theme';
-import { Body, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
 
-const METRICS = [
-  { value: 'overall', label: 'Overall' },
-  { value: 'goals', label: 'Gols' },
+// Em destaque: Artilharia, Assistências e Overall. As demais classificações oficiais continuam em "Mais".
+const MAIN = [
+  { value: 'goals', label: 'Artilharia' },
   { value: 'assists', label: 'Assistências' },
+  { value: 'overall', label: 'Overall' },
+] as const;
+const MORE = [
   { value: 'avg_rating', label: 'Média de nota' },
   { value: 'matches', label: 'Jogos' },
   { value: 'wins', label: 'Vitórias' },
 ] as const;
-type Metric = (typeof METRICS)[number]['value'];
+type Metric = (typeof MAIN)[number]['value'] | (typeof MORE)[number]['value'];
+
+const NOTE: Record<Metric, string> = {
+  goals: 'Gols em partidas finalizadas da temporada.',
+  assists: 'Assistências em partidas finalizadas da temporada.',
+  overall: 'Overall do Card na temporada. Com menos de 5 jogos o Card é provisório.',
+  avg_rating: 'Média das notas finais válidas. Só entra quem teve ao menos uma nota válida.',
+  matches: 'Partidas finalizadas disputadas na temporada.',
+  wins: 'Vitórias em partidas finalizadas da temporada.',
+};
+const UNIT: Record<Metric, [string, string]> = {
+  goals: ['gol', 'gols'],
+  assists: ['assist.', 'assist.'],
+  overall: ['', ''],
+  avg_rating: ['', ''],
+  matches: ['jogo', 'jogos'],
+  wins: ['vitória', 'vitórias'],
+};
+const PAGE = 30;
 
 type Row = { rank_position: number; membership_id: string; metric_value: number };
 type Holders = { value: number | null; membership_ids: string[] | null } | null;
@@ -35,15 +57,19 @@ export default function Rankings() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const [members, setMembers] = useState<Member[]>([]);
+  const [photos, setPhotos] = useState<Record<string, string | null>>({});
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [seasonId, setSeasonId] = useState<string | null>(null);
-  const [metric, setMetric] = useState<Metric>('overall');
+  const [metric, setMetric] = useState<Metric>('goals');
   const [rows, setRows] = useState<Row[] | null>(null);
+  const [tiers, setTiers] = useState<Record<string, keyof typeof TIER>>({});
   const [records, setRecords] = useState<Records | null>(null);
   const [month, setMonth] = useState<MonthAward[]>([]);
+  const [limit, setLimit] = useState(PAGE);
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
+    let alive = true;
     (async () => {
       const [ms, ss, { data: aw }] = await Promise.all([
         loadMembers(id),
@@ -57,72 +83,179 @@ export default function Rankings() {
           .order('period_month', { ascending: false })
           .limit(20),
       ]);
+      // Fotos só de quem o RLS deixa ver (pelada em comum, sem bloqueio nos dois sentidos); senão, iniciais.
+      const uids = ms.map((m) => m.user_id).filter((u): u is string => !!u);
+      const { data: pr } = uids.length ? await supabase.from('profiles').select('id, avatar_path').in('id', uids) : { data: [] };
+      if (!alive) return;
       setMembers(ms);
+      setPhotos(Object.fromEntries((pr ?? []).map((p) => [p.id as string, p.avatar_path as string | null])));
       setSeasons(ss);
       setSeasonId(currentSeason(ss)?.id ?? null);
+      if (!ss.length) setRows([]);
       const latest = (aw ?? [])[0]?.period_month;
       setMonth(((aw ?? []) as MonthAward[]).filter((a) => a.period_month === latest));
-    })().catch((e) => setMsg(friendly((e as Error).message)));
+    })().catch((e) => alive && setMsg(friendly((e as Error).message)));
+    return () => {
+      alive = false;
+    };
   }, [id]);
+
+  // Recordes e categorias dependem só da temporada.
+  useEffect(() => {
+    if (!seasonId) return;
+    let alive = true;
+    (async () => {
+      const [{ data: rec }, { data: cs }] = await Promise.all([
+        supabase.rpc('get_season_records', { p_season: seasonId }),
+        supabase.from('player_cards').select('membership_id, tier').eq('season_id', seasonId),
+      ]);
+      if (!alive) return;
+      setRecords((rec as Records | null) ?? null);
+      setTiers(Object.fromEntries((cs ?? []).map((c) => [c.membership_id as string, c.tier as keyof typeof TIER])));
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [seasonId]);
 
   useEffect(() => {
     if (!seasonId) return;
     let alive = true; // ignora respostas que chegarem depois de trocar o filtro
     (async () => {
-      const [{ data: r, error: e1 }, { data: rec, error: e2 }] = await Promise.all([
-        supabase.rpc('get_season_ranking', { p_season: seasonId, p_metric: metric }),
-        supabase.rpc('get_season_records', { p_season: seasonId }),
-      ]);
+      const { data: r, error } = await supabase.rpc('get_season_ranking', { p_season: seasonId, p_metric: metric });
       if (!alive) return;
-      const e = e1 ?? e2;
-      if (e) {
+      if (error) {
         setRows([]);
-        setRecords(null);
         // Grátis: temporada atual e a anterior (RN-083).
-        return setMsg(e.message.includes('PREMIUM_REQUIRED') ? 'Temporadas mais antigas ficam no Premium.' : friendly(e.message));
+        return setMsg(error.message.includes('PREMIUM_REQUIRED') ? 'Temporadas mais antigas ficam no Premium da pelada.' : friendly(error.message));
       }
       setMsg(null);
       setRows((r ?? []) as Row[]);
-      setRecords(rec as Records);
+      setLimit(PAGE);
     })();
     return () => {
       alive = false;
     };
   }, [seasonId, metric]);
 
-  const nameOf = (m: string) => members.find((x) => x.id === m)?.player_name ?? 'Jogador';
+  const member = (m: string) => members.find((x) => x.id === m);
+  const nameOf = (m: string) => member(m)?.player_name ?? 'Jogador';
+
+  // Posição oficial do servidor (empatados dividem: 1, 1, 3). Entre empatados, ordem alfabética estável.
+  const sorted = [...(rows ?? [])].sort(
+    (a, b) => Number(a.rank_position) - Number(b.rank_position) || nameOf(a.membership_id).localeCompare(nameOf(b.membership_id), 'pt-BR'),
+  );
+  const tied = (r: Row) => sorted.filter((x) => Number(x.rank_position) === Number(r.rank_position)).length > 1;
+
   const fmt = (v: number) =>
     metric === 'avg_rating' ? fmtRating(Number(v)) : metric === 'overall' ? String(Math.round(Number(v))) : String(v);
+  const unit = (v: number) => UNIT[metric][Number(v) === 1 ? 0 : 1];
   const holders = (h: Holders, f: (v: number) => string = String) =>
     h?.value && h.membership_ids?.length ? `${f(Number(h.value))} — ${h.membership_ids.map(nameOf).join(', ')}` : '–';
   const openCard = (m: string) => router.push({ pathname: '/jogador/[id]', params: { id: m } });
+  const pick = (v: Metric) => {
+    if (v === metric) return;
+    setRows(null);
+    setMetric(v);
+  };
+  const isMore = MORE.some((m) => m.value === metric);
 
   return (
     <Screen>
       <Title>Rankings</Title>
       {seasons.length > 1 && (
-        <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={(v) => { setRows(null); setSeasonId(v); }} />
+        <Chips
+          options={seasons.map((s) => ({ value: s.id, label: s.name }))}
+          value={seasonId}
+          onChange={(v) => {
+            setRows(null);
+            setSeasonId(v);
+          }}
+        />
       )}
-      <Chips options={METRICS} value={metric} onChange={(v) => { setRows(null); setMetric(v); }} />
+
+      {/* Classificações principais: abas largas. */}
+      <View style={{ flexDirection: 'row', backgroundColor: colors.bg, borderRadius: 12, padding: 4, gap: 4 }}>
+        {MAIN.map((m) => {
+          const on = metric === m.value;
+          return (
+            <Pressable
+              key={m.value}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: on }}
+              onPress={() => pick(m.value)}
+              style={{ flex: 1, paddingVertical: 10, borderRadius: 9, alignItems: 'center', backgroundColor: on ? colors.blue : 'transparent' }}>
+              <Text style={{ fontWeight: '700', fontSize: 14, color: on ? colors.white : colors.deepBlue }} numberOfLines={1}>
+                {m.label}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+        <Text style={{ color: colors.muted, fontSize: 13 }}>Mais:</Text>
+        <Chips options={MORE} value={isMore ? metric : null} onChange={pick} />
+      </View>
+      <Sub>{NOTE[metric]}</Sub>
       <ErrorText>{msg}</ErrorText>
 
       {rows === null ? (
         <Sub>Carregando...</Sub>
-      ) : rows.length === 0 ? (
+      ) : sorted.length === 0 ? (
         !msg && <Sub>Ainda sem dados nesta temporada.</Sub>
       ) : (
-        <Card>
-          {rows.map((r) => (
-            <Pressable key={r.membership_id} onPress={() => openCard(r.membership_id)}>
-              <View style={{ flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 6 }}>
-                <Text style={{ color: colors.ink }}>
-                  {r.rank_position}º {nameOf(r.membership_id)}
-                </Text>
-                <Text style={{ color: colors.deepBlue, fontWeight: '800' }}>{fmt(r.metric_value)}</Text>
-              </View>
-            </Pressable>
-          ))}
-        </Card>
+        <View>
+          {sorted.slice(0, limit).map((r) => {
+            const m = member(r.membership_id);
+            const tier = tiers[r.membership_id] ? TIER[tiers[r.membership_id]] : null;
+            const first = Number(r.rank_position) === 1;
+            return (
+              <Pressable
+                key={r.membership_id}
+                accessibilityRole="button"
+                accessibilityLabel={`${r.rank_position}º lugar${tied(r) ? ', empatado' : ''}: ${nameOf(r.membership_id)}, ${fmt(r.metric_value)} ${unit(r.metric_value)}`}
+                onPress={() => openCard(r.membership_id)}
+                style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+                <View
+                  style={{
+                    width: 32,
+                    height: 32,
+                    borderRadius: 16,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderWidth: first ? 2 : 0,
+                    borderColor: colors.gold,
+                  }}>
+                  <Text style={{ fontWeight: '800', fontSize: 15, color: first ? colors.darkGold : colors.deepBlue }}>{r.rank_position}º</Text>
+                </View>
+                <Avatar path={m?.user_id && m.status !== 'retired' ? photos[m.user_id] : null} name={nameOf(r.membership_id)} size={36} />
+                <View style={{ flex: 1, gap: 2 }}>
+                  <Text style={{ fontSize: 15, color: colors.ink, fontWeight: first ? '700' : '500' }} numberOfLines={1}>
+                    {nameOf(r.membership_id)}
+                  </Text>
+                  <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+                    {tier && (
+                      <View style={{ paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, backgroundColor: tier.bg, borderWidth: 1, borderColor: tier.frame }}>
+                        <Text style={{ fontSize: 10, fontWeight: '800', color: tier.deep }}>{tier.label.toUpperCase()}</Text>
+                      </View>
+                    )}
+                    {tied(r) && <Text style={{ fontSize: 12, color: colors.muted }}>empatado</Text>}
+                  </View>
+                </View>
+                <View style={{ alignItems: 'flex-end' }}>
+                  <Text style={{ color: colors.deepBlue, fontWeight: '800', fontSize: 18, fontVariant: ['tabular-nums'] }}>{fmt(r.metric_value)}</Text>
+                  {unit(r.metric_value) ? <Text style={{ color: colors.muted, fontSize: 11 }}>{unit(r.metric_value)}</Text> : null}
+                </View>
+                <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+              </Pressable>
+            );
+          })}
+          {sorted.length > limit && (
+            <View style={{ marginTop: 10 }}>
+              <Button title={`Ver mais (${sorted.length - limit})`} kind="secondary" onPress={() => setLimit(limit + PAGE)} />
+            </View>
+          )}
+        </View>
       )}
 
       {month.length > 0 && (
@@ -144,9 +277,7 @@ export default function Rankings() {
           <Body>Recordes da temporada</Body>
           <Sub>
             Maior goleada:{' '}
-            {records.biggest_win?.length
-              ? records.biggest_win.map((b) => `${b.team_a_score} x ${b.team_b_score}`).join(', ')
-              : '–'}
+            {records.biggest_win?.length ? records.biggest_win.map((b) => `${b.team_a_score} x ${b.team_b_score}`).join(', ') : '–'}
           </Sub>
           <Sub>Mais gols numa partida: {holders(records.most_goals_in_match)}</Sub>
           <Sub>Maior nota: {holders(records.best_final_rating, fmtRating)}</Sub>
