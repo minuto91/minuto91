@@ -15,7 +15,7 @@ export const colors = {
 export const POSITIONS = [
   { value: 'goalkeeper', label: 'Goleiro' },
   { value: 'defender', label: 'Defensor' },
-  { value: 'midfielder', label: 'Meia' },
+  { value: 'midfielder', label: 'Meio-campista' },
   { value: 'attacker', label: 'Atacante' },
 ] as const;
 
@@ -23,3 +23,17 @@ export type Position = (typeof POSITIONS)[number]['value'];
 
 export const positionLabel = (v: string) =>
   POSITIONS.find((p) => p.value === v)?.label ?? v;
+
+// Pé dominante (027): dado do perfil da conta, nunca usado em fórmula.
+export const FEET = [
+  { value: 'right', label: 'Direito' },
+  { value: 'left', label: 'Esquerdo' },
+  { value: 'both', label: 'Ambos' },
+] as const;
+
+export type Foot = (typeof FEET)[number]['value'];
+
+export const footLabel = (v: string) => {
+  const f = FEET.find((x) => x.value === v);
+  return f ? (f.value === 'both' ? 'Ambos os pés' : `Pé ${f.label.toLowerCase()}`) : v;
+};

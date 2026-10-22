@@ -3,6 +3,7 @@ import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
 import { CardArt, SharePanel } from '../../../lib/arts';
+import { Avatar } from '../../../lib/avatar';
 import {
   ATTRIBUTES,
   AWARD_LABEL,
@@ -20,8 +21,8 @@ import { fmtRating } from '../../../lib/match';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { colors, positionLabel } from '../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { colors, footLabel, Position, positionLabel } from '../../../lib/theme';
+import { Body, Button, Card, Chips, ErrorText, PositionPicker, Screen, Sub, Title } from '../../../lib/ui';
 
 type Membership = {
   id: string;
@@ -32,12 +33,18 @@ type Membership = {
   status: string;
 };
 
+type Profile = { avatar_path: string | null; dominant_foot: string | null };
+
 export default function Carta() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const router = useRouter();
   const { session } = useAuth();
   const [blocked, setBlocked] = useState(false);
   const [member, setMember] = useState<Membership | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
+  const [newPos, setNewPos] = useState<Position | null>(null);
+  const [posBusy, setPosBusy] = useState(false);
+  const [posOk, setPosOk] = useState<string | null>(null);
   const [peladaName, setPeladaName] = useState('');
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [seasonId, setSeasonId] = useState<string | null>(null);
@@ -59,6 +66,9 @@ export default function Carta() {
       const { data: p } = await supabase.from('peladas').select('name').eq('id', m.pelada_id).maybeSingle();
       setPeladaName(p?.name ?? '');
       if (m.user_id) {
+        // Foto e pé só aparecem se o perfil for visível (pelada em comum, sem bloqueio).
+        const { data: pr } = await supabase.from('profiles').select('avatar_path, dominant_foot').eq('id', m.user_id).maybeSingle();
+        setProfile(pr as Profile | null);
         const { data: b } = await supabase.from('user_blocks').select('blocked_user_id').eq('blocked_user_id', m.user_id);
         setBlocked((b ?? []).length > 0);
       }
@@ -106,10 +116,35 @@ export default function Carta() {
   const isMe = !!member.user_id && member.user_id === session?.user.id;
   const seasonName = seasons.find((x) => x.id === seasonId)?.name ?? '';
 
+  // RN-068: a posição do perfil vale a partir da próxima partida; a carta mostra a da última jogada.
+  const pendingPos = card && card.position !== member.preferred_position ? member.preferred_position : null;
+
+  async function salvarPosicao() {
+    if (!member || !newPos) return;
+    setPosBusy(true);
+    setMsg(null);
+    setPosOk(null);
+    const { error } = await supabase.rpc('set_my_position', { p_pelada: member.pelada_id, p_position: newPos });
+    setPosBusy(false);
+    if (error) return setMsg(friendly(error.message));
+    setMember({ ...member, preferred_position: newPos });
+    setNewPos(null);
+    setPosOk(`Posição alterada para ${positionLabel(newPos)}. Vale a partir da próxima partida.`);
+  }
+
   return (
     <Screen>
-      <Title>{member.player_name}</Title>
-      <Sub>{positionLabel(card?.position ?? member.preferred_position)}</Sub>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+        <Avatar path={member.status === 'retired' ? null : profile?.avatar_path} name={member.player_name} size={72} />
+        <View style={{ flex: 1, gap: 2 }}>
+          <Title>{member.player_name}</Title>
+          <Sub>
+            {positionLabel(card?.position ?? member.preferred_position)}
+            {profile?.dominant_foot ? ` · ${footLabel(profile.dominant_foot)}` : ''}
+          </Sub>
+          {pendingPos && <Sub>Próxima partida: {positionLabel(pendingPos)}</Sub>}
+        </View>
+      </View>
       {seasons.length > 1 && (
         <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={(v) => { setLoaded(false); setSeasonId(v); }} />
       )}
@@ -197,6 +232,21 @@ export default function Carta() {
               {AWARD_LABEL[k] ?? k}: {n}
             </Sub>
           ))}
+        </Card>
+      )}
+
+      {isMe && member.status === 'active' && (
+        <Card>
+          <Body>Minha posição nesta pelada</Body>
+          <Sub>
+            A posição define os pesos da sua carta. A troca vale a partir da próxima partida: as partidas já jogadas
+            continuam com a posição da época, e seu overall pode mudar por causa da nova função, não só do desempenho.
+          </Sub>
+          <PositionPicker value={newPos ?? (member.preferred_position as Position)} onChange={setNewPos} />
+          {newPos && newPos !== member.preferred_position && (
+            <Button title={`Mudar para ${positionLabel(newPos)}`} onPress={salvarPosicao} loading={posBusy} />
+          )}
+          {posOk && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{posOk}</Text>}
         </Card>
       )}
 

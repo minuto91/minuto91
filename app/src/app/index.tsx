@@ -92,6 +92,7 @@ export default function Home() {
       <View style={{ height: 8 }} />
       <Button title="Criar pelada" onPress={() => router.push('/criar-pelada')} />
       <Button title="Entrar com convite" kind="secondary" onPress={() => router.push('/entrar')} />
+      <Button title="Meu perfil" kind="secondary" onPress={() => router.push('/perfil')} />
       <Button title="Minha conta" kind="secondary" onPress={() => router.push('/conta')} />
       <Button title="Sair da conta" kind="secondary" onPress={() => supabase.auth.signOut()} />
     </Screen>

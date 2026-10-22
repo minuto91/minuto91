@@ -79,6 +79,10 @@ const MAP: Record<string, string> = {
   DESTINATION_CONFLICT: 'Esta conta já participou de uma das peladas do histórico. Use uma conta nova.',
   TOO_MANY_ATTEMPTS: 'Muitas tentativas. Espere uma hora e tente de novo.',
   INVALID_TRANSFER_CODE: 'Código inválido, já usado ou vencido.',
+  // Perfil
+  INVALID_DOMINANT_FOOT: 'Escolha o pé dominante.',
+  INVALID_AVATAR_PATH: 'Foto inválida. Escolha a foto de novo.',
+  ACTIVE_MEMBERSHIP_REQUIRED: 'Você não está ativo nesta pelada.',
   // Denúncia e bloqueio
   INVALID_REASON: 'Escolha o motivo da denúncia.',
   INVALID_REPORT_TARGET: 'Não foi possível denunciar este conteúdo.',

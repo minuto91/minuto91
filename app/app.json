@@ -38,7 +38,15 @@
       ],
       "expo-apple-authentication",
       "expo-web-browser",
-      "expo-sharing"
+      "expo-sharing",
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "O Minuto 91 usa a foto que você escolher apenas no seu perfil e na sua carta.",
+          "cameraPermission": false,
+          "microphonePermission": false
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true,
