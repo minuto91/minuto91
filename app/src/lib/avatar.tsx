@@ -104,7 +104,7 @@ export function useAvatarUrl(path: string | null | undefined) {
   return url?.path === path ? url.url : (cached ?? null);
 }
 
-const initials = (name: string) =>
+export const initials = (name: string) =>
   name
     .trim()
     .split(/\s+/)

@@ -37,18 +37,19 @@ export type SeasonStats = {
 };
 
 export const ATTRIBUTES = [
-  { key: 'finishing', label: 'Finalização' },
-  { key: 'assisting', label: 'Garçom' },
-  { key: 'attendance', label: 'Presença' },
-  { key: 'winning', label: 'Pé Quente' },
-  { key: 'peer_rating', label: 'Resenha' },
+  { key: 'finishing', label: 'Finalização', code: 'FIN' },
+  { key: 'assisting', label: 'Garçom', code: 'GAR' },
+  { key: 'attendance', label: 'Presença', code: 'PRE' },
+  { key: 'winning', label: 'Pé Quente', code: 'PEQ' },
+  { key: 'peer_rating', label: 'Resenha', code: 'RES' },
 ] as const;
 
 // Categoria pelo overall exibido (inteiro), como no servidor.
+// color = texto (contraste AA sobre branco); frame = moldura; tint = fundo suave do topo da carta.
 export const TIER = {
-  bronze: { label: 'Bronze', color: '#8C5A3C' },
-  prata: { label: 'Prata', color: '#6B7A90' },
-  ouro: { label: 'Ouro', color: colors.darkGold },
+  bronze: { label: 'Bronze', color: '#8C5A3C', frame: '#B07C5B', tint: '#FBF5F1' },
+  prata: { label: 'Prata', color: '#5E6E86', frame: '#A3AEBF', tint: '#F4F6F9' },
+  ouro: { label: 'Ouro', color: colors.darkGold, frame: colors.gold, tint: '#FCF7EB' },
 } as const;
 
 export const AWARD_LABEL: Record<string, string> = {

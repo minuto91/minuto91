@@ -175,6 +175,25 @@ Revisão de autorização de 005–025 (políticas, grants e entrada de cada fun
 **Pendente de você**: aplicar a 026 no Supabase dev e rodar no SQL Editor `012_premium`, `019_premium_store_events`
 e `020_security_invariants` (todos devem terminar com "PASS"). Eu não tenho acesso ao banco.
 
+## 5c. Fases 2 e 3 — resultado (21/10/2026)
+
+Fase 2 (migração 027, aplicada no dev; testes 020 e 021 com PASS):
+- Foto: bucket privado `avatars`; app escolhe, recorta (nativo no celular, central na web), reduz a 800 px JPEG,
+  envia, troca e remove; link assinado de 15 min, cache da CDN de 5 min; iniciais quando não há foto.
+- Pé dominante no perfil da conta; nome editável (renomeia as participações ativas); posição por pelada na carta,
+  com aviso da RN-068. Rótulo "Meio-campista".
+- Conferido pela web com imagens geradas no navegador: 1200×900 → 800×800; troca apaga o arquivo antigo; remoção
+  esvazia a pasta; 100×100 recusada com mensagem. O seletor de arquivos foi simulado (o navegador embutido não abre
+  a janela de arquivos). **Não testado no celular** (recorte nativo e permissão de fotos do iOS).
+- Edge Function `storage-cleanup`: escrita, **ainda não publicada** (o app já apaga a foto antiga na hora).
+
+Fase 3 (`PlayerCard` em `lib/arts.tsx`):
+- Carta com foto quadrada em destaque, overall compacto e sigla da posição no canto, selo da categoria, nome,
+  posição, FIN/GAR/PRE/PEQ/RES, pelada e temporada no rodapé; moldura dupla fina bronze/prata/ouro e fundo suave no
+  topo; sem brilho nem 3D. Mesma carta na tela e na arte 9:16.
+- Conferido pela web: bronze com dados reais; prata e ouro simulando só a resposta na tela (nada gravado);
+  arte exportada em 1080×1920 com a foto incluída. Fórmulas e pesos não foram tocados.
+
 ## 6. Funcionalidades novas (avaliação, nada será implementado sem aprovação)
 
 | Proposta | Valor | Complexidade | Risco | Retenção | Compartilhamento | Plano |

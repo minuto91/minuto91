@@ -1,9 +1,11 @@
 // Artes oficiais 9:16 (Brand Book 11: fundo branco, azul nos títulos, dourado só nas conquistas,
 // logo discreta) e o painel que mostra a arte e compartilha como imagem 1080 x 1920.
 // Quem monta cada arte decide se pode: o resultado e a Seleção só para quem vê as notas (RN-098).
+import { Image } from 'expo-image';
 import { ReactNode, useRef, useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
+import { initials, useAvatarUrl } from './avatar';
 import { ATTRIBUTES, Card as CardData, TIER } from './career';
 import { friendly } from './errors';
 import { fmtRating } from './match';
@@ -178,48 +180,91 @@ export function SelectionArt({ peladaName, date, slots }: { peladaName: string; 
 }
 
 // ---------- Carta do jogador ----------
+// Brand Book 6: branco e azul, categoria só na moldura e no selo, sem brilho nem 3D.
+// A foto é quadrada (no compartilhamento pela web o html2canvas não respeita "cover").
 
-export function CardArt({
+const POS_CODE: Record<string, string> = { goalkeeper: 'GOL', defender: 'DEF', midfielder: 'MEI', attacker: 'ATA' };
+export const CARD_W = 275;
+
+export function PlayerCard({
+  card,
+  playerName,
+  photoPath,
   peladaName,
   seasonName,
-  playerName,
-  card,
 }: {
+  card: CardData;
+  playerName: string;
+  photoPath: string | null | undefined;
   peladaName: string;
   seasonName: string;
-  playerName: string;
-  card: CardData;
 }) {
   const tier = TIER[card.tier];
+  const photo = useAvatarUrl(photoPath);
   return (
-    <>
-      <Header title={peladaName} subtitle={seasonName} />
-      <View style={[s.card, { borderColor: tier.color }]}>
-        <Text style={s.overall}>{Math.round(card.overall)}</Text>
-        <Text style={[s.goldLabel, { color: tier.color }]}>{tier.label.toUpperCase()}</Text>
-        <Text style={s.bigName} numberOfLines={1}>
+    <View style={[s.cardOuter, { borderColor: tier.frame }]}>
+      <View style={[s.cardInner, { borderColor: tier.frame }]}>
+        <View style={[s.cardTop, { backgroundColor: tier.tint }]}>
+          <View style={{ alignItems: 'center', width: 52 }}>
+            <Text style={s.cardOverall}>{Math.round(card.overall)}</Text>
+            <Text style={s.cardPos}>{POS_CODE[card.position] ?? card.position}</Text>
+          </View>
+          <View style={s.cardPhotoBox}>
+            {photo ? (
+              <Image source={{ uri: photo }} style={s.cardPhoto} contentFit="cover" accessibilityLabel={`Foto de ${playerName}`} />
+            ) : (
+              <View style={[s.cardPhoto, s.cardNoPhoto]}>
+                <Text style={s.cardInitials}>{initials(playerName)}</Text>
+              </View>
+            )}
+          </View>
+          <View style={{ alignItems: 'center', width: 52 }}>
+            <Text style={[s.cardTier, { color: tier.color }]}>{tier.label.toUpperCase()}</Text>
+          </View>
+        </View>
+        <Text style={s.cardName} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
           {playerName}
         </Text>
-        <Text style={s.muted}>
+        <Text style={s.cardPosFull}>
           {positionLabel(card.position)}
           {card.is_provisional ? ' · provisória' : ''}
         </Text>
-      </View>
-      <View style={{ gap: 7 }}>
-        {ATTRIBUTES.map((a) => {
-          const v = Math.max(0, Math.min(100, Number(card[a.key])));
-          return (
-            <View key={a.key} style={{ gap: 3 }}>
-              <View style={s.row}>
-                <Text style={s.rowName}>{a.label}</Text>
-                <Text style={s.rowValue}>{Math.round(v)}</Text>
-              </View>
-              <View style={s.barBg}>
-                <View style={[s.bar, { width: `${v}%` }]} />
-              </View>
+        <View style={[s.cardRule, { backgroundColor: tier.frame }]} />
+        <View style={s.cardAttrs}>
+          {ATTRIBUTES.map((a) => (
+            <View key={a.key} style={s.cardAttr} accessibilityLabel={`${a.label} ${Math.round(Number(card[a.key]))}`}>
+              <Text style={s.cardAttrValue}>{Math.round(Number(card[a.key]))}</Text>
+              <Text style={s.cardAttrCode}>{a.code}</Text>
             </View>
-          );
-        })}
+          ))}
+        </View>
+        <View style={s.cardFoot}>
+          <Text style={s.cardFootText} numberOfLines={1}>
+            {peladaName}
+          </Text>
+          <Text style={s.cardFootText} numberOfLines={1}>
+            {seasonName}
+          </Text>
+        </View>
+      </View>
+    </View>
+  );
+}
+
+export function CardArt(props: {
+  peladaName: string;
+  seasonName: string;
+  playerName: string;
+  photoPath: string | null | undefined;
+  card: CardData;
+}) {
+  return (
+    <>
+      {/* Centraliza a carta na altura da arte (o painel põe um espaço flexível antes da logo). */}
+      <View style={{ flex: 1 }} />
+      <Text style={[s.goldLabel, { textAlign: 'center', color: colors.blue }]}>CARTA DA TEMPORADA</Text>
+      <View style={{ alignItems: 'center' }}>
+        <PlayerCard {...props} />
       </View>
     </>
   );
@@ -321,10 +366,25 @@ const s = StyleSheet.create({
   marker: { width: 22, height: 22, borderRadius: 11, backgroundColor: colors.blue, borderWidth: 2, borderColor: colors.blue },
   playerName: { fontSize: 11, fontWeight: '700', color: colors.ink, maxWidth: 64 },
   playerRating: { fontSize: 11, fontWeight: '800', color: colors.deepBlue },
-  card: { alignItems: 'center', gap: 2, paddingVertical: 16, borderRadius: 16, borderWidth: 3 },
-  overall: { fontSize: 60, fontWeight: '900', color: colors.deepBlue },
-  barBg: { height: 7, borderRadius: 4, backgroundColor: colors.line },
-  bar: { height: 7, borderRadius: 4, backgroundColor: colors.blue },
+  cardOuter: { width: CARD_W, borderWidth: 3, borderRadius: 18, padding: 3, backgroundColor: colors.white },
+  cardInner: { borderWidth: 1, borderRadius: 14, overflow: 'hidden', backgroundColor: colors.white, paddingBottom: 12 },
+  cardTop: { flexDirection: 'row', alignItems: 'flex-start', justifyContent: 'space-between', paddingTop: 14, paddingHorizontal: 6 },
+  cardOverall: { fontSize: 34, fontWeight: '800', color: colors.deepBlue, lineHeight: 38 },
+  cardPos: { fontSize: 12, fontWeight: '800', color: colors.blue, letterSpacing: 1 },
+  cardPhotoBox: { borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.white, padding: 3 },
+  cardPhoto: { width: 136, height: 136, borderRadius: 11 },
+  cardNoPhoto: { backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center' },
+  cardInitials: { fontSize: 48, fontWeight: '800', color: colors.deepBlue, opacity: 0.85 },
+  cardTier: { fontSize: 10, fontWeight: '800', letterSpacing: 1.5, marginTop: 6 },
+  cardName: { fontSize: 22, fontWeight: '800', color: colors.deepBlue, textAlign: 'center', marginTop: 12, paddingHorizontal: 12 },
+  cardPosFull: { fontSize: 12, color: colors.muted, textAlign: 'center', marginTop: 2 },
+  cardRule: { height: 1, marginHorizontal: 22, marginVertical: 12, opacity: 0.8 },
+  cardAttrs: { flexDirection: 'row', justifyContent: 'space-around', paddingHorizontal: 8 },
+  cardAttr: { alignItems: 'center', minWidth: 44 },
+  cardAttrValue: { fontSize: 20, fontWeight: '800', color: colors.deepBlue },
+  cardAttrCode: { fontSize: 10, fontWeight: '700', color: colors.muted, letterSpacing: 1 },
+  cardFoot: { flexDirection: 'row', justifyContent: 'space-between', gap: 8, marginTop: 14, paddingHorizontal: 14 },
+  cardFootText: { flexShrink: 1, fontSize: 10, fontWeight: '600', color: colors.muted },
   sticker: { alignItems: 'center', gap: 10, paddingVertical: 18, borderRadius: 16, borderWidth: 2, borderColor: colors.gold },
   emblem: {
     width: 110,

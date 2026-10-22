@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
 
-import { CardArt, SharePanel } from '../../../lib/arts';
+import { CardArt, PlayerCard, SharePanel } from '../../../lib/arts';
 import { Avatar } from '../../../lib/avatar';
 import {
   ATTRIBUTES,
@@ -115,6 +115,7 @@ export default function Carta() {
   const tier = card ? TIER[card.tier] : null;
   const isMe = !!member.user_id && member.user_id === session?.user.id;
   const seasonName = seasons.find((x) => x.id === seasonId)?.name ?? '';
+  const photoPath = member.status === 'retired' ? null : profile?.avatar_path;
 
   // RN-068: a posição do perfil vale a partir da próxima partida; a carta mostra a da última jogada.
   const pendingPos = card && card.position !== member.preferred_position ? member.preferred_position : null;
@@ -135,7 +136,8 @@ export default function Carta() {
   return (
     <Screen>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <Avatar path={member.status === 'retired' ? null : profile?.avatar_path} name={member.player_name} size={72} />
+        {/* Com carta na tela, a foto já aparece nela. */}
+        {!card && <Avatar path={photoPath} name={member.player_name} size={72} />}
         <View style={{ flex: 1, gap: 2 }}>
           <Title>{member.player_name}</Title>
           <Sub>
@@ -161,22 +163,18 @@ export default function Carta() {
         </Card>
       ) : (
         <>
-          <View
-            style={{
-              borderWidth: 3,
-              borderColor: tier.color,
-              borderRadius: 16,
-              backgroundColor: colors.white,
-              padding: 18,
-              alignItems: 'center',
-              gap: 4,
-            }}>
-            <Text style={{ fontSize: 56, fontWeight: '900', color: colors.deepBlue }}>{Math.round(card.overall)}</Text>
-            <Text style={{ fontSize: 16, fontWeight: '800', color: tier.color }}>{tier.label.toUpperCase()}</Text>
-            {card.is_provisional && (
-              <Sub>Provisória: {card.matches_played} de 5 jogos</Sub>
-            )}
+          <View style={{ alignItems: 'center' }}>
+            <PlayerCard
+              card={card}
+              playerName={member.player_name}
+              photoPath={photoPath}
+              peladaName={peladaName}
+              seasonName={seasonName}
+            />
           </View>
+          {card.is_provisional && (
+            <Sub>Carta provisória: {card.matches_played} de 5 jogos na temporada.</Sub>
+          )}
           <Card>
             {ATTRIBUTES.map((a) => {
               const v = Number(card[a.key]);
@@ -196,7 +194,7 @@ export default function Carta() {
           {/* Só a própria carta: compartilhar a de outro jogador fica com ele (privacidade, Doc 03 36.3). */}
           {isMe && (
             <SharePanel label="Compartilhar minha carta" fileName="minuto91-carta" title="Minha carta">
-              <CardArt peladaName={peladaName} seasonName={seasonName} playerName={member.player_name} card={card} />
+              <CardArt peladaName={peladaName} seasonName={seasonName} playerName={member.player_name} photoPath={photoPath} card={card} />
             </SharePanel>
           )}
         </>
