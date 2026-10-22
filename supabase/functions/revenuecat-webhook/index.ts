@@ -4,7 +4,9 @@
 //   comparamos com o secret REVENUECAT_WEBHOOK_AUTH.
 // - Ambiente: se o secret REVENUECAT_ENVIRONMENT existir (PRODUCTION ou SANDBOX), eventos do outro
 //   ambiente são aceitos (200) mas não aplicados.
-// - Idempotência: o banco ignora event.id repetido; erro do banco devolve 500 para o RevenueCat tentar de novo.
+// - Idempotência: o banco ignora event.id já aplicado ou rejeitado; erro do banco devolve 500 para o RevenueCat
+//   tentar de novo e grava o evento como "recebido" (036), que o agendador reprocessa.
+// - O banco também confere produto (private.app_config premium_product_ids) e ambiente (store_environment).
 // - Usuário: o app compra com appUserID = id do usuário (uuid). Se o app_user_id não for uuid (usuário
 //   anônimo do RevenueCat), usamos o primeiro uuid de original_app_user_id ou aliases.
 import { createClient } from 'npm:@supabase/supabase-js@2';
@@ -72,6 +74,8 @@ Deno.serve(async (req) => {
   });
   if (error) {
     console.error('apply_subscription_event', event.id, event.type, error.message);
+    // A05 (036): o evento fica registrado como "recebido" e o agendador tenta de novo, mesmo que a loja desista.
+    await supabase.rpc('record_store_event_failure', { p_event: { ...event, app_user_id: buyerId(event) }, p_error: error.message });
     return new Response('error', { status: 500 });
   }
   return Response.json({ result: data });
