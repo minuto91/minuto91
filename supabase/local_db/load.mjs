@@ -86,6 +86,42 @@ const counts = (await db.query(`select (select count(*) from public.matches) par
  (select count(*) from public.card_snapshots) snapshots, (select count(*) from public.awards) premios, (select count(*) from public.seasons) temporadas`)).rows[0];
 console.log('  volume:', counts);
 
+// V4.2 (8.2): finalização incremental (038) x recálculo completo (014). Mesmo resultado, linha a linha.
+const statsSnapshot = `select coalesce(jsonb_agg(to_jsonb(x) - 'id' - 'updated_at' order by x.membership_id, x.season_id), '[]') j from (
+  select s.*, null::uuid c from public.player_season_stats s where s.pelada_id=$1) x`;
+const careerSnapshot = `select coalesce(jsonb_agg(to_jsonb(x) - 'id' - 'updated_at' order by x.membership_id), '[]') j
+  from public.player_career_stats x where x.pelada_id=$1`;
+const cardsSnapshot = `select coalesce(jsonb_agg(to_jsonb(x) - 'id' - 'updated_at' order by x.membership_id, x.season_id), '[]') j
+  from public.player_cards x where x.pelada_id=$1`;
+const snap = async () => [statsSnapshot, careerSnapshot, cardsSnapshot].map(async (q) => (await db.query(q, [pid])).rows[0].j);
+const before = await Promise.all(await snap());
+await db.exec(`do $$ declare s uuid; begin
+ for s in select id from public.seasons where pelada_id='${pid}' order by starts_on loop
+  perform private.recompute_stats('${pid}', s); perform private.recompute_season_cards(s, null);
+ end loop; end $$;`);
+const after = await Promise.all(await snap());
+const same = ['estatísticas da temporada', 'carreira', 'Cards'].map((n, i) => `${n}: ${JSON.stringify(before[i]) === JSON.stringify(after[i]) ? 'iguais' : 'DIFERENTES'}`);
+console.log('  incremental x recálculo completo →', same.join(', '));
+if (same.some((x) => x.includes('DIFERENTES'))) process.exitCode = 1;
+
+// Tempo de uma finalização (cadeia oficial inteira), com e sem o recálculo completo das estatísticas.
+const oneMore = (full) => `do $$ declare v_id uuid; v_p uuid := '${pid}'; begin
+ insert into public.matches(pelada_id,season_id,played_at,status,team_a_score,team_b_score,finalized_at)
+ values(v_p, private.season_for_date(v_p, private.pelada_today(v_p)), now(), 'finalized', 2, 1, now()) returning id into v_id;
+ insert into public.match_player_results(pelada_id,match_id,membership_id,numeric_rating_count,peer_rating,objective_rating,
+  final_rating,has_valid_rating,goals,assists,red_cards,match_result,position_snapshot,formula_version)
+ select v_p, v_id, id, 5, 7, 5, 7, true, 1, 0, 0, case when r % 2 = 0 then 'win' else 'loss' end, preferred_position, 1
+ from (select id, preferred_position, row_number() over (order by id) r from public.pelada_memberships where pelada_id=v_p and status='active') m
+ where r <= ${PER_SIDE * 2};
+ ${full ? `perform private.recompute_stats(v_p, (select season_id from public.matches where id=v_id));` : ''}
+ perform private.after_match_finalized(v_id);
+end $$;`;
+for (const [label, full] of [['finalizar 1 partida (V4.2, incremental)', false], ['finalizar 1 partida (+ recálculo completo, como V4.1)', true]]) {
+  const t = performance.now();
+  await db.exec(oneMore(full));
+  console.log(`  ${label.padEnd(52)} ${(performance.now() - t).toFixed(0).padStart(6)} ms`);
+}
+
 // Fila de avisos: NOTIFS pendentes para os jogadores, 2 aparelhos por jogador.
 await db.exec(`
 insert into public.push_devices(user_id, expo_push_token, platform)
