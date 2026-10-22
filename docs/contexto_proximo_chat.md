@@ -176,7 +176,7 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
 ## 10d. V4.3 (22/10)
 - Relatório: `docs/relatorio_v43_2026-10-22.md` (diagnóstico, matriz da auditoria, posições, formações, sorteio,
   Financeiro, permissões, testes, checklist, riscos). Evidências (dados simulados): `docs/evidencias_v43/`; vitrine `/dev-v43`.
-- Migrações **040–043 NÃO aplicadas no dev** (aplicar na ordem; depois rodar 020, 030–036 no SQL Editor).
+- Migrações **040–043 aplicadas no dev em 22/10**; testes 020 e 030–036 com PASS no dev.
   040 = correções da auditoria V4.2 (nomes fora dos sorteios, escalação revalidada no servidor, Duelo só ativos, semente
   do servidor, rodadas independentes sem repetição); 041 = dez posições; 042 = formações 4-3-3/4-4-2; 043 = Financeiro.
 - **Posições**: `preferred_position` continua sendo o SETOR (fórmulas inalteradas); a sigla (GOL, ZAG, LD, LE, VOL, MEI,
