@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Share, Text } from 'react-native';
+import { Pressable, Share, Text } from 'react-native';
 
 import { friendly } from '../lib/errors';
 import { supabase } from '../lib/supabase';
@@ -105,6 +105,25 @@ export default function Conta() {
       <ErrorText>{msg}</ErrorText>
       {ok && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{ok}</Text>}
 
+      <Pressable onPress={() => router.push('/perfil')} accessibilityRole="button">
+        <Card>
+          <Body>Meu perfil ›</Body>
+          <Sub>Foto, nome e pé dominante. A posição e a carta ficam em cada pelada.</Sub>
+        </Card>
+      </Pressable>
+      <Button title="Sair da conta" kind="secondary" onPress={() => supabase.auth.signOut()} />
+
+      <Text style={section}>Privacidade</Text>
+      <Card>
+        <Body>Jogadores bloqueados</Body>
+        <Sub>Quem você bloqueia não aparece com foto e perfil para você.</Sub>
+        {blocked.length === 0 && <Sub>Ninguém bloqueado.</Sub>}
+        {blocked.map((b) => (
+          <Button key={b.user_id} title={`Desbloquear ${b.name}`} kind="secondary" onPress={() => desbloquear(b.user_id)} />
+        ))}
+      </Card>
+
+      <Text style={section}>Trocar de conta</Text>
       <Card>
         <Body>Levar meu histórico para outra conta</Body>
         <Sub>
@@ -130,14 +149,7 @@ export default function Conta() {
         <Button title="Usar código" onPress={usarCodigo} loading={busy === 'usar'} disabled={redeem.trim().length < 16} />
       </Card>
 
-      <Card>
-        <Body>Jogadores bloqueados</Body>
-        {blocked.length === 0 && <Sub>Ninguém bloqueado.</Sub>}
-        {blocked.map((b) => (
-          <Button key={b.user_id} title={`Desbloquear ${b.name}`} kind="secondary" onPress={() => desbloquear(b.user_id)} />
-        ))}
-      </Card>
-
+      <Text style={section}>Excluir conta</Text>
       <Card>
         <Body>Excluir minha conta</Body>
         <Sub>
@@ -154,8 +166,8 @@ export default function Conta() {
           disabled={confirm.trim().toUpperCase() !== 'EXCLUIR'}
         />
       </Card>
-
-      <Button title="Voltar ao início" kind="secondary" onPress={() => router.replace('/')} />
     </Screen>
   );
 }
+
+const section = { fontSize: 13, fontWeight: '800' as const, color: colors.deepBlue, letterSpacing: 0.5, marginTop: 10 };
