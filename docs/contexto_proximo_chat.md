@@ -1,6 +1,6 @@
 # Minuto 91 — contexto para continuar em outro chat
 
-Atualizado em 21/10/2026. Leia este arquivo inteiro antes de qualquer ação.
+Atualizado em 22/10/2026. Leia este arquivo inteiro antes de qualquer ação.
 
 ## 1. Como trabalhar comigo
 - Responda sempre em português do Brasil, direto e curto. Sou fundador solo, não desenvolvedor.
@@ -48,9 +48,11 @@ Migrações em `supabase/migrations` (ordem do Doc 04 seção 36):
 017 catálogo de figurinhas · 018 progresso/desbloqueio · 019 Premium/teste grátis/eventos da loja ·
 020 anulação · 020b correção de permissão · 021 exclusão de conta · 022 notificações e agendador (pg_cron) ·
 023 denúncia/bloqueio/índices · 024 transferência de conta por código · 025 configurações da pelada
-(admin: prazo padrão, Bola Murcha só com Premium, mínimo de notas; fuso não editável).
+(admin: prazo padrão, Bola Murcha só com Premium, mínimo de notas; fuso não editável) ·
+026 Premium/loja (um pendente por comprador, atributo pelada_id, eventos fora de ordem, reembolso, TRANSFER) ·
+027 foto em bucket privado `avatars`, pé dominante, perfil só por RPC (update_my_profile/set_my_avatar/clear_my_avatar).
 
-Testes: `supabase/tests_editor/001..018_*.sql` (rodar no SQL Editor; terminam com o erro proposital
+Testes: `supabase/tests_editor/001..021_*.sql` (020 = invariantes de segurança do banco inteiro) (rodar no SQL Editor; terminam com o erro proposital
 "PASS: ..." = ok e nada gravado). Versões psql em `supabase/tests/`. Cadeia pós-finalização:
 `after_match_finalized` → stats/cartas (014) → `after_cards_updated` → destaques/meses (015) →
 `after_rankings_updated` → Seleção (016) → `after_selection_updated` → figurinhas (018).
@@ -88,7 +90,10 @@ transferência gerar/usar, bloqueados, excluir/recuperar), anulação de partida
 impacto e motivo), configurações da pelada (admin), Seleção da Rodada na partida, destaques da última rodada
 na pelada, denunciar convidado (na partida). Artes 9:16 em `lib/arts.tsx` (+ `lib/share.ts`, react-native-view-shot
 e expo-sharing): resultado/Craque e Seleção (só para quem vê as notas), carta e figurinha (só as próprias).
-A arte da Seleção foi vista só com dados simulados (o dev não tem 11 jogadores com nota). Também existe `premium.tsx` (teste RevenueCat).
+A arte da Seleção foi vista só com dados simulados (o dev não tem 11 jogadores com nota). Missão de auditoria (21-22/10): ver `docs/relatorio_final_2026-10-22.md` (checklist de lançamento, deploy) e
+`docs/auditoria_inicial_2026-10-21.md`. Novo: Meu perfil (foto, nome, pé), posição por pelada na carta (RN-068),
+carta `PlayerCard` com foto e moldura bronze/prata/ouro, início com "Falta o seu voto", Minha conta em seções,
+fundo branco, assinatura só na tela Premium da pelada (`lib/purchases.ts`). Tela Premium geral e template do Expo removidos.
 Avisos e confirmações: `app/src/lib/dialog.ts` (funciona no celular e na web).
 
 ## 8. Como testar
