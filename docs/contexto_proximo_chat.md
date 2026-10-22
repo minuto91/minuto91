@@ -158,7 +158,7 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
 ## 10c. V4.2 (22/10)
 - Relatório: `docs/relatorio_v42_2026-10-22.md` (matriz A01–A27, testes, implantação, checklist). Diagnóstico:
   `docs/v42_fase0_diagnostico_2026-10-22.md`. Evidências: `docs/evidencias_v42/` (Duelo/sorteio com dados simulados).
-- Migrações **036–039 ainda NÃO aplicadas no dev** (aplicar em ordem e rodar `tests_editor/030`, `031`, `032`, `020`).
+- Migrações **036–039 aplicadas no dev em 22/10** e testes `030`, `031`, `032` e `020` com PASS no dev.
   036 = correções P1 (votos de súmula antiga, exclusão, assinatura, retenção, eventos da loja) e ordem de travas;
   037 = histórico Premium por RLS, Card cronológico, figurinha do mês, onboarding, `get_my_home`, aceite versionado,
   retrospectiva no servidor; 038 = estatísticas incrementais; 039 = Duelo, escalações, sorteio por posição.
