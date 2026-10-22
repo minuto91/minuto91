@@ -51,7 +51,7 @@
 - **Teste grátis**: o da B vale só para a B.
 - **Expiração**: quando a A expira, o teste grátis da B não é afetado.
 
-**Status**: escrito, ainda não rodado (rodar no SQL Editor do dev; deve terminar com "PASS: 026_multi_pelada_premium").
+**Status**: PASS no dev (rodado pelo fundador no SQL Editor em 22/10). Na primeira execução falhou por erro do próprio teste: o evento de expiração tinha data de fim no futuro. O teste foi corrigido; o banco estava certo.
 
 ## 6. Jornada do admin e do jogador (diagnóstico)
 
