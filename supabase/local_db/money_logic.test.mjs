@@ -38,6 +38,9 @@ test('meses: deslocamento e nome', () => {
 
 test('CSV e chave de idempotência', () => {
   assert.equal(m.csvRow(['a', 'b "c"', null, 3]), '"a";"b ""c""";"";"3"');
+  // V4.4: fórmula digitada num nome/descrição não roda na planilha
+  assert.equal(m.csvRow(['=HYPERLINK("x")', '+1', '-2', '@SUM(A1)', 'ok']), `"'=HYPERLINK(""x"")";"'+1";"'-2";"'@SUM(A1)";"ok"`);
+  assert.equal(m.csvRow([-5]), '"-5"');
   const a = m.newRequestId();
   assert.match(a, /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/);
   assert.notEqual(a, m.newRequestId());

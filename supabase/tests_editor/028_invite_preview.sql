@@ -32,7 +32,8 @@ perform pg_temp.as_user(2);
 p := public.get_invite_preview(v_tok);
 perform pg_temp.assert((p->>'valid')::boolean and p->>'pelada_name'='Pelada Convite' and not (p->>'already_member')::boolean
  and p->'pelada_id'='null'::jsonb, 'convite válido mostra só o nome');
-perform pg_temp.assert((select array_agg(k order by k) from jsonb_object_keys(p) k)=array['already_member','pelada_id','pelada_name','valid'],
+-- V4.4 (045): + o que acontece ao entrar (pode entrar, precisa escolher posição, situação anterior DA PRÓPRIA PESSOA) e o prazo.
+perform pg_temp.assert((select array_agg(k order by k) from jsonb_object_keys(p) k)=array['already_member','can_join','expires_at','membership_status','needs_position','pelada_id','pelada_name','valid'],
  'nenhum outro dado');
 perform pg_temp.assert(not (public.get_invite_preview(repeat('a',64))->>'valid')::boolean, 'token inexistente');
 perform pg_temp.assert(not (public.get_invite_preview('nao-e-token')->>'valid')::boolean, 'formato inválido');

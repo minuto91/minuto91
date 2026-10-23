@@ -22,3 +22,11 @@ que estouram a dívida, geração de mensalidades e estorno x pagamento) e confe
 leva 2-3 min no PGlite.
 
 Limites: sem pg_cron, `auth` e `storage` simulados. Antes do lançamento, rode os testes também no SQL Editor do dev.
+
+V4.4: `node perf.mjs` sobe um **PostgreSQL 17 real** com dois bancos e a mesma massa sintética (V4.3 = migrações até a 043;
+V4.4 = todas): peladas de 20, 50, 100, 200 e 500 jogadores, 100 a 5.000 partidas, e 1.000, 5.000 e 10.000 movimentações
+financeiras. Mede as mesmas chamadas nos dois (Financeiro, Central do Jogador, Minha Carreira, telas da pelada, sorteio e
+leituras simultâneas) e grava `docs/evidencias_v44/perf_resultados.json` e os planos (`explain_*.txt`, EXPLAIN ANALYZE
+BUFFERS das consultas internas via auto_explain). Leva ~15 min; `SMALL=1 node perf.mjs` é a versão rápida. Pelada com mais de
+100 jogadores é montada direto no banco (o servidor só aceita 100 ativos pelo convite) apenas para medir.
+Novos testes SQL: `037_v44_finance_reports` (2.350 movimentações no mês, ~1 min no PGlite) e `038_v44_central_career`.
