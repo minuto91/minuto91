@@ -187,6 +187,21 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
 - **Financeiro**: só admin e assistentes autorizados (`set_finance_access`), com Pelada Premium; valores em centavos;
   nada é apagado (cancelamento/estorno com motivo); o app não movimenta dinheiro.
 
+## 10e. V4.4 (22/10)
+- Relatório: `docs/relatorio_v44_2026-10-22.md` (diagnóstico, matriz, desempenho medido, limites por plano, checklist).
+  Evidências: `docs/evidencias_v44/` (planos EXPLAIN, `perf_resultados.json`, vitrine `/dev-v44` com dados simulados).
+- Migrações **044 e 045 NÃO aplicadas no dev ainda** (aplicar no SQL Editor, nessa ordem; depois rodar `tests_editor/020`,
+  `028`, `036`, `037`, `038`). 044 = Financeiro (relatórios por agregação SQL, páginas com cursor para cobranças, livro-caixa
+  e auditoria, exportação completa); 045 = Central do Jogador, Minha Carreira, Sala de Troféus, convites com motivo,
+  notificações por categoria, guia inicial (`user_app_state`).
+- Tela inicial = **Central do Jogador** (igual para todos; admin também é jogador). Minha Carreira em `/carreira`;
+  guia de Cards em `/guia-cards`. Sala de Troféus: só Craque da Partida, Rei do Mês e Bola Murcha, contados da tabela
+  `awards` (a mesma das estatísticas e do álbum). Bola Murcha continua fora das "conquistas" antigas e do push.
+- Listas longas: `ListScreen` (FlatList) + `usePaged` (`lib/paging.ts`). CSV vira arquivo (`expo-file-system`) e protege
+  contra fórmula. Fotos de listas assinadas em lote (`prefetchAvatars`).
+- Carga com Postgres 17 real: `cd supabase/local_db; node perf.mjs` (~15 min).
+- Tag local `v4.3` marca a V4.3 intacta (não enviada).
+
 ## 11. Próximas etapas (em ordem sugerida)
 0. **Push** dos commits da Evolução V2 (aguarda confirmação) e rodar `tests_editor/001..019` de novo no dev.
    Pendências V2: escudo nas artes de resultado e Seleção; publicar `storage-cleanup` (fotos e escudos).

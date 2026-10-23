@@ -1,0 +1,294 @@
+-- v44: select public.get_finance_report($1, $2)
+-- comandos internos executados: 12; soma das durações: 326.2 ms
+-- abaixo, os 12 mais lentos (EXPLAIN ANALYZE, BUFFERS via auto_explain)
+
+duration: 173.858 ms  plan:
+Query Text: select public.get_finance_report($1, $2)
+Query Parameters: $1 = 'b6523fea-b68d-403e-b927-0a51aa75dcc2', $2 = '2026-10-01'
+Result  (cost=0.00..0.26 rows=1 width=32) (actual time=173.754..173.755 rows=1 loops=1)
+  Buffers: shared hit=37176
+
+-----
+
+duration: 48.916 ms  plan:
+Query Text: select coalesce(jsonb_agg(jsonb_build_object('direction', direction, 'category', category, 'amount_cents', total, 'count', n)
+   order by direction, total desc, category), '[]'::jsonb)
+            from (
+  select direction, category, sum(amount) total, count(*) n from (
+   select 'income'::text direction, (case c.kind when 'monthly' then 'Mensalidade' when 'single' then 'Avulso' else 'Contribuição extraordinária' end) category, p.amount_cents amount
+   from public.finance_payments p join public.finance_charges c on c.id = p.charge_id
+   where p.pelada_id = p_pelada and p.reversed_at is null and p.received_on between v_from and v_to
+   union all
+   select e.direction, e.category, e.amount_cents from public.finance_entries e
+   where e.pelada_id = p_pelada and e.status = 'settled' and e.entry_date between v_from and v_to) x
+  group by direction, category) q
+Aggregate  (cost=173.14..173.15 rows=1 width=32) (actual time=48.908..48.912 rows=1 loops=1)
+  Buffers: shared hit=14811
+  ->  Incremental Sort  (cost=171.51..173.03 rows=23 width=57) (actual time=48.798..48.803 rows=7 loops=1)
+        Sort Key: ('income'::text), (sum(p.amount_cents)) DESC, (CASE c.kind WHEN 'monthly'::text THEN 'Mensalidade'::text WHEN 'single'::text THEN 'Avulso'::text ELSE 'Contribuição extraordinária'::text END)
+        Presorted Key: ('income'::text)
+        Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 25kB  Peak Memory: 25kB
+        Buffers: shared hit=14811
+        ->  GroupAggregate  (cost=171.47..171.99 rows=23 width=57) (actual time=44.309..48.757 rows=7 loops=1)
+              Group Key: ('income'::text), (CASE c.kind WHEN 'monthly'::text THEN 'Mensalidade'::text WHEN 'single'::text THEN 'Avulso'::text ELSE 'Contribuição extraordinária'::text END)
+              Buffers: shared hit=14811
+              ->  Sort  (cost=171.47..171.53 rows=23 width=45) (actual time=43.838..44.701 rows=8683 loops=1)
+                    Sort Key: ('income'::text), (CASE c.kind WHEN 'monthly'::text THEN 'Mensalidade'::text WHEN 'single'::text THEN 'Avulso'::text ELSE 'Contribuição extraordinária'::text END)
+                    Sort Method: quicksort  Memory: 735kB
+                    Buffers: shared hit=14811
+                    ->  Append  (cost=4.71..170.95 rows=23 width=45) (actual time=0.338..32.127 rows=8683 loops=1)
+                          Buffers: shared hit=14811
+                          ->  Nested Loop  (cost=4.71..125.58 rows=11 width=68) (actual time=0.337..25.493 rows=4167 loops=1)
+                                Buffers: shared hit=12578
+                                ->  Bitmap Heap Scan on finance_payments p  (cost=4.42..38.23 rows=11 width=20) (actual time=0.296..1.821 rows=4167 loops=1)
+                                      Recheck Cond: ((pelada_id = $1) AND (received_on >= $4) AND (received_on <= $5) AND (reversed_at IS NULL))
+                                      Heap Blocks: exact=70
+                                      Buffers: shared hit=77
+                                      ->  Bitmap Index Scan on finance_payments_by_date  (cost=0.00..4.42 rows=11 width=0) (actual time=0.255..0.255 rows=4167 loops=1)
+                                            Index Cond: ((pelada_id = $1) AND (received_on >= $4) AND (received_on <= $5))
+                                            Buffers: shared hit=7
+                                ->  Index Scan using finance_charges_pkey on finance_charges c  (cost=0.28..7.94 rows=1 width=23) (actual time=0.004..0.004 rows=1 loops=4167)
+                                      Index Cond: (id = p.charge_id)
+                                      Buffers: shared hit=12501
+                          ->  Index Scan using finance_entries_ledger on finance_entries e  (cost=0.28..45.25 rows=12 width=24) (actual time=0.039..5.425 rows=4516 loops=1)
+                                Index Cond: ((pelada_id = $1) AND (entry_date >= $4) AND (entry_date <= $5))
+                                Filter: (status = 'settled'::text)
+                                Rows Removed by Filter: 484
+                                Buffers: shared hit=2233
+
+-----
+
+duration: 46.209 ms  plan:
+Query Text: with rows as (
+  select c.membership_id, c.payer_id,
+   case when c.status <> 'cancelled' and c.due_date between v_from and v_to then c.amount_due_cents else 0 end due,
+   0::bigint paid,
+   case when c.status in ('pending','partial') then c.amount_due_cents - c.amount_paid_cents else 0 end open_total
+  from public.finance_charges c where c.pelada_id = p_pelada
+  union all
+  select c.membership_id, c.payer_id, 0, p.amount_cents, 0
+  from public.finance_payments p join public.finance_charges c on c.id = p.charge_id
+  where p.pelada_id = p_pelada and p.reversed_at is null and p.received_on between v_from and v_to),
+ per as (
+  select membership_id, payer_id, sum(due) due, sum(paid) paid, sum(open_total) open_total
+  from rows group by membership_id, payer_id)
+ select coalesce(jsonb_agg(jsonb_build_object('membership_id', per.membership_id, 'payer_id', per.payer_id,
+   'name', coalesce(m.player_name, fp.display_name, '-'), 'due_cents', per.due, 'paid_cents', per.paid,
+   'open_total_cents', per.open_total) order by coalesce(m.player_name, fp.display_name, '-'), per.membership_id, per.payer_id), '[]'::jsonb)
+                from per left join public.pelada_memberships m on m.id = per.membership_id
+ left join public.finance_payers fp on fp.id = per.payer_id
+ where per.due > 0 or per.paid > 0 or per.open_total > 0
+Aggregate  (cost=520.93..520.94 rows=1 width=32) (actual time=46.193..46.202 rows=1 loops=1)
+  Buffers: shared hit=12761
+  ->  Sort  (cost=519.51..519.98 rows=189 width=123) (actual time=45.781..45.794 rows=30 loops=1)
+        Sort Key: (COALESCE(m.player_name, fp.display_name, '-'::text)), c.membership_id, c.payer_id
+        Sort Method: quicksort  Memory: 27kB
+        Buffers: shared hit=12761
+        ->  Hash Left Join  (cost=477.60..512.37 rows=189 width=123) (actual time=45.553..45.596 rows=30 loops=1)
+              Hash Cond: (c.payer_id = fp.id)
+              Buffers: shared hit=12761
+              ->  Hash Right Join  (cost=477.59..511.85 rows=189 width=91) (actual time=45.180..45.212 rows=30 loops=1)
+                    Hash Cond: (m.id = c.membership_id)
+                    Buffers: shared hit=12761
+                    ->  Seq Scan on pelada_memberships m  (cost=0.00..28.72 rows=972 width=27) (actual time=0.031..0.131 rows=963 loops=1)
+                          Buffers: shared hit=19
+                    ->  Hash  (cost=475.23..475.23 rows=189 width=80) (actual time=44.942..44.947 rows=30 loops=1)
+                          Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                          Buffers: shared hit=12742
+                          ->  HashAggregate  (cost=469.87..475.23 rows=189 width=80) (actual time=44.889..44.911 rows=30 loops=1)
+                                Group Key: c.membership_id, c.payer_id
+                                Filter: ((sum((CASE WHEN ((c.status <> 'cancelled'::text) AND (c.due_date >= $4) AND (c.due_date <= $5)) THEN c.amount_due_cents ELSE 0 END)) > 0) OR (sum(('0'::bigint)) > '0'::numeric) OR (sum((CASE WHEN (c.status = ANY ('{pending,partial}'::text[])) THEN (c.amount_due_cents - c.amount_paid_cents) ELSE 0 END)) > 0))
+                                Batches: 1  Memory Usage: 45kB
+                                Buffers: shared hit=12742
+                                ->  Append  (cost=0.00..436.39 rows=2678 width=48) (actual time=18.952..38.628 rows=9167 loops=1)
+                                      Buffers: shared hit=12742
+                                      ->  Seq Scan on finance_charges c  (cost=0.00..297.34 rows=2667 width=48) (actual time=18.951..23.788 rows=5000 loops=1)
+                                            Filter: (pelada_id = $1)
+                                            Rows Removed by Filter: 3000
+                                            Buffers: shared hit=164
+                                      ->  Subquery Scan on "*SELECT* 2"  (cost=4.71..125.67 rows=11 width=48) (actual time=0.219..13.746 rows=4167 loops=1)
+                                            Buffers: shared hit=12578
+                                            ->  Nested Loop  (cost=4.71..125.53 rows=11 width=44) (actual time=0.218..12.767 rows=4167 loops=1)
+                                                  Buffers: shared hit=12578
+                                                  ->  Bitmap Heap Scan on finance_payments p  (cost=4.42..38.23 rows=11 width=20) (actual time=0.196..0.956 rows=4167 loops=1)
+                                                        Recheck Cond: ((pelada_id = $1) AND (received_on >= $4) AND (received_on <= $5) AND (reversed_at IS NULL))
+                                                        Heap Blocks: exact=70
+                                                        Buffers: shared hit=77
+                                                        ->  Bitmap Index Scan on finance_payments_by_date  (cost=0.00..4.42 rows=11 width=0) (actual time=0.162..0.162 rows=4167 loops=1)
+                                                              Index Cond: ((pelada_id = $1) AND (received_on >= $4) AND (received_on <= $5))
+                                                              Buffers: shared hit=7
+                                                  ->  Index Scan using finance_charges_pkey on finance_charges c_1  (cost=0.28..7.94 rows=1 width=48) (actual time=0.002..0.002 rows=1 loops=4167)
+                                                        Index Cond: (id = p.charge_id)
+                                                        Buffers: shared hit=12501
+              ->  Hash  (cost=0.00..0.00 rows=1 width=48) (actual time=0.361..0.362 rows=0 loops=1)
+                    Buckets: 1024  Batches: 1  Memory Usage: 8kB
+                    ->  Seq Scan on finance_payers fp  (cost=0.00..0.00 rows=1 width=48) (actual time=0.360..0.360 rows=0 loops=1)
+
+-----
+
+duration: 22.485 ms  plan:
+Query Text: SELECT private.require_finance(p_pelada, false)
+Result  (cost=0.00..0.26 rows=1 width=4) (actual time=22.481..22.482 rows=1 loops=1)
+  Buffers: shared hit=12
+
+-----
+
+duration: 12.887 ms  plan:
+Query Text: 
+ select jsonb_build_object(
+  'income_cents', coalesce((select sum(amount_cents) from public.finance_payments where pelada_id=p_pelada and reversed_at is null
+     and received_on between p_from and p_to), 0)
+   + coalesce((select sum(amount_cents) from public.finance_entries where pelada_id=p_pelada and direction='income'
+     and status='settled' and entry_date between p_from and p_to), 0),
+  'expense_cents', coalesce((select sum(amount_cents) from public.finance_entries where pelada_id=p_pelada and direction='expense'
+     and status='settled' and entry_date between p_from and p_to), 0));
+
+Query Parameters: $1 = 'b6523fea-b68d-403e-b927-0a51aa75dcc2', $2 = '2026-10-01', $3 = '2026-10-31'
+Result  (cost=128.89..128.90 rows=1 width=32) (actual time=12.880..12.884 rows=1 loops=1)
+  Buffers: shared hit=4543
+  InitPlan 1
+    ->  Aggregate  (cost=38.25..38.26 rows=1 width=8) (actual time=2.362..2.363 rows=1 loops=1)
+          Buffers: shared hit=77
+          ->  Bitmap Heap Scan on finance_payments  (cost=4.42..38.23 rows=11 width=4) (actual time=0.321..1.230 rows=4167 loops=1)
+                Recheck Cond: ((pelada_id = $1) AND (received_on >= $2) AND (received_on <= $3) AND (reversed_at IS NULL))
+                Heap Blocks: exact=70
+                Buffers: shared hit=77
+                ->  Bitmap Index Scan on finance_payments_by_date  (cost=0.00..4.42 rows=11 width=0) (actual time=0.277..0.277 rows=4167 loops=1)
+                      Index Cond: ((pelada_id = $1) AND (received_on >= $2) AND (received_on <= $3))
+                      Buffers: shared hit=7
+  InitPlan 2
+    ->  Aggregate  (cost=45.30..45.31 rows=1 width=8) (actual time=5.686..5.687 rows=1 loops=1)
+          Buffers: shared hit=2233
+          ->  Index Scan using finance_entries_ledger on finance_entries  (cost=0.28..45.29 rows=6 width=4) (actual time=0.345..5.235 rows=2259 loops=1)
+                Index Cond: ((pelada_id = $1) AND (entry_date >= $2) AND (entry_date <= $3))
+                Filter: ((direction = 'income'::text) AND (status = 'settled'::text))
+                Rows Removed by Filter: 2741
+                Buffers: shared hit=2233
+  InitPlan 3
+    ->  Aggregate  (cost=45.30..45.31 rows=1 width=8) (actual time=4.789..4.790 rows=1 loops=1)
+          Buffers: shared hit=2233
+          ->  Index Scan using finance_entries_ledger on finance_entries finance_entries_1  (cost=0.28..45.29 rows=6 width=4) (actual time=0.072..4.453 rows=2257 loops=1)
+                Index Cond: ((pelada_id = $1) AND (entry_date >= $2) AND (entry_date <= $3))
+                Filter: ((direction = 'expense'::text) AND (status = 'settled'::text))
+                Rows Removed by Filter: 2743
+                Buffers: shared hit=2233
+
+-----
+
+duration: 12.696 ms  plan:
+Query Text: select (select count(*) from public.finance_payments where pelada_id = p_pelada and received_on between v_from and v_to)
+  + (select count(*) from public.finance_entries where pelada_id = p_pelada and entry_date between v_from and v_to)
+Result  (cost=86.11..86.13 rows=1 width=8) (actual time=12.691..12.693 rows=1 loops=1)
+  Buffers: shared hit=2360
+  InitPlan 1
+    ->  Aggregate  (cost=40.84..40.85 rows=1 width=8) (actual time=7.681..7.683 rows=1 loops=1)
+          Buffers: shared hit=127
+          ->  Bitmap Heap Scan on finance_payments  (cost=4.44..40.81 rows=12 width=0) (actual time=0.672..6.891 rows=4500 loops=1)
+                Recheck Cond: ((pelada_id = $1) AND (received_on >= $4) AND (received_on <= $5))
+                Heap Blocks: exact=70
+                Buffers: shared hit=127
+                ->  Bitmap Index Scan on finance_payments_ledger  (cost=0.00..4.43 rows=12 width=0) (actual time=0.624..0.624 rows=4500 loops=1)
+                      Index Cond: ((pelada_id = $1) AND (received_on >= $4) AND (received_on <= $5))
+                      Buffers: shared hit=57
+  InitPlan 2
+    ->  Aggregate  (cost=45.25..45.26 rows=1 width=8) (actual time=4.999..4.999 rows=1 loops=1)
+          Buffers: shared hit=2233
+          ->  Index Only Scan using finance_entries_ledger on finance_entries  (cost=0.28..45.22 rows=13 width=0) (actual time=0.071..4.306 rows=5000 loops=1)
+                Index Cond: ((pelada_id = $1) AND (entry_date >= $4) AND (entry_date <= $5))
+                Heap Fetches: 5000
+                Buffers: shared hit=2233
+
+-----
+
+duration: 4.066 ms  plan:
+Query Text: select coalesce(sum(amount_cents) filter (where direction = 'income'), 0), coalesce(sum(amount_cents) filter (where direction = 'expense'), 0)
+                     from public.finance_entries where pelada_id = p_pelada and status = 'pending' and entry_date between v_from and v_to
+Aggregate  (cost=45.26..45.27 rows=1 width=16) (actual time=4.060..4.060 rows=1 loops=1)
+  Buffers: shared hit=2233
+  ->  Index Scan using finance_entries_ledger on finance_entries  (cost=0.28..45.25 rows=1 width=11) (actual time=0.055..3.941 rows=333 loops=1)
+        Index Cond: ((pelada_id = $1) AND (entry_date >= $4) AND (entry_date <= $5))
+        Filter: (status = 'pending'::text)
+        Rows Removed by Filter: 4667
+        Buffers: shared hit=2233
+
+-----
+
+duration: 2.079 ms  plan:
+Query Text: select coalesce(sum(amount_cents), 0)            from public.finance_payments
+ where pelada_id = p_pelada and reversed_at is not null and received_on between v_from and v_to
+Aggregate  (cost=40.81..40.82 rows=1 width=8) (actual time=2.073..2.074 rows=1 loops=1)
+  Buffers: shared hit=127
+  ->  Bitmap Heap Scan on finance_payments  (cost=4.43..40.81 rows=1 width=4) (actual time=0.676..2.027 rows=333 loops=1)
+        Recheck Cond: ((pelada_id = $1) AND (received_on >= $4) AND (received_on <= $5))
+        Filter: (reversed_at IS NOT NULL)
+        Rows Removed by Filter: 4167
+        Heap Blocks: exact=70
+        Buffers: shared hit=127
+        ->  Bitmap Index Scan on finance_payments_ledger  (cost=0.00..4.43 rows=12 width=0) (actual time=0.626..0.626 rows=4500 loops=1)
+              Index Cond: ((pelada_id = $1) AND (received_on >= $4) AND (received_on <= $5))
+              Buffers: shared hit=57
+
+-----
+
+duration: 1.677 ms  plan:
+Query Text: p_pelada is null or not exists(select 1 from public.peladas where id=p_pelada)
+Result  (cost=1.06..1.07 rows=1 width=1) (actual time=1.672..1.673 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on peladas  (cost=0.00..1.06 rows=1 width=0) (actual time=1.669..1.669 rows=1 loops=1)
+          Filter: (id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 1.234 ms  plan:
+Query Text: select coalesce(sum(amount_due_cents - amount_paid_cents), 0)             from public.finance_charges
+ where pelada_id = p_pelada and status in ('pending','partial') and due_date between v_from and v_to
+Aggregate  (cost=17.55..17.56 rows=1 width=8) (actual time=1.229..1.229 rows=1 loops=1)
+  Buffers: shared hit=311
+  ->  Index Scan using finance_charges_open on finance_charges  (cost=0.28..17.53 rows=4 width=8) (actual time=0.031..0.727 rows=1333 loops=1)
+        Index Cond: ((pelada_id = $1) AND (due_date >= $4) AND (due_date <= $5))
+        Buffers: shared hit=311
+
+-----
+
+duration: 0.082 ms  plan:
+Query Text: 
+ select exists(select 1 from public.pelada_memberships m where m.pelada_id=p_pelada and m.user_id=(select auth.uid())
+  and m.status='active' and (m.role='admin' or (m.role='assistant' and private.is_active_staff(p_pelada)
+   and exists(select 1 from public.finance_access a where a.pelada_id=p_pelada and a.membership_id=m.id))));
+
+Query Parameters: $1 = 'b6523fea-b68d-403e-b927-0a51aa75dcc2'
+Result  (cost=8.57..8.58 rows=1 width=1) (actual time=0.077..0.079 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 4
+    ->  Index Scan using memberships_by_user on pelada_memberships m  (cost=0.30..8.57 rows=1 width=0) (actual time=0.075..0.076 rows=1 loops=1)
+          Index Cond: ((user_id = (InitPlan 1).col1) AND (pelada_id = $1))
+          Filter: ((status = 'active'::text) AND ((role = 'admin'::text) OR ((role = 'assistant'::text) AND private.is_active_staff($1) AND EXISTS(SubPlan 2))))
+          Buffers: shared hit=3
+          InitPlan 1
+            ->  Result  (cost=0.00..0.02 rows=1 width=16) (actual time=0.018..0.019 rows=1 loops=1)
+          SubPlan 2
+            ->  Seq Scan on finance_access a  (cost=0.00..0.00 rows=1 width=0) (never executed)
+                  Filter: ((pelada_id = $1) AND (membership_id = m.id))
+
+-----
+
+duration: 0.035 ms  plan:
+Query Text: 
+ select coalesce((select (value)::boolean from private.app_config where key='premium_beta_open'), false)
+  or exists(select 1 from public.pelada_entitlements e where e.pelada_id=p_pelada
+   and (e.trial_ends_at > now() or e.premium_until > now()));
+
+Query Parameters: $1 = 'b6523fea-b68d-403e-b927-0a51aa75dcc2'
+Result  (cost=1.05..1.06 rows=1 width=1) (actual time=0.032..0.033 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on app_config  (cost=0.00..1.05 rows=1 width=1) (actual time=0.027..0.028 rows=1 loops=1)
+          Filter: (key = 'premium_beta_open'::text)
+          Rows Removed by Filter: 3
+          Buffers: shared hit=1
+  InitPlan 2
+    ->  Seq Scan on pelada_entitlements e  (cost=0.00..0.00 rows=1 width=0) (never executed)
+          Filter: ((pelada_id = $1) AND ((trial_ends_at > now()) OR (premium_until > now())))

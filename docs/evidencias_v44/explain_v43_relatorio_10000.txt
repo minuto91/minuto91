@@ -1,0 +1,565 @@
+-- v43: select public.get_finance_report($1, $2)
+-- comandos internos executados: 4542; soma das durações: 4780.4 ms
+-- abaixo, os 25 mais lentos (EXPLAIN ANALYZE, BUFFERS via auto_explain)
+
+duration: 1685.157 ms  plan:
+Query Text: select public.get_finance_report($1, $2)
+Query Parameters: $1 = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f', $2 = '2026-10-01'
+Result  (cost=0.00..0.26 rows=1 width=32) (actual time=1685.055..1685.056 rows=1 loops=1)
+  Buffers: shared hit=39689
+
+-----
+
+duration: 1552.358 ms  plan:
+Query Text: jsonb_build_object('month', v_from,
+  'income_cents', (v_t->>'income_cents')::bigint, 'expense_cents', (v_t->>'expense_cents')::bigint,
+  'result_cents', (v_t->>'income_cents')::bigint - (v_t->>'expense_cents')::bigint,
+  'open_cents', coalesce((select sum(amount_due_cents - amount_paid_cents) from public.finance_charges where pelada_id=p_pelada
+     and status in ('pending','partial') and due_date between v_from and v_to), 0),
+  'by_category', coalesce((select jsonb_agg(jsonb_build_object('direction', direction, 'category', category, 'amount_cents', total)
+     order by direction, total desc) from (
+    select x->>'direction' direction, x->>'category' category, sum((x->>'amount_cents')::bigint) total
+    from jsonb_array_elements(public.get_finance_ledger(p_pelada, v_from, null, null, 1000)) x
+    where x->>'status'='settled' group by 1, 2) q), '[]'::jsonb),
+  'by_person', coalesce((select jsonb_agg(jsonb_build_object('membership_id', membership_id, 'payer_id', payer_id,
+     'name', private.finance_person_name(membership_id, payer_id), 'due_cents', due, 'paid_cents', paid, 'open_total_cents', open_total)
+     order by private.finance_person_name(membership_id, payer_id)) from (
+    select c.membership_id, c.payer_id,
+     sum(c.amount_due_cents) filter (where c.due_date between v_from and v_to and c.status<>'cancelled') due,
+     coalesce((select sum(p.amount_cents) from public.finance_payments p join public.finance_charges c2 on c2.id=p.charge_id
+       where p.reversed_at is null and p.received_on between v_from and v_to
+        and c2.membership_id is not distinct from c.membership_id and c2.payer_id is not distinct from c.payer_id and c2.pelada_id=p_pelada), 0) paid,
+     sum(c.amount_due_cents - c.amount_paid_cents) filter (where c.status in ('pending','partial')) open_total
+    from public.finance_charges c where c.pelada_id=p_pelada group by c.membership_id, c.payer_id) q
+    where coalesce(due,0) > 0 or paid > 0 or coalesce(open_total,0) > 0), '[]'::jsonb))
+Result  (cost=426636.83..426636.84 rows=1 width=32) (actual time=1552.344..1552.353 rows=1 loops=1)
+  Buffers: shared hit=33743
+  InitPlan 1
+    ->  Aggregate  (cost=230.60..230.61 rows=1 width=8) (actual time=1.588..1.590 rows=1 loops=1)
+          Buffers: shared hit=106
+          ->  Bitmap Heap Scan on finance_charges  (cost=33.28..223.94 rows=1333 width=8) (actual time=0.594..1.059 rows=1333 loops=1)
+                Recheck Cond: ((pelada_id = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f'::uuid) AND (due_date >= '2026-10-01'::date) AND (due_date <= '2026-10-31'::date) AND (status = ANY ('{pending,partial}'::text[])))
+                Heap Blocks: exact=103
+                Buffers: shared hit=106
+                ->  Bitmap Index Scan on finance_charges_open  (cost=0.00..32.94 rows=1333 width=0) (actual time=0.546..0.546 rows=1333 loops=1)
+                      Index Cond: ((pelada_id = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f'::uuid) AND (due_date >= '2026-10-01'::date) AND (due_date <= '2026-10-31'::date))
+                      Buffers: shared hit=3
+  InitPlan 2
+    ->  Aggregate  (cost=1.87..1.88 rows=1 width=32) (actual time=1461.935..1461.936 rows=1 loops=1)
+          Buffers: shared hit=13960
+          ->  Incremental Sort  (cost=1.81..1.86 rows=2 width=96) (actual time=1461.877..1461.878 rows=7 loops=1)
+                Sort Key: ((x.value ->> 'direction'::text)), (sum(((x.value ->> 'amount_cents'::text))::bigint)) DESC
+                Presorted Key: ((x.value ->> 'direction'::text))
+                Full-sort Groups: 1  Sort Method: quicksort  Average Memory: 25kB  Peak Memory: 25kB
+                Buffers: shared hit=13960
+                ->  GroupAggregate  (cost=1.77..1.80 rows=1 width=96) (actual time=1461.043..1461.841 rows=7 loops=1)
+                      Group Key: ((x.value ->> 'direction'::text)), ((x.value ->> 'category'::text))
+                      Buffers: shared hit=13960
+                      ->  Sort  (cost=1.77..1.77 rows=1 width=96) (actual time=1460.955..1461.018 rows=927 loops=1)
+                            Sort Key: ((x.value ->> 'direction'::text)), ((x.value ->> 'category'::text))
+                            Sort Method: quicksort  Memory: 389kB
+                            Buffers: shared hit=13960
+                            ->  Function Scan on jsonb_array_elements x  (cost=0.25..1.76 rows=1 width=96) (actual time=1459.347..1460.210 rows=927 loops=1)
+                                  Filter: ((value ->> 'status'::text) = 'settled'::text)
+                                  Rows Removed by Filter: 73
+                                  Buffers: shared hit=13960
+  InitPlan 5
+    ->  Aggregate  (cost=426404.33..426404.34 rows=1 width=32) (actual time=88.717..88.721 rows=1 loops=1)
+          Buffers: shared hit=19677
+          ->  Sort  (cost=426118.60..426120.01 rows=563 width=56) (actual time=88.384..88.392 rows=30 loops=1)
+                Sort Key: (private.finance_person_name(q.membership_id, q.payer_id))
+                Sort Method: quicksort  Memory: 26kB
+                Buffers: shared hit=19677
+                ->  Subquery Scan on q  (cost=376.50..426092.88 rows=563 width=56) (actual time=8.223..88.165 rows=30 loops=1)
+                      Buffers: shared hit=19677
+                      ->  HashAggregate  (cost=376.50..426092.88 rows=563 width=56) (actual time=7.663..79.698 rows=30 loops=1)
+                            Group Key: c.membership_id, c.payer_id
+                            Filter: ((COALESCE(sum(c.amount_due_cents) FILTER (WHERE ((c.due_date >= '2026-10-01'::date) AND (c.due_date <= '2026-10-31'::date) AND (c.status <> 'cancelled'::text))), '0'::bigint) > 0) OR (COALESCE((SubPlan 4), '0'::bigint) > 0) OR (COALESCE(sum((c.amount_due_cents - c.amount_paid_cents)) FILTER (WHERE (c.status = ANY ('{pending,partial}'::text[]))), '0'::bigint) > 0))
+                            Batches: 1  Memory Usage: 49kB
+                            Buffers: shared hit=19584
+                            ->  Seq Scan on finance_charges c  (cost=0.00..264.00 rows=5000 width=49) (actual time=0.569..1.706 rows=5000 loops=1)
+                                  Filter: (pelada_id = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f'::uuid)
+                                  Rows Removed by Filter: 3000
+                                  Buffers: shared hit=164
+                            SubPlan 3
+                              ->  Aggregate  (cost=312.32..312.33 rows=1 width=8) (actual time=2.455..2.455 rows=1 loops=30)
+                                    Buffers: shared hit=19420
+                                    ->  Nested Loop  (cost=0.28..312.31 rows=1 width=4) (actual time=0.893..2.433 rows=139 loops=30)
+                                          Buffers: shared hit=19420
+                                          ->  Seq Scan on finance_charges c2  (cost=0.00..304.00 rows=1 width=16) (actual time=0.713..1.867 rows=167 loops=30)
+                                                Filter: ((NOT (membership_id IS DISTINCT FROM c.membership_id)) AND (NOT (payer_id IS DISTINCT FROM c.payer_id)) AND (pelada_id = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f'::uuid))
+                                                Rows Removed by Filter: 7833
+                                                Buffers: shared hit=4920
+                                          ->  Index Scan using finance_payments_by_charge on finance_payments p  (cost=0.28..8.31 rows=1 width=20) (actual time=0.003..0.003 rows=1 loops=5000)
+                                                Index Cond: (charge_id = c2.id)
+                                                Filter: ((reversed_at IS NULL) AND (received_on >= '2026-10-01'::date) AND (received_on <= '2026-10-31'::date))
+                                                Rows Removed by Filter: 0
+                                                Buffers: shared hit=14500
+                            SubPlan 4
+                              ->  Aggregate  (cost=312.32..312.33 rows=1 width=8) (never executed)
+                                    ->  Nested Loop  (cost=0.28..312.31 rows=1 width=4) (never executed)
+                                          ->  Seq Scan on finance_charges c2_1  (cost=0.00..304.00 rows=1 width=16) (never executed)
+                                                Filter: ((NOT (membership_id IS DISTINCT FROM c.membership_id)) AND (NOT (payer_id IS DISTINCT FROM c.payer_id)) AND (pelada_id = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f'::uuid))
+                                          ->  Index Scan using finance_payments_by_charge on finance_payments p_1  (cost=0.28..8.31 rows=1 width=20) (never executed)
+                                                Index Cond: (charge_id = c2_1.id)
+                                                Filter: ((reversed_at IS NULL) AND (received_on >= '2026-10-01'::date) AND (received_on <= '2026-10-31'::date))
+
+-----
+
+duration: 1434.442 ms  plan:
+Query Text: coalesce((select jsonb_agg(x order by (x->>'date') desc, (x->>'created_at') desc) from (
+  select x from (
+   select jsonb_build_object('source','payment','id',p.id,'charge_id',c.id,'direction','income',
+    'category', case c.kind when 'monthly' then 'Mensalidade' when 'single' then 'Avulso' else 'Contribuição extraordinária' end,
+    'description', c.description || ' · ' || private.finance_person_name(c.membership_id, c.payer_id),
+    'amount_cents', p.amount_cents, 'date', p.received_on, 'method', p.method,
+    'status', case when p.reversed_at is null then 'settled' else 'reversed' end,
+    'author', (select display_name from public.profiles where id=p.created_by), 'created_at', p.created_at) x
+   from public.finance_payments p join public.finance_charges c on c.id=p.charge_id
+   where p.pelada_id=p_pelada and (v_from is null or p.received_on between v_from and v_to)
+   union all
+   select jsonb_build_object('source','entry','id',e.id,'direction',e.direction,'category',e.category,'description',e.description,
+    'amount_cents', e.amount_cents, 'date', e.entry_date, 'method', e.method, 'status', e.status, 'version', e.version,
+    'notes', e.notes, 'cancel_reason', e.cancel_reason,
+    'author', (select display_name from public.profiles where id=e.created_by), 'created_at', e.created_at)
+   from public.finance_entries e
+   where e.pelada_id=p_pelada and (v_from is null or e.entry_date between v_from and v_to)) y
+  where (p_direction is null or x->>'direction'=p_direction) and (p_category is null or x->>'category'=p_category)
+  order by (x->>'date') desc, (x->>'created_at') desc limit greatest(1, least(coalesce(p_limit,200), 1000))) z), '[]'::jsonb)
+Result  (cost=81621.79..81621.80 rows=1 width=32) (actual time=1434.196..1434.204 rows=1 loops=1)
+  Buffers: shared hit=13938
+  InitPlan 3
+    ->  Aggregate  (cost=81621.78..81621.79 rows=1 width=32) (actual time=1434.131..1434.138 rows=1 loops=1)
+          Buffers: shared hit=13938
+          ->  Sort  (cost=81611.78..81614.28 rows=1000 width=32) (actual time=1427.442..1427.516 rows=1000 loops=1)
+                Sort Key: ((z.x ->> 'date'::text)) DESC, ((z.x ->> 'created_at'::text)) DESC
+                Sort Method: quicksort  Memory: 445kB
+                Buffers: shared hit=13938
+                ->  Subquery Scan on z  (cost=81549.45..81561.95 rows=1000 width=32) (actual time=1425.651..1426.227 rows=1000 loops=1)
+                      Buffers: shared hit=13938
+                      ->  Limit  (cost=81549.45..81551.95 rows=1000 width=96) (actual time=1425.646..1425.814 rows=1000 loops=1)
+                            Buffers: shared hit=13938
+                            ->  Sort  (cost=81549.45..81573.20 rows=9500 width=96) (actual time=1425.644..1425.743 rows=1000 loops=1)
+                                  Sort Key: (((jsonb_build_object('source', 'payment', 'id', p.id, 'charge_id', c.id, 'direction', 'income', 'category', CASE c.kind WHEN 'monthly'::text THEN 'Mensalidade'::text WHEN 'single'::text THEN 'Avulso'::text ELSE 'Contribuição extraordinária'::text END, 'description', ((c.description || ' · '::text) || private.finance_person_name(c.membership_id, c.payer_id)), 'amount_cents', p.amount_cents, 'date', p.received_on, 'method', p.method, 'status', CASE WHEN (p.reversed_at IS NULL) THEN 'settled'::text ELSE 'reversed'::text END, 'author', (SubPlan 1), 'created_at', p.created_at)) ->> 'date'::text)) DESC, (((jsonb_build_object('source', 'payment', 'id', p.id, 'charge_id', c.id, 'direction', 'income', 'category', CASE c.kind WHEN 'monthly'::text THEN 'Mensalidade'::text WHEN 'single'::text THEN 'Avulso'::text ELSE 'Contribuição extraordinária'::text END, 'description', ((c.description || ' · '::text) || private.finance_person_name(c.membership_id, c.payer_id)), 'amount_cents', p.amount_cents, 'date', p.received_on, 'method', p.method, 'status', CASE WHEN (p.reversed_at IS NULL) THEN 'settled'::text ELSE 'reversed'::text END, 'author', (SubPlan 1), 'created_at', p.created_at)) ->> 'created_at'::text)) DESC
+                                  Sort Method: top-N heapsort  Memory: 922kB
+                                  Buffers: shared hit=13938
+                                  ->  Result  (cost=344.00..81028.57 rows=9500 width=96) (actual time=13.609..1354.263 rows=9500 loops=1)
+                                        Buffers: shared hit=13938
+                                        ->  Append  (cost=344.00..80886.07 rows=9500 width=32) (actual time=13.605..1343.089 rows=9500 loops=1)
+                                              Buffers: shared hit=13938
+                                              ->  Hash Join  (cost=344.00..39079.07 rows=4500 width=32) (actual time=13.604..1270.535 rows=4500 loops=1)
+                                                    Hash Cond: (p.charge_id = c.id)
+                                                    Buffers: shared hit=13781
+                                                    ->  Seq Scan on finance_payments p  (cost=0.00..237.00 rows=4500 width=76) (actual time=0.881..8.235 rows=4500 loops=1)
+                                                          Filter: ((received_on >= '2026-10-01'::date) AND (received_on <= '2026-10-31'::date) AND (pelada_id = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f'::uuid))
+                                                          Rows Removed by Filter: 2700
+                                                          Buffers: shared hit=111
+                                                    ->  Hash  (cost=244.00..244.00 rows=8000 width=66) (actual time=8.231..8.232 rows=8000 loops=1)
+                                                          Buckets: 8192  Batches: 1  Memory Usage: 710kB
+                                                          Buffers: shared hit=164
+                                                          ->  Seq Scan on finance_charges c  (cost=0.00..244.00 rows=8000 width=66) (actual time=0.022..3.560 rows=8000 loops=1)
+                                                                Buffers: shared hit=164
+                                                    SubPlan 1
+                                                      ->  Index Scan using profiles_pkey on profiles  (cost=0.27..8.29 rows=1 width=11) (actual time=0.001..0.001 rows=0 loops=4500)
+                                                            Index Cond: (id = p.created_by)
+                                              ->  Seq Scan on finance_entries e  (cost=0.00..41759.50 rows=5000 width=32) (actual time=1.049..69.619 rows=5000 loops=1)
+                                                    Filter: ((entry_date >= '2026-10-01'::date) AND (entry_date <= '2026-10-31'::date) AND (pelada_id = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f'::uuid))
+                                                    Rows Removed by Filter: 3000
+                                                    Buffers: shared hit=157
+                                                    SubPlan 2
+                                                      ->  Index Scan using profiles_pkey on profiles profiles_1  (cost=0.27..8.29 rows=1 width=11) (actual time=0.000..0.000 rows=0 loops=5000)
+                                                            Index Cond: (id = e.created_by)
+
+-----
+
+duration: 22.635 ms  plan:
+Query Text: SELECT private.require_finance(p_pelada, false)
+Result  (cost=0.00..0.26 rows=1 width=4) (actual time=22.630..22.631 rows=1 loops=1)
+  Buffers: shared hit=12
+
+-----
+
+duration: 13.691 ms  plan:
+Query Text: 
+ select jsonb_build_object(
+  'income_cents', coalesce((select sum(amount_cents) from public.finance_payments where pelada_id=p_pelada and reversed_at is null
+     and received_on between p_from and p_to), 0)
+   + coalesce((select sum(amount_cents) from public.finance_entries where pelada_id=p_pelada and direction='income'
+     and status='settled' and entry_date between p_from and p_to), 0),
+  'expense_cents', coalesce((select sum(amount_cents) from public.finance_entries where pelada_id=p_pelada and direction='expense'
+     and status='settled' and entry_date between p_from and p_to), 0));
+
+Query Parameters: $1 = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f', $2 = '2026-10-01', $3 = '2026-10-31'
+Result  (cost=91.97..91.99 rows=1 width=32) (actual time=13.685..13.688 rows=1 loops=1)
+  Buffers: shared hit=5888
+  InitPlan 1
+    ->  Aggregate  (cost=27.99..28.00 rows=1 width=8) (actual time=3.355..3.356 rows=1 loops=1)
+          Buffers: shared hit=1544
+          ->  Index Scan using finance_payments_by_date on finance_payments  (cost=0.28..27.96 rows=11 width=4) (actual time=0.041..2.333 rows=4167 loops=1)
+                Index Cond: ((pelada_id = $1) AND (received_on >= $2) AND (received_on <= $3))
+                Buffers: shared hit=1544
+  InitPlan 2
+    ->  Aggregate  (cost=31.98..31.99 rows=1 width=8) (actual time=4.982..4.983 rows=1 loops=1)
+          Buffers: shared hit=2172
+          ->  Index Scan using finance_entries_by_date on finance_entries  (cost=0.28..31.96 rows=6 width=4) (actual time=0.049..4.543 rows=2259 loops=1)
+                Index Cond: ((pelada_id = $1) AND (entry_date >= $2) AND (entry_date <= $3))
+                Filter: ((direction = 'income'::text) AND (status = 'settled'::text))
+                Rows Removed by Filter: 2741
+                Buffers: shared hit=2172
+  InitPlan 3
+    ->  Aggregate  (cost=31.98..31.99 rows=1 width=8) (actual time=5.309..5.309 rows=1 loops=1)
+          Buffers: shared hit=2172
+          ->  Index Scan using finance_entries_by_date on finance_entries finance_entries_1  (cost=0.28..31.96 rows=6 width=4) (actual time=0.227..4.767 rows=2257 loops=1)
+                Index Cond: ((pelada_id = $1) AND (entry_date >= $2) AND (entry_date <= $3))
+                Filter: ((direction = 'expense'::text) AND (status = 'settled'::text))
+                Rows Removed by Filter: 2743
+                Buffers: shared hit=2172
+
+-----
+
+duration: 2.274 ms  plan:
+Query Text: SELECT private.require_finance(p_pelada, false)
+Result  (cost=0.00..0.26 rows=1 width=4) (actual time=2.268..2.269 rows=1 loops=1)
+  Buffers: shared hit=5
+
+-----
+
+duration: 1.548 ms  plan:
+Query Text: p_pelada is null or not exists(select 1 from public.peladas where id=p_pelada)
+Result  (cost=1.06..1.07 rows=1 width=1) (actual time=1.542..1.544 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on peladas  (cost=0.00..1.06 rows=1 width=0) (actual time=1.540..1.540 rows=1 loops=1)
+          Filter: (id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.086 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = '5a5d81ce-49e3-4777-bc9c-404c6e683d2e', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.084..0.084 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.081..0.082 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.081 ms  plan:
+Query Text: 
+ select exists(select 1 from public.pelada_memberships m where m.pelada_id=p_pelada and m.user_id=(select auth.uid())
+  and m.status='active' and (m.role='admin' or (m.role='assistant' and private.is_active_staff(p_pelada)
+   and exists(select 1 from public.finance_access a where a.pelada_id=p_pelada and a.membership_id=m.id))));
+
+Query Parameters: $1 = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f'
+Result  (cost=8.57..8.58 rows=1 width=1) (actual time=0.077..0.078 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 4
+    ->  Index Scan using memberships_by_user on pelada_memberships m  (cost=0.30..8.57 rows=1 width=0) (actual time=0.075..0.076 rows=1 loops=1)
+          Index Cond: ((user_id = (InitPlan 1).col1) AND (pelada_id = $1))
+          Filter: ((status = 'active'::text) AND ((role = 'admin'::text) OR ((role = 'assistant'::text) AND private.is_active_staff($1) AND EXISTS(SubPlan 2))))
+          Buffers: shared hit=3
+          InitPlan 1
+            ->  Result  (cost=0.00..0.02 rows=1 width=16) (actual time=0.014..0.015 rows=1 loops=1)
+          SubPlan 2
+            ->  Seq Scan on finance_access a  (cost=0.00..0.00 rows=1 width=0) (never executed)
+                  Filter: ((pelada_id = $1) AND (membership_id = m.id))
+
+-----
+
+duration: 0.081 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = '624138fa-72d3-4805-9162-728e12e75a79', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.077..0.077 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.071..0.072 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.081 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = 'cb277517-e4b8-433f-957b-86b399e3dd15', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.079..0.079 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.013..0.077 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.081 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = 'cae0e143-2757-48bc-9fdb-a5e9d6d91265', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.080..0.080 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.076..0.077 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.070 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = '0fe3a4c8-d979-481b-a064-ed07ddf77680', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.015..0.015 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.012..0.013 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.069 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = 'e3b9f14b-45a9-4845-bb9d-44769a7184a7', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.065..0.066 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.059..0.061 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.058 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = 'c728a825-6dd0-486b-831a-e3c767e0b625', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.056..0.056 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.052..0.053 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.058 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = 'cae0e143-2757-48bc-9fdb-a5e9d6d91265', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.019..0.020 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.017..0.017 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.053 ms  plan:
+Query Text: 
+ select coalesce((select (value)::boolean from private.app_config where key='premium_beta_open'), false)
+  or exists(select 1 from public.pelada_entitlements e where e.pelada_id=p_pelada
+   and (e.trial_ends_at > now() or e.premium_until > now()));
+
+Query Parameters: $1 = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f'
+Result  (cost=1.05..1.06 rows=1 width=1) (actual time=0.049..0.050 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on app_config  (cost=0.00..1.05 rows=1 width=1) (actual time=0.044..0.045 rows=1 loops=1)
+          Filter: (key = 'premium_beta_open'::text)
+          Rows Removed by Filter: 3
+          Buffers: shared hit=1
+  InitPlan 2
+    ->  Seq Scan on pelada_entitlements e  (cost=0.00..0.00 rows=1 width=0) (never executed)
+          Filter: ((pelada_id = $1) AND ((trial_ends_at > now()) OR (premium_until > now())))
+
+-----
+
+duration: 0.053 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = '927ca364-edd5-45f2-a589-7ca33badb8ae', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.051..0.052 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.047..0.049 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.050 ms  plan:
+Query Text: 
+ select coalesce((select (value)::boolean from private.app_config where key='premium_beta_open'), false)
+  or exists(select 1 from public.pelada_entitlements e where e.pelada_id=p_pelada
+   and (e.trial_ends_at > now() or e.premium_until > now()));
+
+Query Parameters: $1 = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f'
+Result  (cost=1.05..1.06 rows=1 width=1) (actual time=0.036..0.037 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on app_config  (cost=0.00..1.05 rows=1 width=1) (actual time=0.031..0.032 rows=1 loops=1)
+          Filter: (key = 'premium_beta_open'::text)
+          Rows Removed by Filter: 3
+          Buffers: shared hit=1
+  InitPlan 2
+    ->  Seq Scan on pelada_entitlements e  (cost=0.00..0.00 rows=1 width=0) (never executed)
+          Filter: ((pelada_id = $1) AND ((trial_ends_at > now()) OR (premium_until > now())))
+
+-----
+
+duration: 0.043 ms  plan:
+Query Text: 
+ select exists(select 1 from public.pelada_memberships m where m.pelada_id=p_pelada and m.user_id=(select auth.uid())
+  and m.status='active' and (m.role='admin' or (m.role='assistant' and private.is_active_staff(p_pelada)
+   and exists(select 1 from public.finance_access a where a.pelada_id=p_pelada and a.membership_id=m.id))));
+
+Query Parameters: $1 = 'a514ef29-c1b9-4cba-9e58-2aef6938c17f'
+Result  (cost=8.57..8.58 rows=1 width=1) (actual time=0.039..0.040 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 4
+    ->  Index Scan using memberships_by_user on pelada_memberships m  (cost=0.30..8.57 rows=1 width=0) (actual time=0.038..0.039 rows=1 loops=1)
+          Index Cond: ((user_id = (InitPlan 1).col1) AND (pelada_id = $1))
+          Filter: ((status = 'active'::text) AND ((role = 'admin'::text) OR ((role = 'assistant'::text) AND private.is_active_staff($1) AND EXISTS(SubPlan 2))))
+          Buffers: shared hit=3
+          InitPlan 1
+            ->  Result  (cost=0.00..0.02 rows=1 width=16) (actual time=0.013..0.014 rows=1 loops=1)
+          SubPlan 2
+            ->  Seq Scan on finance_access a  (cost=0.00..0.00 rows=1 width=0) (never executed)
+                  Filter: ((pelada_id = $1) AND (membership_id = m.id))
+
+-----
+
+duration: 0.041 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = '4d76a37d-3f0e-497c-910b-5a00b1a8f891', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.039..0.040 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.037..0.038 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.041 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = 'cb277517-e4b8-433f-957b-86b399e3dd15', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.038..0.039 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.034..0.036 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.040 ms  plan:
+Query Text: p_pelada is null or not exists(select 1 from public.peladas where id=p_pelada)
+Result  (cost=1.06..1.07 rows=1 width=1) (actual time=0.036..0.037 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on peladas  (cost=0.00..1.06 rows=1 width=0) (actual time=0.034..0.034 rows=1 loops=1)
+          Filter: (id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.040 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = '5c784801-6a80-4304-b710-8fc4623a3598', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.038..0.038 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.017..0.017 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)
+
+-----
+
+duration: 0.039 ms  plan:
+Query Text: 
+ select coalesce((select player_name from public.pelada_memberships where id=p_membership),
+  (select display_name from public.finance_payers where id=p_payer), '-');
+
+Query Parameters: $1 = 'cae0e143-2757-48bc-9fdb-a5e9d6d91265', $2 = NULL
+Result  (cost=8.29..8.30 rows=1 width=32) (actual time=0.036..0.037 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 1
+    ->  Index Scan using pelada_memberships_id_pelada_id_key on pelada_memberships  (cost=0.28..8.29 rows=1 width=11) (actual time=0.031..0.032 rows=1 loops=1)
+          Index Cond: (id = $1)
+          Buffers: shared hit=3
+  InitPlan 2
+    ->  Seq Scan on finance_payers  (cost=0.00..0.00 rows=1 width=32) (never executed)
+          Filter: (id = $2)

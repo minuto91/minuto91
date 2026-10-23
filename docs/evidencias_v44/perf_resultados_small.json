@@ -1,0 +1,546 @@
+{
+ "generated_at": "2026-10-23T01:32:55.261Z",
+ "small": true,
+ "postgres": "17.10",
+ "setup": {
+  "users_and_peladas_s": 0.3,
+  "sports_s": 5.9,
+  "volume": {
+   "partidas": "250",
+   "resultados": "4000",
+   "premios": "596",
+   "membros": "120",
+   "temporadas": "10"
+  }
+ },
+ "measures": [
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "relatório do mês (1000 mov.)",
+   "median_ms": 89.3,
+   "max_ms": 123.1,
+   "response_kb": 5.1,
+   "movements": 1000
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "categorias = total de receitas (1000 mov.)",
+   "correct": true,
+   "categories_income": 2240799,
+   "income": 2240799,
+   "movements": 1000
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "painel (1000 mov.)",
+   "median_ms": 61.2,
+   "max_ms": 65.3,
+   "response_kb": 2.9,
+   "movements": 1000
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "cobranças: lista inteira da V4.3 (500)",
+   "median_ms": 237.5,
+   "max_ms": 255.3,
+   "response_kb": 343.9,
+   "movements": 1000
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "pessoas e mensalistas (1000 mov.)",
+   "median_ms": 2.4,
+   "max_ms": 2.6,
+   "response_kb": 2.4,
+   "movements": 1000
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "exportação V4.3 (ledger 1000)",
+   "median_ms": 73.9,
+   "max_ms": 81.2,
+   "response_kb": 0,
+   "movements": 1000
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "exportação V4.3 (1000 mov.)",
+   "rows": 950,
+   "expected": 950,
+   "complete": true,
+   "movements": 1000
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "relatório do mês (1000 mov.)",
+   "median_ms": 11.1,
+   "max_ms": 44.4,
+   "response_kb": 5.2,
+   "movements": 1000
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "categorias = total de receitas (1000 mov.)",
+   "correct": true,
+   "categories_income": 2240799,
+   "income": 2240799,
+   "movements": 1000
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "painel (1000 mov.)",
+   "median_ms": 10.9,
+   "max_ms": 12.1,
+   "response_kb": 3,
+   "movements": 1000
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "cobranças: lista inteira da V4.3 (500)",
+   "median_ms": 45,
+   "max_ms": 51.8,
+   "response_kb": 342.9,
+   "movements": 1000
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "pessoas e mensalistas (1000 mov.)",
+   "median_ms": 3.9,
+   "max_ms": 5.1,
+   "response_kb": 2.4,
+   "movements": 1000
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "cobranças: 1ª página de 30 + resumo (500)",
+   "median_ms": 8.2,
+   "max_ms": 10,
+   "response_kb": 20.9,
+   "movements": 1000
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "cobranças: em aberto, 1ª página",
+   "median_ms": 8.2,
+   "max_ms": 10,
+   "response_kb": 20.4,
+   "movements": 1000
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "livro-caixa: 1ª página de 40 + total",
+   "median_ms": 11,
+   "max_ms": 12.8,
+   "response_kb": 12.4,
+   "movements": 1000
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "exportação completa (1000 mov.)",
+   "total_ms": 68,
+   "pages": 2,
+   "rows": 950,
+   "expected": 950,
+   "complete": true,
+   "movements": 1000
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "relatório do mês (2400 mov.)",
+   "median_ms": 197.1,
+   "max_ms": 206.5,
+   "response_kb": 5.2,
+   "movements": 2400
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "categorias = total de receitas (2400 mov.)",
+   "correct": false,
+   "categories_income": 2548343,
+   "income": 5614070,
+   "movements": 2400
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "painel (2400 mov.)",
+   "median_ms": 139.4,
+   "max_ms": 142.9,
+   "response_kb": 3,
+   "movements": 2400
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "cobranças: lista inteira da V4.3 (1200)",
+   "median_ms": 555.1,
+   "max_ms": 565.8,
+   "response_kb": 825.7,
+   "movements": 2400
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "pessoas e mensalistas (2400 mov.)",
+   "median_ms": 2.2,
+   "max_ms": 2.6,
+   "response_kb": 2.4,
+   "movements": 2400
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "exportação V4.3 (ledger 1000)",
+   "median_ms": 165.4,
+   "max_ms": 180,
+   "response_kb": 0,
+   "movements": 2400
+  },
+  {
+   "db": "v43",
+   "area": "financeiro",
+   "label": "exportação V4.3 (2400 mov.)",
+   "rows": 1000,
+   "expected": 2280,
+   "complete": false,
+   "movements": 2400
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "relatório do mês (2400 mov.)",
+   "median_ms": 18.5,
+   "max_ms": 48,
+   "response_kb": 5.3,
+   "movements": 2400
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "categorias = total de receitas (2400 mov.)",
+   "correct": true,
+   "categories_income": 5614070,
+   "income": 5614070,
+   "movements": 2400
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "painel (2400 mov.)",
+   "median_ms": 10.3,
+   "max_ms": 12.1,
+   "response_kb": 3,
+   "movements": 2400
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "cobranças: lista inteira da V4.3 (1200)",
+   "median_ms": 102.8,
+   "max_ms": 123.8,
+   "response_kb": 825.7,
+   "movements": 2400
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "pessoas e mensalistas (2400 mov.)",
+   "median_ms": 2.4,
+   "max_ms": 3.6,
+   "response_kb": 2.4,
+   "movements": 2400
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "cobranças: 1ª página de 30 + resumo (1200)",
+   "median_ms": 9.9,
+   "max_ms": 11.3,
+   "response_kb": 20.9,
+   "movements": 2400
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "cobranças: em aberto, 1ª página",
+   "median_ms": 8.2,
+   "max_ms": 9.7,
+   "response_kb": 20.4,
+   "movements": 2400
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "livro-caixa: 1ª página de 40 + total",
+   "median_ms": 9.9,
+   "max_ms": 10.3,
+   "response_kb": 13.3,
+   "movements": 2400
+  },
+  {
+   "db": "v44",
+   "area": "financeiro",
+   "label": "exportação completa (2400 mov.)",
+   "total_ms": 168,
+   "pages": 5,
+   "rows": 2280,
+   "expected": 2280,
+   "complete": true,
+   "movements": 2400
+  },
+  {
+   "db": "v43",
+   "area": "explain",
+   "label": "explain_v43_relatorio_2400.txt",
+   "internal_statements": 1122,
+   "internal_ms": 1714
+  },
+  {
+   "db": "v43",
+   "area": "explain",
+   "label": "explain_v43_painel_2400.txt",
+   "internal_statements": 1096,
+   "internal_ms": 1422.5
+  },
+  {
+   "db": "v44",
+   "area": "explain",
+   "label": "explain_v44_relatorio_2400.txt",
+   "internal_statements": 12,
+   "internal_ms": 87.7
+  },
+  {
+   "db": "v44",
+   "area": "explain",
+   "label": "explain_v44_painel_2400.txt",
+   "internal_statements": 12,
+   "internal_ms": 96.8
+  },
+  {
+   "db": "v44",
+   "area": "explain",
+   "label": "explain_v44_cobrancas_pagina_2400.txt",
+   "internal_statements": 41,
+   "internal_ms": 92.1
+  },
+  {
+   "db": "v44",
+   "area": "explain",
+   "label": "explain_v44_livro_caixa_pagina_2400.txt",
+   "internal_statements": 9,
+   "internal_ms": 144.1
+  },
+  {
+   "db": "v44",
+   "area": "central",
+   "label": "Central do Jogador (get_player_central)",
+   "median_ms": 8,
+   "max_ms": 74.6,
+   "response_kb": 1.6
+  },
+  {
+   "db": "v44",
+   "area": "central",
+   "label": "Resumo da carreira (get_player_career_summary)",
+   "median_ms": 9.4,
+   "max_ms": 32.2,
+   "response_kb": 7
+  },
+  {
+   "db": "v44",
+   "area": "carreira",
+   "label": "Troféus: Craque, 1ª página de 20",
+   "median_ms": 7.4,
+   "max_ms": 8.9,
+   "response_kb": 3.4
+  },
+  {
+   "db": "v44",
+   "area": "carreira",
+   "label": "Histórico de partidas: 1ª página de 20",
+   "median_ms": 6.2,
+   "max_ms": 13.6,
+   "response_kb": 6.6
+  },
+  {
+   "db": "v44",
+   "area": "carreira",
+   "label": "Carreira V4.3 (get_player_career, com conquistas)",
+   "median_ms": 14.4,
+   "max_ms": 25.1,
+   "response_kb": 8.9
+  },
+  {
+   "db": "v44",
+   "area": "central",
+   "label": "Início V4.3 (get_my_home)",
+   "median_ms": 3.1,
+   "max_ms": 4.1,
+   "response_kb": 0.9
+  },
+  {
+   "db": "v44",
+   "area": "explain",
+   "label": "explain_v44_central.txt",
+   "internal_statements": 12,
+   "internal_ms": 82.6
+  },
+  {
+   "db": "v44",
+   "area": "pelada",
+   "label": "P20: Elenco (cards + membros)",
+   "median_ms": 3.8,
+   "max_ms": 13.4,
+   "response_kb": 0,
+   "pelada": "P20",
+   "players": 20,
+   "matches": 50
+  },
+  {
+   "db": "v44",
+   "area": "pelada",
+   "label": "P20: partidas (página de 30)",
+   "median_ms": 2.1,
+   "max_ms": 2.4,
+   "response_kb": 0,
+   "pelada": "P20",
+   "players": 20,
+   "matches": 50
+  },
+  {
+   "db": "v44",
+   "area": "pelada",
+   "label": "P20: ranking de gols da temporada",
+   "median_ms": 1.8,
+   "max_ms": 8,
+   "response_kb": 0,
+   "pelada": "P20",
+   "players": 20,
+   "matches": 50
+  },
+  {
+   "db": "v44",
+   "area": "pelada",
+   "label": "P20: ranking de overall da temporada",
+   "median_ms": 1.7,
+   "max_ms": 2,
+   "response_kb": 0,
+   "pelada": "P20",
+   "players": 20,
+   "matches": 50
+  },
+  {
+   "db": "v44",
+   "area": "pelada",
+   "label": "P20: recordes da temporada",
+   "median_ms": 6.1,
+   "max_ms": 7,
+   "response_kb": 2.2,
+   "pelada": "P20",
+   "players": 20,
+   "matches": 50
+  },
+  {
+   "db": "v44",
+   "area": "pelada",
+   "label": "P100: Elenco (cards + membros)",
+   "median_ms": 3.6,
+   "max_ms": 4.4,
+   "response_kb": 0,
+   "pelada": "P100",
+   "players": 100,
+   "matches": 200
+  },
+  {
+   "db": "v44",
+   "area": "pelada",
+   "label": "P100: partidas (página de 30)",
+   "median_ms": 1.9,
+   "max_ms": 2.3,
+   "response_kb": 0,
+   "pelada": "P100",
+   "players": 100,
+   "matches": 200
+  },
+  {
+   "db": "v44",
+   "area": "pelada",
+   "label": "P100: ranking de gols da temporada",
+   "median_ms": 2.3,
+   "max_ms": 2.8,
+   "response_kb": 0,
+   "pelada": "P100",
+   "players": 100,
+   "matches": 200
+  },
+  {
+   "db": "v44",
+   "area": "pelada",
+   "label": "P100: ranking de overall da temporada",
+   "median_ms": 1.9,
+   "max_ms": 2.2,
+   "response_kb": 0,
+   "pelada": "P100",
+   "players": 100,
+   "matches": 200
+  },
+  {
+   "db": "v44",
+   "area": "pelada",
+   "label": "P100: recordes da temporada",
+   "median_ms": 7.5,
+   "max_ms": 8.3,
+   "response_kb": 4.9,
+   "pelada": "P100",
+   "players": 100,
+   "matches": 200
+  },
+  {
+   "db": "v44",
+   "area": "sorteio",
+   "label": "sorteio único, 20 jogadores",
+   "median_ms": 109.1,
+   "max_ms": 145.3,
+   "players": 20
+  },
+  {
+   "db": "v44",
+   "area": "sorteio",
+   "label": "sorteio único, 50 jogadores",
+   "median_ms": 457.8,
+   "max_ms": 525.4,
+   "players": 50
+  },
+  {
+   "db": "v44",
+   "area": "concorrencia",
+   "label": "10 usuários x 10 aberturas da Central",
+   "connections": 10,
+   "requests": 100,
+   "p50_ms": 22,
+   "p95_ms": 83.1,
+   "max_ms": 269.2,
+   "wall_ms": 474,
+   "cold_first_call_median_ms": 990.4,
+   "cold_first_call_max_ms": 1065.1
+  }
+ ]
+}
