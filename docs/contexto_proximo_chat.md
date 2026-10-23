@@ -219,7 +219,7 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
 ## 10g. V4.6 (23/10) — visual, Garçons e homologação local
 - Relatório: `docs/relatorio_v46_2026-10-23.md`; diagnóstico `docs/v46_fase0_diagnostico_2026-10-23.md`; Design System
   `docs/v46_design_system.md`; evidências `docs/evidencias_v46/`; vitrine sem login `/dev-v46` (simulada).
-- Migrações **048 e 049 NÃO aplicadas no dev** (aplicar nessa ordem; depois testes 009, 010, 020, 037, 040, 041).
+- Migrações **048 e 049 aplicadas no dev em 23/10**; testes 020, 009, 010, 037, 040 e 041 com PASS no dev.
   048 = ordem estável dos pagamentos da cobrança (o teste 037 era intermitente). 049 = Garçom da Partida (`match_garcom`,
   mín. 1, empate premia todos; estatística objetiva: vale também com votação inválida — decisão do fundador em 23/10) e Garçom do Mês
   (`monthly_garcom`, mín. 2, desempate total → média exata → partidas com assistência → todos; substitui `top_assist`,
