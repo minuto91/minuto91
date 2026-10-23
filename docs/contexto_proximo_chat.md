@@ -206,13 +206,14 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
 - Relatório: `docs/relatorio_v45_2026-10-22.md` (matriz E1/G1–G6/S1/L1–L4/U1–U5/I1, regressão, desempenho V4.4 × V4.5,
   visual, checklist). LGPD: `docs/v45_lgpd_retencao_e_minuta_politica.md` (proposta de retenção + minuta da Política v1.3,
   tudo [VALIDAR COM ADVOGADO]). Evidências: `docs/evidencias_v45/`.
-- Migração **047** (não aplicada no dev; ordem 044 → 045 → 046 → 047): `get_finance_export` (exportação do mês numa chamada
+- Migrações **044–047 aplicadas no dev em 23/10** (044–046 já estavam; 047 aplicada nesse dia) e testes 020, 023, 026, 028,
+  031, 036, 037, 038 e 039 com PASS no dev. Migração **047**: `get_finance_export` (exportação do mês numa chamada
   STABLE = um instantâneo; o app confere linhas × totais antes de gerar o CSV) e gatilho que apaga a permissão financeira
   quando a pessoa deixa de ser assistente ativa (com auditoria). Teste SQL `039_v45_finance_export`.
 - App: paginação em `lib/pager.ts` (sem React, testada no Node) e `usePaged(fetch, keyOf)`; uma página a mais por vez,
   respostas antigas descartadas, filtro novo limpa a lista. Filtros (`Chips`) com 44 px. Vitrine `/dev-v45` (simulada).
 - Testes locais: suíte SQL 39/39, `node --test` 29/29, `concurrency.mjs` com exportação concorrente, `PERF_COMPARE=v45 node perf.mjs`.
-- **Não está pronta para lançamento**: falta Supabase dev com 044–047, login real, aparelhos, push/RevenueCat e advogado.
+- **Não está pronta para lançamento**: falta login real, aparelhos, push/RevenueCat e advogado.
 
 ## 11. Próximas etapas (em ordem sugerida)
 0. **Push** dos commits da Evolução V2 (aguarda confirmação) e rodar `tests_editor/001..019` de novo no dev.
