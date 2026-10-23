@@ -1,6 +1,7 @@
 import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '../../../lib/text';
 
 import { RetroPeladaArt, RetroPlayerArt, RetroRankingsArt, SharePanel } from '../../../lib/arts';
 import { fmtMonth, loadReadableSeasons, plural, Season } from '../../../lib/career';
@@ -187,6 +188,7 @@ export default function Retrospectiva() {
                     peladaName={name}
                     crestPath={pelada?.crest_path}
                     seasonName={season?.name ?? ''}
+                    seasonStart={season?.starts_on}
                     width={220}
                   />
                 </View>
@@ -224,4 +226,4 @@ function TopCard({ title, rows, unit }: { title: string; rows: Top[]; unit: [str
   );
 }
 
-const section = { fontSize: 13, fontWeight: '800' as const, color: colors.deepBlue, letterSpacing: 0.5, marginTop: 10 };
+const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 10 };

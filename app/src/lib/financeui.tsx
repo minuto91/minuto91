@@ -3,7 +3,8 @@ import * as Clipboard from 'expo-clipboard';
 import { File, Paths } from 'expo-file-system';
 import * as Sharing from 'expo-sharing';
 import { ReactNode, useState } from 'react';
-import { Platform, Pressable, Share, Text, View } from 'react-native';
+import { Platform, Pressable, Share, View } from 'react-native';
+import { Text } from './text';
 
 import { fmtDay, formatBRL, parseDay } from './money';
 import { colors } from './theme';

@@ -1,19 +1,20 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Href, useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { AppState, Pressable, Text, View } from 'react-native';
+import { useCallback, useEffect, useState } from 'react';
+import { AppState, Pressable, View } from 'react-native';
+import { Text } from '../../lib/text';
 
-import { Avatar } from '../lib/avatar';
-import { TIER } from '../lib/career';
-import { CareerSummary, latestCard, loadCareerSummary, markGuide, referencePelada, trophyTotal } from '../lib/careerv2';
-import { Crest } from '../lib/crest';
-import { friendly } from '../lib/errors';
-import { fmtDate, fmtTime, STATUS_LABEL } from '../lib/match';
-import { PushPrompt } from '../lib/push';
-import { useAuth } from '../lib/session';
-import { supabase } from '../lib/supabase';
-import { colors, positionLabel } from '../lib/theme';
-import { Body, Button, Card, ErrorText, Screen, Sub } from '../lib/ui';
+import { Avatar } from '../../lib/avatar';
+import { TIER } from '../../lib/career';
+import { CareerSummary, latestCard, loadCareerSummary, markGuide, referencePelada, trophyTotal } from '../../lib/careerv2';
+import { Crest } from '../../lib/crest';
+import { friendly } from '../../lib/errors';
+import { fmtDate, fmtTime, STATUS_LABEL } from '../../lib/match';
+import { PushPrompt } from '../../lib/push';
+import { useAuth } from '../../lib/session';
+import { supabase } from '../../lib/supabase';
+import { colors, positionLabel, radius, shadow, type } from '../../lib/theme';
+import { Body, Button, Card, EmptyState, ErrorText, Loading, Screen, Section, Sub } from '../../lib/ui';
 
 type Pelada = {
   id: string;
@@ -143,20 +144,6 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [pendingVotes]);
 
-  // Um toque por vez: toque duplo não marca e desmarca em seguida.
-  const primaryBusy = useRef(false);
-  async function principal(p: Pelada) {
-    if (primaryBusy.current) return;
-    primaryBusy.current = true;
-    try {
-      const { error } = await supabase.rpc('set_primary_pelada', { p_pelada: p.is_primary ? null : p.id });
-      if (error) return setErr(friendly(error.message));
-      setReload((n) => n + 1);
-    } finally {
-      primaryBusy.current = false;
-    }
-  }
-
   async function dispensarGuia() {
     await markGuide('dismiss').catch(() => {});
     setReload((n) => n + 1);
@@ -189,7 +176,7 @@ export default function Home() {
 
       <ErrorText>{err}</ErrorText>
       {err && <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />}
-      {!data && !err && <Sub>Carregando...</Sub>}
+      {!data && !err && <Loading />}
       {purgeAfter && (
         <Pressable onPress={() => router.push('/conta')}>
           <Card>
@@ -199,10 +186,12 @@ export default function Home() {
         </Pressable>
       )}
 
+      {/* V4.6: ordem da Central — pendências, último jogo, minhas peladas, próxima rodada, resumo e acesso à Minha
+          Carreira. O guia inicial fica discreto, no fim. */}
       {/* Pendências: só o que pede uma ação. */}
       {votes.length > 0 && (
         <>
-          <Text style={section}>Falta o seu voto</Text>
+          <Section>Falta o seu voto</Section>
           {votes.map((p) => (
             <Pressable key={p.match_id} onPress={() => router.push({ pathname: '/partida/[id]', params: { id: p.match_id } })} accessibilityRole="button">
               <View style={{ ...cardBox, borderColor: colors.blue, borderWidth: 1.5 }}>
@@ -245,36 +234,99 @@ export default function Home() {
         </View>
       )}
 
-      {showGuide && (
-        <Card>
-          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
-            <Text style={{ flex: 1, fontWeight: '800', color: colors.deepBlue }}>Primeiros passos</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Dispensar o guia" onPress={dispensarGuia} style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}>
-              <Text style={{ color: colors.muted, fontWeight: '600' }}>Dispensar</Text>
-            </Pressable>
-          </View>
-          {steps.map((s) => (
-            <Pressable
-              key={s.key}
-              accessibilityRole="button"
-              accessibilityState={{ checked: s.done }}
-              disabled={s.done}
-              onPress={s.go}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
-              <Text style={{ fontSize: 16, color: s.done ? colors.blue : colors.muted, width: 20 }} accessibilityElementsHidden importantForAccessibility="no">
-                {s.done ? '✓' : '○'}
+      {data?.last_match && (
+        <>
+          <Section>Último jogo</Section>
+          <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/partida/[id]', params: { id: data.last_match!.match_id } })}>
+            <View style={{ ...cardBox, borderWidth: 1, borderColor: colors.line }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Crest path={data.last_match.crest_path} name={data.last_match.pelada_name} size={28} />
+                <Sub>
+                  {data.last_match.pelada_name} · {fmtDate(data.last_match.played_at)}
+                </Sub>
+              </View>
+              <Body>
+                {data.last_match.team_a_name} {data.last_match.team_a_score} x {data.last_match.team_b_score} {data.last_match.team_b_name}
+              </Body>
+              <Text style={{ fontWeight: '700', color: data.last_match.result === 'win' ? colors.blue : data.last_match.result === 'loss' ? colors.danger : colors.darkGold }}>
+                {RESULT[data.last_match.result]} do seu time
+                <Text style={{ color: colors.muted, fontWeight: '400' }}>
+                  {data.last_match.goals ? ` · ${data.last_match.goals} ${data.last_match.goals === 1 ? 'gol' : 'gols'}` : ''}
+                  {data.last_match.assists
+                    ? ` · ${data.last_match.assists} ${data.last_match.assists === 1 ? 'assistência' : 'assistências'}`
+                    : ''}
+                </Text>
               </Text>
-              <Text style={{ flex: 1, color: s.done ? colors.muted : colors.ink, textDecorationLine: s.done ? 'line-through' : 'none' }}>{s.label}</Text>
-              {!s.done && <Text style={{ color: colors.blue }}>›</Text>}
+              {!data.last_match.official && <Sub>{STATUS_LABEL[data.last_match.status] ?? 'Em andamento'}: o resultado ainda não é oficial.</Sub>}
+            </View>
+          </Pressable>
+        </>
+      )}
+
+      {data && (
+        <>
+          <Section>Minhas peladas</Section>
+          {peladas.length === 0 && (
+            <Card>
+              <EmptyState title="Você ainda não está em nenhuma pelada" hint="Crie a pelada da sua turma ou entre com o convite que recebeu.">
+                <Button title="Criar pelada" onPress={() => router.push('/criar-pelada')} />
+                <Button title="Entrar com convite" kind="secondary" onPress={() => router.push('/entrar')} />
+              </EmptyState>
+            </Card>
+          )}
+          {peladas.length > 0 && (
+            <View style={{ ...cardBox, borderWidth: 1, borderColor: colors.line, paddingVertical: 4 }}>
+              {peladas.map((p, i) => (
+                <Pressable
+                  key={p.id}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Abrir ${p.name}`}
+                  onPress={() => router.push({ pathname: '/pelada/[id]', params: { id: p.id } })}
+                  style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, borderTopWidth: i ? 1 : 0, borderTopColor: '#EEF2F8' }}>
+                  <Crest path={p.crest_path} name={p.name} size={36} />
+                  <View style={{ flex: 1 }}>
+                    <Text style={type.cardTitle} numberOfLines={1}>
+                      {p.name}
+                    </Text>
+                    <Sub>
+                      {ROLE(p.role)}
+                      {p.is_primary && peladas.length > 1 ? ' · principal' : ''}
+                      {p.drafts > 0 ? ` · ${p.drafts === 1 ? '1 súmula em rascunho' : `${p.drafts} súmulas em rascunho`}` : ''}
+                    </Sub>
+                  </View>
+                  <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text>
+                </Pressable>
+              ))}
+            </View>
+          )}
+        </>
+      )}
+
+      {data && data.next_rounds.length > 0 && (
+        <>
+          <Section>Próxima rodada</Section>
+          {data.next_rounds.slice(0, 3).map((r) => (
+            <Pressable
+              key={r.lineup_id}
+              accessibilityRole="button"
+              onPress={() => router.push({ pathname: '/pelada/[id]/escalacoes', params: { id: r.pelada_id } })}>
+              <View style={{ ...cardBox, borderWidth: 1, borderColor: colors.line }}>
+                <Body>
+                  {r.team_name} x {r.opponent_name}
+                </Body>
+                <Sub>
+                  {r.pelada_name} · {r.label} · você está no {r.team_name}
+                </Sub>
+              </View>
             </Pressable>
           ))}
-        </Card>
+        </>
       )}
 
       {/* Minha Carreira (prévia) e Resumo da Carreira */}
       {peladas.length > 0 && (
         <>
-          <Text style={section}>Minha Carreira</Text>
+          <Section>Minha Carreira</Section>
           <Pressable accessibilityRole="button" accessibilityLabel="Abrir Minha Carreira" onPress={() => router.push('/carreira')}>
             <View style={{ ...cardBox, borderWidth: 1, borderColor: colors.line }}>
               {careerErr && <Sub>Não foi possível carregar a carreira agora.</Sub>}
@@ -317,111 +369,34 @@ export default function Home() {
         </>
       )}
 
-      {data?.last_match && (
-        <>
-          <Text style={section}>Último jogo</Text>
-          <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/partida/[id]', params: { id: data.last_match!.match_id } })}>
-            <View style={{ ...cardBox, borderWidth: 1, borderColor: colors.line }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-                <Crest path={data.last_match.crest_path} name={data.last_match.pelada_name} size={28} />
-                <Sub>
-                  {data.last_match.pelada_name} · {fmtDate(data.last_match.played_at)}
-                </Sub>
-              </View>
-              <Body>
-                {data.last_match.team_a_name} {data.last_match.team_a_score} x {data.last_match.team_b_score} {data.last_match.team_b_name}
-              </Body>
-              <Text style={{ fontWeight: '700', color: data.last_match.result === 'win' ? colors.blue : data.last_match.result === 'loss' ? colors.danger : colors.darkGold }}>
-                {RESULT[data.last_match.result]} do seu time
-                <Text style={{ color: colors.muted, fontWeight: '400' }}>
-                  {data.last_match.goals ? ` · ${data.last_match.goals} ${data.last_match.goals === 1 ? 'gol' : 'gols'}` : ''}
-                  {data.last_match.assists
-                    ? ` · ${data.last_match.assists} ${data.last_match.assists === 1 ? 'assistência' : 'assistências'}`
-                    : ''}
-                </Text>
-              </Text>
-              {!data.last_match.official && <Sub>{STATUS_LABEL[data.last_match.status] ?? 'Em andamento'}: o resultado ainda não é oficial.</Sub>}
-            </View>
-          </Pressable>
-        </>
-      )}
-
-      {data && data.next_rounds.length > 0 && (
-        <>
-          <Text style={section}>Próxima rodada</Text>
-          {data.next_rounds.slice(0, 3).map((r) => (
-            <Pressable
-              key={r.lineup_id}
-              accessibilityRole="button"
-              onPress={() => router.push({ pathname: '/pelada/[id]/escalacoes', params: { id: r.pelada_id } })}>
-              <View style={{ ...cardBox, borderWidth: 1, borderColor: colors.line }}>
-                <Body>
-                  {r.team_name} x {r.opponent_name}
-                </Body>
-                <Sub>
-                  {r.pelada_name} · {r.label} · você está no {r.team_name}
-                </Sub>
-              </View>
-            </Pressable>
-          ))}
-        </>
-      )}
-
       {data && peladas.length > 0 && <PushPrompt />}
 
-      <Text style={section}>Minhas peladas</Text>
-      {data && peladas.length === 0 && (
+      {showGuide && (
         <Card>
-          <Body>Você ainda não está em nenhuma pelada.</Body>
-          <Sub>Crie a pelada da sua turma ou entre com o convite que recebeu.</Sub>
-          <Button title="Criar pelada" onPress={() => router.push('/criar-pelada')} />
-          <Button title="Entrar com convite" kind="secondary" onPress={() => router.push('/entrar')} />
-        </Card>
-      )}
-      {peladas.map((p) => (
-        <Card key={p.id}>
-          <Pressable
-            accessibilityRole="button"
-            accessibilityLabel={`Abrir ${p.name}`}
-            onPress={() => router.push({ pathname: '/pelada/[id]', params: { id: p.id } })}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-              <Crest path={p.crest_path} name={p.name} size={44} />
-              <View style={{ flex: 1, gap: 2 }}>
-                <Text style={{ fontSize: 17, fontWeight: '700', color: colors.deepBlue }} numberOfLines={1}>
-                  {p.name}
-                </Text>
-                <Sub>
-                  {ROLE(p.role)} · {positionLabel(p.position_code ?? p.position)}
-                  {p.drafts > 0 ? ` · ${p.drafts === 1 ? '1 súmula em rascunho' : `${p.drafts} súmulas em rascunho`}` : ''}
-                </Sub>
-              </View>
-              <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
-            </View>
-          </Pressable>
-          {peladas.length > 1 && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={p.is_primary ? `${p.name} é a pelada principal. Toque para desmarcar.` : `Tornar ${p.name} a pelada principal`}
-              onPress={() => principal(p)}
-              style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', paddingRight: 12 }}>
-              <Text style={{ fontSize: 13, fontWeight: '700', color: p.is_primary ? colors.darkGold : colors.muted }}>
-                {p.is_primary ? '★ Principal' : '☆ Tornar principal'}
-              </Text>
+          <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+            <Text style={{ flex: 1, fontWeight: '600', color: colors.muted, fontSize: 14 }}>Primeiros passos</Text>
+            <Pressable accessibilityRole="button" accessibilityLabel="Dispensar o guia" onPress={dispensarGuia} style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}>
+              <Text style={{ color: colors.muted, fontWeight: '600' }}>Dispensar</Text>
             </Pressable>
-          )}
+          </View>
+          {steps.map((s) => (
+            <Pressable
+              key={s.key}
+              accessibilityRole="button"
+              accessibilityState={{ checked: s.done }}
+              disabled={s.done}
+              onPress={s.go}
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
+              <Text style={{ fontSize: 16, color: s.done ? colors.blue : colors.muted, width: 20 }} accessibilityElementsHidden importantForAccessibility="no">
+                {s.done ? '✓' : '○'}
+              </Text>
+              <Text style={{ flex: 1, color: s.done ? colors.muted : colors.ink, textDecorationLine: s.done ? 'line-through' : 'none' }}>{s.label}</Text>
+              {!s.done && <Text style={{ color: colors.blue }}>›</Text>}
+            </Pressable>
+          ))}
         </Card>
-      ))}
-
-      {peladas.length > 0 && (
-        <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
-          <View style={{ flex: 1 }}>
-            <Button title="Criar pelada" kind="secondary" onPress={() => router.push('/criar-pelada')} />
-          </View>
-          <View style={{ flex: 1 }}>
-            <Button title="Entrar em outra pelada" kind="secondary" onPress={() => router.push('/entrar')} />
-          </View>
-        </View>
       )}
+
     </Screen>
   );
 }
@@ -465,6 +440,5 @@ function MiniStat({ value, label }: { value: number; label: string }) {
   );
 }
 
-const section = { fontSize: 13, fontWeight: '800' as const, color: colors.deepBlue, letterSpacing: 0.5, marginTop: 6 };
-const cardBox = { backgroundColor: colors.white, borderRadius: 12, padding: 14, gap: 6 };
+const cardBox = { backgroundColor: colors.white, borderRadius: radius.card, padding: 16, gap: 6, ...shadow.card };
 const pendingRow = { minHeight: 44, justifyContent: 'center' as const, borderLeftWidth: 3, borderLeftColor: colors.gold, paddingLeft: 10 };

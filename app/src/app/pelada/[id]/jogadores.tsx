@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '../../../lib/text';
 
 import { Avatar, prefetchAvatars } from '../../../lib/avatar';
 import { friendly } from '../../../lib/errors';

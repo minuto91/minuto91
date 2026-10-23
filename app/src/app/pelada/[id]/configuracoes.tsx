@@ -6,7 +6,8 @@ import { confirm, notify } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import { CrestSwatch } from '../../../lib/playercard';
 import { supabase } from '../../../lib/supabase';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '../../../lib/text';
 
 import { colors } from '../../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Screen, Stepper, Sub, Title } from '../../../lib/ui';

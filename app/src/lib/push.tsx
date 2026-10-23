@@ -10,7 +10,8 @@ import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Platform, Switch, Text, View } from 'react-native';
+import { Platform, Switch, View } from 'react-native';
+import { Text } from './text';
 
 import { friendly } from './errors';
 import { supabase } from './supabase';

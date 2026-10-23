@@ -1,17 +1,8 @@
 import { ReactNode } from 'react';
-import {
-  ActivityIndicator,
-  FlatList,
-  Pressable,
-  ScrollView,
-  StyleSheet,
-  Text,
-  TextInput,
-  TextInputProps,
-  View,
-} from 'react-native';
+import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, TextInputProps, View } from 'react-native';
+import { Text, TextInput } from './text';
 
-import { colors, POSITIONS, Position, Sector, SECTORS } from './theme';
+import { colors, POSITIONS, Position, radius, Sector, SECTORS, shadow, type } from './theme';
 
 export function Screen({ children }: { children: ReactNode }) {
   return (
@@ -74,17 +65,44 @@ export function ListScreen<T>({
 }
 const ListGap = () => <View style={{ height: 12 }} />;
 
+// V4.6: escala única (theme.type). Título da tela 26, seção 19, texto 16, legenda 14.
 export const Title = ({ children }: { children: ReactNode }) => (
-  <Text style={{ fontSize: 26, fontWeight: '800', color: colors.deepBlue }}>{children}</Text>
+  <Text style={type.title} accessibilityRole="header">
+    {children}
+  </Text>
 );
 
-export const Sub = ({ children }: { children: ReactNode }) => (
-  <Text style={{ fontSize: 15, color: colors.muted }}>{children}</Text>
+/** Título de seção dentro da tela (19). */
+export const Section = ({ children, first }: { children: ReactNode; first?: boolean }) => (
+  <Text style={[type.section, { marginTop: first ? 0 : 10 }]} accessibilityRole="header">
+    {children}
+  </Text>
 );
 
-export const Body = ({ children }: { children: ReactNode }) => (
-  <Text style={{ fontSize: 16, color: colors.ink }}>{children}</Text>
-);
+export const Sub = ({ children }: { children: ReactNode }) => <Text style={type.caption}>{children}</Text>;
+
+export const Body = ({ children }: { children: ReactNode }) => <Text style={type.body}>{children}</Text>;
+
+/** Estado vazio: o que falta e, quando houver, o próximo passo. */
+export function EmptyState({ title, hint, children }: { title: string; hint?: string; children?: ReactNode }) {
+  return (
+    <View style={{ alignItems: 'center', gap: 6, paddingVertical: 24, paddingHorizontal: 12 }}>
+      <Text style={[type.cardTitle, { textAlign: 'center' }]}>{title}</Text>
+      {hint ? <Text style={[type.caption, { textAlign: 'center' }]}>{hint}</Text> : null}
+      {children ? <View style={{ alignSelf: 'stretch', gap: 8, marginTop: 8 }}>{children}</View> : null}
+    </View>
+  );
+}
+
+/** Carregando (indicador e texto curto, lido pelo leitor de tela). */
+export function Loading({ label = 'Carregando...' }: { label?: string }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 8 }} accessibilityLiveRegion="polite">
+      <ActivityIndicator color={colors.blue} />
+      <Text style={type.caption}>{label}</Text>
+    </View>
+  );
+}
 
 export function Button({
   title,
@@ -95,30 +113,36 @@ export function Button({
 }: {
   title: string;
   onPress: () => void;
-  kind?: 'primary' | 'secondary' | 'danger';
+  /** primary: ação principal; secondary: contorno azul; ghost: discreto, só texto; danger: destrutivo. */
+  kind?: 'primary' | 'secondary' | 'ghost' | 'danger';
   disabled?: boolean;
   loading?: boolean;
 }) {
-  const bg = kind === 'primary' ? colors.blue : colors.white;
+  const bg = kind === 'primary' ? colors.blue : kind === 'ghost' ? 'transparent' : colors.white;
   const fg = kind === 'primary' ? colors.white : kind === 'danger' ? colors.danger : colors.blue;
-  const border = kind === 'primary' ? colors.blue : kind === 'danger' ? colors.danger : colors.line;
+  const border = kind === 'primary' ? colors.blue : kind === 'danger' ? colors.danger : kind === 'ghost' ? 'transparent' : colors.blue;
   return (
     <Pressable
       onPress={onPress}
       disabled={disabled || loading}
-      style={{
+      accessibilityRole="button"
+      accessibilityLabel={title}
+      accessibilityState={{ disabled: !!(disabled || loading), busy: !!loading }}
+      style={({ pressed }) => ({
         backgroundColor: bg,
         borderColor: border,
-        borderWidth: 1,
-        borderRadius: 10,
-        paddingVertical: 14,
+        borderWidth: kind === 'ghost' ? 0 : 1.5,
+        borderRadius: radius.md,
+        minHeight: kind === 'ghost' ? 44 : 48,
+        paddingHorizontal: 16,
+        justifyContent: 'center',
         alignItems: 'center',
-        opacity: disabled ? 0.5 : 1,
-      }}>
+        opacity: disabled ? 0.45 : pressed ? 0.85 : 1,
+      })}>
       {loading ? (
         <ActivityIndicator color={fg} />
       ) : (
-        <Text style={{ color: fg, fontSize: 16, fontWeight: '700' }}>{title}</Text>
+        <Text style={{ color: fg, fontSize: kind === 'ghost' ? 15 : 16, fontWeight: '600' }}>{title}</Text>
       )}
     </Pressable>
   );
@@ -154,7 +178,7 @@ export function PositionPicker({
     <View style={{ gap: 10 }}>
       {SECTORS.filter((s) => !sector || s.value === sector).map((s) => (
         <View key={s.value} style={{ gap: 6 }}>
-          {!sector && <Text style={{ fontSize: 12, fontWeight: '700', color: colors.muted, letterSpacing: 0.5 }}>{s.label.toUpperCase()}</Text>}
+          {!sector && <Text style={type.meta}>{s.label}</Text>}
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {POSITIONS.filter((p) => p.sector === s.value).map((p) => {
               const on = value === p.value;
@@ -282,15 +306,21 @@ export function Stepper({
 }
 
 export const ErrorText = ({ children }: { children?: string | null }) =>
-  children ? <Text style={{ color: colors.danger }}>{children}</Text> : null;
+  children ? (
+    <Text style={{ color: colors.danger, fontSize: 14, lineHeight: 20 }} accessibilityLiveRegion="polite" accessibilityRole="alert">
+      {children}
+    </Text>
+  ) : null;
 
 const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
     borderColor: colors.line,
     backgroundColor: colors.white,
-    borderRadius: 10,
-    padding: 12,
+    borderRadius: radius.md,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    minHeight: 48,
     fontSize: 16,
     color: colors.ink,
   },
@@ -307,10 +337,11 @@ const styles = StyleSheet.create({
   stepTxt: { fontSize: 20, fontWeight: '700', color: colors.blue },
   card: {
     backgroundColor: colors.white,
-    borderRadius: 12,
+    borderRadius: radius.card,
     borderWidth: 1,
     borderColor: colors.line,
-    padding: 14,
+    padding: 16,
     gap: 6,
+    ...shadow.card,
   },
 });

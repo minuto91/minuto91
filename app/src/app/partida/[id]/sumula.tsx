@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
+import { Text } from '../../../lib/text';
 
 import { confirm, notify } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
@@ -23,6 +24,7 @@ import {
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, Position, positionLabel } from '../../../lib/theme';
+import { TeamColorPicker } from '../../../lib/selection';
 import { Body, Button, Card, Chips, ErrorText, Input, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
 const TEAMS = [
@@ -250,6 +252,9 @@ export default function Sumula() {
           <Button title="Salvar nomes" kind="secondary" onPress={salvarNomes} loading={busy} disabled={teamA === match.team_a_name && teamB === match.team_b_name} />
         </Card>
       )}
+      <Card>
+        <TeamColorPicker matchId={id} teamA={match.team_a_name} teamB={match.team_b_name} />
+      </Card>
       <Card>
         <Text style={{ fontSize: 22, fontWeight: '800', color: colors.deepBlue, textAlign: 'center' }}>
           {match.team_a_name} {score.A} x {score.B} {match.team_b_name}

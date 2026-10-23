@@ -9,7 +9,8 @@
 // Tudo é desenhado em unidades de uma caixa 100 x 144; width muda a escala inteira.
 import { Image } from 'expo-image';
 import { useArtImage } from './artload';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from './text';
 import Svg, { ClipPath, Defs, Ellipse, G, Line, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { initials, useAvatarUrl } from './avatar';
@@ -300,6 +301,13 @@ export function CrestSwatch({ tier, crestUrl, peladaName, width }: { tier: Tier;
   );
 }
 
+/** Ano da temporada: o do início dela; sem data, um ano de 4 dígitos no nome; senão nada (o Card não inventa ano). */
+export function seasonYear(start: string | null | undefined, name?: string | null): string | null {
+  const fromStart = start?.match(/^(\d{4})-/)?.[1];
+  if (fromStart) return fromStart;
+  return name?.match(/\b(?:19|20)\d{2}\b/)?.[0] ?? null;
+}
+
 export function PlayerCard({
   card,
   playerName,
@@ -307,6 +315,7 @@ export function PlayerCard({
   peladaName,
   crestPath,
   seasonName,
+  seasonStart,
   width = CARD_W,
   photoUrl,
   crestUrl,
@@ -316,7 +325,10 @@ export function PlayerCard({
   photoPath: string | null | undefined;
   peladaName: string;
   crestPath?: string | null;
+  /** Nome da temporada (leitor de tela e retrocompatibilidade). */
   seasonName: string;
+  /** Início da temporada (AAAA-MM-DD): o ano do rodapé. */
+  seasonStart?: string | null;
   width?: number;
   /** URLs já resolvidas (vitrine de desenvolvimento); no app vêm de photoPath e crestPath. */
   photoUrl?: string | null;
@@ -324,6 +336,7 @@ export function PlayerCard({
 }) {
   const tier = card.tier as Tier;
   const f = FINISH[tier];
+  const year = seasonYear(seasonStart, seasonName);
   const t = TIER[card.tier];
   const signedPhoto = useAvatarUrl(photoPath);
   const signedCrest = useCrestUrl(crestPath);
@@ -375,7 +388,7 @@ export function PlayerCard({
           {SECTOR_CODE[cardPosition(card)] ?? positionShort(cardPosition(card))}
         </Text>
         {card.is_provisional && !compact && (
-          <Text style={{ fontSize: font(2.9), fontWeight: '800', color: f.ink, opacity: 0.75, marginTop: px(1) }}>PROVISÓRIO</Text>
+          <Text style={{ fontSize: font(2.9), fontWeight: '800', color: f.ink, opacity: 0.75, marginTop: px(1) }}>Provisório</Text>
         )}
       </View>
 
@@ -399,7 +412,7 @@ export function PlayerCard({
         numberOfLines={1}
         adjustsFontSizeToFit
         minimumFontScale={0.6}>
-        {playerName.toUpperCase()}
+        {playerName}
       </Text>
 
       <View style={{ position: 'absolute', top: px(ROW_TOP), left: px(ROW_L), width: px(ROW_R - ROW_L), flexDirection: 'row' }}>
@@ -411,32 +424,24 @@ export function PlayerCard({
         ))}
       </View>
 
-      {!compact && (
-        <>
-          {!!seasonName && (
-            <Text
-              style={{ position: 'absolute', top: px(122), left: px(30), right: px(30), textAlign: 'center', fontSize: font(3.3), fontWeight: '700', color: f.accent }}
-              numberOfLines={1}>
-              {seasonName}
-            </Text>
-          )}
-          <Text
-            style={{
-              position: 'absolute',
-              top: px(127.6),
-              left: px(36),
-              right: px(36),
-              textAlign: 'center',
-              fontSize: font(3.1),
-              fontWeight: '800',
-              letterSpacing: px(0.4),
-              color: f.light,
-              opacity: 0.85,
-            }}
-            numberOfLines={1}>
-            MINUTO 91
-          </Text>
-        </>
+      {/* V4.6: o rodapé mostra só o ano da temporada do Card (sem "Temporada" e sem o nome da marca). */}
+      {!compact && !!year && (
+        <Text
+          style={{
+            position: 'absolute',
+            top: px(123.2),
+            left: px(30),
+            right: px(30),
+            textAlign: 'center',
+            fontSize: font(4),
+            fontWeight: '700',
+            letterSpacing: px(0.6),
+            color: f.accent,
+          }}
+          accessibilityLabel={`Temporada ${year}`}
+          numberOfLines={1}>
+          {year}
+        </Text>
       )}
     </View>
   );

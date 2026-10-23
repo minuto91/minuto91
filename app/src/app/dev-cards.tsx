@@ -4,7 +4,8 @@
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
 import { useRef, useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Text } from '../lib/text';
 import { captureRef } from 'react-native-view-shot';
 
 import { CardArt } from '../lib/arts';

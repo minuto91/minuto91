@@ -2,7 +2,8 @@
 // em uma pelada. Tudo vem pronto do servidor, que já aplica privacidade, bloqueios e o limite do
 // plano grátis (temporada atual e anterior); aqui nada é recalculado, só somado para exibir.
 import { useRouter } from 'expo-router';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from './text';
 
 import { PlayerCard } from './arts';
 import { AWARD_LABEL, Card as CardData, plural, TIER } from './career';
@@ -268,6 +269,7 @@ export function CardsList({
           peladaName={p.name}
           crestPath={p.crest_path}
           seasonName={s.name}
+          seasonStart={s.starts_on}
         />
       ))}
     </View>

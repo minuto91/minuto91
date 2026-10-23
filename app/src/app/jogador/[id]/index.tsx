@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '../../../lib/text';
 
 import { CardArt, PlayerCard, SharePanel } from '../../../lib/arts';
 import { Avatar } from '../../../lib/avatar';
@@ -127,6 +128,7 @@ export default function Carta() {
   const tier = card ? TIER[card.tier] : null;
   const isMe = !!member.user_id && member.user_id === session?.user.id;
   const seasonName = seasons.find((x) => x.id === seasonId)?.name ?? '';
+  const seasonStart = seasons.find((x) => x.id === seasonId)?.starts_on ?? null;
   const photoPath = member.status === 'retired' ? null : profile?.avatar_path;
 
   // RN-068: a posição do perfil vale a partir da próxima partida; a carta mostra a da última jogada.
@@ -187,6 +189,7 @@ export default function Carta() {
               peladaName={peladaName}
               crestPath={crestPath}
               seasonName={seasonName}
+              seasonStart={seasonStart}
             />
           </View>
           {card.is_provisional && (
@@ -211,7 +214,7 @@ export default function Carta() {
           {/* Só a própria carta: compartilhar a de outro jogador fica com ele (privacidade, Doc 03 36.3). */}
           {isMe && (
             <SharePanel label="Compartilhar meu Card" fileName="minuto91-card" title="Meu Card">
-              <CardArt peladaName={peladaName} crestPath={crestPath} seasonName={seasonName} playerName={member.player_name} photoPath={photoPath} card={shownCard!} />
+              <CardArt peladaName={peladaName} crestPath={crestPath} seasonName={seasonName} seasonStart={seasonStart} playerName={member.player_name} photoPath={photoPath} card={shownCard!} />
             </SharePanel>
           )}
         </>

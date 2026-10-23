@@ -1,6 +1,8 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { AppState, Pressable, Text, View } from 'react-native';
+import { AppState, Pressable, View } from 'react-native';
+import { Text } from '../../../lib/text';
+import { HOME , colors, needsPositionUpdate } from '../../../lib/theme';
 
 import { currentSeason, loadSeasons } from '../../../lib/career';
 import { Crest } from '../../../lib/crest';
@@ -12,7 +14,6 @@ import { AdminPending } from '../../../lib/pending';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { colors, needsPositionUpdate } from '../../../lib/theme';
 import { Body, Button, ErrorText, Screen, Sub } from '../../../lib/ui';
 
 type Member = { id: string; user_id: string | null; player_name: string; role: string; preferred_position: string; position_code?: string | null };
@@ -163,27 +164,34 @@ export default function CentralDaRodada() {
       async () => {
         const { error } = await supabase.rpc('leave_pelada', { p_pelada: id });
         if (error) return setMsg(friendly(error.message));
-        router.replace('/');
+        router.replace(HOME);
       },
     );
   }
 
-  const actions: { icon: IconName; label: string; onPress: () => void }[] = [
-    { icon: 'elenco', label: 'Elenco', onPress: () => router.push({ pathname: '/pelada/[id]/elenco', params: { id } }) },
-    { icon: 'rankings', label: 'Rankings', onPress: () => router.push({ pathname: '/pelada/[id]/rankings', params: { id } }) },
-    ...(me ? [{ icon: 'card' as const, label: 'Meu Card', onPress: () => router.push({ pathname: '/jogador/[id]', params: { id: me.id } }) }] : []),
-    { icon: 'partidas', label: 'Partidas', onPress: () => router.push({ pathname: '/pelada/[id]/partidas', params: { id } }) },
-    { icon: 'retro', label: 'Retrospectiva', onPress: () => router.push({ pathname: '/pelada/[id]/retrospectiva', params: { id } }) },
-    { icon: 'jogadores', label: 'Jogadores', onPress: () => router.push({ pathname: '/pelada/[id]/jogadores', params: { id } }) },
+  // V4.6: a pelada em três grupos claros (protótipo aprovado): Jogo, Desempenho e Gestão (conforme as permissões).
+  // Linhas com ícone, nome e uma linha de apoio, em vez de uma grade de atalhos pequenos. Recursos da Pelada Premium
+  // levam a marca dourada quando a pelada ainda está no Básico.
+  const go = (pathname: Parameters<typeof router.push>[0]) => () => router.push(pathname);
+  const jogo: GroupItem[] = [
+    { icon: 'partidas', label: 'Partidas', sub: 'Súmula, votação e resultado', onPress: go({ pathname: '/pelada/[id]/partidas', params: { id } }) },
+    { icon: 'elenco', label: 'Elenco', sub: loaded ? `${members.length} ${members.length === 1 ? 'jogador' : 'jogadores'}` : 'Jogadores da pelada', onPress: go({ pathname: '/pelada/[id]/elenco', params: { id } }) },
+    { icon: 'escalacao', label: 'Escalações', sub: 'Times da próxima rodada', onPress: go({ pathname: '/pelada/[id]/escalacoes', params: { id } }) },
+    ...(isStaff ? [{ icon: 'sorteio' as const, label: 'Sorteio', sub: 'Times equilibrados por posição', premium: true, onPress: go({ pathname: '/pelada/[id]/sorteio', params: { id } }) }] : []),
+    { icon: 'duelo', label: 'Duelo', sub: 'Compare dois jogadores', premium: true, onPress: go({ pathname: '/pelada/[id]/duelo', params: { id } }) },
   ];
-
-  // Organização (V4.2): escalações, sorteio, Duelo e temporadas num grupo só, para não lotar a Central.
-  // Recursos da Pelada Premium levam a marca dourada quando a pelada ainda está no Básico.
-  const organize: { icon: IconName; label: string; premium?: boolean; onPress: () => void }[] = [
-    { icon: 'escalacao', label: 'Escalações', onPress: () => router.push({ pathname: '/pelada/[id]/escalacoes', params: { id } }) },
-    ...(isStaff ? [{ icon: 'sorteio' as const, label: 'Sorteio', premium: true, onPress: () => router.push({ pathname: '/pelada/[id]/sorteio', params: { id } }) }] : []),
-    { icon: 'duelo', label: 'Duelo', premium: true, onPress: () => router.push({ pathname: '/pelada/[id]/duelo', params: { id } }) },
-    { icon: 'temporadas', label: 'Temporadas', onPress: () => router.push({ pathname: '/pelada/[id]/temporadas', params: { id } }) },
+  const desempenho: GroupItem[] = [
+    { icon: 'rankings', label: 'Rankings', sub: 'Overall, gols, assistências e prêmios do mês', onPress: go({ pathname: '/pelada/[id]/rankings', params: { id } }) },
+    ...(me ? [{ icon: 'card' as const, label: 'Meu Card', sub: 'Overall, atributos e álbum', onPress: go({ pathname: '/jogador/[id]', params: { id: me.id } }) }] : []),
+    { icon: 'jogadores', label: 'Jogadores e estatísticas', sub: 'Cards e números de cada um', onPress: go({ pathname: '/pelada/[id]/jogadores', params: { id } }) },
+    { icon: 'retro', label: 'Retrospectiva', sub: 'Resumo da temporada', onPress: go({ pathname: '/pelada/[id]/retrospectiva', params: { id } }) },
+    { icon: 'temporadas', label: 'Temporadas', sub: 'Atual e anteriores', onPress: go({ pathname: '/pelada/[id]/temporadas', params: { id } }) },
+  ];
+  const gestao: GroupItem[] = [
+    ...(isAdmin ? [{ icon: 'convite' as const, label: 'Convidar jogadores', sub: 'Link de convite', onPress: convidar }] : []),
+    // Financeiro (V4.3): só admin e assistentes com permissão financeira; nenhum valor aparece fora dele.
+    ...(finance ? [{ icon: 'financeiro' as const, label: 'Financeiro', sub: 'Mensalidades, cobranças e relatórios', premium: true, onPress: go({ pathname: '/pelada/[id]/financeiro', params: { id } }) }] : []),
+    ...(isAdmin ? [{ icon: 'config' as const, label: 'Configurações', sub: 'Escudo, votação, assistentes e Premium', onPress: go({ pathname: '/pelada/[id]/configuracoes', params: { id } }) }] : []),
   ];
 
   // Dia habitual (004), se o admin tiver definido. Não é uma partida agendada.
@@ -230,7 +238,7 @@ export default function CentralDaRodada() {
         return (
           <Pressable key={v.matchId} accessibilityRole="button" onPress={() => openMatch(v.matchId)}>
             <View style={[box, { borderColor: colors.blue, borderWidth: 1.5 }]}>
-              <Text style={label(colors.blue)}>FALTA O SEU VOTO</Text>
+              <Text style={label(colors.blue)}>Falta o seu voto</Text>
               {m && (
                 <Body>
                   {m.team_a_name} {m.team_a_score} x {m.team_b_score} {m.team_b_name}
@@ -253,7 +261,7 @@ export default function CentralDaRodada() {
         .map((m) => (
           <Pressable key={m.id} accessibilityRole="button" onPress={() => openMatch(m.id)}>
             <View style={box}>
-              <Text style={label(colors.deepBlue)}>RODADA EM VOTAÇÃO</Text>
+              <Text style={label(colors.deepBlue)}>Rodada em votação</Text>
               <Body>
                 {m.team_a_name} {m.team_a_score} x {m.team_b_score} {m.team_b_name}
               </Body>
@@ -268,7 +276,7 @@ export default function CentralDaRodada() {
       {lastFinal && (
         <Pressable accessibilityRole="button" accessibilityHint="Abre a partida, com súmula, notas e artes para compartilhar" onPress={() => openMatch(lastFinal.id)}>
           <View style={box}>
-            <Text style={label(colors.deepBlue)}>ÚLTIMA RODADA · {fmtDate(lastFinal.played_at).toUpperCase()}</Text>
+            <Text style={label(colors.deepBlue)}>Última rodada · {fmtDate(lastFinal.played_at)}</Text>
             <Scoreboard m={lastFinal} />
             {Object.keys(HIGHLIGHT_LABEL)
               .filter((t) => lastHighlights.some((h) => h.highlight_type === t))
@@ -295,7 +303,7 @@ export default function CentralDaRodada() {
       {/* Pelada recém-criada: o próximo passo, sem parecer app vazio. */}
       {empty && (
         <View style={[box, { gap: 10 }]}>
-          <Text style={label(colors.deepBlue)}>{isStaff ? 'PRIMEIROS PASSOS' : 'AINDA SEM PARTIDAS'}</Text>
+          <Text style={label(colors.deepBlue)}>{isStaff ? 'Primeiros passos' : 'Ainda sem partidas'}</Text>
           {isStaff ? (
             <>
               {isAdmin && (
@@ -324,61 +332,10 @@ export default function CentralDaRodada() {
         </Pressable>
       )}
 
-      {/* Atalhos: grade compacta, 3 por linha. */}
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        {actions.map((a) => (
-          <Pressable
-            key={a.label}
-            accessibilityRole="button"
-            onPress={a.onPress}
-            style={({ pressed }) => ({
-              flexBasis: '31%',
-              flexGrow: 1,
-              alignItems: 'center',
-              gap: 6,
-              paddingVertical: 12,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: colors.line,
-              backgroundColor: pressed ? colors.bg : colors.white,
-            })}>
-            <Icon name={a.icon} size={24} />
-            <Text style={{ fontSize: 13, fontWeight: '600', color: colors.ink }} numberOfLines={1}>
-              {a.label}
-            </Text>
-          </Pressable>
-        ))}
-      </View>
-
-      <Text style={section}>Organização</Text>
-      <View style={{ flexDirection: 'row', gap: 8 }}>
-        {organize.map((a) => (
-          <Pressable
-            key={a.label}
-            accessibilityRole="button"
-            accessibilityLabel={a.premium && !premium ? `${a.label}, recurso da Pelada Premium` : a.label}
-            onPress={a.onPress}
-            style={({ pressed }) => ({
-              flex: 1,
-              alignItems: 'center',
-              gap: 4,
-              paddingVertical: 10,
-              borderRadius: 12,
-              borderWidth: 1,
-              borderColor: a.premium && !premium ? colors.gold : colors.line,
-              backgroundColor: pressed ? colors.bg : colors.white,
-            })}>
-            <Icon name={a.icon} size={22} />
-            <Text style={{ fontSize: 12, fontWeight: '600', color: colors.ink }} numberOfLines={1}>
-              {a.label}
-            </Text>
-            {a.premium && !premium && <Text style={{ fontSize: 9, fontWeight: '800', letterSpacing: 1, color: colors.darkGold }}>PREMIUM</Text>}
-          </Pressable>
-        ))}
-      </View>
-
       {isStaff && !empty && <Button title="Lançar partida" onPress={lancarPartida} loading={busy} />}
       {isStaff && empty && <Button title="Lançar a primeira partida" kind={isAdmin ? 'secondary' : 'primary'} onPress={lancarPartida} loading={busy} />}
+
+      <Group title="Jogo" items={jogo} premium={premium} />
 
       {recent.length > 0 && (
         <View style={{ gap: 2 }}>
@@ -406,17 +363,8 @@ export default function CentralDaRodada() {
         </View>
       )}
 
-      {(isAdmin || finance) && (
-        <>
-          <Text style={section}>Administração</Text>
-          {isAdmin && <Row title="Convidar jogadores" onPress={convidar} />}
-          {isAdmin && <Row title="Configurações da pelada" onPress={() => router.push({ pathname: '/pelada/[id]/configuracoes', params: { id } })} />}
-          {/* Financeiro (V4.3): só admin e assistentes com permissão financeira; nenhum valor aparece na Central. */}
-          {finance && (
-            <Row title={premium ? 'Financeiro' : 'Financeiro · Pelada Premium'} onPress={() => router.push({ pathname: '/pelada/[id]/financeiro/index', params: { id } })} />
-          )}
-        </>
-      )}
+      <Group title="Desempenho" items={desempenho} premium={premium} />
+      {gestao.length > 0 && <Group title="Gestão" items={gestao} premium={premium} />}
       <Text style={section}>Pelada</Text>
       <Row title="Pelada Premium" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
       <Row title="Sair da pelada" danger onPress={sair} />
@@ -462,6 +410,48 @@ function Step({ n, title, text }: { n: number; title: string; text: string }) {
   );
 }
 
+type GroupItem = { icon: IconName; label: string; sub: string; premium?: boolean; onPress: () => void };
+
+function Group({ title, items, premium }: { title: string; items: GroupItem[]; premium: boolean }) {
+  return (
+    <View style={{ gap: 8, marginTop: 10 }}>
+      <Text style={{ fontSize: 19, lineHeight: 25, fontWeight: '700', color: colors.deepBlue }} accessibilityRole="header">
+        {title}
+      </Text>
+      <View style={{ borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.white, overflow: 'hidden' }}>
+        {items.map((a, n) => (
+          <Pressable
+            key={a.label}
+            accessibilityRole="button"
+            accessibilityLabel={a.premium && !premium ? `${a.label}, recurso da Pelada Premium` : a.label}
+            accessibilityHint={a.sub}
+            onPress={a.onPress}
+            style={({ pressed }) => ({
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 12,
+              minHeight: 60,
+              paddingHorizontal: 14,
+              borderTopWidth: n ? 1 : 0,
+              borderTopColor: '#EEF2F8',
+              backgroundColor: pressed ? colors.bg : colors.white,
+            })}>
+            <Icon name={a.icon} size={22} />
+            <View style={{ flex: 1, paddingVertical: 8 }}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.ink }}>{a.label}</Text>
+              <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
+                {a.sub}
+              </Text>
+            </View>
+            {a.premium && !premium && <Text style={{ fontSize: 12, fontWeight: '700', color: colors.darkGold }}>Premium</Text>}
+            <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
 function Row({ title, onPress, danger }: { title: string; onPress: () => void; danger?: boolean }) {
   return (
     <Pressable
@@ -475,5 +465,5 @@ function Row({ title, onPress, danger }: { title: string; onPress: () => void; d
 }
 
 const box = { backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.line, padding: 14, gap: 6 };
-const label = (color: string) => ({ fontSize: 12, fontWeight: '800' as const, letterSpacing: 1, color });
-const section = { fontSize: 13, fontWeight: '800' as const, color: colors.deepBlue, letterSpacing: 0.5, marginTop: 10 };
+const label = (color: string) => ({ fontSize: 14, fontWeight: '700' as const, color });
+const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 10 };

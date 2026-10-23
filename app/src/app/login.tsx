@@ -3,7 +3,8 @@ import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Platform, Pressable, Text, View } from 'react-native';
+import { Platform, Pressable, View } from 'react-native';
+import { Text } from '../lib/text';
 
 import { friendly } from '../lib/errors';
 import { supabase } from '../lib/supabase';

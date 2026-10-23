@@ -1,12 +1,12 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
+import { HOME , Position } from '../../lib/theme';
 
 import { friendly } from '../../lib/errors';
 import { extractInviteToken } from '../../lib/invite';
 import { useAuth } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
-import { Position } from '../../lib/theme';
 import { Body, Button, Card, ErrorText, PositionPicker, Screen, Sub, Title } from '../../lib/ui';
 
 type Preview = {
@@ -91,7 +91,7 @@ export default function Convite() {
       return;
     }
     if (m?.pelada_id) router.replace({ pathname: '/pelada/[id]', params: { id: m.pelada_id } });
-    else router.replace('/');
+    else router.replace(HOME);
   }
 
   if (!session || !onboarded)
@@ -125,7 +125,7 @@ export default function Convite() {
         ) : null}
         <Sub>{REASON[preview.reason ?? 'not_found']}</Sub>
         <Sub>Peça um novo convite ao administrador da pelada.</Sub>
-        <Button title="Voltar à Central" kind="secondary" onPress={() => router.replace('/')} />
+        <Button title="Voltar à Central" kind="secondary" onPress={() => router.replace(HOME)} />
       </Screen>
     );
 
@@ -138,7 +138,7 @@ export default function Convite() {
             ? 'Sua participação nesta pelada está suspensa. Fale com o administrador.'
             : 'Você não pode voltar a esta pelada.'}
         </Sub>
-        <Button title="Voltar à Central" kind="secondary" onPress={() => router.replace('/')} />
+        <Button title="Voltar à Central" kind="secondary" onPress={() => router.replace(HOME)} />
       </Screen>
     );
 

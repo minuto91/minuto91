@@ -60,7 +60,7 @@ export function referencePelada(peladas: SummaryPelada[], primaryId: string | nu
   );
 }
 
-export const trophyTotal = (t: TrophyCounts | null | undefined) => (t ? t.match_craque + t.monthly_king + t.bola_murcha : 0);
+export const trophyTotal = (t: TrophyCounts | null | undefined) => (t ? t.match_craque + t.monthly_king + t.bola_murcha + (t.match_garcom ?? 0) + (t.monthly_garcom ?? 0) : 0);
 
 export async function markGuide(step: 'career' | 'cards' | 'dismiss' | 'restore') {
   await supabase.rpc('set_guide_state', { p_step: step });

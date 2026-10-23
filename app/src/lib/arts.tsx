@@ -5,7 +5,8 @@
 // Quem monta cada arte decide se pode: notas só para quem vê as notas (RN-098); o pós-jogo, o Card
 // e a figurinha só da própria pessoa. Sem números inventados: tudo vem do resultado oficial.
 import { createContext, ReactNode, useContext, useRef, useState } from 'react';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+import { Text } from './text';
 
 import { ArtImagesProvider, useArtTracker } from './artload';
 import { Avatar } from './avatar';
@@ -17,6 +18,9 @@ import { CARD_W, PlayerCard } from './playercard';
 import type { PeladaRetro, PlayerRetro } from './retro';
 import { shareViewAsImage } from './share';
 import { colors } from './theme';
+import { BrandSignature } from './brand';
+import { FieldPlayer, SelectionField, TeamLegend } from './selection';
+import { StickerArtCode, StickerTile } from './stickers';
 import { Button, Chips, ErrorText, Sub } from './ui';
 
 // Largura que cabe na tela de um iPhone pequeno (375 - 2 x 20 de margem); a altura vem do formato.
@@ -80,7 +84,9 @@ export function SharePanel({
             <FormatContext.Provider value={format}>{children}</FormatContext.Provider>
           </ArtImagesProvider>
           <View style={{ flex: 1 }} />
-          <Text style={s.logo}>MINUTO 91</Text>
+          <View style={{ alignItems: 'center' }}>
+            <BrandSignature size={18} />
+          </View>
         </View>
       </View>
       <ErrorText>{msg}</ErrorText>
@@ -151,7 +157,7 @@ export function ResultArt({ data }: { data: ResultArtData }) {
       </Text>
       {data.craque.length > 0 && (
         <View style={[s.goldBox, post && { paddingVertical: 8 }]}>
-          <Text style={s.goldLabel}>CRAQUE DA PARTIDA</Text>
+          <Text style={s.goldLabel}>Craque da Partida</Text>
           {data.craque.map((c) => (
             <Text key={c.name} style={s.bigName} numberOfLines={1}>
               {c.name}
@@ -235,7 +241,7 @@ export function PostGameArt({ data }: { data: PostGameArtData }) {
           </Text>
           {data.craque && (
             <View style={s.badge}>
-              <Text style={s.badgeText}>CRAQUE DA PARTIDA</Text>
+              <Text style={s.badgeText}>Craque da Partida</Text>
             </View>
           )}
         </View>
@@ -266,48 +272,33 @@ export const FORMATION: { position: string; count: number }[] = [
   { position: 'goalkeeper', count: 1 },
 ];
 
+// V4.6: a peça da Seleção traz o nome da pelada, "Seleção da Rodada", a partida (data e times), o campo verde com
+// fotos e bordas dos times, a legenda das cores e a assinatura 91’ (no canto do campo e no rodapé da arte).
 export function SelectionArt({
   peladaName,
   crestPath,
   date,
-  slots,
+  matchLabel,
+  players,
+  teams,
 }: {
   peladaName: string;
   crestPath?: string | null;
   date: string;
-  slots: SelectionSlot[];
+  matchLabel: string;
+  players: FieldPlayer[];
+  teams: { name: string; color: string | null }[];
 }) {
   const post = useArtFormat() === 'post';
   return (
     <>
-      <Header title={peladaName} subtitle={date} crestPath={post ? undefined : crestPath} />
-      <Text style={[s.goldLabel, { textAlign: 'center', color: colors.blue }]}>SELEÇÃO DA RODADA</Text>
-      <View style={[s.field, post && { height: 230, paddingVertical: 4 }]}>
-        <View style={s.midline} />
-        <View style={s.circle} />
-        {FORMATION.map((line) => (
-          <View key={line.position} style={s.fieldRow}>
-            {slots
-              .filter((x) => x.position === line.position)
-              .map((x, i) => (
-                <View key={`${line.position}-${i}`} style={s.player}>
-                  <View
-                    style={[
-                      s.marker,
-                      post && { width: 16, height: 16 },
-                      x.best && { backgroundColor: colors.gold },
-                      !x.name && { backgroundColor: colors.white, borderStyle: 'dashed' },
-                    ]}
-                  />
-                  <Text style={s.playerName} numberOfLines={1}>
-                    {x.name ?? 'vaga'}
-                  </Text>
-                  {x.rating !== null && <Text style={s.playerRating}>{fmtRating(x.rating)}</Text>}
-                </View>
-              ))}
-          </View>
-        ))}
+      <Header title={peladaName} subtitle={`${matchLabel} · ${date}`} crestPath={post ? undefined : crestPath} />
+      <Text style={[s.goldLabel, { textAlign: 'center', color: colors.blue, fontSize: 18 }]}>Seleção da Rodada</Text>
+      <View style={{ alignItems: 'center' }}>
+        <SelectionField players={players} width={post ? 144 : 220} />
       </View>
+      {/* No 4:5 não sobra altura para a legenda (a cor continua na borda de cada jogador). */}
+      {!post && <TeamLegend teams={teams} />}
     </>
   );
 }
@@ -320,6 +311,7 @@ export function CardArt(props: {
   peladaName: string;
   crestPath?: string | null;
   seasonName: string;
+  seasonStart?: string | null;
   playerName: string;
   photoPath: string | null | undefined;
   card: CardData;
@@ -331,7 +323,7 @@ export function CardArt(props: {
     <>
       {/* Centraliza o Card na altura da arte (o painel põe um espaço flexível antes da logo). */}
       <View style={{ flex: 1 }} />
-      <Text style={[s.goldLabel, { textAlign: 'center', color: colors.blue }]}>CARD DA TEMPORADA</Text>
+      <Text style={[s.goldLabel, { textAlign: 'center', color: colors.blue }]}>Card da temporada</Text>
       <View style={{ alignItems: 'center' }}>
         <PlayerCard {...props} width={post ? 210 : CARD_W} />
       </View>
@@ -341,10 +333,12 @@ export function CardArt(props: {
 
 // ---------- Figurinha conquistada ----------
 
+// V4.6: a figurinha desenhada (ilustração da coleção e acabamento do nível), sem a estrela genérica.
 export function StickerArt({
   peladaName,
   playerName,
   collection,
+  art,
   sticker,
   level,
   criteria,
@@ -353,6 +347,7 @@ export function StickerArt({
   peladaName: string;
   playerName: string;
   collection: string;
+  art: StickerArtCode;
   sticker: string;
   level: number;
   criteria: string;
@@ -362,21 +357,10 @@ export function StickerArt({
   return (
     <>
       <Header title={peladaName} subtitle={playerName} />
-      <Text style={[s.goldLabel, { textAlign: 'center' }]}>FIGURINHA CONQUISTADA</Text>
-      <View style={[s.sticker, post && { gap: 6, paddingVertical: 10 }]}>
-        <Text style={s.muted}>{collection}</Text>
-        <View style={[s.emblem, post && { width: 64, height: 64, borderRadius: 32 }]}>
-          <Text style={{ fontSize: post ? 32 : 56, color: colors.gold }}>★</Text>
-        </View>
-        <Text style={[s.bigName, { textAlign: 'center' }]} numberOfLines={2}>
-          {sticker}
-        </Text>
-        <View style={{ flexDirection: 'row', gap: 5 }}>
-          {[1, 2, 3, 4, 5, 6].map((n) => (
-            <View key={n} style={[s.dot, n <= level && { backgroundColor: colors.gold, borderColor: colors.gold }]} />
-          ))}
-        </View>
-        <Text style={s.center} numberOfLines={post ? 2 : 4}>
+      <Text style={[s.goldLabel, { textAlign: 'center' }]}>Figurinha conquistada</Text>
+      <View style={{ alignItems: 'center', gap: post ? 4 : 8 }}>
+        <StickerTile art={art} level={level} title={sticker} sub={collection} width={post ? 128 : 190} />
+        <Text style={s.center} numberOfLines={post ? 2 : 3}>
           {criteria}
         </Text>
         <Text style={s.muted}>Conquistada em {date}</Text>
@@ -551,7 +535,7 @@ export function RetroPlayerArt({
       </Text>
       {honors.map((h) => (
         <View key={h} style={[s.badge, { alignSelf: 'center' }]}>
-          <Text style={s.badgeText}>{h.toUpperCase()}</Text>
+          <Text style={s.badgeText}>{h}</Text>
         </View>
       ))}
     </>
@@ -573,7 +557,7 @@ const s = StyleSheet.create({
   team: { fontSize: 13, fontWeight: '700', color: colors.ink, textAlign: 'center' },
   score: { fontSize: 36, fontWeight: '800', color: colors.blue },
   goldBox: { alignItems: 'center', gap: 4, paddingVertical: 12, borderRadius: 12, borderWidth: 2, borderColor: colors.gold },
-  goldLabel: { fontSize: 11, fontWeight: '800', letterSpacing: 2, color: colors.darkGold },
+  goldLabel: { fontSize: 14, fontWeight: '700', letterSpacing: 0.2, color: colors.darkGold },
   bigName: { fontSize: 20, fontWeight: '800', color: colors.deepBlue },
   section: { fontSize: 12, fontWeight: '800', color: colors.blue, marginBottom: 2 },
   row: { flexDirection: 'row', alignItems: 'center', gap: 8 },
@@ -582,8 +566,8 @@ const s = StyleSheet.create({
   rowValue: { fontSize: 14, fontWeight: '800', color: colors.deepBlue },
   photoRing: { borderRadius: 999, borderWidth: 3, borderColor: colors.line, padding: 3 },
   badge: { borderRadius: 999, backgroundColor: colors.gold, paddingHorizontal: 12, paddingVertical: 4 },
-  badgeText: { fontSize: 11, fontWeight: '800', letterSpacing: 1.5, color: colors.deepBlue },
-  outcome: { fontSize: 13, fontWeight: '800', letterSpacing: 2, color: colors.muted },
+  badgeText: { fontSize: 12, fontWeight: '700', letterSpacing: 0.2, color: colors.deepBlue },
+  outcome: { fontSize: 13, fontWeight: '700', letterSpacing: 0.3, color: colors.muted },
   statsRow: { flexDirection: 'row', justifyContent: 'center', gap: 10 },
   stat: { flex: 1, alignItems: 'center', paddingVertical: 10, borderRadius: 12, backgroundColor: colors.bg },
   statValue: { fontSize: 26, fontWeight: '800', color: colors.deepBlue },

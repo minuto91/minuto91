@@ -10,7 +10,8 @@ import { useArtImage } from './artload';
 import { ImageManipulator, SaveFormat } from 'expo-image-manipulator';
 import * as ImagePicker from 'expo-image-picker';
 import { useState } from 'react';
-import { Platform, Text, View } from 'react-native';
+import { Platform, View } from 'react-native';
+import { Text } from './text';
 
 import { useSignedUrl, uuid } from './avatar';
 import { friendly } from './errors';

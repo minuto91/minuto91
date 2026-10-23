@@ -1,6 +1,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Text, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
+import { Text } from '../../../lib/text';
 
 import { ANNUL_REASONS, AnnulMatch } from '../../../lib/annul';
 import {
@@ -10,7 +11,6 @@ import {
   ResultArt,
   ResultArtData,
   SelectionArt,
-  SelectionSlot,
   SharePanel,
 } from '../../../lib/arts';
 import { friendly } from '../../../lib/errors';
@@ -33,6 +33,7 @@ import {
   TeamExtras,
 } from '../../../lib/match';
 import { ReportLink } from '../../../lib/report';
+import { FieldPlayer, SelectionField, TeamColorPicker, TeamLegend, teamHex } from '../../../lib/selection';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, positionLabel } from '../../../lib/theme';
@@ -55,6 +56,7 @@ export default function Partida() {
   const { session: auth } = useAuth();
   const uid = auth?.user.id;
   const router = useRouter();
+  const { width: screenW } = useWindowDimensions();
   const [match, setMatch] = useState<Match | null>(null);
   const [members, setMembers] = useState<Member[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
@@ -70,6 +72,8 @@ export default function Partida() {
   const [crestPath, setCrestPath] = useState<string | null>(null);
   const [myPhoto, setMyPhoto] = useState<string | null>(null);
   const [selection, setSelection] = useState<SelectionPlayer[] | null>(null);
+  // V4.6 (049): cor de cada time nesta partida (escolhida na súmula); sem cor = borda neutra.
+  const [teamColors, setTeamColors] = useState<{ A: string | null; B: string | null }>({ A: null, B: null });
   // Escalação depois do jogo (grátis, V4.2): os dois times da súmula oficial.
   const [lineup, setLineup] = useState<{ team_a_name: string; team_b_name: string; players: LineupPlayer[]; formations: TeamFormations } | null>(null);
   const [busy, setBusy] = useState(false);
@@ -92,6 +96,9 @@ export default function Partida() {
           .limit(1),
         supabase.from('peladas').select('name, crest_path').eq('id', m.pelada_id).maybeSingle(),
       ]);
+      // Banco sem a 049 (colunas novas) não quebra a tela: fica sem cor.
+      const { data: tc } = await supabase.from('matches').select('team_a_color, team_b_color').eq('id', id).maybeSingle();
+      setTeamColors({ A: teamHex(tc?.team_a_color), B: teamHex(tc?.team_b_color) });
       setPeladaName(pl?.name ?? '');
       setCrestPath(pl?.crest_path ?? null);
       // Foto da própria pessoa, para a arte pós-jogo.
@@ -216,7 +223,8 @@ export default function Partida() {
     const r = results.find((x) => x.membership_id === membershipId);
     return r?.has_valid_rating && r.final_rating !== null ? Number(r.final_rating) : null;
   };
-  // Garçom da rodada como no servidor: só membros, mais assistências (mínimo 1), empate compartilha.
+  // Garçom da Partida (V4.6): o prêmio oficial do servidor (049); antes dele chegar, a mesma regra: só membros,
+  // mais assistências (mínimo 1), empate premia todos.
   const memberPlayers = players.filter((p) => p.membership_id);
   const maxAssists = Math.max(0, ...memberPlayers.map((p) => p.assists));
   const date = new Date(match.played_at).toLocaleDateString('pt-BR');
@@ -240,8 +248,11 @@ export default function Partida() {
             .filter((p) => p.goals > 0)
             .sort((a, b) => b.goals - a.goals)
             .map((p) => ({ name: playerName(p), goals: p.goals })),
-          garcom:
-            maxAssists > 0
+          garcom: awards.some((a) => a.award_type === 'match_garcom')
+            ? awards
+                .filter((a) => a.award_type === 'match_garcom')
+                .map((a) => ({ name: nameOf(a.membership_id), assists: maxAssists }))
+            : maxAssists > 0
               ? memberPlayers.filter((p) => p.assists === maxAssists).map((p) => ({ name: playerName(p), assists: maxAssists }))
               : [],
           top: ranked.slice(0, 5).map((r) => ({ pos: posOf(r), name: nameOf(r.membership_id), rating: Number(r.final_rating) })),
@@ -268,19 +279,32 @@ export default function Partida() {
           craque: awards.some((a) => a.award_type === 'match_craque' && a.membership_id === me.id),
         }
       : null;
-  // Seleção 4-3-3 sem adaptação: cada linha pega os melhores daquela posição; o que faltar fica vago.
-  const bestRank = Math.min(...(selection ?? []).map((x) => x.rank_order));
-  const slots: SelectionSlot[] = FORMATION.flatMap((line) => {
+  // Seleção 4-3-3 sem adaptação: cada linha pega os melhores daquela posição; o que faltar fica vago. Foto e sigla vêm
+  // da escalação oficial da partida; a borda é a cor do time em que o jogador jogou nesta partida.
+  const fieldPlayers: FieldPlayer[] = FORMATION.flatMap((line) => {
     const inLine = (selection ?? [])
       .filter((x) => x.slot_position === line.position)
       .sort((a, b) => a.rank_order - b.rank_order);
-    return Array.from({ length: line.count }, (_, i) => {
+    return Array.from({ length: line.count }, (_, i): FieldPlayer => {
       const x = inLine[i];
-      return x
-        ? { position: line.position, name: nameOf(x.membership_id), rating: ratingOf(x.membership_id), best: x.rank_order === bestRank }
-        : { position: line.position, name: null, rating: null, best: false };
+      const pos = line.position as FieldPlayer['position'];
+      if (!x) return { key: `${line.position}-${i}`, position: pos, name: null };
+      const lp = lineup?.players.find((l) => l.key === x.membership_id);
+      const team = players.find((p) => p.membership_id === x.membership_id)?.team ?? lp?.team ?? null;
+      return {
+        key: x.membership_id,
+        position: pos,
+        name: nameOf(x.membership_id),
+        posLabel: lp?.position && lp.position.length <= 3 ? lp.position : null,
+        photoPath: lp?.avatar_path ?? null,
+        teamColor: team ? teamColors[team] : null,
+      };
     });
   });
+  const teamsLegend = [
+    { name: match.team_a_name, color: teamColors.A },
+    { name: match.team_b_name, color: teamColors.B },
+  ];
   const matchGuests = guests.filter((g) => players.some((p) => p.guest_id === g.id));
 
   return (
@@ -334,11 +358,12 @@ export default function Partida() {
             // A27: mesma regra do servidor (013/036): válida com pelo menos metade dos eleitores E pelo menos 3 votos.
             <Sub>
               Votação inválida: {voted.length} de {voting.eligible_voter_count} votaram. Para valer, precisa de pelo menos metade dos
-              eleitores e de no mínimo 3 votos. Sem notas oficiais nem prêmios nesta partida.
+              eleitores e de no mínimo 3 votos. Sem notas oficiais nem prêmios da votação nesta partida.
             </Sub>
           )}
           {awardNames('match_craque') !== '' && <Body>Craque da Partida: {awardNames('match_craque')}</Body>}
           {awardNames('bola_murcha') !== '' && <Body>Bola Murcha: {awardNames('bola_murcha')}</Body>}
+          {awardNames('match_garcom') !== '' && <Body>Garçom da Partida: {awardNames('match_garcom')}</Body>}
           {voting?.is_valid && results.length === 0 && iAmVoter && !iVoted && (
             <Sub>Você não votou, então o resultado detalhado desta partida fica bloqueado para você.</Sub>
           )}
@@ -366,20 +391,20 @@ export default function Partida() {
       {selection && (
         <Card>
           <Body>Seleção da Rodada</Body>
-          {FORMATION.map((line) => (
-            <Sub key={line.position}>
-              {positionLabel(line.position)}:{' '}
-              {slots
-                .filter((x) => x.position === line.position)
-                .map((x) => x.name ?? 'vaga')
-                .join(', ')}
-            </Sub>
-          ))}
+          <View style={{ alignItems: 'center', gap: 10, marginTop: 4 }}>
+            <SelectionField players={fieldPlayers} width={Math.min(320, screenW - 74)} />
+            <TeamLegend teams={teamsLegend} />
+          </View>
+        </Card>
+      )}
+      {selection && isStaff && match.status === 'finalized' && (
+        <Card>
+          <TeamColorPicker matchId={match.id} teamA={match.team_a_name} teamB={match.team_b_name} onSaved={setTeamColors} />
         </Card>
       )}
       {selection && ranked.length > 0 && (
         <SharePanel label="Compartilhar Seleção da Rodada" fileName="minuto91-selecao" title="Seleção da Rodada">
-          <SelectionArt peladaName={peladaName} crestPath={crestPath} date={date} slots={slots} />
+          <SelectionArt peladaName={peladaName} crestPath={crestPath} date={date} matchLabel={`${match.team_a_name} ${match.team_a_score} x ${match.team_b_score} ${match.team_b_name}`} players={fieldPlayers} teams={teamsLegend} />
         </SharePanel>
       )}
 

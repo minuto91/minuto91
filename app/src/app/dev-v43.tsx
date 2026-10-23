@@ -2,7 +2,8 @@
 // formações 4-3-3 e 4-4-2 com troca por toque, e o painel do Financeiro, com DADOS SIMULADOS, para conferir o
 // desenho sem gravar nada no banco. Nunca lê o Supabase. Não é teste de integração.
 import { useState } from 'react';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Text } from '../lib/text';
 
 import { PlayerCard, SharePanel } from '../lib/arts';
 import { Card as CardData } from '../lib/career';

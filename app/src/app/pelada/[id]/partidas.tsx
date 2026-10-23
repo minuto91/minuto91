@@ -1,6 +1,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
+import { Text } from '../../../lib/text';
 
 import { friendly } from '../../../lib/errors';
 import { fmtDate, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match';

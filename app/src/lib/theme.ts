@@ -1,3 +1,5 @@
+import type { TextStyle } from 'react-native';
+
 // Brand Book v2.1 (sem modo escuro).
 export const colors = {
   blue: '#1255C6',
@@ -11,6 +13,28 @@ export const colors = {
   danger: '#B42318',
   line: '#D9E0EC',
 };
+
+// V4.6 — Design System (docs/v46_design_system.md). Inter é a fonte única (lib/text.tsx).
+// Escala de texto: título 26, seção 19, cartão 17, texto 15–16, legenda 13–14, metadados 12–13, números 28–36.
+export const type: Record<'title' | 'section' | 'cardTitle' | 'body' | 'bodySm' | 'caption' | 'meta' | 'number', TextStyle> = {
+  title: { fontSize: 26, lineHeight: 32, fontWeight: '700', color: '#103675' },
+  section: { fontSize: 19, lineHeight: 25, fontWeight: '700', color: '#103675' },
+  cardTitle: { fontSize: 17, lineHeight: 23, fontWeight: '600', color: '#15243B' },
+  body: { fontSize: 16, lineHeight: 23, fontWeight: '400', color: '#15243B' },
+  bodySm: { fontSize: 15, lineHeight: 21, fontWeight: '400', color: '#15243B' },
+  caption: { fontSize: 14, lineHeight: 20, fontWeight: '400', color: '#5E6E86' },
+  meta: { fontSize: 13, lineHeight: 18, fontWeight: '500', color: '#5E6E86' },
+  number: { fontSize: 32, lineHeight: 38, fontWeight: '800', color: '#103675', fontVariant: ['tabular-nums'] },
+};
+
+/** Raios: campos e botões 12, cartões 14, folhas e modais 20, chips 22 (pílula). */
+export const radius = { sm: 8, md: 12, card: 14, lg: 20, pill: 22 } as const;
+/** Espaçamento em múltiplos de 4. */
+export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28 } as const;
+/** Sombra moderada dos cartões (iOS/web) e elevação equivalente (Android). */
+export const shadow = {
+  card: { shadowColor: '#103675', shadowOpacity: 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+} as const;
 
 // V4.3: as dez posições oficiais (041). O setor é o que as fórmulas oficiais usam (inalteradas); a sigla é a
 // posição específica do jogador. Registros antigos ficam só com o setor (Defensor, Meio-campista, Atacante)
@@ -76,3 +100,6 @@ export const footLabel = (v: string) => {
   const f = FEET.find((x) => x.value === v);
   return f ? (f.value === 'both' ? 'Ambos os pés' : `Pé ${f.label.toLowerCase()}`) : v;
 };
+
+/** Rota da Central (aba Início, app/(tabs)/index.tsx). */
+export const HOME = '/' as import('expo-router').Href;

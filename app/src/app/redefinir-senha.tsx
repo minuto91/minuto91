@@ -2,6 +2,7 @@ import * as Linking from 'expo-linking';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Platform } from 'react-native';
+import { HOME } from '../lib/theme';
 
 import { friendly } from '../lib/errors';
 import { supabase } from '../lib/supabase';
@@ -93,7 +94,7 @@ export default function RedefinirSenha() {
       {phase === 'done' && (
         <>
           <Body>Senha alterada. Você já está dentro do app.</Body>
-          <Button title="Continuar" onPress={() => router.replace('/')} />
+          <Button title="Continuar" onPress={() => router.replace(HOME)} />
         </>
       )}
     </Screen>

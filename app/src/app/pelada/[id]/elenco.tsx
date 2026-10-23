@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
-import { Pressable, Text, useWindowDimensions, View } from 'react-native';
+import { Pressable, useWindowDimensions, View } from 'react-native';
+import { Text } from '../../../lib/text';
 
 import { PlayerCard } from '../../../lib/arts';
 import { cardPosition } from '../../../lib/playercard';
@@ -112,6 +113,7 @@ export default function Elenco() {
   }, [rows, query, sector, pos, sort]);
 
   const seasonName = seasons.find((s) => s.id === seasonId)?.name ?? '';
+  const seasonStart = seasons.find((s) => s.id === seasonId)?.starts_on ?? null;
   const cardWidth = Math.min(200, Math.floor((Math.min(width, 520) - 40 - 12) / 2));
   const open = (r: Row) => router.push({ pathname: '/jogador/[id]', params: { id: r.membershipId } });
   const photoOf = (r: Row) => (r.userId ? photos[r.userId] : null);
@@ -169,6 +171,7 @@ export default function Elenco() {
                     peladaName={pelada?.name ?? ''}
                     crestPath={pelada?.crest_path}
                     seasonName={seasonName}
+                    seasonStart={seasonStart}
                     width={cardWidth}
                   />
                 </Pressable>

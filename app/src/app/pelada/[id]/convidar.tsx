@@ -1,7 +1,8 @@
 import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Share, Text, View } from 'react-native';
+import { Linking, Share, View } from 'react-native';
+import { Text } from '../../../lib/text';
 
 import { confirm } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';

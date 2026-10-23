@@ -1,7 +1,8 @@
 // Escalação visual: os dois times com foto ou iniciais. Time com formação registrada (4-3-3 ou 4-4-2, V4.3)
 // aparece num campo estilizado; os outros, na lista organizada por posição (nunca se inventa formação).
 // Usada depois do jogo (súmula oficial, grátis) e antes do jogo (escalação da Pelada Premium).
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from './text';
 
 import { Header, useArtFormat } from './arts';
 import { Avatar } from './avatar';
@@ -235,7 +236,7 @@ export function LineupArt({
   return (
     <>
       <Header title={peladaName} subtitle={subtitle} crestPath={crestPath} />
-      <Text style={{ textAlign: 'center', fontSize: 11, fontWeight: '800', letterSpacing: 2, color: colors.darkGold }}>ESCALAÇÃO</Text>
+      <Text style={{ textAlign: 'center', fontSize: 14, fontWeight: '700', color: colors.darkGold }}>Escalação</Text>
       <LineupBoard
         teamA={teamA}
         teamB={teamB}

@@ -2,7 +2,8 @@
 // mesmo pedestal), e uma lista virtualizada com 2.000 cobranças, com DADOS SIMULADOS, para conferir o desenho e a
 // rolagem sem gravar nada no banco. Nunca lê o Supabase. Não é teste de integração.
 import { useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '../lib/text';
 
 import { StatusBadge } from '../lib/financeui';
 import { formatBRL } from '../lib/money';
@@ -16,7 +17,7 @@ const ROWS: Row[] = Array.from({ length: 2000 }, (_, i) => {
   const status = i % 10 === 0 ? 'pending' : i % 10 === 1 ? 'partial' : 'paid';
   return { id: String(i), name: `Jogador ${(i % 40) + 1}`, due, paid: status === 'pending' ? 0 : status === 'partial' ? Math.floor(due / 2) : due, status };
 });
-const COUNTS: Record<TrophyType, number> = { match_craque: 7, monthly_king: 2, bola_murcha: 0 };
+const COUNTS: Record<TrophyType, number> = { match_craque: 7, monthly_king: 2, bola_murcha: 0, match_garcom: 4, monthly_garcom: 1 };
 
 export default function DevV44() {
   const [page, setPage] = useState(1);

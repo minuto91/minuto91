@@ -4,7 +4,8 @@
 // Sem pendência, o cartão não aparece. O início do app não muda.
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from './text';
 
 import { fmtDate, fmtTime, Match } from './match';
 import { supabase } from './supabase';

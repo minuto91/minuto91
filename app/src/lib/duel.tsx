@@ -1,7 +1,8 @@
 // Duelo de Jogadores (V4.2, Pelada Premium): dois jogadores da mesma pelada lado a lado, só com dados
 // oficiais da temporada (get_player_duel, migração 039). Valor ausente aparece como "–" (nunca estimado).
 // O Card oficial não é redesenhado: aqui só os números dele, com a categoria.
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from './text';
 
 import { Header, useArtFormat } from './arts';
 import { Avatar } from './avatar';
@@ -145,7 +146,7 @@ export function DuelArt({ duel, peladaName, crestPath }: { duel: Duel; peladaNam
   return (
     <>
       <Header title={peladaName} subtitle={duel.season_name} crestPath={crestPath} />
-      <Text style={{ textAlign: 'center', fontSize: 11, fontWeight: '800', letterSpacing: 2, color: colors.darkGold }}>DUELO</Text>
+      <Text style={{ textAlign: 'center', fontSize: 14, fontWeight: '700', color: colors.darkGold }}>Duelo</Text>
       <DuelView duel={duel} dense only={post ? ['Overall', 'FIN', 'GAR', 'RES', 'Gols', 'Assistências', 'Craque da Partida'] : undefined} />
     </>
   );

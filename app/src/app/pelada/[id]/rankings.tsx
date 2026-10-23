@@ -1,6 +1,7 @@
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '../../../lib/text';
 
 import { Avatar, prefetchAvatars } from '../../../lib/avatar';
 import { AWARD_LABEL, currentSeason, fmtMonth, loadSeasons, Season, TIER } from '../../../lib/career';
@@ -262,7 +263,7 @@ export default function Rankings() {
       {month.length > 0 && (
         <Card>
           <Body>Prêmios de {fmtMonth(month[0].period_month)}</Body>
-          {['monthly_king', 'top_scorer', 'top_assist', 'most_improved'].map((t) => {
+          {['monthly_king', 'top_scorer', 'monthly_garcom', 'most_improved'].map((t) => {
             const who = month.filter((a) => a.award_type === t).map((a) => nameOf(a.membership_id));
             return who.length ? (
               <Sub key={t}>

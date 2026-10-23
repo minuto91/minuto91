@@ -1,6 +1,7 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, Switch, Text, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
+import { Text } from '../../../../lib/text';
 
 import { friendly } from '../../../../lib/errors';
 import { Stat } from '../../../../lib/financeui';

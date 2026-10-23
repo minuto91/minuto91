@@ -2,7 +2,8 @@
 // servidor grava a cada partida finalizada (014), sem partidas anuladas, com o mesmo acesso dos rankings
 // (temporadas antigas no Premium da pelada). Nada é estimado: com menos de 2 registros não há gráfico.
 import { useEffect, useState } from 'react';
-import { Text, useWindowDimensions, View } from 'react-native';
+import { useWindowDimensions, View } from 'react-native';
+import { Text } from './text';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 
 import { ATTRIBUTES } from './career';

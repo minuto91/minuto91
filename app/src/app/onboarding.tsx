@@ -1,6 +1,7 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Switch, Text, View } from 'react-native';
+import { Switch, View } from 'react-native';
+import { Text } from '../lib/text';
 
 import { friendly } from '../lib/errors';
 import { LEGAL_VERSIONS } from '../lib/legalText';

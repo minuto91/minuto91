@@ -1,7 +1,8 @@
 // Vitrine da V4.2: só em desenvolvimento (fora do __DEV__ não mostra nada). Duelo, escalação e resultado de
 // sorteio com DADOS SIMULADOS, para conferir o desenho sem gravar nada no banco. Nunca lê o Supabase.
 import { useLocalSearchParams } from 'expo-router';
-import { ScrollView, Text, View } from 'react-native';
+import { ScrollView, View } from 'react-native';
+import { Text } from '../lib/text';
 
 import { ArtFormat, SharePanel } from '../lib/arts';
 import { Duel, DuelArt, DuelView } from '../lib/duel';

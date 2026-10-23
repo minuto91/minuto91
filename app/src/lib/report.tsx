@@ -1,6 +1,7 @@
 // Denúncia de conteúdo (RF-014): apelido, perfil, pelada ou convidado.
 import { useState } from 'react';
-import { Pressable, Text } from 'react-native';
+import { Pressable } from 'react-native';
+import { Text } from './text';
 
 import { friendly } from './errors';
 import { supabase } from './supabase';

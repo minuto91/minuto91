@@ -1,20 +1,21 @@
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '../../lib/text';
 
-import { PlayerCard } from '../lib/arts';
-import { Avatar } from '../lib/avatar';
-import { plural, TIER } from '../lib/career';
-import { CareerSummary, latestCard, loadCareerSummary, markGuide, referencePelada, SummaryPelada } from '../lib/careerv2';
-import { friendly } from '../lib/errors';
-import { EvolutionChart, useEvolution } from '../lib/evolution';
-import { fmtDate, fmtRating } from '../lib/match';
-import { TotalsGrid } from '../lib/profile';
-import { useAuth } from '../lib/session';
-import { supabase } from '../lib/supabase';
-import { colors, footLabel, positionLabel } from '../lib/theme';
-import { TrophyRoom } from '../lib/trophies';
-import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../lib/ui';
+import { PlayerCard } from '../../lib/arts';
+import { Avatar } from '../../lib/avatar';
+import { plural, TIER } from '../../lib/career';
+import { CareerSummary, latestCard, loadCareerSummary, markGuide, referencePelada, SummaryPelada } from '../../lib/careerv2';
+import { friendly } from '../../lib/errors';
+import { EvolutionChart, useEvolution } from '../../lib/evolution';
+import { fmtDate, fmtRating } from '../../lib/match';
+import { TotalsGrid } from '../../lib/profile';
+import { useAuth } from '../../lib/session';
+import { supabase } from '../../lib/supabase';
+import { colors, footLabel, positionLabel } from '../../lib/theme';
+import { TrophyRoom } from '../../lib/trophies';
+import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../lib/ui';
 
 type Me = { display_name: string; avatar_path: string | null; dominant_foot: string | null };
 type HistoryItem = {
@@ -136,6 +137,7 @@ export default function Carreira() {
             peladaName={cardPelada.name}
             crestPath={cardPelada.crest_path}
             seasonName={latest.season.name}
+            seasonStart={latest.season.starts_on}
           />
           <Sub>
             Overall {Math.round(Number(latest.card.overall))} · {TIER[latest.card.tier].label}
@@ -283,4 +285,4 @@ function MatchHistory({ peladaId, showPelada }: { peladaId: string | null; showP
   );
 }
 
-const section = { fontSize: 13, fontWeight: '800' as const, color: colors.deepBlue, letterSpacing: 0.5, marginTop: 8 };
+const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 8 };

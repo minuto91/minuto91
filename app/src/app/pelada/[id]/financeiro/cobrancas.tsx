@@ -1,6 +1,7 @@
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
+import { Pressable, View } from 'react-native';
+import { Text } from '../../../../lib/text';
 
 import { todayIn } from '../../../../lib/dates';
 import { confirm } from '../../../../lib/dialog';

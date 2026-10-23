@@ -4,7 +4,8 @@
 // DADOS SIMULADOS; nunca lê o Supabase. Não é teste de integração (os testes automáticos estão em
 // supabase/local_db/pager_logic.test.mjs).
 import { useCallback, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '../lib/text';
 
 import { Page, usePaged } from '../lib/paging';
 import { colors } from '../lib/theme';

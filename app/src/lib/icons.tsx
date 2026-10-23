@@ -16,7 +16,8 @@ export type IconName =
   | 'duelo'
   | 'escalacao'
   | 'sorteio'
-  | 'temporadas';
+  | 'temporadas'
+  | 'financeiro';
 
 export function Icon({ name, size = 24, color = colors.blue }: { name: IconName; size?: number; color?: string }) {
   const p = { stroke: color, strokeWidth: 1.8, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -105,6 +106,12 @@ export function Icon({ name, size = 24, color = colors.blue }: { name: IconName;
         <>
           <Rect x={4} y={5} width={16} height={15} rx={2} {...p} />
           <Path d="M4 10h16M8 3v4M16 3v4" {...p} />
+        </>
+      )}
+      {name === 'financeiro' && (
+        <>
+          <Rect x={3} y={6} width={18} height={13} rx={2.5} {...p} />
+          <Path d="M3 10h18M16 15h2" {...p} />
         </>
       )}
     </Svg>

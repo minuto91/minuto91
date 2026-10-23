@@ -215,6 +215,21 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
 - Testes locais: suíte SQL 39/39, `node --test` 29/29, `concurrency.mjs` com exportação concorrente, `PERF_COMPARE=v45 node perf.mjs`.
 - **Não está pronta para lançamento**: falta login real, aparelhos, push/RevenueCat e advogado.
 
+## 10g. V4.6 (23/10) — visual, Garçons e homologação local
+- Relatório: `docs/relatorio_v46_2026-10-23.md`; diagnóstico `docs/v46_fase0_diagnostico_2026-10-23.md`; Design System
+  `docs/v46_design_system.md`; evidências `docs/evidencias_v46/`; vitrine sem login `/dev-v46` (simulada).
+- Migrações **048 e 049 NÃO aplicadas no dev** (aplicar nessa ordem; depois testes 009, 010, 020, 037, 040, 041).
+  048 = ordem estável dos pagamentos da cobrança (o teste 037 era intermitente). 049 = Garçom da Partida (`match_garcom`,
+  mín. 1, empate premia todos; objetivo: vale também com votação inválida — confirmar com o fundador) e Garçom do Mês
+  (`monthly_garcom`, mín. 2, desempate total → média exata → partidas com assistência → todos; substitui `top_assist`,
+  meses fechados recalculados sem aviso); cor dos times (`matches.team_a_color/team_b_color`, paleta fixa,
+  `set_match_team_colors` só admin/assistente).
+- App: Inter em todo o app (`lib/text.tsx`: todo Text/TextInput vem daí), tokens em `theme.ts` (`type`, `radius`, `space`,
+  `shadow`, `HOME`), quatro abas em `app/(tabs)` (Início, Peladas, Carreira, Perfil), pelada em Jogo/Desempenho/Gestão,
+  Card com o ano no rodapé, cinco troféus, álbum com 9 ilustrações (`lib/stickers.tsx`), Seleção no campo verde
+  (`lib/selection.tsx`), assinatura 91’ provisória (`lib/brand.tsx`) até a arte final do fundador.
+- Rotas tipadas: o índice dentro de `(tabs)` não aparece como "/" nos tipos; use `HOME` de `lib/theme`.
+
 ## 11. Próximas etapas (em ordem sugerida)
 0. **Push** dos commits da Evolução V2 (aguarda confirmação) e rodar `tests_editor/001..019` de novo no dev.
    Pendências V2: escudo nas artes de resultado e Seleção; publicar `storage-cleanup` (fotos e escudos).

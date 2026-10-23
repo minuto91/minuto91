@@ -1,10 +1,13 @@
-// Sala de Troféus (V4.4): só as três premiações oficiais — Craque da Partida, Rei do Mês e Bola Murcha. As contagens
+// Sala de Troféus (V4.4; V4.6 com os dois Garçons): as cinco premiações oficiais — Craque da Partida, Rei do Mês,
+// Bola Murcha, Garçom da Partida e Garçom do Mês. As contagens
 // vêm da tabela oficial de prêmios (a mesma das estatísticas, do álbum e dos avisos); o histórico de cada troféu é
 // carregado só quando a pessoa abre (get_trophy_history, paginado). Nada é contado de novo no app.
-// Desenho: os três dividem o mesmo pedestal azul com friso dourado, o mesmo tamanho e o mesmo acabamento dourado.
+// Desenho: todos dividem o mesmo pedestal azul com friso dourado, o mesmo tamanho e o mesmo acabamento dourado. Os dois
+// Garçons são a mesma escultura (mão dourada, bandeja e bola) com placas diferentes no pedestal.
 import { useState } from 'react';
-import { Pressable, Text, View } from 'react-native';
-import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Polygon, Rect, Stop } from 'react-native-svg';
+import { Pressable, View } from 'react-native';
+import { Text } from './text';
+import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Polygon, Rect, Stop, Text as SvgText } from 'react-native-svg';
 
 import { friendly } from './errors';
 import { fmtDate } from './match';
@@ -12,13 +15,16 @@ import { supabase } from './supabase';
 import { colors } from './theme';
 import { Button, Sub } from './ui';
 
-export type TrophyType = 'match_craque' | 'monthly_king' | 'bola_murcha';
-export type TrophyCounts = Record<TrophyType, number>;
+export type TrophyType = 'match_craque' | 'monthly_king' | 'bola_murcha' | 'match_garcom' | 'monthly_garcom';
+// Servidor antigo (antes da 049) não manda os Garçons: contam como zero.
+export type TrophyCounts = Record<'match_craque' | 'monthly_king' | 'bola_murcha', number> & Partial<Record<'match_garcom' | 'monthly_garcom', number>>;
 
 export const TROPHIES: { type: TrophyType; label: string; hint: string }[] = [
   { type: 'match_craque', label: 'Craque da Partida', hint: 'Mais votado como Craque numa partida.' },
   { type: 'monthly_king', label: 'Rei do Mês', hint: 'Melhor do mês na pelada.' },
   { type: 'bola_murcha', label: 'Bola Murcha', hint: 'Escolhido como Bola Murcha numa partida.' },
+  { type: 'match_garcom', label: 'Garçom da Partida', hint: 'Mais assistências na partida (mínimo 1; empate premia todos).' },
+  { type: 'monthly_garcom', label: 'Garçom do Mês', hint: 'Mais assistências no mês (mínimo 2; desempate pela média e pelas partidas com assistência).' },
 ];
 
 const GOLD_LIGHT = '#F3D98B';
@@ -31,6 +37,44 @@ function Pedestal() {
       <Path d="M34 91 H66 L71 110 H29 Z" fill={colors.deepBlue} />
       <Rect x={33} y={98} width={34} height={2.5} fill={colors.gold} opacity={0.9} />
       <Rect x={22} y={109} width={56} height={9} rx={3} fill={colors.blue} />
+    </G>
+  );
+}
+
+// Escultura Garçom: braço e mão dourados, palma para cima, segurando a bandeja circular na horizontal; bola dourada com
+// gomos azuis centralizada sobre a bandeja. Mesma luz (brilho no alto à esquerda) e escala dos outros troféus.
+function Garcom({ gid }: { gid: string }) {
+  const tray = `${gid}-tray`;
+  return (
+    <G>
+      <Defs>
+        <LinearGradient id={tray} x1="0" y1="0" x2="0" y2="1">
+          <Stop offset="0" stopColor="#F7E3A6" />
+          <Stop offset="1" stopColor={GOLD_DARK} />
+        </LinearGradient>
+      </Defs>
+      <Path d="M45.5 86 L46.5 72 C46.6 70.5 47.4 69.6 48.6 69.6 H51.4 C52.6 69.6 53.4 70.5 53.5 72 L54.5 86 Z" fill={`url(#${gid})`} stroke={GOLD_DARK} strokeWidth={0.9} />
+      <Rect x={45.4} y={76} width={9.2} height={3.2} rx={1} fill={GOLD_DARK} />
+      <Path
+        d="M47 70 C44.5 69.5 41 68.4 37.5 66.9 C36.2 66.3 36.4 64.9 37.7 64.9 L41.5 65.2 C40.4 64.2 39.6 63.1 40.2 62.4 C40.8 61.7 42.6 62.5 44.4 63.6 L45.2 62 C46.2 61.2 48.2 61.1 50 61.1 C52.6 61.1 55.4 61.3 58.6 61.8 C60.4 62.1 61.7 62.4 62.3 63 C62.9 63.7 62.2 64.6 60.8 65 C58.5 65.6 56.6 66.4 55 67.4 C54 68 53.5 69.1 53.2 70 Z"
+        fill={`url(#${gid})`}
+        stroke={GOLD_DARK}
+        strokeWidth={0.9}
+        strokeLinejoin="round"
+      />
+      <Path d="M44.6 63.6 C46 63 48 62.9 50 63" stroke={GOLD_DARK} strokeWidth={0.6} fill="none" opacity={0.8} />
+      <Path d="M49 64.5 C51.5 64.4 54.2 64.4 57 64.7" stroke={GOLD_DARK} strokeWidth={0.5} fill="none" opacity={0.7} />
+      <Ellipse cx={50} cy={59.6} rx={30} ry={5.2} fill={GOLD_DARK} />
+      <Ellipse cx={50} cy={58.2} rx={30} ry={5.2} fill={`url(#${tray})`} stroke={GOLD_DARK} strokeWidth={0.9} />
+      <Ellipse cx={50} cy={58} rx={26} ry={3.9} fill="none" stroke="#FFF3CC" strokeWidth={0.7} opacity={0.8} />
+      <Ellipse cx={50} cy={57.6} rx={9} ry={1.6} fill="#7A5A12" opacity={0.35} />
+      <Circle cx={50} cy={45} r={12.5} fill={`url(#${gid})`} stroke={GOLD_DARK} strokeWidth={1} />
+      <Polygon points="50,39.8 54.4,43 52.7,48.1 47.3,48.1 45.6,43" fill={colors.blue} />
+      <Path d="M50 39.8 V33 M54.4 43 L61.4 40.8 M52.7 48.1 L56.4 54.2 M47.3 48.1 L43.6 54.2 M45.6 43 L38.6 40.8" stroke={GOLD_DARK} strokeWidth={1} />
+      <Polygon points="61.4,40.8 62.4,44.6 60.6,46.4" fill={colors.deepBlue} opacity={0.8} />
+      <Polygon points="38.6,40.8 37.6,44.6 39.4,46.4" fill={colors.deepBlue} opacity={0.8} />
+      <Path d="M41.5 37 C43.5 34.6 46.4 33.4 49 33.3" stroke="#FFFFFF" strokeWidth={1.6} strokeLinecap="round" opacity={0.6} fill="none" />
+      <Path d="M24 57.2 C26 54.6 32 53.4 38 53.2" stroke="#FFFFFF" strokeWidth={1.1} strokeLinecap="round" opacity={0.55} fill="none" />
     </G>
   );
 }
@@ -90,7 +134,13 @@ export function TrophyArt({ type, size = 96, dim = false }: { type: TrophyType; 
           <Ellipse cx={50} cy={86} rx={27} ry={1.6} fill={GOLD_DARK} opacity={0.5} />
         </G>
       )}
+      {(type === 'match_garcom' || type === 'monthly_garcom') && <Garcom gid={gid} />}
       <Pedestal />
+      {(type === 'match_garcom' || type === 'monthly_garcom') && (
+        <SvgText x={50} y={106.6} textAnchor="middle" fontSize={4.2} fontWeight="700" fill={colors.gold} letterSpacing={0.4}>
+          {type === 'match_garcom' ? 'PARTIDA' : 'MÊS'}
+        </SvgText>
+      )}
     </Svg>
   );
 }
@@ -112,7 +162,7 @@ type Cursor = { at: string; id: string };
 
 const monthName = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
-/** Sala de Troféus: os três troféus com a quantidade; tocar abre o histórico daquele troféu (sob demanda). */
+/** Sala de Troféus: os cinco troféus com a quantidade; tocar abre o histórico daquele troféu (sob demanda). */
 export function TrophyRoom({ userId, counts, partial }: { userId: string; counts: TrophyCounts; partial?: boolean }) {
   const [open, setOpen] = useState<TrophyType | null>(null);
   const [items, setItems] = useState<Item[]>([]);
@@ -136,12 +186,12 @@ export function TrophyRoom({ userId, counts, partial }: { userId: string; counts
     setOpen(type);
     setItems([]);
     setNext(null);
-    if (counts[type] > 0) load(type, null);
+    if ((counts[type] ?? 0) > 0) load(type, null);
   }
 
   return (
     <View style={{ gap: 12 }}>
-      <View style={{ flexDirection: 'row', justifyContent: 'space-between', gap: 8 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
         {TROPHIES.map((t) => {
           const n = counts[t.type] ?? 0;
           const on = open === t.type;
@@ -153,7 +203,8 @@ export function TrophyRoom({ userId, counts, partial }: { userId: string; counts
               accessibilityState={{ expanded: on }}
               onPress={() => toggle(t.type)}
               style={{
-                flex: 1,
+                width: '31%',
+                minWidth: 96,
                 alignItems: 'center',
                 paddingVertical: 10,
                 borderRadius: 14,
@@ -176,7 +227,7 @@ export function TrophyRoom({ userId, counts, partial }: { userId: string; counts
         <View style={{ borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 12, gap: 6 }}>
           <Text style={{ fontWeight: '800', color: colors.deepBlue }}>{TROPHIES.find((t) => t.type === open)!.label}</Text>
           <Sub>{TROPHIES.find((t) => t.type === open)!.hint}</Sub>
-          {counts[open] === 0 && <Sub>Ainda não conquistado.</Sub>}
+          {(counts[open] ?? 0) === 0 && <Sub>Ainda não conquistado.</Sub>}
           {msg && <Text style={{ color: colors.danger }}>{msg}</Text>}
           {items.map((it) => (
             <View key={it.id} style={{ paddingVertical: 6, borderTopWidth: 1, borderTopColor: colors.line }}>

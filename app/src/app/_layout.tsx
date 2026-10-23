@@ -1,11 +1,13 @@
+import { useFonts } from 'expo-font';
 import { Stack, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
+import { HOME , colors } from '../lib/theme';
 
 import { PushHandler, pushSupported } from '../lib/push';
 import { AuthProvider, useAuth } from '../lib/session';
-import { colors } from '../lib/theme';
+import { INTER_FONTS } from '../lib/text';
 
 function Gate() {
   const { session, loading, onboarded } = useAuth();
@@ -19,7 +21,7 @@ function Gate() {
     const open = first === 'termos' || first === 'privacidade' || first === 'redefinir-senha';
     if (!session) {
       // A vitrine de Cards (só em desenvolvimento) abre sem login, para conferir o desenho.
-      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && (first === 'dev-cards' || first === 'dev-v42' || first === 'dev-v43' || first === 'dev-v44' || first === 'dev-v45'))) router.replace('/login');
+      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && (first === 'dev-cards' || first === 'dev-v42' || first === 'dev-v43' || first === 'dev-v44' || first === 'dev-v45' || first === 'dev-v46'))) router.replace('/login');
       return;
     }
     if (onboarded === null) return;
@@ -27,7 +29,7 @@ function Gate() {
       if (first !== 'onboarding' && !open) router.replace('/onboarding');
       return;
     }
-    if (first === 'login' || first === 'onboarding') router.replace('/');
+    if (first === 'login' || first === 'onboarding') router.replace(HOME);
   }, [loading, session, onboarded, segments, router]);
 
   if (loading) {
@@ -45,10 +47,13 @@ function Gate() {
       <Stack
         screenOptions={{
           headerTintColor: colors.blue,
-          headerTitleStyle: { color: colors.deepBlue },
+          headerTitleStyle: { color: colors.deepBlue, fontFamily: 'Inter_700Bold', fontSize: 17 },
+          headerBackTitleStyle: { fontFamily: 'Inter_500Medium' },
+          headerShadowVisible: false,
           contentStyle: { backgroundColor: colors.white },
         }}>
-        <Stack.Screen name="index" options={{ title: 'Central do Jogador' }} />
+        {/* V4.6: Início, Peladas, Carreira e Perfil ficam nas abas ((tabs)/_layout.tsx); o resto abre por cima. */}
+        <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Início' }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ title: 'Seu cadastro', headerBackVisible: false }} />
         <Stack.Screen name="criar-pelada" options={{ title: 'Criar pelada' }} />
@@ -76,8 +81,6 @@ function Gate() {
         <Stack.Screen name="termos" options={{ title: 'Termos de Uso' }} />
         <Stack.Screen name="privacidade" options={{ title: 'Política de Privacidade' }} />
         <Stack.Screen name="redefinir-senha" options={{ title: 'Nova senha' }} />
-        <Stack.Screen name="perfil" options={{ title: 'Meu perfil' }} />
-        <Stack.Screen name="carreira" options={{ title: 'Minha Carreira' }} />
         <Stack.Screen name="guia-cards" options={{ title: 'Cards e premiações' }} />
         <Stack.Screen name="atleta/[id]" options={{ title: 'Perfil do jogador' }} />
         <Stack.Screen name="jogador/[id]/index" options={{ title: 'Card' }} />
@@ -91,6 +94,15 @@ function Gate() {
 }
 
 export default function RootLayout() {
+  // V4.6: Inter (fonte única da marca). Enquanto carrega, a tela de abertura; se falhar, segue com a fonte do sistema.
+  const [fontsLoaded, fontError] = useFonts(INTER_FONTS);
+  if (!fontsLoaded && !fontError) {
+    return (
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.white }}>
+        <ActivityIndicator color={colors.blue} />
+      </View>
+    );
+  }
   return (
     <AuthProvider>
       <StatusBar style="dark" />

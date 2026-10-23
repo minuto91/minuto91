@@ -1,10 +1,11 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Text, View } from 'react-native';
+import { View } from 'react-native';
+import { Text } from '../../lib/text';
 
-import { Avatar, pickAndUploadAvatar, removeAvatar } from '../lib/avatar';
-import { confirm } from '../lib/dialog';
-import { friendly } from '../lib/errors';
+import { Avatar, pickAndUploadAvatar, removeAvatar } from '../../lib/avatar';
+import { confirm } from '../../lib/dialog';
+import { friendly } from '../../lib/errors';
 import {
   AchievementsList,
   CardsList,
@@ -18,11 +19,11 @@ import {
   PlayerProfile,
   VISIBILITY,
   Visibility,
-} from '../lib/profile';
-import { useAuth } from '../lib/session';
-import { supabase } from '../lib/supabase';
-import { colors, FEET, Foot, footLabel } from '../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
+} from '../../lib/profile';
+import { useAuth } from '../../lib/session';
+import { supabase } from '../../lib/supabase';
+import { colors, FEET, Foot, footLabel } from '../../lib/theme';
+import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../../lib/ui';
 
 const TABS = [
   { value: 'geral', label: 'Visão geral' },

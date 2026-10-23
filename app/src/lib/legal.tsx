@@ -1,6 +1,6 @@
 // A18: Termos de Uso e Política de Privacidade oficiais, legíveis antes do aceite (sem login). O texto vem
 // sem edição de legalText.ts; o aceite grava documento + versão + momento (migração 037).
-import { Text } from 'react-native';
+import { Text } from './text';
 
 import { LEGAL_VERSIONS, PRIVACY, TERMS } from './legalText';
 import { colors } from './theme';
