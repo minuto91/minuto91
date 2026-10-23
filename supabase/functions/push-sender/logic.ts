@@ -37,6 +37,8 @@ const AWARD: Record<string, string> = {
   monthly_king: 'Você é o Rei do Mês',
   top_scorer: 'Você é o Artilheiro do mês',
   top_assist: 'Você é o Garçom do mês',
+  match_garcom: 'Você foi o Garçom da Partida',
+  monthly_garcom: 'Você é o Garçom do Mês',
   most_improved: 'Você teve a Maior evolução do mês',
 };
 

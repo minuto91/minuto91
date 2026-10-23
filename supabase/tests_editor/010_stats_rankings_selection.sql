@@ -119,11 +119,13 @@ perform pg_temp.assert((select array_agg(membership_id)=array[pg_temp.mem(v_pid,
 perform pg_temp.assert((select array_agg(membership_id)=array[pg_temp.mem(v_pid,1)] from public.awards
   where pelada_id=v_pid and award_type='top_scorer' and status='active'),'artilheiro do mês');
 perform pg_temp.assert((select array_agg(membership_id)=array[pg_temp.mem(v_pid,2)] from public.awards
-  where pelada_id=v_pid and award_type='top_assist' and status='active'),'garçom do mês');
+  where pelada_id=v_pid and award_type='monthly_garcom' and status='active'),'Garçom do Mês (V4.6: 6 assistências)');
+-- V4.6 (049): o antigo top_assist não é mais concedido.
+perform pg_temp.assert(not exists(select 1 from public.awards where pelada_id=v_pid and award_type='top_assist' and status='active'),'top_assist não é mais concedido');
 perform pg_temp.assert(not exists(select 1 from public.awards where pelada_id=v_pid and award_type='most_improved'
   and status='active' and membership_id=pg_temp.mem(v_pid,3)),'quem mudou de posição não concorre à evolução');
 perform pg_temp.assert((select count(*)=0 from public.awards where pelada_id=v_pid and award_type in
-  ('monthly_king','top_scorer','top_assist') and status='active' and period_month<>v_month),'só o mês passado');
+  ('monthly_king','top_scorer','monthly_garcom') and status='active' and period_month<>v_month),'só o mês passado');
 -- Recalcular o mês não duplica prêmios ativos.
 perform private.close_month(v_pid, v_month);
 perform pg_temp.assert((select count(*)=1 from public.awards where pelada_id=v_pid and award_type='monthly_king' and status='active'),'mês recalculado sem duplicar');

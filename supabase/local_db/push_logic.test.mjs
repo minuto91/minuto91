@@ -12,7 +12,8 @@ const n = (event_type, payload = {}, tokens = ['t1', 't2']) => ({ id: 'n1', user
 test('todos os tipos produzidos pelo banco têm texto, menos Bola Murcha', () => {
   for (const t of ['voting_opened', 'voting_closing_soon', 'sheet_corrected', 'voting_restarted', 'result_published', 'match_annulled',
     'admin_succession', 'subscription_changed', 'account_transferred', 'role_changed', 'successor_designated', 'sticker_unlocked',
-    'season_review', 'award_match_craque', 'award_monthly_king', 'award_top_scorer', 'award_top_assist', 'award_most_improved'])
+    'season_review', 'award_match_craque', 'award_monthly_king', 'award_top_scorer', 'award_top_assist', 'award_most_improved',
+    'award_match_garcom', 'award_monthly_garcom'])
     assert.ok(texts(t, {}, 'Pelada X'), t);
   assert.equal(texts('award_bola_murcha', {}, 'Pelada X'), null);
   assert.equal(texts('tipo_desconhecido', {}, 'Pelada X'), null);

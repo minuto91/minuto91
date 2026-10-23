@@ -127,7 +127,9 @@ perform set_config('role','authenticated',true);
 perform pg_temp.as_user(4);
 v_r := public.finalize_voting_session(v_s1);
 perform pg_temp.assert(v_r->>'session_status'='finalized' and (v_r->>'submitted_count')::int=9,'retorna o resultado existente');
-perform pg_temp.assert((select count(*)=3 from public.awards where match_id=v_x1),'sem prêmio duplicado');
+-- V4.6 (049): o Garçom da Partida também é prêmio da partida; aqui contam os da votação.
+perform pg_temp.assert((select count(*)=3 from public.awards where match_id=v_x1 and award_type<>'match_garcom'),'sem prêmio duplicado');
+perform pg_temp.assert((select count(*) from public.awards where match_id=v_x1 and award_type='match_garcom') = (select count(*) from public.awards where match_id=v_x1 and award_type='match_garcom' and status='active'),'Garçom da Partida sem duplicar');
 perform pg_temp.as_user(10);
 perform pg_temp.assert((select count(*)=0 from public.match_player_results where match_id=v_x1),'de fora não vê');
 perform pg_temp.expect_error(format('select public.finalize_voting_session(%L)',v_s1),'SESSION_NOT_FOUND');
@@ -159,7 +161,8 @@ execute 'reset role';
 perform pg_temp.assert((select count(*)=0 from private.secret_ballots where session_id=v_s2 and status='draft'),'rascunho descartado');
 perform pg_temp.assert((select bool_and(not has_valid_rating) from public.match_player_results where match_id=v_x2),'inválida: ninguém tem nota');
 perform pg_temp.assert((select goals=2 from public.match_player_results where match_id=v_x2 and membership_id=m[1]),'inválida: gols contam');
-perform pg_temp.assert((select count(*)=0 from public.awards where match_id=v_x2),'inválida: sem prêmios');
+-- V4.6 (049): votação inválida não dá prêmio de votação; o Garçom da Partida é estatística objetiva (como os gols).
+perform pg_temp.assert((select count(*)=0 from public.awards where match_id=v_x2 and award_type<>'match_garcom'),'inválida: sem prêmios da votação');
 
 -- Quem não votou não vê o resultado detalhado (mas vê o da partida em que votou).
 perform set_config('role','authenticated',true);
