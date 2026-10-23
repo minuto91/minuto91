@@ -70,7 +70,8 @@ Fórmulas de nota e carta validadas em `docs/simulacao_formulas.xlsx` (aprovada)
 - Horário fixo de encerramento (Premium): entre 1h e 24h após abrir.
 - Jogador sem celular (sem conta): não recebe nota nem prêmio (só estatística objetiva). Conflita com RN-004
   ("pode ter carta"): a carta dele fica sem Resenha (valor neutro 50).
-- Votação inválida (<50% ou <3 votos): sem notas e sem prêmios (nem Craque).
+- Votação inválida (<50% ou <3 votos): sem notas e sem prêmios da votação (nem Craque). O Garçom da Partida (V4.6)
+  é estatística objetiva e vale mesmo assim (decisão de 23/10).
 - **Seleção da Rodada sem adaptação de posição**: vaga sem candidato fica vazia. Isso muda Doc 02 RN-075,
   Doc 03 21.4 e Doc 04 25.1 (atualizar os docs).
 - Maior Evolução do mês: quem mudou de posição no mês não concorre.
@@ -220,7 +221,7 @@ Elenco da pelada (`pelada/[id]/elenco`); escudo nas configurações da pelada.
   `docs/v46_design_system.md`; evidências `docs/evidencias_v46/`; vitrine sem login `/dev-v46` (simulada).
 - Migrações **048 e 049 NÃO aplicadas no dev** (aplicar nessa ordem; depois testes 009, 010, 020, 037, 040, 041).
   048 = ordem estável dos pagamentos da cobrança (o teste 037 era intermitente). 049 = Garçom da Partida (`match_garcom`,
-  mín. 1, empate premia todos; objetivo: vale também com votação inválida — confirmar com o fundador) e Garçom do Mês
+  mín. 1, empate premia todos; estatística objetiva: vale também com votação inválida — decisão do fundador em 23/10) e Garçom do Mês
   (`monthly_garcom`, mín. 2, desempate total → média exata → partidas com assistência → todos; substitui `top_assist`,
   meses fechados recalculados sem aviso); cor dos times (`matches.team_a_color/team_b_color`, paleta fixa,
   `set_match_team_colors` só admin/assistente).
