@@ -6,7 +6,7 @@ import { Text } from '../../../lib/text';
 import { PlayerCard } from '../../../lib/arts';
 import { cardPosition } from '../../../lib/playercard';
 import { Avatar, prefetchAvatars } from '../../../lib/avatar';
-import { Card as CardData, currentSeason, loadSeasons, Season, TIER } from '../../../lib/career';
+import { Card as CardData, cardOverall, currentSeason, loadSeasons, Season, TIER } from '../../../lib/career';
 import { Crest } from '../../../lib/crest';
 import { friendly } from '../../../lib/errors';
 import { supabase } from '../../../lib/supabase';
@@ -73,7 +73,7 @@ export default function Elenco() {
       const [{ data: cs, error: e1 }, { data: ms, error: e2 }] = await Promise.all([
         supabase
           .from('player_cards')
-          .select('id, membership_id, position, finishing, assisting, attendance, winning, peer_rating, overall, tier, is_provisional, matches_played')
+          .select('id, membership_id, position, finishing, assisting, attendance, winning, peer_rating, overall, tier, is_provisional, matches_played, formula_version, atu, est, peq, res, dis, ovr_display')
           .eq('season_id', seasonId),
         supabase.from('pelada_memberships').select('id, user_id, player_name, position_code').eq('pelada_id', id).eq('status', 'active'),
       ]);
@@ -108,7 +108,7 @@ export default function Elenco() {
         return okPos && (!q || r.name.toLocaleLowerCase('pt-BR').includes(q));
       })
       .sort((a, b) =>
-        sort === 'overall' ? Number(b.card.overall) - Number(a.card.overall) || a.name.localeCompare(b.name, 'pt-BR') : a.name.localeCompare(b.name, 'pt-BR'),
+        sort === 'overall' ? (cardOverall(b.card) ?? -1) - (cardOverall(a.card) ?? -1) || a.name.localeCompare(b.name, 'pt-BR') : a.name.localeCompare(b.name, 'pt-BR'),
       );
   }, [rows, query, sector, pos, sort]);
 
@@ -195,7 +195,7 @@ export default function Elenco() {
                     </Sub>
                   </View>
                   <View style={{ alignItems: 'center', minWidth: 52, paddingVertical: 4, borderRadius: 8, borderWidth: 2, borderColor: t.frame, backgroundColor: t.bg }}>
-                    <Text style={{ fontSize: 18, fontWeight: '800', color: colors.deepBlue }}>{Math.round(Number(r.card.overall))}</Text>
+                    <Text style={{ fontSize: 18, fontWeight: '800', color: colors.deepBlue }}>{cardOverall(r.card) ?? '—'}</Text>
                     <Text style={{ fontSize: 9, fontWeight: '800', color: t.deep }}>{t.label.toUpperCase()}</Text>
                   </View>
                 </Pressable>

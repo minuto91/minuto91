@@ -5,11 +5,12 @@ import { AppState, Pressable, View } from 'react-native';
 import { Text } from '../../lib/text';
 
 import { Avatar } from '../../lib/avatar';
-import { TIER } from '../../lib/career';
+import { overallLabel, TIER } from '../../lib/career';
 import { CareerSummary, latestCard, loadCareerSummary, markGuide, referencePelada, trophyTotal } from '../../lib/careerv2';
 import { Crest } from '../../lib/crest';
 import { friendly } from '../../lib/errors';
 import { fmtDate, fmtTime, STATUS_LABEL } from '../../lib/match';
+import { timeLeft } from '../../lib/dates';
 import { PushPrompt } from '../../lib/push';
 import { useAuth } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
@@ -51,7 +52,8 @@ type Central = {
   last_match: LastMatch | null;
   next_rounds: { lineup_id: string; pelada_id: string; pelada_name: string; label: string; team_name: string; opponent_name: string }[];
   pending: {
-    votes: { match_id: string; pelada_name: string; closes_at: string; team_a_name: string; team_b_name: string; team_a_score: number; team_b_score: number }[];
+    // V5: votações v2 trazem o progresso (rated de total) e vão direto para a tela de votar.
+    votes: { match_id: string; pelada_name: string; closes_at: string; team_a_name: string; team_b_name: string; team_a_score: number; team_b_score: number; rated?: number; total?: number; started?: boolean; v2?: boolean }[];
     positions: { pelada_id: string; pelada_name: string; membership_id: string }[];
     profile: { photo: boolean; foot: boolean };
   };
@@ -95,13 +97,19 @@ export default function Home() {
         }
         if (!uid) return;
         void reload;
-        const [{ data: st }, central] = await Promise.all([supabase.rpc('get_account_status'), supabase.rpc('get_player_central')]);
+        const [{ data: st }, central, ratingVotes] = await Promise.all([
+          supabase.rpc('get_account_status'),
+          supabase.rpc('get_player_central'),
+          supabase.rpc('get_my_pending_rating_votes'),
+        ]);
         if (!alive) return;
         setPurgeAfter((st as { purge_after: string | null } | null)?.purge_after ?? null);
         // Falha de rede não vira "nenhuma pelada".
         if (central.error || !central.data) return setErr('Não foi possível carregar a sua Central. Verifique a internet e tente de novo.');
         setErr(null);
-        setData(central.data as Central);
+        const c = central.data as Central;
+        const v2 = ((ratingVotes.data ?? []) as Central['pending']['votes']).map((v) => ({ ...v, v2: true }));
+        setData({ ...c, pending: { ...c.pending, votes: [...v2, ...c.pending.votes].sort((a, b) => a.closes_at.localeCompare(b.closes_at)) } });
       })();
       return () => {
         alive = false;
@@ -193,7 +201,10 @@ export default function Home() {
         <>
           <Section>Falta o seu voto</Section>
           {votes.map((p) => (
-            <Pressable key={p.match_id} onPress={() => router.push({ pathname: '/partida/[id]', params: { id: p.match_id } })} accessibilityRole="button">
+            <Pressable
+              key={p.match_id}
+              onPress={() => router.push({ pathname: p.v2 ? '/partida/[id]/votar' : '/partida/[id]', params: { id: p.match_id } })}
+              accessibilityRole="button">
               <View style={{ ...cardBox, borderColor: colors.blue, borderWidth: 1.5 }}>
                 <Body>
                   {p.team_a_name} {p.team_a_score} x {p.team_b_score} {p.team_b_name}
@@ -201,7 +212,12 @@ export default function Home() {
                 <Sub>
                   {p.pelada_name} · votação até {fmtDate(p.closes_at)}, {fmtTime(p.closes_at)}
                 </Sub>
-                <Text style={{ color: colors.blue, fontWeight: '700' }}>Votar ›</Text>
+                {p.v2 && (
+                  <Sub>
+                    Você avaliou {p.rated} de {p.total} · {timeLeft(p.closes_at)}
+                  </Sub>
+                )}
+                <Text style={{ color: colors.blue, fontWeight: '700' }}>{p.v2 && p.started ? 'Continuar avaliação ›' : 'Avaliar jogadores ›'}</Text>
               </View>
             </Pressable>
           ))}
@@ -342,7 +358,7 @@ export default function Home() {
                       <Sub>{ref ? positionLabel(ref.position_code ?? ref.position) : ''}</Sub>
                       {card && ref && (
                         <Text style={{ color: TIER[card.card.tier].color, fontWeight: '800' }}>
-                          Overall {Math.round(Number(card.card.overall))} · {TIER[card.card.tier].label}
+                          {overallLabel(card.card)}
                           <Text style={{ color: colors.muted, fontWeight: '400' }}>
                             {' '}
                             · {ref.name}, {card.season.name}

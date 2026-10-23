@@ -20,6 +20,14 @@ export type Card = {
   tier: 'bronze' | 'prata' | 'ouro';
   is_provisional: boolean;
   matches_played: number;
+  /** V5 (formula_version 2): OVR do Prompt Master v2.0 e seus cinco componentes; nulos nas cartas antigas. */
+  formula_version?: number | null;
+  atu?: number | null;
+  est?: number | null;
+  peq?: number | null;
+  res?: number | null;
+  dis?: number | null;
+  ovr_display?: number | null;
 };
 
 export type SeasonStats = {
@@ -47,6 +55,23 @@ export const ATTRIBUTES = [
   { key: 'winning', label: 'Pé Quente', code: 'PEQ' },
   { key: 'peer_rating', label: 'Resenha', code: 'RES' },
 ] as const;
+
+// V5: os cinco atributos do OVR, iguais para todas as posições (goleiro sem GAR: o EST dele já é defesas + defesa).
+export const ATTRIBUTES_V2 = [
+  { key: 'atu', label: 'Atuação', code: 'ATU' },
+  { key: 'est', label: 'Estatísticas', code: 'EST' },
+  { key: 'peq', label: 'Performance da Equipe', code: 'PEQ' },
+  { key: 'res', label: 'Regularidade', code: 'RES' },
+  { key: 'dis', label: 'Disciplina', code: 'DIS' },
+] as const;
+
+// Basta a parte da carta que as telas recebem (algumas listas vêm sem id).
+type CardLike = Pick<Card, 'overall' | 'tier' | 'matches_played'> & Partial<Pick<Card, 'formula_version' | 'atu' | 'ovr_display'>>;
+
+export const isV2 = (c: Partial<Pick<Card, 'formula_version' | 'atu'>>) => (c.formula_version ?? 1) >= 2 && c.atu !== null && c.atu !== undefined;
+export const cardAttributes = (c: Partial<Pick<Card, 'formula_version' | 'atu'>>) => (isV2(c) ? ATTRIBUTES_V2 : ATTRIBUTES);
+/** OVR mostrado: null = avaliação em andamento (menos de 5 partidas, sem número fictício). */
+export const cardOverall = (c: CardLike): number | null => (isV2(c) ? (c.ovr_display ?? null) : Math.round(c.overall));
 
 // Categoria pelo overall exibido (inteiro), como no servidor. Cores só das cartas (a interface segue
 // branco, azul e dourado). color = texto sobre branco (AA); bg = fundo da carta; frame = moldura;
@@ -104,7 +129,7 @@ export async function loadCard(membershipId: string, seasonId: string) {
   const [{ data: card, error: e1 }, { data: stats, error: e2 }] = await Promise.all([
     supabase
       .from('player_cards')
-      .select('id, position, finishing, assisting, attendance, winning, peer_rating, overall, tier, is_provisional, matches_played')
+      .select('id, position, finishing, assisting, attendance, winning, peer_rating, overall, tier, is_provisional, matches_played, formula_version, atu, est, peq, res, dis, ovr_display')
       .eq('membership_id', membershipId)
       .eq('season_id', seasonId)
       .maybeSingle(),
@@ -121,3 +146,9 @@ export async function loadCard(membershipId: string, seasonId: string) {
   if (e2) throw e2;
   return { card: card as Card | null, stats: stats as SeasonStats | null };
 }
+
+// Texto curto do overall com a categoria; antes de 5 partidas (V5), "em avaliação" sem número.
+export const overallLabel = (c: CardLike) => {
+  const o = cardOverall(c);
+  return o === null ? 'Em avaliação (menos de 5 partidas na pelada)' : `Overall ${o} · ${TIER[c.tier].label}`;
+};

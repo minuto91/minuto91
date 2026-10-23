@@ -6,7 +6,8 @@ import { Text } from '../../../lib/text';
 import { CardArt, PlayerCard, SharePanel } from '../../../lib/arts';
 import { Avatar } from '../../../lib/avatar';
 import {
-  ATTRIBUTES,
+  cardAttributes,
+  isV2,
   AWARD_LABEL,
   Card as CardData,
   currentSeason,
@@ -144,6 +145,14 @@ export default function Carta() {
     setMsg(null);
     setPosOk(null);
     const { error } = await supabase.rpc('set_my_position', { p_pelada: member.pelada_id, p_position: newPos });
+    // V5: depois da primeira partida oficial a troca vira um pedido ao administrador.
+    if (error?.message.includes('POSITION_CHANGE_NEEDS_ADMIN')) {
+      const req = await supabase.rpc('request_position_change', { p_pelada: member.pelada_id, p_position: newPos });
+      setPosBusy(false);
+      if (req.error) return setMsg(friendly(req.error.message));
+      setNewPos(null);
+      return setPosOk(`Pedido enviado ao administrador: ${positionLabel(newPos)}. A posição muda quando ele aprovar.`);
+    }
     setPosBusy(false);
     if (error) return setMsg(friendly(error.message));
     setMember({ ...member, preferred_position: positionSector(newPos) ?? member.preferred_position, position_code: newPos });
@@ -193,10 +202,14 @@ export default function Carta() {
             />
           </View>
           {card.is_provisional && (
-            <Sub>Card provisório: {card.matches_played} de 5 jogos na temporada.</Sub>
+            <Sub>
+              {isV2(card)
+                ? 'Avaliação em andamento: o OVR aparece a partir da 5ª partida oficial nesta pelada.'
+                : `Card provisório: ${card.matches_played} de 5 jogos na temporada.`}
+            </Sub>
           )}
           <Card>
-            {ATTRIBUTES.map((a) => {
+            {cardAttributes(card).map((a) => {
               const v = Number(card[a.key]);
               return (
                 <View key={a.key} style={{ gap: 4, marginBottom: 6 }}>

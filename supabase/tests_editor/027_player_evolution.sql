@@ -75,12 +75,12 @@ perform pg_temp.assert((e->'points'->0->>'match_id')::uuid=v_m1 and (e->'points'
 perform pg_temp.assert((e->'points'->0->>'played')::boolean and not (e->'points'->2->>'played')::boolean, 'marca se jogou');
 perform pg_temp.assert((e->'points'->0) ?& array['overall','finishing','assisting','attendance','winning','peer_rating','tier','position','is_provisional'],
  'cinco atributos, overall, categoria, posição e provisório');
-perform pg_temp.assert((e->'current'->>'overall')::numeric=(select overall from public.player_cards where membership_id=pg_temp.mem(v_a,1) and season_id=v_s),
+perform pg_temp.assert((e->'current'->>'overall')::numeric is not distinct from (select case when formula_version >= 2 then ovr_display else overall end from public.player_cards where membership_id=pg_temp.mem(v_a,1) and season_id=v_s),
  'atual = Card oficial');
 perform pg_temp.assert((e->>'craque')::int=1, 'um Craque na temporada');
 perform pg_temp.assert(jsonb_array_length(e->'monthly_king')=0, 'sem Rei do Mês');
 -- Valores reais: o último ponto é o Card depois da última partida.
-perform pg_temp.assert((e->'points'->2->>'overall')::numeric=(e->'current'->>'overall')::numeric, 'último ponto = Card atual');
+perform pg_temp.assert((e->'points'->2->>'overall')::numeric is not distinct from (e->'current'->>'overall')::numeric, 'último ponto = Card atual (V5: os dois nulos antes de 5 partidas)');
 
 -- ===== Outro membro da mesma pelada também vê (Cards já são visíveis dentro da pelada) =====
 perform pg_temp.as_user(3);
@@ -109,7 +109,7 @@ perform public.annul_match(v_m2,'match_not_played','Lançada por engano no teste
 e := pg_temp.evo(1, v_a, v_s);
 perform pg_temp.assert(jsonb_array_length(e->'points')=2 and not exists(select 1 from jsonb_array_elements(e->'points') p
  where (p->>'match_id')::uuid=v_m2), 'partida anulada fora do histórico');
-perform pg_temp.assert((e->'current'->>'overall')::numeric=(select overall from public.player_cards where membership_id=pg_temp.mem(v_a,1) and season_id=v_s),
+perform pg_temp.assert((e->'current'->>'overall')::numeric is not distinct from (select case when formula_version >= 2 then ovr_display else overall end from public.player_cards where membership_id=pg_temp.mem(v_a,1) and season_id=v_s),
  'atual continua igual ao Card oficial depois da anulação');
 
 -- ===== Sem login e sem permissão =====

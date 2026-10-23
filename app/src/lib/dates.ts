@@ -8,3 +8,12 @@ export function todayIn(timeZone: string = PELADA_TZ, at: Date = new Date()): st
   // en-CA formata como AAAA-MM-DD.
   return new Intl.DateTimeFormat('en-CA', { timeZone, year: 'numeric', month: '2-digit', day: '2-digit' }).format(at);
 }
+
+// Tempo restante pelo relógio do aparelho só para exibir; o prazo que vale é o do servidor.
+export function timeLeft(closesAt: string) {
+  const ms = new Date(closesAt).getTime() - Date.now();
+  if (ms <= 0) return 'prazo encerrado';
+  const h = Math.floor(ms / 3600000);
+  const m = Math.floor((ms % 3600000) / 60000);
+  return h > 0 ? `faltam ${h}h${String(m).padStart(2, '0')}` : `faltam ${m} min`;
+}

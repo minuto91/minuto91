@@ -5,7 +5,7 @@ import { Text } from '../../lib/text';
 
 import { PlayerCard } from '../../lib/arts';
 import { Avatar } from '../../lib/avatar';
-import { plural, TIER } from '../../lib/career';
+import { overallLabel, plural } from '../../lib/career';
 import { CareerSummary, latestCard, loadCareerSummary, markGuide, referencePelada, SummaryPelada } from '../../lib/careerv2';
 import { friendly } from '../../lib/errors';
 import { EvolutionChart, useEvolution } from '../../lib/evolution';
@@ -140,7 +140,7 @@ export default function Carreira() {
             seasonStart={latest.season.starts_on}
           />
           <Sub>
-            Overall {Math.round(Number(latest.card.overall))} · {TIER[latest.card.tier].label}
+            {overallLabel(latest.card)}
             {latest.card.is_provisional ? ' (provisório)' : ''} · {cardPelada.name} · {latest.season.name}
           </Sub>
           {scope === 'all' && career.peladas.length > 1 && <Sub>O Card é de cada pelada. Escolha outra pelada acima para ver o Card dela.</Sub>}

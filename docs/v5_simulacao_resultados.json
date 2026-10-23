@@ -1,0 +1,421 @@
+{
+ "aviso": "Dados sintéticos gerados por supabase/local_db/rating/simulate.mjs. Não são dados reais do aplicativo.",
+ "configuracao": {
+  "peladas": 1000,
+  "rodadas": 30,
+  "jogadores": 32314,
+  "elegiveis_ovr": 32275,
+  "partidas": 29990,
+  "segundos": 39.41
+ },
+ "ovr_por_posicao": {
+  "GOL": {
+   "n": 2995,
+   "min": 51,
+   "p5": 61,
+   "p25": 65,
+   "p50": 68,
+   "p75": 71,
+   "p95": 77,
+   "max": 85,
+   "mean": 68.15
+  },
+  "ZAG": {
+   "n": 6483,
+   "min": 51,
+   "p5": 60,
+   "p25": 65,
+   "p50": 69,
+   "p75": 74,
+   "p95": 80,
+   "max": 87,
+   "mean": 69.46
+  },
+  "LAT": {
+   "n": 5322,
+   "min": 52,
+   "p5": 60,
+   "p25": 65,
+   "p50": 69,
+   "p75": 74,
+   "p95": 81,
+   "max": 90,
+   "mean": 69.5
+  },
+  "VOL": {
+   "n": 4295,
+   "min": 53,
+   "p5": 60,
+   "p25": 65,
+   "p50": 69,
+   "p75": 73,
+   "p95": 80,
+   "max": 88,
+   "mean": 69.02
+  },
+  "MEI": {
+   "n": 5855,
+   "min": 49,
+   "p5": 59,
+   "p25": 64,
+   "p50": 68,
+   "p75": 74,
+   "p95": 81,
+   "max": 92,
+   "mean": 69
+  },
+  "ATA": {
+   "n": 4407,
+   "min": 51,
+   "p5": 58,
+   "p25": 64,
+   "p50": 68,
+   "p75": 73,
+   "p95": 81,
+   "max": 90,
+   "mean": 68.59
+  },
+  "PON": {
+   "n": 2918,
+   "min": 51,
+   "p5": 58,
+   "p25": 63,
+   "p50": 67,
+   "p75": 72,
+   "p95": 81,
+   "max": 90,
+   "mean": 67.97
+  }
+ },
+ "componentes": {
+  "ATU": {
+   "n": 32275,
+   "min": 24.22,
+   "p5": 50.57,
+   "p25": 59.25,
+   "p50": 66.09,
+   "p75": 73.76,
+   "p95": 84.88,
+   "max": 96.35,
+   "mean": 66.68
+  },
+  "EST": {
+   "n": 32275,
+   "min": 52.78,
+   "p5": 59.72,
+   "p25": 65.72,
+   "p50": 69.96,
+   "p75": 76.24,
+   "p95": 84.22,
+   "max": 95.34,
+   "mean": 70.99
+  },
+  "PEQ": {
+   "n": 32275,
+   "min": 43.75,
+   "p5": 57.36,
+   "p25": 64.17,
+   "p50": 68.48,
+   "p75": 73.07,
+   "p95": 79.72,
+   "max": 95.45,
+   "mean": 68.56
+  },
+  "RES": {
+   "n": 32275,
+   "min": 15.83,
+   "p5": 45,
+   "p25": 57.5,
+   "p50": 70,
+   "p75": 78.33,
+   "p95": 90.83,
+   "max": 95,
+   "mean": 67.7
+  },
+  "DIS": {
+   "n": 32275,
+   "min": 50,
+   "p5": 64.66,
+   "p25": 70,
+   "p50": 70,
+   "p75": 80.95,
+   "p95": 90.07,
+   "max": 94.47,
+   "mean": 74.38
+  },
+  "OVR": {
+   "n": 32275,
+   "min": 49.11,
+   "p5": 59.23,
+   "p25": 64.4,
+   "p50": 68.49,
+   "p75": 73.17,
+   "p95": 80.21,
+   "max": 92.07,
+   "mean": 68.95
+  }
+ },
+ "componentes_mediana_por_posicao": {
+  "GOL": {
+   "ATU": 65.06,
+   "EST": 70.01,
+   "PEQ": 68.7,
+   "RES": 65.83
+  },
+  "ZAG": {
+   "ATU": 65.3,
+   "EST": 73.03,
+   "PEQ": 68.54,
+   "RES": 70
+  },
+  "LAT": {
+   "ATU": 65.95,
+   "EST": 71.81,
+   "PEQ": 68.7,
+   "RES": 70
+  },
+  "VOL": {
+   "ATU": 66.17,
+   "EST": 70.57,
+   "PEQ": 68.16,
+   "RES": 70
+  },
+  "MEI": {
+   "ATU": 66.68,
+   "EST": 68.87,
+   "PEQ": 68.16,
+   "RES": 70
+  },
+  "ATA": {
+   "ATU": 67.27,
+   "EST": 66.97,
+   "PEQ": 69.03,
+   "RES": 70
+  },
+  "PON": {
+   "ATU": 66.58,
+   "EST": 66.09,
+   "PEQ": 68.06,
+   "RES": 70
+  }
+ },
+ "frequencia_ovr": {
+  "acima_de_80": 0.05,
+  "acima_de_85": 0.01,
+  "acima_de_90": 0,
+  "acima_de_95": 0
+ },
+ "cartoes": {
+  "sem_cartao": {
+   "n": 3877,
+   "DIS": 88.87
+  },
+  "um_cartao": {
+   "n": 4853,
+   "DIS": 83.23
+  },
+  "dois_ou_mais": {
+   "n": 6436,
+   "DIS": 72.92
+  },
+  "max_efeito_no_ovr": 2.45
+ },
+ "ausencias": [
+  {
+   "presenca": "0-60%",
+   "n": 10171,
+   "RES": 53.33,
+   "OVR": 67
+  },
+  {
+   "presenca": "60-75%",
+   "n": 10429,
+   "RES": 65.83,
+   "OVR": 68
+  },
+  {
+   "presenca": "75-90%",
+   "n": 8190,
+   "RES": 78.33,
+   "OVR": 70
+  },
+  {
+   "presenca": "90-100%",
+   "n": 3485,
+   "RES": 90.83,
+   "OVR": 71
+  }
+ ],
+ "estabilidade_historico_curto": {
+  "n": 25890,
+  "diferenca_ovr_5a_partida_x_final": {
+   "n": 25890,
+   "min": -14.68,
+   "p5": -5.77,
+   "p25": -2.51,
+   "p50": -0.19,
+   "p75": 2.34,
+   "p95": 6.24,
+   "max": 14.43,
+   "mean": -0.03
+  }
+ },
+ "excepcionais_top2pct_por_posicao": {
+  "GOL": {
+   "n": 59,
+   "OVR_mediana": 79,
+   "EST_mediana": 75.46,
+   "ATU_mediana": 89.18
+  },
+  "ZAG": {
+   "n": 129,
+   "OVR_mediana": 82,
+   "EST_mediana": 83.19,
+   "ATU_mediana": 89.83
+  },
+  "LAT": {
+   "n": 106,
+   "OVR_mediana": 83,
+   "EST_mediana": 85.6,
+   "ATU_mediana": 90.73
+  },
+  "VOL": {
+   "n": 85,
+   "OVR_mediana": 83,
+   "EST_mediana": 83.8,
+   "ATU_mediana": 89.76
+  },
+  "MEI": {
+   "n": 117,
+   "OVR_mediana": 84,
+   "EST_mediana": 89.05,
+   "ATU_mediana": 91.22
+  },
+  "ATA": {
+   "n": 88,
+   "OVR_mediana": 84,
+   "EST_mediana": 87.86,
+   "ATU_mediana": 91.76
+  },
+  "PON": {
+   "n": 58,
+   "OVR_mediana": 84,
+   "EST_mediana": 86.83,
+   "ATU_mediana": 91.18
+  }
+ },
+ "votacao": {
+  "cobertura_jogador_partida_com_nota_valida": 0.99,
+  "avaliacao_insuficiente": 0.01,
+  "erro_da_nota_por_votos": [
+   {
+    "votos_no_menor_grupo": "1-1",
+    "n": 46015,
+    "erro_abs_medio": 0.55
+   },
+   {
+    "votos_no_menor_grupo": "2-2",
+    "n": 116925,
+    "erro_abs_medio": 0.44
+   },
+   {
+    "votos_no_menor_grupo": "3-4",
+    "n": 319581,
+    "erro_abs_medio": 0.37
+   },
+   {
+    "votos_no_menor_grupo": "5-7",
+    "n": 133419,
+    "erro_abs_medio": 0.32
+   },
+   {
+    "votos_no_menor_grupo": "8+",
+    "n": 1791,
+    "erro_abs_medio": 0.27
+   }
+  ]
+ },
+ "sensibilidade_mediana_ovr_por_posicao": {
+  "base": {
+   "GOL": 68,
+   "ZAG": 69,
+   "LAT": 69,
+   "VOL": 69,
+   "MEI": 69,
+   "ATA": 68,
+   "PON": 67
+  },
+  "alphaK_75": {
+   "GOL": 68,
+   "ZAG": 69,
+   "LAT": 69,
+   "VOL": 69,
+   "MEI": 69,
+   "ATA": 68,
+   "PON": 68
+  },
+  "alphaK_300": {
+   "GOL": 68,
+   "ZAG": 69,
+   "LAT": 69,
+   "VOL": 69,
+   "MEI": 68,
+   "ATA": 68,
+   "PON": 67
+  },
+  "refShrink_1": {
+   "GOL": 68,
+   "ZAG": 69,
+   "LAT": 69,
+   "VOL": 69,
+   "MEI": 69,
+   "ATA": 68,
+   "PON": 67
+  },
+  "refShrink_6": {
+   "GOL": 68,
+   "ZAG": 69,
+   "LAT": 69,
+   "VOL": 69,
+   "MEI": 69,
+   "ATA": 68,
+   "PON": 67
+  },
+  "muC0_2_5": {
+   "GOL": 68,
+   "ZAG": 68,
+   "LAT": 68,
+   "VOL": 68,
+   "MEI": 68,
+   "ATA": 68,
+   "PON": 67
+  },
+  "muC0_3_5": {
+   "GOL": 68,
+   "ZAG": 70,
+   "LAT": 69,
+   "VOL": 69,
+   "MEI": 69,
+   "ATA": 68,
+   "PON": 67
+  },
+  "refs_x0_8": {
+   "GOL": 68,
+   "ZAG": 69,
+   "LAT": 70,
+   "VOL": 69,
+   "MEI": 69,
+   "ATA": 69,
+   "PON": 68
+  },
+  "refs_x1_2": {
+   "GOL": 68,
+   "ZAG": 69,
+   "LAT": 69,
+   "VOL": 68,
+   "MEI": 68,
+   "ATA": 67,
+   "PON": 67
+  }
+ }
+}

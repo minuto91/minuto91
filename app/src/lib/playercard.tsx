@@ -14,7 +14,7 @@ import { Text } from './text';
 import Svg, { ClipPath, Defs, Ellipse, G, Line, LinearGradient, Path, RadialGradient, Rect, Stop } from 'react-native-svg';
 
 import { initials, useAvatarUrl } from './avatar';
-import { ATTRIBUTES, Card as CardData, TIER } from './career';
+import { Card as CardData, cardAttributes, cardOverall, isV2, TIER } from './career';
 import { CrestView, useCrestUrl } from './crest';
 import { positionLabel, positionSector, positionShort } from './theme';
 
@@ -162,7 +162,7 @@ function Front({ tier }: { tier: Tier }) {
   const p = PATHS[tier];
   const id = `m91${tier}`;
   const t = f.t;
-  const cols = ATTRIBUTES.length;
+  const cols = 5; // cinco atributos na carta antiga e na V5
   const colW = (ROW_R - ROW_L) / cols;
   return (
     <Svg width="100%" height="100%" viewBox={`0 0 ${VB_W} ${VB_H}`} style={{ position: 'absolute', top: 0, left: 0 }}>
@@ -348,17 +348,19 @@ export function PlayerCard({
   const px = (n: number) => Math.round(n * u * 10) / 10;
   const font = (n: number) => Math.max(9, px(n));
   const compact = width < 200; // no Elenco: sem rodapé
-  const overall = Math.round(card.overall);
+  // V5: antes de 5 partidas não há OVR (sem número fictício): o canto mostra só "em avaliação".
+  const overall = cardOverall(card);
+  const attrs = cardAttributes(card);
 
   // Foto quadrada recortada à mão para cobrir a área (largura toda; sobra corta mais embaixo).
   const areaW = px(OUTER[1][0] - OUTER[5][0]); // só dentro da silhueta
   const areaH = px(PHOTO_BOTTOM - PHOTO_TOP);
   const side = areaW;
-  const colW = (ROW_R - ROW_L) / ATTRIBUTES.length;
+  const colW = (ROW_R - ROW_L) / attrs.length;
 
   return (
     <View
-      accessibilityLabel={`Card ${t.label} de ${playerName}, overall ${overall}, ${positionLabel(cardPosition(card))}${card.is_provisional ? ', provisório' : ''}`}
+      accessibilityLabel={`Card ${t.label} de ${playerName}, ${overall === null ? 'em avaliação' : `overall ${overall}`},${positionLabel(cardPosition(card))}${card.is_provisional && overall !== null ? ', provisório' : ''}`}
       style={{ width, height }}>
       <Back tier={tier} />
 
@@ -383,12 +385,12 @@ export function PlayerCard({
 
       {/* Overall e posição (alto à esquerda). */}
       <View style={{ position: 'absolute', left: px(7), top: px(16), width: px(24), alignItems: 'center' }}>
-        <Text style={{ fontSize: font(15), lineHeight: font(16), fontWeight: '900', color: f.ink }}>{overall}</Text>
+        <Text style={{ fontSize: font(15), lineHeight: font(16), fontWeight: '900', color: f.ink }}>{overall ?? '–'}</Text>
         <Text style={{ fontSize: font(6.2), fontWeight: '800', color: f.ink, letterSpacing: px(0.3) }}>
           {SECTOR_CODE[cardPosition(card)] ?? positionShort(cardPosition(card))}
         </Text>
         {card.is_provisional && !compact && (
-          <Text style={{ fontSize: font(2.9), fontWeight: '800', color: f.ink, opacity: 0.75, marginTop: px(1) }}>Provisório</Text>
+          <Text style={{ fontSize: font(2.9), fontWeight: '800', color: f.ink, opacity: 0.75, marginTop: px(1) }}>{isV2(card) ? 'Em avaliação' : 'Provisório'}</Text>
         )}
       </View>
 
@@ -416,7 +418,7 @@ export function PlayerCard({
       </Text>
 
       <View style={{ position: 'absolute', top: px(ROW_TOP), left: px(ROW_L), width: px(ROW_R - ROW_L), flexDirection: 'row' }}>
-        {ATTRIBUTES.map((a) => (
+        {attrs.map((a) => (
           <View key={a.key} style={{ width: px(colW), alignItems: 'center' }} accessibilityLabel={`${a.label} ${Math.round(Number(card[a.key]))}`}>
             <Text style={{ fontSize: font(3.9), fontWeight: '700', color: f.accent, letterSpacing: compact ? 0 : px(0.2) }}>{a.code}</Text>
             <Text style={{ fontSize: font(6.8), lineHeight: font(7.6), fontWeight: '800', color: f.light }}>{Math.round(Number(card[a.key]))}</Text>

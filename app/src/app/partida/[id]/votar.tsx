@@ -1,281 +1,260 @@
+// V5: avaliação pós-partida, um jogador por vez (Prompt Master v2.0, Etapa 12).
+// O servidor guarda a ordem, as notas e o progresso: cada "Confirmar e próximo" só avança depois que o
+// servidor confirma; sem confirmação a nota escolhida continua na tela para tentar de novo. A nota inicial
+// 7,0 não vale como voto até ser confirmada. Pular não registra nota; o pulado volta uma vez no fim e
+// depois fica na revisão. Ninguém vê as notas que recebeu. Votações abertas antes da V5 seguem o fluxo antigo.
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
-import { Text } from '../../../lib/text';
 
-import { notify } from '../../../lib/dialog';
-
+import { Avatar } from '../../../lib/avatar';
 import { friendly } from '../../../lib/errors';
-import {
-  fmtRating,
-  fmtTime,
-  loadGuests,
-  loadMatch,
-  loadMembers,
-  loadSheet,
-  Match,
-  Member,
-  newKey,
-  SheetPlayer,
-} from '../../../lib/match';
+import { LegacyVotar } from '../../../lib/legacyvote';
+import { loadMatch, Match } from '../../../lib/match';
+import { fmtScore, RatingSlider, RatingTarget, RatingVote, useServerCountdown } from '../../../lib/ratingvote';
 import { supabase } from '../../../lib/supabase';
-import { colors, memberPosition, positionLabel } from '../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Screen, Stepper, Sub, Title } from '../../../lib/ui';
+import { Text } from '../../../lib/text';
+import { colors, positionLabel } from '../../../lib/theme';
+import { Body, Button, Card, Chips, ErrorText, Loading, Screen, Sub, Title } from '../../../lib/ui';
 
-type VotingState = {
-  session_id: string | null;
-  closes_at: string | null;
-  sheet_version: number;
-  eligible: boolean;
-  sheet_confirmed: boolean;
-};
-type SessionInfo = { bola_murcha_required: boolean; minimum_numeric_ratings: number | null; eligible_voter_count: number };
-// Nota de 0 a 10, "não vi jogar" ou em branco (sem entrada).
-type Score = number | 'not_seen';
+const START = 7;
 
 export default function Votar() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const router = useRouter();
-  const [state, setState] = useState<VotingState | null>(null);
-  const [info, setInfo] = useState<SessionInfo | null>(null);
+  const [v, setV] = useState<RatingVote | null>(null);
+  const [legacy, setLegacy] = useState(false);
   const [match, setMatch] = useState<Match | null>(null);
-  const [colleagues, setColleagues] = useState<Member[]>([]);
-  const [sheet, setSheet] = useState<{ players: SheetPlayer[]; names: Map<string, string> } | null>(null);
-  const [scores, setScores] = useState<Record<string, Score>>({});
-  const [craque, setCraque] = useState<string | null>(null);
-  const [bola, setBola] = useState<string | null>(null);
-  const [submitted, setSubmitted] = useState(false);
-  const [busy, setBusy] = useState(false);
-  const [msg, setMsg] = useState<string | null>(null);
-
-  const [reload, setReload] = useState(0); // incrementar = buscar de novo
-  // A10: a mesma chave em todas as tentativas do mesmo envio (rede caiu, toque duplo): o servidor responde
-  // "repetido" em vez de erro, mesmo se o envio já tiver fechado a votação.
-  const sendKey = useRef<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      try {
-        const { data: st, error } = await supabase.rpc('get_my_voting_state', { p_match: id });
-        if (error) throw error;
-        if (!alive) return;
-        const s = st as VotingState | null;
-        if (!s?.session_id || !s.eligible) return setMsg('Você não vota nesta partida, ou a votação já acabou.');
-        const m = await loadMatch(id);
-        const [{ data: si }, { data: el }, members, guests, sh, { data: ballot, error: e2 }] = await Promise.all([
-          supabase
-            .from('voting_sessions')
-            .select('bola_murcha_required, minimum_numeric_ratings, eligible_voter_count')
-            .eq('id', s.session_id)
-            .single(),
-          supabase.from('voting_eligible_members').select('membership_id').eq('session_id', s.session_id),
-          loadMembers(m!.pelada_id),
-          loadGuests(m!.pelada_id),
-          loadSheet(id),
-          supabase.rpc('get_my_ballot', { p_session: s.session_id }),
-        ]);
-        if (e2) throw e2;
-        const { data: auth } = await supabase.auth.getUser();
-        if (!alive) return;
-        const meId = members.find((x) => x.user_id === auth.user?.id)?.id;
-        const eligibleIds = new Set((el ?? []).map((x) => x.membership_id));
-        setState(s);
-        setInfo(si as SessionInfo);
-        setMatch(m);
-        setColleagues(members.filter((x) => eligibleIds.has(x.id) && x.id !== meId));
-        setSheet({
-          players: sh.players,
-          names: new Map([...members.map((x) => [x.id, x.player_name] as const), ...guests.map((g) => [g.id, g.display_name] as const)]),
-        });
-        const b = ballot as { status: string; scores: { membership_id: string; rating?: number; not_seen?: boolean }[]; craque?: string; bola_murcha?: string };
-        setScores(Object.fromEntries(b.scores.map((x) => [x.membership_id, x.not_seen ? 'not_seen' : Number(x.rating)])));
-        setCraque(b.craque ?? null);
-        setBola(b.bola_murcha ?? null);
-        setSubmitted(b.status === 'submitted');
-        setMsg(null);
-      } catch (e) {
-        if (alive) setMsg(friendly((e as Error).message));
-      }
+      const [{ data, error }, m] = await Promise.all([supabase.rpc('get_rating_vote', { p_match: id }), loadMatch(id).catch(() => null)]);
+      if (!alive) return;
+      if (error) return setErr(friendly(error.message));
+      const r = data as RatingVote;
+      if (r.state === 'legacy' || (r.state === 'unavailable' && m?.status === 'voting_open')) return setLegacy(true);
+      setMatch(m);
+      setV(r);
     })();
     return () => {
       alive = false;
     };
-  }, [id, reload]);
+  }, [id]);
 
-  const payload = () =>
-    Object.entries(scores).map(([membership_id, v]) =>
-      v === 'not_seen' ? { membership_id, not_seen: true } : { membership_id, rating: v },
-    );
+  if (legacy) return <LegacyVotar />;
+  if (!v) return <Screen>{err ? <ErrorText>{err}</ErrorText> : <Loading />}</Screen>;
+  return <Flow initial={v} match={match} />;
+}
 
-  async function run(fn: string, args: Record<string, unknown>) {
-    setBusy(true);
-    setMsg(null);
-    const { data, error } = await supabase.rpc(fn, args);
-    setBusy(false);
-    if (error) setMsg(friendly(error.message));
-    return { ok: !error, data, error: error?.message };
-  }
+function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) {
+  const router = useRouter();
+  const [v, setV] = useState(initial);
+  const [editing, setEditing] = useState<string | null>(null);
+  // Nota escolhida por jogador (ainda não confirmada); sem escolha vale a já dada ou 7,0.
+  const [picked, setPicked] = useState<Record<string, number>>({});
+  const [busy, setBusy] = useState(false);
+  const [err, setErr] = useState<string | null>(null);
+  const [done, setDone] = useState(false);
+  const left = useServerCountdown(v.closes_at, v.server_now);
+  const targets = v.targets ?? [];
+  const current = targets.find((t) => t.membership_id === v.current) ?? null;
+  const teamName = (t: 'A' | 'B') => (t === 'A' ? match?.team_a_name : match?.team_b_name) ?? `Time ${t}`;
 
-  async function conferir() {
-    if ((await run('confirm_match_sheet', { p_match: id, p_sheet_version: state!.sheet_version })).ok) setReload((n) => n + 1);
-  }
+  const focusId = editing ?? v.current ?? null;
+  const focus = targets.find((x) => x.membership_id === focusId);
+  const value = focusId ? (picked[focusId] ?? (focus?.my_rating != null ? Number(focus.my_rating) : START)) : START;
+  const setValue = useCallback((n: number) => {
+    if (focusId) setPicked((p) => ({ ...p, [focusId]: n }));
+  }, [focusId]);
 
-  async function salvarRascunho() {
-    const r = await run('save_ballot_draft', {
-      p_session: state!.session_id,
-      p_scores: payload(),
-      p_craque: craque,
-      p_bola_murcha: bola,
-    });
-    if (r.ok) notify('Rascunho salvo', 'Você pode terminar até o fim do prazo.');
-  }
+  const call = useCallback(
+    async (fn: string, args: Record<string, unknown>) => {
+      setBusy(true);
+      setErr(null);
+      const { data, error } = await supabase.rpc(fn, args);
+      setBusy(false);
+      if (error) {
+        // Sem confirmação do servidor nada avança: a nota escolhida continua na tela.
+        setErr(error.message.includes('VOTING_CLOSED') ? 'A votação já foi encerrada. Esta nota não foi registrada.' : 'O envio não foi confirmado. Verifique a internet e tente de novo.');
+        return false;
+      }
+      setV(data as RatingVote);
+      return true;
+    },
+    [],
+  );
 
-  async function enviar() {
-    const r = await run('submit_ballot', {
-      p_session: state!.session_id,
-      p_sheet_version: state!.sheet_version,
-      p_scores: payload(),
-      p_craque: craque,
-      p_bola_murcha: bola,
-      p_idempotency_key: (sendKey.current ??= newKey()),
-    });
-    if (!r.ok) {
-      // Recusa do servidor (nota faltando etc.): o próximo envio é outro conteúdo, com chave nova.
-      if (!/conexão|internet/i.test(friendly(String(r.error ?? '')))) sendKey.current = null;
-      return;
-    }
-    sendKey.current = null;
-    const res = r.data as { all_voted: boolean };
-    notify(
-      'Voto enviado',
-      res.all_voted ? 'Todo mundo votou: o resultado já saiu!' : 'Você pode mudar seu voto até o fim do prazo.',
-    );
-    router.replace({ pathname: '/partida/[id]', params: { id } });
-  }
-
-  if (!state || !info || !match || !sheet) {
+  if (v.state !== 'open') {
     return (
       <Screen>
-        <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        <Title>Avaliação dos jogadores</Title>
+        <Body>
+          {v.state === 'published'
+            ? 'As notas desta partida já foram publicadas.'
+            : v.state === 'awaiting_publication'
+              ? 'O prazo terminou. As notas aparecem depois que o administrador publicar.'
+              : v.state === 'ready'
+                ? 'A votação desta partida ainda não foi aberta.'
+                : 'A votação não está disponível.'}
+        </Body>
+        <Button title="Voltar para a partida" kind="secondary" onPress={() => router.back()} />
+      </Screen>
+    );
+  }
+  if (!v.is_voter) {
+    return (
+      <Screen>
+        <Title>Avaliação dos jogadores</Title>
+        <Body>Só quem jogou esta partida avalia os jogadores.</Body>
       </Screen>
     );
   }
 
-  const notSeen = Object.values(scores).filter((v) => v === 'not_seen').length;
-  const maxNotSeen = Math.floor(colleagues.length / 2);
-  const options = colleagues.map((c) => ({ value: c.id, label: c.player_name }));
+  const header = (
+    <View style={{ gap: 2 }}>
+      {match && (
+        <Sub>
+          {match.team_a_name} {match.team_a_score} x {match.team_b_score} {match.team_b_name}
+        </Sub>
+      )}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+        <Sub>
+          {v.rated} de {targets.length} avaliados
+        </Sub>
+        <Sub>{left}</Sub>
+      </View>
+      <View style={{ height: 4, borderRadius: 2, backgroundColor: colors.line }}>
+        <View style={{ width: `${targets.length ? ((v.rated ?? 0) / targets.length) * 100 : 0}%`, height: 4, borderRadius: 2, backgroundColor: colors.blue }} />
+      </View>
+    </View>
+  );
 
-  // RN-020: primeiro conferir a versão atual da súmula.
-  if (!state.sheet_confirmed) {
+  // Edição na revisão.
+  if (editing) {
+    const t = targets.find((x) => x.membership_id === editing)!;
     return (
       <Screen>
-        <Title>Confira a súmula</Title>
-        <Sub>
-          Versão {state.sheet_version}. {match.team_a_name} {match.team_a_score} x {match.team_b_score} {match.team_b_name}
-        </Sub>
-        {(['A', 'B'] as const).map((t) => (
-          <Card key={t}>
-            <Body>{t === 'A' ? match.team_a_name : match.team_b_name}</Body>
-            {sheet.players
-              .filter((p) => p.team === t)
-              .map((p) => (
-                <Text key={p.key} style={{ color: colors.ink }}>
-                  {sheet.names.get(p.membership_id ?? p.guest_id!) ?? 'Jogador'}
-                  {p.guest_id ? ' (convidado)' : ''}
-                  {p.goals ? ` · ${p.goals} gol(s)` : ''}
-                  {p.assists ? ` · ${p.assists} assist.` : ''}
-                  {p.reds ? ` · ${p.reds} vermelho` : ''}
-                </Text>
-              ))}
-          </Card>
-        ))}
-        <ErrorText>{msg}</ErrorText>
-        <Button title="Conferi a súmula" onPress={conferir} loading={busy} />
-        <Sub>Viu um erro? Avise o administrador antes de votar.</Sub>
+        {header}
+        <PlayerBox t={t} team={teamName(t.team)} />
+        <RatingSlider value={value} onChange={setValue} disabled={busy} />
+        <ErrorText>{err}</ErrorText>
+        <Button
+          title="Salvar nota"
+          loading={busy}
+          disabled={busy}
+          onPress={async () => {
+            if (await call('cast_rating_vote', { p_session: v.session_id, p_target: t.membership_id, p_rating: value })) setEditing(null);
+          }}
+        />
+        <Button title="Cancelar" kind="ghost" onPress={() => setEditing(null)} />
+      </Screen>
+    );
+  }
+
+  if (current) {
+    return (
+      <Screen>
+        {header}
+        {v.phase === 'second' && <Sub>Você pulou este jogador. Quer avaliar agora?</Sub>}
+        <PlayerBox t={current} team={teamName(current.team)} />
+        <RatingSlider value={value} onChange={setValue} disabled={busy} />
+        <ErrorText>{err}</ErrorText>
+        <Button
+          title="Confirmar e próximo"
+          loading={busy}
+          disabled={busy}
+          onPress={() => call('cast_rating_vote', { p_session: v.session_id, p_target: current.membership_id, p_rating: value })}
+        />
+        <Button title="Pular jogador" kind="ghost" disabled={busy} onPress={() => call('skip_rating_vote', { p_session: v.session_id, p_target: current.membership_id })} />
+      </Screen>
+    );
+  }
+
+  if (done) {
+    return (
+      <Screen>
+        <Title>Avaliação concluída</Title>
+        <Body>
+          Você avaliou {v.rated} de {targets.length} jogadores. Dá para mudar suas notas até o fim do prazo.
+        </Body>
+        <Sub>As notas aparecem para todos só depois que o administrador publicar. Ninguém vê quem deu cada nota.</Sub>
+        <Button title="Revisar notas" kind="secondary" onPress={() => setDone(false)} />
+        <Button title="Voltar para a partida" onPress={() => router.back()} />
       </Screen>
     );
   }
 
   return (
     <Screen>
-      <Title>Suas notas</Title>
-      <Sub>
-        Notas secretas, de 0 a 10. Prazo: {state.closes_at ? fmtTime(state.closes_at) : '-'}.
-        {info.minimum_numeric_ratings !== null
-          ? ` Avalie pelo menos ${info.minimum_numeric_ratings} colegas.`
-          : ' Avalie todos os colegas que você viu jogar.'}
-      </Sub>
-      <Sub>
-        “Não vi jogar”: {notSeen} de no máximo {maxNotSeen}.
-      </Sub>
-      {submitted && <Sub>Seu voto já foi enviado. Mudanças valem ao enviar de novo.</Sub>}
-
-      {colleagues.map((c) => {
-        const v = scores[c.id];
-        const set = (next: Score | undefined) =>
-          setScores((s) => {
-            const copy = { ...s };
-            if (next === undefined) delete copy[c.id];
-            else copy[c.id] = next;
-            return copy;
-          });
-        return (
-          <Card key={c.id}>
-            <Body>{c.player_name}</Body>
-            <Sub>{positionLabel(memberPosition(c))}</Sub>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flexWrap: 'wrap' }}>
-              {v === 'not_seen' ? (
-                <Text style={{ color: colors.muted, fontWeight: '700' }}>Não vi jogar</Text>
-              ) : (
-                <Stepper
-                  value={v ?? null}
-                  onChange={(n) => set(n)}
-                  min={0}
-                  max={10}
-                  step={0.5}
-                  start={6}
-                  format={fmtRating}
-                  a11yName={`Nota de ${c.player_name}`}
-                />
-              )}
-              <Pressable
-                onPress={() => set(v === 'not_seen' ? undefined : 'not_seen')}
-                accessibilityRole="button"
-                accessibilityLabel={v === 'not_seen' ? `Vi ${c.player_name} jogar` : `Não vi ${c.player_name} jogar`}
-                style={linkBtn}>
-                <Text style={{ color: colors.blue, fontWeight: '600' }}>{v === 'not_seen' ? 'Vi jogar' : 'Não vi jogar'}</Text>
-              </Pressable>
-              {typeof v === 'number' && (
-                <Pressable
-                  onPress={() => set(undefined)}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Limpar nota de ${c.player_name}`}
-                  style={linkBtn}>
-                  <Text style={{ color: colors.muted }}>Limpar</Text>
-                </Pressable>
-              )}
+      <Title>Revisão</Title>
+      {header}
+      <Card>
+        {targets.map((t) => (
+          <View key={t.membership_id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 }}>
+            <Avatar path={t.avatar_path} name={t.name} size={32} />
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontWeight: '600', color: colors.ink }} numberOfLines={1}>
+                {t.name}
+              </Text>
+              <Sub>{teamName(t.team)}</Sub>
             </View>
-          </Card>
-        );
-      })}
-
-      <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 8 }}>Craque da Partida</Text>
-      <Chips options={options} value={craque} onChange={setCraque} />
-      {info.bola_murcha_required && (
-        <>
-          <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 8 }}>Bola Murcha</Text>
-          <Chips options={options} value={bola} onChange={setBola} />
-        </>
-      )}
-
-      <ErrorText>{msg}</ErrorText>
-      {!submitted && <Button title="Salvar rascunho" kind="secondary" onPress={salvarRascunho} loading={busy} />}
-      <Button title={submitted ? 'Enviar de novo' : 'Enviar voto'} onPress={enviar} loading={busy} />
+            <Text style={{ fontWeight: '800', color: t.my_rating === null ? colors.muted : colors.deepBlue }}>
+              {t.my_rating === null ? 'Sem nota' : fmtScore(Number(t.my_rating))}
+            </Text>
+            <Pressable onPress={() => setEditing(t.membership_id)} accessibilityRole="button" accessibilityLabel={`Editar nota de ${t.name}`} style={{ padding: 8 }}>
+              <Text style={{ color: colors.blue, fontWeight: '700' }}>Editar</Text>
+            </Pressable>
+          </View>
+        ))}
+      </Card>
+      <Awards v={v} onSaved={(r) => setV(r)} />
+      <ErrorText>{err}</ErrorText>
+      <Button title="Concluir" onPress={() => setDone(true)} />
     </Screen>
   );
 }
 
-// A26: alvo de toque de pelo menos 44 px para os botões de texto.
-const linkBtn = { minHeight: 44, justifyContent: 'center' as const, paddingHorizontal: 6 };
+function PlayerBox({ t, team }: { t: RatingTarget; team: string }) {
+  return (
+    <Card>
+      <View style={{ alignItems: 'center', gap: 6 }}>
+        <Avatar path={t.avatar_path} name={t.name} size={88} />
+        <Text style={{ fontSize: 20, fontWeight: '800', color: colors.deepBlue, textAlign: 'center' }}>{t.name}</Text>
+        <Sub>
+          {positionLabel(t.position)} · {team} · {t.is_teammate ? 'seu time' : 'adversário'}
+        </Sub>
+        <Body>
+          {t.goals} {t.goals === 1 ? 'gol' : 'gols'} · {t.assists} {t.assists === 1 ? 'assistência' : 'assistências'}
+        </Body>
+      </View>
+    </Card>
+  );
+}
+
+// Craque e Bola Murcha: opcionais, uma escolha cada.
+function Awards({ v, onSaved }: { v: RatingVote; onSaved: (r: RatingVote) => void }) {
+  const [craque, setCraque] = useState<string | null>(v.my_awards?.craque ?? null);
+  const [bola, setBola] = useState<string | null>(v.my_awards?.bola_murcha ?? null);
+  const [msg, setMsg] = useState<string | null>(null);
+  const options = (v.targets ?? []).map((t) => ({ value: t.membership_id, label: t.name }));
+  async function save(c: string | null, b: string | null) {
+    setMsg(null);
+    const { error } = await supabase.rpc('set_rating_vote_awards', { p_session: v.session_id, p_craque: c, p_bola_murcha: b });
+    if (error) return setMsg('Não foi possível salvar. Tente de novo.');
+    onSaved({ ...v, my_awards: { craque: c ?? undefined, bola_murcha: b ?? undefined } });
+  }
+  return (
+    <Card>
+      <Text style={{ fontWeight: '700', color: colors.deepBlue }}>Craque da partida (opcional)</Text>
+      <Chips options={options} value={craque} onChange={(x) => { const n = x === craque ? null : x; setCraque(n); void save(n, bola); }} />
+      {v.bola_murcha_enabled && (
+        <>
+          <Text style={{ fontWeight: '700', color: colors.deepBlue, marginTop: 8 }}>Bola Murcha (opcional)</Text>
+          <Chips options={options} value={bola} onChange={(x) => { const n = x === bola ? null : x; setBola(n); void save(craque, n); }} />
+        </>
+      )}
+      <ErrorText>{msg}</ErrorText>
+    </Card>
+  );
+}

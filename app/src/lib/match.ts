@@ -37,6 +37,11 @@ export type SheetPlayer = {
   goals: number;
   assists: number;
   reds: number;
+  /** V5: amarelo (0 ou 1) e expulsão por segundo amarelo (0 ou 1, vale como um vermelho). */
+  yellows?: number;
+  secondYellow?: number;
+  /** Id na súmula (só das súmulas já gravadas). */
+  participant_id?: string;
 };
 
 // Gols que não são de um jogador: gol sem autor e gol contra, pelo time que se beneficiou.
@@ -104,6 +109,7 @@ export async function loadSheet(matchId: string) {
   for (const p of parts ?? []) {
     byId.set(p.id, {
       key: p.membership_id ? `m:${p.membership_id}` : `g:${p.guest_id}`,
+      participant_id: p.id,
       membership_id: p.membership_id ?? undefined,
       guest_id: p.guest_id ?? undefined,
       team: p.team as Team,
@@ -111,6 +117,8 @@ export async function loadSheet(matchId: string) {
       goals: 0,
       assists: 0,
       reds: 0,
+      yellows: 0,
+      secondYellow: 0,
     });
   }
   const extras = emptyExtras();
@@ -119,6 +127,8 @@ export async function loadSheet(matchId: string) {
     if (e.event_type === 'goal' && player) player.goals += e.quantity;
     else if (e.event_type === 'assist' && player) player.assists += e.quantity;
     else if (e.event_type === 'red_card' && player) player.reds += e.quantity;
+    else if (e.event_type === 'yellow_card' && player) player.yellows = (player.yellows ?? 0) + e.quantity;
+    else if (e.event_type === 'second_yellow' && player) player.secondYellow = 1;
     else if (e.event_type === 'unattributed_goal') extras.unattributed[e.team as Team] += e.quantity;
     else if (e.event_type === 'own_goal') extras.ownGoals[e.team as Team] += e.quantity;
   }
@@ -138,6 +148,8 @@ export function sheetPayload(players: SheetPlayer[], extras: TeamExtras) {
     if (p.goals) events.push({ ...who, type: 'goal', quantity: p.goals });
     if (p.assists) events.push({ ...who, type: 'assist', quantity: p.assists });
     if (p.reds) events.push({ ...who, type: 'red_card', quantity: p.reds });
+    if (p.yellows) events.push({ ...who, type: 'yellow_card', quantity: p.yellows });
+    if (p.secondYellow) events.push({ ...who, type: 'second_yellow', quantity: 1 });
   }
   for (const t of ['A', 'B'] as Team[]) {
     if (extras.unattributed[t]) events.push({ type: 'unattributed_goal', team: t, quantity: extras.unattributed[t] });

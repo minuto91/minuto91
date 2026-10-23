@@ -32,6 +32,8 @@ import {
   Team,
   TeamExtras,
 } from '../../../lib/match';
+import { HardSaves } from '../../../lib/ratingadmin';
+import { RatingVotePanel } from '../../../lib/ratingvote';
 import { ReportLink } from '../../../lib/report';
 import { FieldPlayer, SelectionField, TeamColorPicker, TeamLegend, teamHex } from '../../../lib/selection';
 import { useAuth } from '../../../lib/session';
@@ -46,7 +48,7 @@ type Session = {
   eligible_voter_count: number;
   is_valid: boolean | null;
 };
-type Result = { membership_id: string; final_rating: number | null; has_valid_rating: boolean; numeric_rating_count: number };
+type Result = { membership_id: string; final_rating: number | null; has_valid_rating: boolean };
 type Award = { membership_id: string; award_type: string; is_shared: boolean };
 type SelectionPlayer = { membership_id: string; slot_position: string; rank_order: number };
 type Annulment = { reason_category: string; description: string; created_at: string };
@@ -147,7 +149,7 @@ export default function Partida() {
         const [{ data: rs }, { data: aw }, { data: sel }] = await Promise.all([
           supabase
             .from('match_player_results')
-            .select('membership_id, final_rating, has_valid_rating, numeric_rating_count')
+            .select('membership_id, final_rating, has_valid_rating')
             .eq('match_id', id),
           supabase.from('awards').select('membership_id, award_type, is_shared').eq('match_id', id).eq('status', 'active'),
           supabase.from('round_selections').select('id').eq('match_id', id).eq('status', 'published').maybeSingle(),
@@ -322,6 +324,17 @@ export default function Partida() {
         <Button title="Editar súmula" onPress={() => router.push({ pathname: '/partida/[id]/sumula', params: { id } })} />
       )}
 
+      {/* V5: avaliação dos jogadores (abrir, votar, acompanhar e publicar). */}
+      {match.status === 'finalized' && <RatingVotePanel matchId={match.id} />}
+      {match.status === 'finalized' && isStaff && (
+        <HardSaves
+          matchId={match.id}
+          keepers={players
+            .filter((p) => p.participant_id && (p.position === 'GOL' || p.position === 'goalkeeper'))
+            .map((p) => ({ participant_id: p.participant_id!, name: p.membership_id ? nameOf(p.membership_id) : (guests.find((g) => g.id === p.guest_id)?.display_name ?? 'Convidado') }))}
+        />
+      )}
+
       {open && (
         <Card>
           <Body>
@@ -374,6 +387,15 @@ export default function Partida() {
               {fmtRating(Number(r.final_rating))}
             </Text>
           ))}
+          {/* V5: sem nota fictícia; só a mensagem, nunca quantos votos o jogador recebeu. */}
+          {ranked.length > 0 &&
+            results
+              .filter((r) => !r.has_valid_rating)
+              .map((r) => (
+                <Text key={r.membership_id} style={{ color: colors.muted }}>
+                  {nameOf(r.membership_id)} — Avaliação insuficiente
+                </Text>
+              ))}
         </Card>
       )}
 
@@ -446,6 +468,8 @@ export default function Partida() {
                 {playerName(p)} · {positionLabel(p.position)}
                 {p.goals ? ` · ${p.goals} gol${p.goals > 1 ? 's' : ''}` : ''}
                 {p.assists ? ` · ${p.assists} assist.` : ''}
+                {p.yellows ? ' · amarelo' : ''}
+                {p.secondYellow ? ' · expulso (2º amarelo)' : ''}
                 {p.reds ? ` · ${p.reds} vermelho` : ''}
               </Text>
             ))}

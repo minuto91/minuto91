@@ -457,7 +457,8 @@ async function exportSuite(files) {
 
 const ONLY_EXPORT = process.env.ONLY_EXPORT === '1';
 const old = ONLY_EXPORT ? null : await suite('V4.1 (até 035)', migrations.filter((f) => f < '036'), false);
-const cur = ONLY_EXPORT ? { deadlocks: 0, broken: 0 } : await suite('Atual (todas)', migrations, true);
+// V5: a 052 desliga a cédula antiga para partidas novas; a disputa correção x último voto roda até a 051.
+const cur = ONLY_EXPORT ? { deadlocks: 0, broken: 0 } : await suite('V4.6 (até 051)', migrations.filter((f) => f < '052'), true);
 const finOk = ONLY_EXPORT ? true : await finSuite(migrations);
 const exp = await exportSuite(migrations);
 const ok = cur.deadlocks === 0 && cur.broken === 0 && finOk && exp.ok;

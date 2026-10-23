@@ -2,7 +2,7 @@ import { useRouter } from 'expo-router';
 import { useEffect } from 'react';
 import { View } from 'react-native';
 
-import { ATTRIBUTES, TIER } from '../lib/career';
+import { ATTRIBUTES_V2, TIER } from '../lib/career';
 import { markGuide } from '../lib/careerv2';
 import { TROPHIES, TrophyArt } from '../lib/trophies';
 import { Body, Button, Card, Screen, Sub, Title } from '../lib/ui';
@@ -23,7 +23,7 @@ export default function GuiaCards() {
           Cada pelada tem o seu Card, por temporada. O overall vem dos números oficiais das partidas e das notas que os colegas dão
           na votação, sempre depois que a partida é finalizada.
         </Sub>
-        <Sub>Atributos: {ATTRIBUTES.map((a) => a.label).join(', ')}.</Sub>
+        <Sub>Atributos: {ATTRIBUTES_V2.map((a) => a.label).join(', ')}. OVR a partir da 5ª partida oficial.</Sub>
         <Sub>
           Categorias: {TIER.bronze.label}, {TIER.prata.label} e {TIER.ouro.label}. Nas primeiras partidas o Card aparece como provisório.
         </Sub>

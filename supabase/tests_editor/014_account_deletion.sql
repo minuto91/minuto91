@@ -1,5 +1,31 @@
 -- Exclusão de conta com 30 dias para recuperar (migração 021). Cole no SQL Editor do Supabase DEV.
 -- Termina SEMPRE com o erro proposital "PASS: 014_account_deletion" = tudo certo, nada gravado.
+-- V5 (052): a súmula publicada vira oficial na hora. Este teste cobre o fluxo antigo de cédula (010-013), que
+-- continua valendo para sessões abertas antes da 052; o bloco abaixo religa esse fluxo só durante o teste (desfeito no fim).
+create or replace function private.open_voting_session(p_match uuid, p_closes_at timestamptz,
+ p_duration integer, p_fixed boolean) returns uuid
+language plpgsql security definer set search_path = '' as $$
+declare c_min_voters constant integer := 6;
+ v_m public.matches; v_s public.pelada_settings; v_count integer; v_id uuid;
+begin
+ select * into v_m from public.matches where id=p_match;
+ select count(*) into v_count from private.match_voters(p_match);
+ if v_count < c_min_voters then
+  perform private.finalize_match_without_voting(p_match);
+  return null;
+ end if;
+ select * into v_s from public.pelada_settings where pelada_id=v_m.pelada_id;
+ insert into public.voting_sessions(pelada_id,match_id,closes_at,duration_minutes,fixed_close,sheet_version,
+  bola_murcha_required,minimum_numeric_ratings,formula_version,eligible_voter_count)
+ values(v_m.pelada_id,p_match,p_closes_at,p_duration,p_fixed,v_m.sheet_version,
+  coalesce(v_s.bola_murcha_enabled,true) and private.pelada_has_premium(v_m.pelada_id),
+  v_s.minimum_numeric_ratings,v_m.formula_version,v_count)
+ returning id into v_id;
+ insert into public.voting_eligible_members(pelada_id,session_id,membership_id,participant_id)
+ select v_m.pelada_id,v_id,v.membership_id,v.participant_id from private.match_voters(p_match) v;
+ update public.matches set status='voting_open' where id=p_match;
+ return v_id;
+end $$;
 create function pg_temp.uid(n int) returns uuid language sql as
  $$ select ('e0000000-0000-4000-8000-' || lpad(n::text,12,'0'))::uuid $$;
 create function pg_temp.as_user(n int) returns void language plpgsql as

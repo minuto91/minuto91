@@ -1,0 +1,10 @@
+Postgres 17.10
+iteração 1: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 1 aceitos / 19 recusados, publicação dupla ok/ok
+iteração 2: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 1 aceitos / 19 recusados, publicação dupla ok/ok
+iteração 3: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 1 aceitos / 19 recusados, publicação dupla ok/ok
+iteração 4: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 1 aceitos / 19 recusados, publicação dupla ok/ok
+iteração 5: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 1 aceitos / 19 recusados, publicação dupla ok/ok
+iteração 6: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 1 aceitos / 19 recusados, publicação dupla ok/ok
+iteração 7: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 0 aceitos / 20 recusados, publicação dupla ok/ok
+iteração 8: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 1 aceitos / 19 recusados, publicação dupla ok/ok
+sem problemas em 8 iterações

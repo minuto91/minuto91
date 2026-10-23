@@ -11,6 +11,7 @@ import { friendly } from '../../../lib/errors';
 import { Icon, IconName } from '../../../lib/icons';
 import { fmtDate, fmtTime, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match';
 import { AdminPending } from '../../../lib/pending';
+import { CardsTracking, PositionRequests } from '../../../lib/ratingadmin';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
@@ -253,6 +254,13 @@ export default function CentralDaRodada() {
 
       {isStaff && loaded && (
         <AdminPending peladaId={id} matches={matches} members={members} successor={pelada?.successor_membership_id ?? null} isAdmin={isAdmin} onInvite={convidar} />
+      )}
+      {/* V5: pedidos de troca de posição e registro de cartões (só o admin decide). */}
+      {isAdmin && loaded && (
+        <>
+          <PositionRequests peladaId={id} isAdmin={isAdmin} />
+          <CardsTracking peladaId={id} isAdmin={isAdmin} />
+        </>
       )}
 
       {/* Rodada em votação (para quem já votou ou não vota): o resultado sai quando a votação fechar. */}

@@ -6,7 +6,7 @@ import { Pressable, View } from 'react-native';
 import { Text } from './text';
 
 import { PlayerCard } from './arts';
-import { AWARD_LABEL, Card as CardData, plural, TIER } from './career';
+import { AWARD_LABEL, Card as CardData, overallLabel, plural } from './career';
 import { Crest } from './crest';
 import { fmtRating } from './match';
 import { supabase } from './supabase';
@@ -197,7 +197,7 @@ export function CareerByPelada({ career }: { career: Extract<Career, { visible: 
             <View key={s.season_id} style={{ borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 8, gap: 2 }}>
               <Text style={{ fontWeight: '700', color: colors.ink }}>
                 {s.name}
-                {s.card ? ` · overall ${Math.round(Number(s.card.overall))} ${TIER[s.card.tier].label}` : ''}
+                {s.card ? ` · ${overallLabel(s.card)}` : ''}
                 {s.card?.is_provisional ? ' (provisório)' : ''}
               </Text>
               <Sub>

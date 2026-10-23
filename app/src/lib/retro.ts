@@ -48,7 +48,7 @@ export async function loadRetro(_peladaId: string, seasonId: string, myMembershi
     myMembershipId
       ? supabase
           .from('player_cards')
-          .select('id, position, finishing, assisting, attendance, winning, peer_rating, overall, tier, is_provisional, matches_played')
+          .select('id, position, finishing, assisting, attendance, winning, peer_rating, overall, tier, is_provisional, matches_played, formula_version, atu, est, peq, res, dis, ovr_display')
           .eq('membership_id', myMembershipId)
           .eq('season_id', seasonId)
           .maybeSingle()

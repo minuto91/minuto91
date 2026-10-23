@@ -285,6 +285,9 @@ export default function Sumula() {
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 4 }}>
                   <Stepper label="Gols" value={p.goals} onChange={(v) => update(p.key, { goals: v })} />
                   <Stepper label="Assist." value={p.assists} onChange={(v) => update(p.key, { assists: v })} />
+                  <Stepper label="Amarelo" value={p.yellows ?? 0} max={1} onChange={(v) => update(p.key, { yellows: v })} />
+                  {/* V5: expulsão por segundo amarelo = uma penalidade de vermelho (não lance os dois amarelos). */}
+                  <Stepper label="2º amarelo" value={p.secondYellow ?? 0} max={1} onChange={(v) => update(p.key, { secondYellow: v })} />
                   <Stepper label="Vermelho" value={p.reds} max={5} onChange={(v) => update(p.key, { reds: v })} />
                 </View>
               </Card>

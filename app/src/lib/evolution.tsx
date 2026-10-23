@@ -6,13 +6,27 @@ import { useWindowDimensions, View } from 'react-native';
 import { Text } from './text';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 
-import { ATTRIBUTES } from './career';
+import { ATTRIBUTES, ATTRIBUTES_V2 } from './career';
 import { friendly } from './errors';
 import { supabase } from './supabase';
 import { colors } from './theme';
 import { Chips, Sub } from './ui';
 
-type Values = { overall: number; finishing: number; assisting: number; attendance: number; winning: number; peer_rating: number };
+// V5: cartas formula_version 2 trazem atu..dis e o overall é o OVR exibido (nulo antes de 5 partidas).
+type Values = {
+  overall: number | null;
+  finishing: number;
+  assisting: number;
+  attendance: number;
+  winning: number;
+  peer_rating: number;
+  atu?: number | null;
+  est?: number | null;
+  peq?: number | null;
+  res?: number | null;
+  dis?: number | null;
+  formula_version?: number | null;
+};
 export type EvoPoint = Values & { match_id: string; played_at: string; played: boolean; tier: string; position: string; is_provisional: boolean };
 export type Evolution = { points: EvoPoint[]; current: (Values & { is_provisional: boolean }) | null; monthly_king: string[]; craque: number };
 
@@ -46,15 +60,18 @@ export function useEvolution(membershipId: string, seasonId: string | null) {
   return { data, error };
 }
 
-const SERIES = [{ value: 'overall', label: 'Overall' }, ...ATTRIBUTES.map((a) => ({ value: a.key, label: a.code }))] as const;
-type Series = (typeof SERIES)[number]['value'];
+type Series = 'overall' | (typeof ATTRIBUTES)[number]['key'] | (typeof ATTRIBUTES_V2)[number]['key'];
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
 export function EvolutionChart({ evolution }: { evolution: Evolution }) {
   const { width } = useWindowDimensions();
   const [series, setSeries] = useState<Series>('overall');
-  const points = evolution.points;
-  const label = series === 'overall' ? 'Overall' : ATTRIBUTES.find((a) => a.key === series)!.label;
+  const v2 = (evolution.current?.formula_version ?? 1) >= 2;
+  const attrs: readonly { key: Series; label: string; code: string }[] = v2 ? ATTRIBUTES_V2 : ATTRIBUTES;
+  const SERIES = [{ value: 'overall' as Series, label: 'Overall' }, ...attrs.map((a) => ({ value: a.key, label: a.code }))];
+  // Só os pontos com valor (na V5, antes de 5 partidas não há OVR e esses pontos ficam fora do gráfico).
+  const points = evolution.points.filter((p) => p[series] !== null && p[series] !== undefined && (!v2 || (p.formula_version ?? 1) >= 2));
+  const label = series === 'overall' ? 'Overall' : (attrs.find((a) => a.key === series)?.label ?? '');
 
   if (points.length < 2) {
     return (
