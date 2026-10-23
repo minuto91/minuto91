@@ -45,6 +45,7 @@ const EVENT_LABEL: Record<string, string> = {
   entry_updated: 'Lançamento alterado',
   entry_cancelled: 'Lançamento cancelado',
 };
+const EXPORT_TIMEOUT_MS = 60_000;
 const STATUS_CSV: Record<string, string> = { settled: 'Efetivado', pending: 'Pendente', cancelled: 'Cancelado', reversed: 'Estornado' };
 const TABS = [
   { value: 'mes', label: 'Resumo do mês' },
@@ -98,14 +99,20 @@ export default function Relatorio() {
     setProgress('Lendo as movimentações do mês...');
     const last = new Date(`${monthShift(month, 1)}T12:00:00Z`);
     last.setUTCDate(last.getUTCDate() - 1);
+    // V4.6: conexão lenta ou caída não deixa a tela presa em "Lendo...": desiste em 60 s e nada é gerado.
+    const abort = new AbortController();
+    const timer = setTimeout(() => abort.abort(), EXPORT_TIMEOUT_MS);
     try {
-      const { data, error } = await supabase.rpc('get_finance_export', {
-        p_pelada: id,
-        p_from: month,
-        p_to: last.toISOString().slice(0, 10),
-        p_direction: null,
-        p_category: null,
-      });
+      const { data, error } = await supabase
+        .rpc('get_finance_export', {
+          p_pelada: id,
+          p_from: month,
+          p_to: last.toISOString().slice(0, 10),
+          p_direction: null,
+          p_category: null,
+        })
+        .abortSignal(abort.signal);
+      if (abort.signal.aborted) throw new Error('EXPORT_TIMEOUT');
       if (error) throw error;
       const x = data as { as_of: string; items: Movement[]; total: ExportTotal };
       const rows = x.items;
@@ -119,8 +126,16 @@ export default function Relatorio() {
       await exportCsvFile(`financeiro-${month.slice(0, 7)}`, `Financeiro ${monthLabel(month)}`, csv);
     } catch (e) {
       setProgress(null);
-      const m = (e as Error).message;
-      setMsg(m === 'EXPORT_INCOMPLETE' ? 'A conferência da exportação não bateu. Nada foi gerado: tente de novo.' : `Não foi possível exportar: ${friendly(m)}`);
+      const m = abort.signal.aborted ? 'EXPORT_TIMEOUT' : (e as Error).message;
+      setMsg(
+        m === 'EXPORT_INCOMPLETE'
+          ? 'A conferência da exportação não bateu. Nada foi gerado: tente de novo.'
+          : m === 'EXPORT_TIMEOUT'
+            ? 'A conexão demorou demais. Nada foi gerado: tente de novo com uma conexão melhor.'
+            : `Não foi possível exportar: ${friendly(m)}`,
+      );
+    } finally {
+      clearTimeout(timer);
     }
     setBusy(false);
   }

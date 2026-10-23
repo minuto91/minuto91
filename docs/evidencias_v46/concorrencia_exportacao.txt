@@ -1,0 +1,15 @@
+V4.5 Exportação (todas): Postgres 17.10, 50 migrações
+  massa: 4000 movimentações no mês (61.4s)
+  [todas as escritas]
+  escritas concorrentes: {"pagamento":701,"estorno":701,"edicao":701,"novo":701,"cancelamento":701,"erro":0}
+  V4.4 (páginas): 20 exportações -> 0 íntegras, 0 ACEITAS com conteúdo inconsistente {}, 20 recusadas pela quantidade
+  V4.5 (um instantâneo): 20 exportações -> 20 íntegras, 0 com problema; p50 464 ms, p95 673 ms
+  controle (mesma função VOLATILE): 0 íntegras, 20 com linhas e totais de instantes diferentes
+  [só estornos e edições (a quantidade não muda)]
+  escritas concorrentes: {"pagamento":0,"estorno":1672,"edicao":1672,"novo":0,"cancelamento":0,"erro":0}
+  V4.4 (páginas): 20 exportações -> 0 íntegras, 4 ACEITAS com conteúdo inconsistente {"repetida":4,"somas":4}, 16 recusadas pela quantidade
+  V4.5 (um instantâneo): 20 exportações -> 20 íntegras, 0 com problema; p50 493 ms, p95 915 ms
+  controle (mesma função VOLATILE): 0 íntegras, 20 com linhas e totais de instantes diferentes
+PASS: sem deadlock, sem voto de versão antiga, Financeiro íntegro e exportação íntegra sob concorrência
+
+[exited with code 0]

@@ -1,0 +1,10 @@
+PASS 034_v43_positions_formations.sql (2.3s)
+PASS 035_v43_draw_property.sql (162.6s)
+PASS 036_v43_finance.sql (0.6s)
+PASS 037_v44_finance_reports.sql (53.5s)
+PASS 038_v44_central_career.sql (0.9s)
+PASS 039_v45_finance_export.sql (5.8s)
+PASS 040_v46_payment_order.sql (0.0s)
+todos os 40 passaram
+
+[exited with code 0]

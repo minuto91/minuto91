@@ -1,0 +1,46 @@
+(node:7960) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Rafael/Documents/minuto91/app/src/lib/money.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\Rafael\Documents\minuto91\app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ formatBRL: centavos inteiros em reais (3.5541ms)
+✔ parseBRL: o que a pessoa digita vira centavos exatos (sem float) (1.5802ms)
+✔ datas: DD/MM/AAAA <-> AAAA-MM-DD, sem datas impossíveis (0.9379ms)
+✔ meses: deslocamento e nome (3.4933ms)
+✔ CSV e chave de idempotência (22.652ms)
+(node:18584) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Rafael/Documents/minuto91/app/src/lib/pager.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\Rafael\Documents\minuto91\app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ carrega a primeira página e as seguintes, sem repetir nem pular (12.8326ms)
+✔ dois loadMore seguidos (rolagem + botão) buscam a próxima página uma vez só (2.8329ms)
+✔ recarregar durante um loadMore: a página atrasada da lista antiga é descartada (0.8923ms)
+✔ loadMore enquanto a primeira página recarrega não usa o cursor antigo (0.7254ms)
+✔ troca de filtro: lista limpa na hora e resposta do filtro anterior nunca entra (0.878ms)
+✔ duas trocas de filtro rápidas: vale a última, mesmo que a primeira responda depois (0.6448ms)
+✔ recarregar com o mesmo filtro mantém a lista na tela até chegar a resposta (0.7197ms)
+✔ tela sem foco (cancel) ou desmontada (dispose): nada atrasado entra nem avisa (1.0113ms)
+✔ item repetido entre páginas (mudou de posição no servidor) entra uma vez só (0.8307ms)
+✔ erro na próxima página: mantém o que já carregou e permite tentar de novo (1.0927ms)
+✔ replace e resumo: troca só o item e mantém o resumo coerente (1.0198ms)
+✔ readAllPages: lê tudo e nunca entra em laço se o servidor repetir o cursor (29.6227ms)
+✔ conferência da exportação: íntegra, linha repetida, quantidade e somas (1.5277ms)
+✔ todos os tipos produzidos pelo banco têm texto, menos Bola Murcha (14.1634ms)
+✔ texto sem dados sensíveis: só o nome da pelada (4.4258ms)
+✔ caminho do toque (1.3074ms)
+✔ uma mensagem por aparelho, com o id da notificação (3.6661ms)
+✔ aceite: basta um aparelho; token morto é apagado (1.0658ms)
+✔ todos os aparelhos mortos = falha; limite de envio = tentar de novo (0.854ms)
+✔ recibos: espera até 24h; depois marca indisponível (1.9283ms)
+✔ lotes de 100 (0.6847ms)
+✔ lista todos os arquivos de uma pasta com mais de 1.000 (1.6864ms)
+✔ candidatos: todos os antigos, nenhum recente, sem repetir (4.146ms)
+✔ página exata (múltiplo do limite) também termina (1.3321ms)
+ℹ tests 29
+ℹ suites 0
+ℹ pass 29
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 1019.4222
+exit 0
