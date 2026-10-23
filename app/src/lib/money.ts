@@ -85,6 +85,16 @@ export const EXPENSE_CATEGORIES = ['Aluguel do campo', 'Arbitragem', 'Material e
 export const CHARGE_STATUS: Record<string, string> = { pending: 'Pendente', partial: 'Parcialmente pago', paid: 'Pago', cancelled: 'Cancelado' };
 export const CHARGE_KIND: Record<string, string> = { monthly: 'Mensalidade', single: 'Avulso', extra: 'Contribuição extraordinária' };
 
-/** Uma linha de CSV (separador ;, como o Excel em português abre). */
+/**
+ * Uma linha de CSV (separador ;, como o Excel em português abre). V4.4: texto livre que começa com = + - @ (ou tab/enter)
+ * ganha um apóstrofo na frente, para a planilha não executar como fórmula (nomes e descrições são digitados à mão).
+ * Números (valores) não passam por isso.
+ */
 export const csvRow = (cols: (string | number | null | undefined)[]) =>
-  cols.map((c) => `"${String(c ?? '').replace(/"/g, '""')}"`).join(';');
+  cols
+    .map((c) => {
+      const s = String(c ?? '');
+      const safe = typeof c === 'string' && /^[=+\-@\t\r]/.test(s) ? `'${s}` : s;
+      return `"${safe.replace(/"/g, '""')}"`;
+    })
+    .join(';');

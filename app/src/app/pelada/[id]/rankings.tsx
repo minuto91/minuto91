@@ -2,7 +2,7 @@ import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
-import { Avatar } from '../../../lib/avatar';
+import { Avatar, prefetchAvatars } from '../../../lib/avatar';
 import { AWARD_LABEL, currentSeason, fmtMonth, loadSeasons, Season, TIER } from '../../../lib/career';
 import { friendly } from '../../../lib/errors';
 import { fmtRating, loadMembers, Member } from '../../../lib/match';
@@ -86,6 +86,7 @@ export default function Rankings() {
       // Fotos só de quem o RLS deixa ver (pelada em comum, sem bloqueio nos dois sentidos); senão, iniciais.
       const uids = ms.map((m) => m.user_id).filter((u): u is string => !!u);
       const { data: pr } = uids.length ? await supabase.from('profiles').select('id, avatar_path').in('id', uids) : { data: [] };
+      await prefetchAvatars((pr ?? []).map((p) => p.avatar_path as string | null)); // V4.4: fotos assinadas em lote
       if (!alive) return;
       setMembers(ms);
       setPhotos(Object.fromEntries((pr ?? []).map((p) => [p.id as string, p.avatar_path as string | null])));

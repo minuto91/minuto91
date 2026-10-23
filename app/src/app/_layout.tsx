@@ -19,7 +19,7 @@ function Gate() {
     const open = first === 'termos' || first === 'privacidade' || first === 'redefinir-senha';
     if (!session) {
       // A vitrine de Cards (só em desenvolvimento) abre sem login, para conferir o desenho.
-      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && (first === 'dev-cards' || first === 'dev-v42' || first === 'dev-v43'))) router.replace('/login');
+      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && (first === 'dev-cards' || first === 'dev-v42' || first === 'dev-v43' || first === 'dev-v44'))) router.replace('/login');
       return;
     }
     if (onboarded === null) return;
@@ -48,7 +48,7 @@ function Gate() {
           headerTitleStyle: { color: colors.deepBlue },
           contentStyle: { backgroundColor: colors.white },
         }}>
-        <Stack.Screen name="index" options={{ title: 'Minuto 91' }} />
+        <Stack.Screen name="index" options={{ title: 'Central do Jogador' }} />
         <Stack.Screen name="login" options={{ headerShown: false }} />
         <Stack.Screen name="onboarding" options={{ title: 'Seu cadastro', headerBackVisible: false }} />
         <Stack.Screen name="criar-pelada" options={{ title: 'Criar pelada' }} />
@@ -77,6 +77,8 @@ function Gate() {
         <Stack.Screen name="privacidade" options={{ title: 'Política de Privacidade' }} />
         <Stack.Screen name="redefinir-senha" options={{ title: 'Nova senha' }} />
         <Stack.Screen name="perfil" options={{ title: 'Meu perfil' }} />
+        <Stack.Screen name="carreira" options={{ title: 'Minha Carreira' }} />
+        <Stack.Screen name="guia-cards" options={{ title: 'Cards e premiações' }} />
         <Stack.Screen name="atleta/[id]" options={{ title: 'Perfil do jogador' }} />
         <Stack.Screen name="jogador/[id]/index" options={{ title: 'Card' }} />
         <Stack.Screen name="jogador/[id]/album" options={{ title: 'Álbum' }} />

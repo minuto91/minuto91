@@ -1,4 +1,4 @@
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
@@ -18,9 +18,10 @@ import {
   newRequestId,
   parseBRL,
 } from '../../../../lib/money';
+import { Page, usePaged } from '../../../../lib/paging';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../../../../lib/ui';
+import { Button, Card, Chips, ErrorText, Input, ListScreen, Screen, Sub, Title } from '../../../../lib/ui';
 
 type Movement = {
   source: 'payment' | 'entry';
@@ -30,6 +31,7 @@ type Movement = {
   description: string;
   amount_cents: number;
   date: string;
+  created_at: string;
   method: string | null;
   status: 'settled' | 'pending' | 'cancelled' | 'reversed';
   version?: number;
@@ -37,24 +39,33 @@ type Movement = {
   cancel_reason?: string | null;
   author: string | null;
 };
+type Cursor = { date: string; created_at: string; id: string };
+type LedgerPage = { items: Movement[]; next: Cursor | null; total: { count: number; settled_income_cents: number; settled_expense_cents: number } | null };
 const DIRECTIONS = [
   { value: 'all', label: 'Tudo' },
   { value: 'income', label: 'Receitas' },
   { value: 'expense', label: 'Despesas' },
 ] as const;
+const PAGE = 40;
+const monthEnd = (m: string) => {
+  const next = monthShift(m, 1);
+  const d = new Date(`${next}T12:00:00Z`);
+  d.setUTCDate(d.getUTCDate() - 1);
+  return d.toISOString().slice(0, 10);
+};
 
 // Receitas e despesas (V4.3): o livro-caixa. Pagamentos de cobranças entram sozinhos como receita; aqui também se
 // lançam contribuições, patrocínios e as despesas (campo, arbitragem, água...). Categorias livres. Despesa pendente
 // não sai do saldo até ser paga. Cancelar nunca apaga: fica no histórico com o motivo.
+// V4.4: páginas do servidor em lista virtualizada (nenhum mês fica cortado), totais do mês calculados no servidor e
+// "Repetir" para despesas e receitas recorrentes (abre o formulário já preenchido, com a data de hoje).
 export default function Lancamentos() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const today = todayIn();
   const [month, setMonth] = useState(monthShift(today, 0));
   const [direction, setDirection] = useState<string>('all');
-  const [rows, setRows] = useState<Movement[] | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [reload, setReload] = useState(0);
   const [form, setForm] = useState<{ edit: Movement | null; direction: 'income' | 'expense' } | null>(null);
   const [category, setCategory] = useState('');
   const [desc, setDesc] = useState('');
@@ -66,37 +77,35 @@ export default function Lancamentos() {
   const [reqId, setReqId] = useState(newRequestId());
   const [cancelling, setCancelling] = useState<string | null>(null);
 
-  useFocusEffect(
-    useCallback(() => {
-      let alive = true;
-      (async () => {
-        void reload;
-        const { data, error } = await supabase.rpc('get_finance_ledger', {
-          p_pelada: id,
-          p_month: month,
-          p_direction: direction === 'all' ? null : direction,
-          p_category: null,
-          p_limit: 500,
-        });
-        if (!alive) return;
-        if (error) return setMsg(friendly(error.message));
-        setMsg(null);
-        setRows(data as Movement[]);
-      })();
-      return () => {
-        alive = false;
-      };
-    }, [id, month, direction, reload]),
+  const fetchPage = useCallback(
+    async (after: Cursor | null): Promise<Page<Movement, Cursor, LedgerPage['total']>> => {
+      const { data, error } = await supabase.rpc('get_finance_ledger_page', {
+        p_pelada: id,
+        p_from: month,
+        p_to: monthEnd(month),
+        p_direction: direction === 'all' ? null : direction,
+        p_category: null,
+        p_after: after,
+        p_limit: PAGE,
+        p_with_total: after === null,
+      });
+      if (error) throw error;
+      const p = data as LedgerPage;
+      return { items: p.items, next: p.next, summary: p.total };
+    },
+    [id, month, direction],
   );
+  const list = usePaged(fetchPage);
 
-  function abrir(dir: 'income' | 'expense', edit: Movement | null) {
+  function abrir(dir: 'income' | 'expense', edit: Movement | null, copy?: Movement) {
+    const src = edit ?? copy ?? null;
     setForm({ edit, direction: dir });
-    setCategory(edit?.category ?? '');
-    setDesc(edit?.description ?? '');
-    setAmount(edit ? centsToInput(edit.amount_cents) : '');
+    setCategory(src?.category ?? '');
+    setDesc(src?.description ?? '');
+    setAmount(src ? centsToInput(src.amount_cents) : '');
     setDay(edit?.date ?? today);
     setPaid(edit?.status === 'pending' ? 'pending' : 'settled');
-    setMethod(edit?.method ?? 'pix');
+    setMethod(src?.method ?? 'pix');
     setNotes(edit?.notes ?? '');
     setReqId(newRequestId());
     setMsg(null);
@@ -105,7 +114,7 @@ export default function Lancamentos() {
   async function salvar() {
     if (!form) return;
     const cents = parseBRL(amount);
-    if (!cents) return setMsg('Valor inválido.');
+    if (!cents) return setMsg('Valor inválido. Use, por exemplo, 50 ou 50,00.');
     setBusy(true);
     const { error } = await supabase.rpc('save_finance_entry', {
       p_pelada: id,
@@ -124,7 +133,7 @@ export default function Lancamentos() {
     setBusy(false);
     if (error) return setMsg(friendly(error.message));
     setForm(null);
-    setReload((n) => n + 1);
+    list.refresh();
   }
 
   async function cancelar(row: Movement) {
@@ -133,7 +142,7 @@ export default function Lancamentos() {
     setBusy(false);
     if (error) return setMsg(friendly(error.message));
     setCancelling(null);
-    setReload((n) => n + 1);
+    list.refresh();
   }
 
   if (form) {
@@ -176,12 +185,9 @@ export default function Lancamentos() {
     );
   }
 
-  const settled = (rows ?? []).filter((r) => r.status === 'settled');
-  const inc = settled.filter((r) => r.direction === 'income').reduce((s, r) => s + r.amount_cents, 0);
-  const exp = settled.filter((r) => r.direction === 'expense').reduce((s, r) => s + r.amount_cents, 0);
-
-  return (
-    <Screen>
+  const t = list.summary;
+  const header = (
+    <>
       <Title>Receitas e despesas</Title>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Pressable accessibilityRole="button" accessibilityLabel="Mês anterior" onPress={() => setMonth(monthShift(month, -1))} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}>
@@ -198,9 +204,12 @@ export default function Lancamentos() {
         </Pressable>
       </View>
       <Chips options={DIRECTIONS} value={direction} onChange={(v) => setDirection(v)} />
-      <Sub>
-        No mês (efetivado): receitas {formatBRL(inc)} · despesas {formatBRL(exp)} · resultado {formatBRL(inc - exp)}
-      </Sub>
+      {t && (
+        <Sub>
+          No mês (efetivado): receitas {formatBRL(t.settled_income_cents)} · despesas {formatBRL(t.settled_expense_cents)} · resultado{' '}
+          {formatBRL(t.settled_income_cents - t.settled_expense_cents)} · {t.count} {t.count === 1 ? 'movimentação' : 'movimentações'}
+        </Sub>
+      )}
       <View style={{ flexDirection: 'row', gap: 8 }}>
         <View style={{ flex: 1 }}>
           <Button title="+ Receita" onPress={() => abrir('income', null)} />
@@ -209,11 +218,23 @@ export default function Lancamentos() {
           <Button title="+ Despesa" kind="secondary" onPress={() => abrir('expense', null)} />
         </View>
       </View>
-      <ErrorText>{msg}</ErrorText>
-      {!rows && !msg && <Sub>Carregando...</Sub>}
-      {rows?.length === 0 && <Sub>Nenhum lançamento neste mês.</Sub>}
-      {rows?.map((r) => (
-        <Card key={`${r.source}-${r.id}`}>
+      <ErrorText>{msg ?? list.error}</ErrorText>
+      {list.error && <Button title="Tentar de novo" kind="secondary" onPress={list.refresh} />}
+      {!list.items && !list.error && <Sub>Carregando...</Sub>}
+    </>
+  );
+
+  return (
+    <ListScreen
+      header={header}
+      data={list.items}
+      keyExtractor={(r) => `${r.source}-${r.id}`}
+      empty={<Sub>Nenhum lançamento neste mês.</Sub>}
+      loadingMore={list.loadingMore}
+      onEndReached={list.loadMore}
+      footer={list.hasMore && !list.loadingMore ? <Button title="Carregar mais" kind="secondary" onPress={list.loadMore} /> : null}
+      renderItem={(r) => (
+        <Card>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.ink, fontWeight: '600' }}>{r.description}</Text>
@@ -236,22 +257,33 @@ export default function Lancamentos() {
           </View>
           {r.status === 'pending' && <Text style={{ color: colors.darkGold, fontWeight: '600' }}>{r.direction === 'income' ? 'A receber' : 'A pagar'}</Text>}
           {r.status === 'cancelled' && <Sub>Cancelado{r.cancel_reason ? `: ${r.cancel_reason}` : ''}</Sub>}
-          {r.status === 'reversed' && <Sub>Pagamento estornado (veja em Cobranças).</Sub>}
+          {r.status === 'reversed' && <Sub>Pagamento estornado{r.cancel_reason ? `: ${r.cancel_reason}` : ''} (veja em Cobranças).</Sub>}
           {r.source === 'payment' && r.status === 'settled' && <Sub>Pagamento de cobrança (altere ou estorne em Cobranças).</Sub>}
-          {r.source === 'entry' && (r.status === 'settled' || r.status === 'pending') && cancelling !== r.id && (
-            <View style={{ flexDirection: 'row', gap: 16 }}>
-              <Pressable accessibilityRole="button" onPress={() => abrir(r.direction, r)} style={{ minHeight: 40, justifyContent: 'center' }}>
-                <Text style={{ color: colors.blue, fontWeight: '600' }}>{r.status === 'pending' ? 'Alterar / marcar como pago' : 'Alterar'}</Text>
-              </Pressable>
+          {r.source === 'entry' && cancelling !== r.id && (
+            <View style={{ flexDirection: 'row', gap: 16, flexWrap: 'wrap' }}>
+              {(r.status === 'settled' || r.status === 'pending') && (
+                <Pressable accessibilityRole="button" onPress={() => abrir(r.direction, r)} style={{ minHeight: 40, justifyContent: 'center' }}>
+                  <Text style={{ color: colors.blue, fontWeight: '600' }}>{r.status === 'pending' ? 'Alterar / marcar como pago' : 'Alterar'}</Text>
+                </Pressable>
+              )}
               <Pressable
                 accessibilityRole="button"
-                onPress={() => {
-                  setNotes('');
-                  setCancelling(r.id);
-                }}
+                accessibilityLabel={`Repetir ${r.description} com a data de hoje`}
+                onPress={() => abrir(r.direction, null, r)}
                 style={{ minHeight: 40, justifyContent: 'center' }}>
-                <Text style={{ color: colors.danger, fontWeight: '600' }}>Cancelar</Text>
+                <Text style={{ color: colors.blue, fontWeight: '600' }}>Repetir</Text>
               </Pressable>
+              {(r.status === 'settled' || r.status === 'pending') && (
+                <Pressable
+                  accessibilityRole="button"
+                  onPress={() => {
+                    setNotes('');
+                    setCancelling(r.id);
+                  }}
+                  style={{ minHeight: 40, justifyContent: 'center' }}>
+                  <Text style={{ color: colors.danger, fontWeight: '600' }}>Cancelar</Text>
+                </Pressable>
+              )}
             </View>
           )}
           {cancelling === r.id && (
@@ -262,7 +294,7 @@ export default function Lancamentos() {
             </View>
           )}
         </Card>
-      ))}
-    </Screen>
+      )}
+    />
   );
 }

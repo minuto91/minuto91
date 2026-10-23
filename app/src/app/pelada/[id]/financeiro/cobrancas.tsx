@@ -8,13 +8,15 @@ import { friendly } from '../../../../lib/errors';
 import { Charge, DateField, Field, People, Person, PersonPicker, StatusBadge } from '../../../../lib/financeui';
 import { fmtDate } from '../../../../lib/match';
 import { CHARGE_KIND, centsToInput, fmtDay, formatBRL, methodLabel, METHODS, monthShift, newRequestId, parseBRL } from '../../../../lib/money';
+import { Page, usePaged } from '../../../../lib/paging';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../../../../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, Input, ListScreen, Screen, Sub, Title } from '../../../../lib/ui';
 
 const STATUS = [
   { value: 'open', label: 'Em aberto' },
   { value: 'overdue', label: 'Vencidas' },
+  { value: 'partial', label: 'Parciais' },
   { value: 'paid', label: 'Pagas' },
   { value: 'cancelled', label: 'Canceladas' },
   { value: 'all', label: 'Todas' },
@@ -24,23 +26,25 @@ const PERIOD = [
   { value: 'this', label: 'Este mês' },
   { value: 'prev', label: 'Mês anterior' },
 ] as const;
+const PAGE = 30;
 type Panel = { charge: string; kind: 'pay' | 'edit' | 'cancel' | 'reverse'; payment?: string } | null;
+type Cursor = { due_date: string; created_at: string; id: string };
+type Summary = { count: number; outstanding_cents: number; partial_count: number };
 
-// Cobranças e pendências (V4.3): mensalidades, avulsos e contribuições. Pagamento integral ou parcial registrado à mão
-// (o app não recebe dinheiro), estorno sem apagar, cancelamento só sem pagamentos. Cada envio leva uma chave única:
-// tocar duas vezes registra uma vez só.
+// Cobranças e pendências (V4.3; V4.4: páginas de 30 vindas do servidor em lista virtualizada, total em aberto calculado
+// no servidor para o filtro inteiro, filtro de parciais e "Recebi tudo hoje" em um toque). Pagamento integral ou parcial
+// registrado à mão (o app não recebe dinheiro), estorno sem apagar, cancelamento só sem pagamentos. Cada envio leva uma
+// chave única: tocar duas vezes registra uma vez só.
 export default function Cobrancas() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, status: initialStatus } = useLocalSearchParams<{ id: string; status?: string }>();
   const today = todayIn();
-  const [status, setStatus] = useState<string>('open');
+  const [status, setStatus] = useState<string>(STATUS.some((s) => s.value === initialStatus) ? String(initialStatus) : 'open');
   const [period, setPeriod] = useState<string>('all');
   const [person, setPerson] = useState<Person | null>(null);
-  const [charges, setCharges] = useState<Charge[] | null>(null);
   const [people, setPeople] = useState<People | null>(null);
   const [matches, setMatches] = useState<{ id: string; played_at: string; team_a_name: string; team_b_name: string }[]>([]);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [reload, setReload] = useState(0);
   const [panel, setPanel] = useState<Panel>(null);
   // Formulários
   const [amount, setAmount] = useState('');
@@ -54,41 +58,55 @@ export default function Cobrancas() {
   const [desc, setDesc] = useState('');
   const [match, setMatch] = useState<string | null>(null);
   const [newPayer, setNewPayer] = useState('');
+  const [peopleReload, setPeopleReload] = useState(0);
 
+  const membershipFilter = person?.membership_id ?? null;
+  const payerFilter = person?.payer_id ?? null;
+  const fetchPage = useCallback(
+    async (after: Cursor | null): Promise<Page<Charge, Cursor, Summary>> => {
+      const month = period === 'this' ? monthShift(today, 0) : period === 'prev' ? monthShift(today, -1) : null;
+      const { data, error } = await supabase.rpc('get_finance_charges_page', {
+        p_pelada: id,
+        p_month: month,
+        p_status: status === 'all' ? null : status,
+        p_membership: membershipFilter,
+        p_payer: payerFilter,
+        p_kind: null,
+        p_after: after,
+        p_limit: PAGE,
+      });
+      if (error) throw error;
+      return data as Page<Charge, Cursor, Summary>;
+    },
+    [id, status, period, membershipFilter, payerFilter, today],
+  );
+  const list = usePaged(fetchPage);
+
+  // Pessoas e partidas recentes (formulário de nova cobrança).
   useFocusEffect(
     useCallback(() => {
       let alive = true;
       (async () => {
-        void reload;
-        const month = period === 'this' ? monthShift(today, 0) : period === 'prev' ? monthShift(today, -1) : null;
-        const [{ data: cs, error }, { data: pp }, { data: ms }] = await Promise.all([
-          supabase.rpc('get_finance_charges', {
-            p_pelada: id,
-            p_month: month,
-            p_status: status === 'all' ? null : status,
-            p_membership: person?.membership_id ?? null,
-            p_payer: person?.payer_id ?? null,
-          }),
+        void peopleReload;
+        const [{ data: pp }, { data: ms }] = await Promise.all([
           supabase.rpc('get_finance_people', { p_pelada: id }),
           supabase.from('matches').select('id, played_at, team_a_name, team_b_name').eq('pelada_id', id).neq('status', 'draft').order('played_at', { ascending: false }).limit(5),
         ]);
         if (!alive) return;
-        if (error) return setMsg(friendly(error.message));
-        setMsg(null);
-        setCharges(cs as Charge[]);
         setPeople(pp as People);
         setMatches(ms ?? []);
       })();
       return () => {
         alive = false;
       };
-    }, [id, status, period, person, reload, today]),
+    }, [id, peopleReload]),
   );
 
   function open(p: Panel, c?: Charge) {
     setPanel(p);
     setReqId(newRequestId());
     setNotes('');
+    setMsg(null);
     setDay(p?.kind === 'edit' && c ? c.due_date : today);
     setAmount(c ? centsToInput(p?.kind === 'edit' ? c.amount_due_cents : c.outstanding_cents) : '');
   }
@@ -100,44 +118,66 @@ export default function Cobrancas() {
     setBusy(false);
     if (error) {
       setMsg(friendly(error.message));
-      return { ok: false, error: error.message };
+      return { ok: false as const, error: error.message };
     }
-    return { ok: true, data };
+    return { ok: true as const, data };
   }
 
-  async function pagar(c: Charge, confirmDuplicate = false) {
-    const cents = parseBRL(amount);
-    if (!cents) return setMsg('Valor inválido.');
+  // O servidor devolve a cobrança atualizada: troca só ela na lista e ajusta o total em aberto.
+  function updated(before: Charge, after: Charge) {
+    list.replace((x) => x.id === before.id, after);
+    list.setSummary((s) => (s ? { ...s, outstanding_cents: s.outstanding_cents - before.outstanding_cents + after.outstanding_cents } : s));
+  }
+
+  async function pagar(c: Charge, cents: number, when: string, how: string, obs: string | null, key: string, confirmDuplicate = false) {
     const r = await call('register_payment', {
       p_charge: c.id,
       p_amount_cents: cents,
-      p_received_on: day,
-      p_method: method,
-      p_notes: notes.trim() || null,
-      p_request_id: reqId,
+      p_received_on: when,
+      p_method: how,
+      p_notes: obs,
+      p_request_id: key,
       p_confirm_duplicate: confirmDuplicate,
     });
-    if (!r.ok && r.error?.includes('FINANCE_POSSIBLE_DUPLICATE')) {
+    if (!r.ok && r.error.includes('FINANCE_POSSIBLE_DUPLICATE')) {
       return confirm(
         'Pagamento parecido acabou de ser registrado',
         `Já existe um pagamento de ${formatBRL(cents)} nesta cobrança, registrado agora há pouco. É outro pagamento?`,
         'Registrar outro',
-        () => pagar(c, true),
+        () => pagar(c, cents, when, how, obs, key, true),
       );
     }
     if (r.ok) {
       setPanel(null);
-      setReload((n) => n + 1);
+      updated(c, r.data as Charge);
     }
+  }
+
+  function pagarDoFormulario(c: Charge) {
+    const cents = parseBRL(amount);
+    if (!cents) return setMsg('Valor inválido. Use, por exemplo, 50 ou 50,00.');
+    if (cents > c.outstanding_cents) return setMsg(`O valor passa do que falta (${formatBRL(c.outstanding_cents)}).`);
+    pagar(c, cents, day, method, notes.trim() || null, reqId);
+  }
+
+  // Atalho: o valor que falta, recebido hoje, na última forma usada. Um toque + confirmação.
+  function recebiTudo(c: Charge) {
+    const key = newRequestId();
+    confirm(
+      'Registrar pagamento',
+      `${c.person_name} pagou ${formatBRL(c.outstanding_cents)} hoje (${methodLabel(method)})?`,
+      'Registrar',
+      () => pagar(c, c.outstanding_cents, today, method, null, key),
+    );
   }
 
   async function editar(c: Charge) {
     const cents = parseBRL(amount);
-    if (!cents) return setMsg('Valor inválido.');
+    if (!cents) return setMsg('Valor inválido. Use, por exemplo, 50 ou 50,00.');
     const r = await call('update_charge', { p_charge: c.id, p_amount_cents: cents, p_due_date: day, p_description: null, p_expected_version: c.version });
     if (r.ok) {
       setPanel(null);
-      setReload((n) => n + 1);
+      updated(c, r.data as Charge);
     }
   }
 
@@ -145,15 +185,15 @@ export default function Cobrancas() {
     const r = await call('cancel_charge', { p_charge: c.id, p_reason: notes.trim() });
     if (r.ok) {
       setPanel(null);
-      setReload((n) => n + 1);
+      updated(c, r.data as Charge);
     }
   }
 
-  async function estornar(paymentId: string) {
+  async function estornar(c: Charge, paymentId: string) {
     const r = await call('reverse_payment', { p_payment: paymentId, p_reason: notes.trim() });
     if (r.ok) {
       setPanel(null);
-      setReload((n) => n + 1);
+      updated(c, r.data as Charge);
     }
   }
 
@@ -162,13 +202,13 @@ export default function Cobrancas() {
     if (r.ok) {
       setWho({ payer_id: String(r.data), name: newPayer.trim() });
       setNewPayer('');
-      setReload((n) => n + 1);
+      setPeopleReload((n) => n + 1);
     }
   }
 
   async function criar() {
     const cents = parseBRL(amount);
-    if (!cents) return setMsg('Valor inválido.');
+    if (!cents) return setMsg('Valor inválido. Use, por exemplo, 50 ou 50,00.');
     if (!who) return setMsg('Escolha quem deve pagar.');
     const r = await call('create_charge', {
       p_pelada: id,
@@ -186,7 +226,7 @@ export default function Cobrancas() {
       setWho(null);
       setDesc('');
       setMatch(null);
-      setReload((n) => n + 1);
+      list.refresh();
     }
   }
 
@@ -237,8 +277,9 @@ export default function Cobrancas() {
     );
   }
 
-  return (
-    <Screen>
+  const s = list.summary;
+  const header = (
+    <>
       <Title>Cobranças e pendências</Title>
       <Chips options={STATUS} value={status} onChange={(v) => setStatus(v)} />
       <Chips options={PERIOD} value={period} onChange={(v) => setPeriod(v)} />
@@ -247,7 +288,8 @@ export default function Cobrancas() {
           <Text style={{ color: colors.blue, fontWeight: '700' }}>Só {person.name} · mostrar todos ✕</Text>
         </Pressable>
       )}
-      <ErrorText>{msg}</ErrorText>
+      <ErrorText>{panel ? list.error : (msg ?? list.error)}</ErrorText>
+      {list.error && <Button title="Tentar de novo" kind="secondary" onPress={list.refresh} />}
       <Button
         title="Nova cobrança (avulso ou contribuição)"
         kind="secondary"
@@ -257,18 +299,30 @@ export default function Cobrancas() {
           setCreating(true);
         }}
       />
-      {!charges && !msg && <Sub>Carregando...</Sub>}
-      {charges?.length === 0 && <Sub>Nenhuma cobrança com esses filtros.</Sub>}
-      {charges && charges.length > 0 && (
+      {!list.items && !list.error && <Sub>Carregando...</Sub>}
+      {s && s.count > 0 && (
         <Sub>
-          {charges.length} {charges.length === 1 ? 'cobrança' : 'cobranças'} · em aberto {formatBRL(charges.reduce((s, c) => s + c.outstanding_cents, 0))}
+          {s.count} {s.count === 1 ? 'cobrança' : 'cobranças'} · em aberto {formatBRL(s.outstanding_cents)}
+          {s.partial_count > 0 ? ` · ${s.partial_count} ${s.partial_count === 1 ? 'parcial' : 'parciais'}` : ''}
         </Sub>
       )}
-      {charges?.map((c) => {
+    </>
+  );
+
+  return (
+    <ListScreen
+      header={header}
+      data={list.items}
+      keyExtractor={(c) => c.id}
+      empty={<Sub>Nenhuma cobrança com esses filtros.</Sub>}
+      loadingMore={list.loadingMore}
+      onEndReached={list.loadMore}
+      footer={list.hasMore && !list.loadingMore ? <Button title="Carregar mais" kind="secondary" onPress={list.loadMore} /> : null}
+      renderItem={(c) => {
         const here = panel?.charge === c.id ? panel : null;
         const openCharge = c.status === 'pending' || c.status === 'partial';
         return (
-          <Card key={c.id}>
+          <Card>
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
               <View style={{ flex: 1, gap: 2 }}>
                 <Pressable
@@ -308,11 +362,14 @@ export default function Cobrancas() {
             {!here && openCharge && (
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                 <View style={{ flex: 1, minWidth: 140 }}>
-                  <Button title="Registrar pagamento" onPress={() => open({ charge: c.id, kind: 'pay' }, c)} />
+                  <Button title="Recebi tudo hoje" onPress={() => recebiTudo(c)} disabled={busy} />
                 </View>
                 <View style={{ flex: 1, minWidth: 140 }}>
-                  <Button title="Alterar" kind="secondary" onPress={() => open({ charge: c.id, kind: 'edit' }, c)} />
+                  <Button title="Outro valor ou data" kind="secondary" onPress={() => open({ charge: c.id, kind: 'pay' }, c)} />
                 </View>
+                <Pressable accessibilityRole="button" onPress={() => open({ charge: c.id, kind: 'edit' }, c)} style={{ minHeight: 44, justifyContent: 'center' }}>
+                  <Text style={{ color: colors.blue, fontWeight: '600' }}>Alterar</Text>
+                </Pressable>
                 {c.amount_paid_cents === 0 && (
                   <Pressable accessibilityRole="button" onPress={() => open({ charge: c.id, kind: 'cancel' }, c)} style={{ minHeight: 44, justifyContent: 'center' }}>
                     <Text style={{ color: colors.danger, fontWeight: '600' }}>Cancelar cobrança</Text>
@@ -321,6 +378,7 @@ export default function Cobrancas() {
               </View>
             )}
 
+            {here && <ErrorText>{msg}</ErrorText>}
             {here?.kind === 'pay' && (
               <View style={{ gap: 8 }}>
                 <Field label="Valor recebido (R$)">
@@ -332,7 +390,7 @@ export default function Cobrancas() {
                   <Chips options={METHODS} value={method} onChange={(v) => setMethod(v)} />
                 </Field>
                 <Input value={notes} onChangeText={setNotes} placeholder="Observação (opcional)" maxLength={200} autoCapitalize="sentences" />
-                <Button title="Confirmar pagamento" onPress={() => pagar(c)} loading={busy} />
+                <Button title="Confirmar pagamento" onPress={() => pagarDoFormulario(c)} loading={busy} />
                 <Button title="Voltar" kind="secondary" onPress={() => setPanel(null)} />
               </View>
             )}
@@ -353,7 +411,7 @@ export default function Cobrancas() {
                 <Button
                   title={here.kind === 'cancel' ? 'Cancelar cobrança' : 'Estornar pagamento'}
                   kind="danger"
-                  onPress={() => (here.kind === 'cancel' ? cancelar(c) : estornar(here.payment!))}
+                  onPress={() => (here.kind === 'cancel' ? cancelar(c) : estornar(c, here.payment!))}
                   loading={busy}
                   disabled={notes.trim().length < 3}
                 />
@@ -362,7 +420,7 @@ export default function Cobrancas() {
             )}
           </Card>
         );
-      })}
-    </Screen>
+      }}
+    />
   );
 }

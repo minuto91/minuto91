@@ -102,37 +102,72 @@ export function PushHandler() {
   return null;
 }
 
-type Prefs = { essential: boolean; engagement: boolean };
+type Category = 'match_voting' | 'voting_reminder' | 'results' | 'awards' | 'pelada';
+type Prefs = { essential: boolean; engagement: boolean; categories: Record<Category, boolean> };
 
-/** Minha conta > Notificações: estado deste aparelho e as duas preferências (valem para todos os aparelhos). */
+// V4.4: uma chave por categoria (045). As duas chaves gerais da V4.1 continuam no servidor para apps antigos: aqui a
+// categoria aparece ligada só se a geral dela também estiver; ligar uma categoria religa a geral correspondente.
+// Nenhum aviso traz valores financeiros; cobrança automática não existe.
+const CATEGORIES: { key: Category; group: 'essential' | 'engagement'; label: string; hint: string }[] = [
+  { key: 'match_voting', group: 'essential', label: 'Nova partida e votação aberta', hint: 'Quando a súmula é publicada, corrigida ou a votação recomeça.' },
+  { key: 'voting_reminder', group: 'essential', label: 'Lembrete de votação', hint: 'Quando a votação está perto de fechar e você ainda não votou.' },
+  { key: 'results', group: 'essential', label: 'Resultado publicado', hint: 'Resultado da partida e partida anulada.' },
+  { key: 'awards', group: 'engagement', label: 'Premiações e conquistas', hint: 'Craque da Partida, Rei do Mês, figurinhas e retrospectiva. No máximo 3 por semana.' },
+  { key: 'pelada', group: 'essential', label: 'Avisos importantes da pelada', hint: 'Mudança de administrador, de função ou da assinatura da pelada.' },
+];
+const ALL_ON: Record<Category, boolean> = { match_voting: true, voting_reminder: true, results: true, awards: true, pelada: true };
+
+/** Minha conta > Notificações: estado deste aparelho e uma preferência por categoria (vale para todos os aparelhos). */
 export function NotificationSettings() {
   const [status, setStatus] = useState<PushStatus | null>(null);
   const [prefs, setPrefs] = useState<Prefs | null>(null);
+  const [legacy, setLegacy] = useState(false); // servidor sem a migração 045
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [s, { data }] = await Promise.all([pushStatus(), supabase.from('notification_preferences').select('essential, engagement').maybeSingle()]);
+      const [s, r] = await Promise.all([pushStatus(), supabase.rpc('get_notification_preferences')]);
       if (!alive) return;
       setStatus(s);
-      setPrefs((data as Prefs | null) ?? { essential: true, engagement: true });
+      if (!r.error) return setPrefs(r.data as Prefs);
+      const { data } = await supabase.from('notification_preferences').select('essential, engagement').maybeSingle();
+      if (!alive) return;
+      setLegacy(true);
+      setPrefs({ ...((data as Omit<Prefs, 'categories'> | null) ?? { essential: true, engagement: true }), categories: ALL_ON });
     })();
     return () => {
       alive = false;
     };
   }, []);
 
-  async function save(next: Prefs) {
+  async function toggle(c: (typeof CATEGORIES)[number], on: boolean) {
+    if (!prefs) return;
     const before = prefs;
+    const next: Prefs = { ...prefs, categories: { ...prefs.categories, [c.key]: on } };
+    if (on) next[c.group] = true;
     setPrefs(next);
     setMsg(null);
-    const { error } = await supabase.rpc('set_notification_preferences', { p_essential: next.essential, p_engagement: next.engagement });
+    // Religar a geral desta categoria (desligada por um app antigo), sem mudar a outra.
+    if (on && !before[c.group]) {
+      const { error } = await supabase.rpc('set_notification_preferences', { p_essential: next.essential, p_engagement: next.engagement });
+      if (error) {
+        setPrefs(before);
+        return setMsg(friendly(error.message));
+      }
+    }
+    const { data, error } = legacy
+      ? await supabase.rpc('set_notification_preferences', {
+          p_essential: c.group === 'essential' ? on : next.essential,
+          p_engagement: c.group === 'engagement' ? on : next.engagement,
+        })
+      : await supabase.rpc('set_notification_category', { p_category: c.key, p_enabled: on });
     if (error) {
       setPrefs(before);
-      setMsg(error.code === 'PGRST202' ? 'Preferências ainda indisponíveis neste servidor (falta a migração 035).' : friendly(error.message));
+      return setMsg(friendly(error.message));
     }
+    if (!legacy && data) setPrefs(data as Prefs);
   }
 
   async function ativar() {
@@ -154,22 +189,17 @@ export function NotificationSettings() {
       {status === 'denied' && <Sub>Os avisos estão bloqueados nos ajustes do celular. Libere em Ajustes &gt; Minuto 91 &gt; Notificações.</Sub>}
       {status === 'undetermined' && <Button title="Ativar avisos neste celular" onPress={ativar} loading={busy} />}
       {status === 'granted' && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>Avisos ativados neste celular.</Text>}
-      {prefs && (
-        <>
+      {prefs &&
+        CATEGORIES.map((c) => (
           <Row
-            label="Votações, resultados e avisos da pelada"
-            hint="Votação aberta e perto de fechar, resultado, partida anulada, mudanças de função."
-            value={prefs.essential}
-            onChange={(v) => save({ ...prefs, essential: v })}
+            key={c.key}
+            label={c.label}
+            hint={c.hint}
+            value={prefs[c.group] && prefs.categories[c.key] !== false}
+            onChange={(v) => toggle(c, v)}
           />
-          <Row
-            label="Conquistas e novidades"
-            hint="Prêmios, figurinhas e retrospectiva. No máximo 3 por semana."
-            value={prefs.engagement}
-            onChange={(v) => save({ ...prefs, engagement: v })}
-          />
-        </>
-      )}
+        ))}
+      {prefs && <Sub>Avisos de segurança da conta (como transferência) sempre chegam. Nenhum aviso mostra valores do Financeiro.</Sub>}
       {msg && <Text style={{ color: colors.danger }}>{msg}</Text>}
     </View>
   );

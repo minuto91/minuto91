@@ -4,7 +4,7 @@ import { Pressable, Text, useWindowDimensions, View } from 'react-native';
 
 import { PlayerCard } from '../../../lib/arts';
 import { cardPosition } from '../../../lib/playercard';
-import { Avatar } from '../../../lib/avatar';
+import { Avatar, prefetchAvatars } from '../../../lib/avatar';
 import { Card as CardData, currentSeason, loadSeasons, Season, TIER } from '../../../lib/career';
 import { Crest } from '../../../lib/crest';
 import { friendly } from '../../../lib/errors';
@@ -86,6 +86,8 @@ export default function Elenco() {
         });
       const uids = list.map((r) => r.userId).filter((u): u is string => !!u);
       const { data: pr } = uids.length ? await supabase.from('profiles').select('id, avatar_path').in('id', uids) : { data: [] };
+      // V4.4: as fotos são assinadas em lote (uma requisição a cada 100), não uma por jogador.
+      await prefetchAvatars((pr ?? []).map((p) => p.avatar_path as string | null));
       if (!alive) return;
       setPhotos(Object.fromEntries((pr ?? []).map((p) => [p.id as string, p.avatar_path as string | null])));
       setRows(list);

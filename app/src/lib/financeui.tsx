@@ -1,5 +1,7 @@
 // Peças reutilizadas pelas telas do Financeiro (V4.3).
 import * as Clipboard from 'expo-clipboard';
+import { File, Paths } from 'expo-file-system';
+import * as Sharing from 'expo-sharing';
 import { ReactNode, useState } from 'react';
 import { Platform, Pressable, Share, Text, View } from 'react-native';
 
@@ -197,4 +199,28 @@ export async function exportText(title: string, text: string): Promise<'shared' 
   }
   await Clipboard.setStringAsync(text);
   return 'copied';
+}
+
+/**
+ * V4.4: exporta o CSV como ARQUIVO (planilhas grandes não cabem no texto do compartilhamento do Android).
+ * Celular: grava no cache do app e abre o compartilhamento do arquivo. Web: baixa o arquivo.
+ * O BOM no início faz o Excel abrir os acentos corretamente.
+ */
+export async function exportCsvFile(fileName: string, title: string, csv: string): Promise<void> {
+  const content = `﻿${csv}`;
+  const name = `${fileName.replace(/[^\w.-]+/g, '_')}.csv`;
+  if (Platform.OS === 'web') {
+    const url = URL.createObjectURL(new Blob([content], { type: 'text/csv;charset=utf-8' }));
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = name;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10_000);
+    return;
+  }
+  const file = new File(Paths.cache, name);
+  file.create({ overwrite: true });
+  file.write(content);
+  if (!(await Sharing.isAvailableAsync())) throw new Error('Compartilhamento indisponível neste aparelho.');
+  await Sharing.shareAsync(file.uri, { mimeType: 'text/csv', UTI: 'public.comma-separated-values-text', dialogTitle: title });
 }

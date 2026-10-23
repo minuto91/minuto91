@@ -1,6 +1,7 @@
 import { ReactNode } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -22,6 +23,56 @@ export function Screen({ children }: { children: ReactNode }) {
     </ScrollView>
   );
 }
+
+/**
+ * Tela com lista longa (V4.4): FlatList (virtualizada, desenha só o que está perto da tela) no lugar do ScrollView
+ * com .map(). O cabeçalho (título, filtros, botões) rola junto. onEndReached pede a próxima página do servidor.
+ */
+export function ListScreen<T>({
+  header,
+  data,
+  renderItem,
+  keyExtractor,
+  empty,
+  loadingMore,
+  onEndReached,
+  footer,
+}: {
+  header: ReactNode;
+  data: readonly T[] | null;
+  renderItem: (item: T) => ReactNode;
+  keyExtractor: (item: T) => string;
+  empty?: ReactNode;
+  loadingMore?: boolean;
+  onEndReached?: () => void;
+  footer?: ReactNode;
+}) {
+  return (
+    <FlatList
+      style={{ backgroundColor: colors.white }}
+      contentContainerStyle={{ padding: 20, flexGrow: 1 }}
+      keyboardShouldPersistTaps="handled"
+      data={data ?? []}
+      keyExtractor={keyExtractor}
+      renderItem={({ item }) => <>{renderItem(item)}</>}
+      ItemSeparatorComponent={ListGap}
+      ListHeaderComponent={<View style={{ gap: 12, marginBottom: 12 }}>{header}</View>}
+      ListEmptyComponent={data ? <>{empty}</> : null}
+      ListFooterComponent={
+        <View style={{ gap: 12, marginTop: 12 }}>
+          {loadingMore && <ActivityIndicator color={colors.blue} />}
+          {footer}
+        </View>
+      }
+      onEndReached={onEndReached}
+      onEndReachedThreshold={0.5}
+      initialNumToRender={12}
+      windowSize={9}
+      removeClippedSubviews={false}
+    />
+  );
+}
+const ListGap = () => <View style={{ height: 12 }} />;
 
 export const Title = ({ children }: { children: ReactNode }) => (
   <Text style={{ fontSize: 26, fontWeight: '800', color: colors.deepBlue }}>{children}</Text>

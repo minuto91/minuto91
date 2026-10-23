@@ -41,6 +41,8 @@ type Overview = {
   monthly_late: number;
   single_count_month: number;
   month_charges_missing: number;
+  partial_count?: number;
+  overdue_count?: number;
   latest: Movement[];
 };
 
@@ -78,8 +80,8 @@ export default function Financeiro() {
     }, [id, reload]),
   );
 
-  const go = (path: 'cobrancas' | 'mensalistas' | 'lancamentos' | 'relatorio') =>
-    router.push({ pathname: `/pelada/[id]/financeiro/${path}`, params: { id } });
+  const go = (path: 'cobrancas' | 'mensalistas' | 'lancamentos' | 'relatorio', status?: string) =>
+    router.push({ pathname: `/pelada/[id]/financeiro/${path}`, params: status ? { id, status } : { id } });
 
   async function gerar() {
     setBusy('gerar');
@@ -153,6 +155,24 @@ export default function Financeiro() {
             <Stat label="A receber" cents={ov.receivable_cents} tone="gold" hint={ov.overdue_cents > 0 ? `${formatBRL(ov.overdue_cents)} vencido` : 'nada vencido'} />
             <Stat label="Despesas pendentes" cents={ov.pending_expense_cents} tone={ov.pending_expense_cents > 0 ? 'danger' : 'ink'} />
           </View>
+          {((ov.overdue_count ?? 0) > 0 || (ov.partial_count ?? 0) > 0) && (
+            <Card>
+              <Body>Pendências</Body>
+              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+                {(ov.overdue_count ?? 0) > 0 && (
+                  <View style={{ flex: 1, minWidth: 140 }}>
+                    <Button title={`${ov.overdue_count} ${ov.overdue_count === 1 ? 'vencida' : 'vencidas'}`} kind="danger" onPress={() => go('cobrancas', 'overdue')} />
+                  </View>
+                )}
+                {(ov.partial_count ?? 0) > 0 && (
+                  <View style={{ flex: 1, minWidth: 140 }}>
+                    <Button title={`${ov.partial_count} ${ov.partial_count === 1 ? 'parcial' : 'parciais'}`} kind="secondary" onPress={() => go('cobrancas', 'partial')} />
+                  </View>
+                )}
+              </View>
+              <Sub>Toque para registrar o pagamento direto na lista.</Sub>
+            </Card>
+          )}
           <Card>
             <Body>Mensalistas</Body>
             <Sub>

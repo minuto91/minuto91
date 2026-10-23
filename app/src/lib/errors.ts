@@ -143,6 +143,13 @@ const MAP: Record<string, string> = {
   FINANCE_ALREADY_REVERSED: 'Este pagamento já foi estornado.',
   FINANCE_REASON_REQUIRED: 'Explique o motivo (3 caracteres ou mais).',
   FINANCE_REQUEST_ID_REQUIRED: 'Erro técnico no envio. Tente de novo.',
+  // V4.4
+  FINANCE_INVALID_FILTER: 'Filtro inválido. Volte e escolha de novo.',
+  FINANCE_INVALID_CURSOR: 'A lista mudou enquanto carregava. Puxe para atualizar.',
+  INVALID_CURSOR: 'A lista mudou enquanto carregava. Abra de novo.',
+  INVALID_TROPHY: 'Troféu inválido.',
+  INVALID_GUIDE_STEP: 'Não foi possível salvar o passo do guia.',
+  INVALID_PREFERENCES: 'Preferência de aviso inválida.',
 };
 
 export function friendly(message?: string | null): string {

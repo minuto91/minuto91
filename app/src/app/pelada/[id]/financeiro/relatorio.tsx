@@ -3,10 +3,10 @@ import { useCallback, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { todayIn } from '../../../../lib/dates';
-import { notify } from '../../../../lib/dialog';
 import { friendly } from '../../../../lib/errors';
-import { exportText, Stat } from '../../../../lib/financeui';
-import { csvRow, fmtDay, formatBRL, monthLabel, monthShift } from '../../../../lib/money';
+import { exportCsvFile, Stat } from '../../../../lib/financeui';
+import { csvRow, fmtDay, formatBRL, methodLabel, monthLabel, monthShift } from '../../../../lib/money';
+import { readAllPages } from '../../../../lib/paging';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../../lib/ui';
@@ -17,11 +17,16 @@ type Report = {
   expense_cents: number;
   result_cents: number;
   open_cents: number;
+  pending_income_cents?: number;
+  pending_expense_cents?: number;
+  reversed_cents?: number;
+  movements_count?: number;
   by_category: { direction: 'income' | 'expense'; category: string; amount_cents: number }[];
   by_person: { name: string; due_cents: number | null; paid_cents: number; open_total_cents: number | null }[];
 };
+type Cursor = { date: string; created_at: string; id: string };
 type Event = { id: number; event_type: string; entity: string; before: Record<string, unknown> | null; after: Record<string, unknown> | null; created_at: string; author: string | null };
-type Movement = { date: string; direction: string; category: string; description: string; amount_cents: number; method: string | null; status: string; author: string | null };
+type Movement = { id: string; created_at: string; date: string; direction: string; category: string; description: string; amount_cents: number; method: string | null; status: string; author: string | null };
 
 const EVENT_LABEL: Record<string, string> = {
   access_granted: 'Permissão financeira dada',
@@ -41,6 +46,7 @@ const EVENT_LABEL: Record<string, string> = {
   entry_updated: 'Lançamento alterado',
   entry_cancelled: 'Lançamento cancelado',
 };
+const STATUS_CSV: Record<string, string> = { settled: 'Efetivado', pending: 'Pendente', cancelled: 'Cancelado', reversed: 'Estornado' };
 const TABS = [
   { value: 'mes', label: 'Resumo do mês' },
   { value: 'historico', label: 'Auditoria' },
@@ -58,6 +64,8 @@ export default function Relatorio() {
   const [events, setEvents] = useState<Event[] | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
+  const [progress, setProgress] = useState<string | null>(null);
+  const [moreEvents, setMoreEvents] = useState<number | null>(null);
 
   useFocusEffect(
     useCallback(() => {
@@ -65,13 +73,15 @@ export default function Relatorio() {
       (async () => {
         const [{ data: r, error }, { data: ev, error: e2 }] = await Promise.all([
           supabase.rpc('get_finance_report', { p_pelada: id, p_month: month }),
-          supabase.rpc('get_finance_history', { p_pelada: id, p_limit: 200 }),
+          supabase.rpc('get_finance_history_page', { p_pelada: id, p_before: null, p_limit: 50 }),
         ]);
         if (!alive) return;
         if (error || e2) return setMsg(friendly((error ?? e2)!.message));
         setMsg(null);
         setReport(r as Report);
-        setEvents(ev as Event[]);
+        const h = ev as { items: Event[]; next: number | null };
+        setEvents(h.items);
+        setMoreEvents(h.next);
       })();
       return () => {
         alive = false;
@@ -79,17 +89,57 @@ export default function Relatorio() {
     }, [id, month]),
   );
 
+  // V4.4: lê TODAS as movimentações do mês em páginas de 500 e só gera o arquivo se o que leu bate com o total do
+  // servidor. Se a internet cair no meio, nada é entregue pela metade.
   async function exportar() {
     setBusy(true);
-    const { data, error } = await supabase.rpc('get_finance_ledger', { p_pelada: id, p_month: month, p_direction: null, p_category: null, p_limit: 1000 });
+    setMsg(null);
+    setProgress('Preparando...');
+    const last = new Date(`${monthShift(month, 1)}T12:00:00Z`);
+    last.setUTCDate(last.getUTCDate() - 1);
+    let expected: number | null = null;
+    try {
+      const rows = await readAllPages<Movement, Cursor>(
+        async (after) => {
+          const { data, error } = await supabase.rpc('get_finance_ledger_page', {
+            p_pelada: id,
+            p_from: month,
+            p_to: last.toISOString().slice(0, 10),
+            p_direction: null,
+            p_category: null,
+            p_after: after,
+            p_limit: 500,
+            p_with_total: after === null,
+          });
+          if (error) throw error;
+          const p = data as { items: Movement[]; next: Cursor | null; total: { count: number } | null };
+          if (p.total) expected = p.total.count;
+          return p;
+        },
+        (n) => setProgress(`Lendo movimentações: ${n}${expected !== null ? ` de ${expected}` : ''}`),
+      );
+      if (expected !== null && rows.length !== expected) throw new Error('EXPORT_INCOMPLETE');
+      const lines = rows.map((m) =>
+        csvRow([fmtDay(m.date), m.direction === 'income' ? 'Receita' : 'Despesa', m.category, m.description, (m.amount_cents / 100).toFixed(2).replace('.', ','), methodLabel(m.method), STATUS_CSV[m.status] ?? m.status, m.author]),
+      );
+      const csv = [csvRow(['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor (R$)', 'Forma', 'Situação', 'Responsável']), ...lines].join('\n');
+      setProgress(`${rows.length} ${rows.length === 1 ? 'movimentação' : 'movimentações'} na planilha.`);
+      await exportCsvFile(`financeiro-${month.slice(0, 7)}`, `Financeiro ${monthLabel(month)}`, csv);
+    } catch (e) {
+      setProgress(null);
+      const m = (e as Error).message;
+      setMsg(m === 'EXPORT_INCOMPLETE' ? 'A exportação não leu todas as movimentações. Nada foi gerado: tente de novo.' : `Não foi possível exportar: ${friendly(m)}`);
+    }
     setBusy(false);
+  }
+
+  async function maisEventos() {
+    if (moreEvents === null) return;
+    const { data, error } = await supabase.rpc('get_finance_history_page', { p_pelada: id, p_before: moreEvents, p_limit: 50 });
     if (error) return setMsg(friendly(error.message));
-    const rows = (data as Movement[]).map((m) =>
-      csvRow([fmtDay(m.date), m.direction === 'income' ? 'Receita' : 'Despesa', m.category, m.description, (m.amount_cents / 100).toFixed(2).replace('.', ','), m.method, m.status, m.author]),
-    );
-    const csv = [csvRow(['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor (R$)', 'Forma', 'Situação', 'Responsável']), ...rows].join('\n');
-    const how = await exportText(`Financeiro ${monthLabel(month)}`, csv);
-    if (how === 'copied') notify('Copiado', 'A planilha (CSV) foi copiada. Cole numa planilha ou mensagem.');
+    const h = data as { items: Event[]; next: number | null };
+    setEvents((xs) => [...(xs ?? []), ...h.items]);
+    setMoreEvents(h.next);
   }
 
   const incomeCats = report?.by_category.filter((c) => c.direction === 'income') ?? [];
@@ -153,7 +203,22 @@ export default function Relatorio() {
                   </View>
                 ))}
               </Card>
-              <Button title="Exportar movimentações do mês (CSV)" kind="secondary" onPress={exportar} loading={busy} />
+              {(report.pending_income_cents || report.pending_expense_cents || report.reversed_cents) ? (
+                <Card>
+                  <Body>Fora do resultado</Body>
+                  <Sub>Pendências e estornos não entram nas receitas, nas despesas nem no saldo.</Sub>
+                  {!!report.pending_income_cents && <Sub>Receitas a receber no mês: {formatBRL(report.pending_income_cents)}</Sub>}
+                  {!!report.pending_expense_cents && <Sub>Despesas a pagar no mês: {formatBRL(report.pending_expense_cents)}</Sub>}
+                  {!!report.reversed_cents && <Sub>Pagamentos estornados: {formatBRL(report.reversed_cents)}</Sub>}
+                </Card>
+              ) : null}
+              <Button
+                title={report.movements_count !== undefined ? `Exportar as ${report.movements_count} movimentações do mês (CSV)` : 'Exportar movimentações do mês (CSV)'}
+                kind="secondary"
+                onPress={exportar}
+                loading={busy}
+              />
+              {progress && <Sub>{progress}</Sub>}
             </>
           )}
         </>
@@ -183,6 +248,7 @@ export default function Relatorio() {
               </View>
             );
           })}
+          {moreEvents !== null && <Button title="Carregar mais" kind="secondary" onPress={maisEventos} />}
         </>
       )}
     </Screen>

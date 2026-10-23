@@ -9,10 +9,24 @@ import { DateField, Field, People, Person, PersonPicker } from '../../../../lib/
 import { centsToInput, fmtDay, formatBRL, monthShift, parseBRL } from '../../../../lib/money';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Body, Button, Card, ErrorText, Input, Screen, Stepper, Sub, Title } from '../../../../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, Input, Screen, Stepper, Sub, Title } from '../../../../lib/ui';
 
 type Monthly = People['monthly'][number];
 const STATUS_LABEL = { active: 'Ativo', suspended: 'Suspenso', ended: 'Encerrado' } as const;
+const FILTERS = [
+  { value: 'all', label: 'Todos' },
+  { value: 'late', label: 'Atrasados' },
+  { value: 'ok', label: 'Em dia' },
+  { value: 'suspended', label: 'Suspensos' },
+  { value: 'ended', label: 'Encerrados' },
+] as const;
+type Filter = (typeof FILTERS)[number]['value'];
+const matches = (m: Monthly, f: Filter) =>
+  f === 'all' ||
+  (f === 'late' && m.overdue_cents > 0) ||
+  (f === 'ok' && m.status === 'active' && m.overdue_cents === 0) ||
+  (f === 'suspended' && m.status === 'suspended') ||
+  (f === 'ended' && m.status === 'ended');
 
 // Mensalistas (V4.3): valor, dia de vencimento (1 a 28), início e situação. Mudar o valor vale só para as
 // mensalidades geradas depois (as cobranças antigas não mudam). Suspender pausa novas cobranças; encerrar é final.
@@ -29,6 +43,7 @@ export default function Mensalistas() {
   const [dueDay, setDueDay] = useState(10);
   const [start, setStart] = useState(monthShift(today, 0));
   const [notes, setNotes] = useState('');
+  const [filter, setFilter] = useState<Filter>('all');
 
   useFocusEffect(
     useCallback(() => {
@@ -119,14 +134,23 @@ export default function Mensalistas() {
     );
   }
 
-  const list = people?.monthly ?? [];
+  const all = people?.monthly ?? [];
+  const list = all.filter((m) => matches(m, filter));
   return (
     <Screen>
       <Title>Mensalistas</Title>
       <ErrorText>{msg}</ErrorText>
       <Button title="Novo mensalista" onPress={() => abrir(null)} />
+      {all.length > 0 && (
+        <Chips
+          options={FILTERS.map((f) => ({ value: f.value, label: `${f.label} (${all.filter((m) => matches(m, f.value)).length})` }))}
+          value={filter}
+          onChange={(v) => setFilter(v as Filter)}
+        />
+      )}
       {!people && !msg && <Sub>Carregando...</Sub>}
-      {people && list.length === 0 && <Sub>Nenhum mensalista ainda.</Sub>}
+      {people && all.length === 0 && <Sub>Nenhum mensalista ainda.</Sub>}
+      {all.length > 0 && list.length === 0 && <Sub>Nenhum mensalista nesse filtro.</Sub>}
       {list.map((m) => (
         <Card key={m.id}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>

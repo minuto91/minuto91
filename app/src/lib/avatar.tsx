@@ -125,6 +125,21 @@ export function useSignedUrlState(bucket: string, path: string | null | undefine
   return { url: !path ? null : url?.path === path ? url.url : (cached ?? null), retry };
 }
 
+/**
+ * V4.4: assina várias fotos de uma vez (uma requisição a cada 100) e guarda no mesmo cache. Listas grandes (Elenco,
+ * rankings) chamam antes de desenhar: cada Avatar encontra a URL pronta em vez de pedir uma por uma.
+ */
+export async function prefetchSignedUrls(bucket: string, paths: (string | null | undefined)[]) {
+  const now = Date.now();
+  const need = [...new Set(paths.filter((p): p is string => !!p))].filter((p) => !((cache.get(`${bucket}/${p}`)?.until ?? 0) > now));
+  for (let i = 0; i < need.length; i += 100) {
+    const { data } = await supabase.storage.from(bucket).createSignedUrls(need.slice(i, i + 100), URL_TTL);
+    const until = Date.now() + (URL_TTL - 120) * 1000;
+    for (const d of data ?? []) if (d.path && d.signedUrl && !d.error) cache.set(`${bucket}/${d.path}`, { url: d.signedUrl, until });
+  }
+}
+export const prefetchAvatars = (paths: (string | null | undefined)[]) => prefetchSignedUrls(BUCKET, paths).catch(() => {});
+
 export const useSignedUrl = (bucket: string, path: string | null | undefined) => useSignedUrlState(bucket, path).url;
 export const useAvatarUrl = (path: string | null | undefined) => useSignedUrl(BUCKET, path);
 

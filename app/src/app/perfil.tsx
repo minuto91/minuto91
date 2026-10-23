@@ -194,6 +194,7 @@ export default function Perfil() {
             </>
           )}
           <Sub>A posição é escolhida em cada pelada: abra o seu Card na pelada para mudar.</Sub>
+          <Button title="Minha Carreira (Card, evolução e troféus)" onPress={() => router.push('/carreira')} />
           <Button title="Minha conta" kind="secondary" onPress={() => router.push('/conta')} />
         </>
       )}
