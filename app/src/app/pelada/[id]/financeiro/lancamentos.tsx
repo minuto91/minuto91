@@ -95,7 +95,7 @@ export default function Lancamentos() {
     },
     [id, month, direction],
   );
-  const list = usePaged(fetchPage);
+  const list = usePaged(fetchPage, (x) => x.id);
 
   function abrir(dir: 'income' | 'expense', edit: Movement | null, copy?: Movement) {
     const src = edit ?? copy ?? null;

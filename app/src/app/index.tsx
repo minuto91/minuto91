@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Href, useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { AppState, Pressable, Text, View } from 'react-native';
 
 import { Avatar } from '../lib/avatar';
@@ -143,10 +143,18 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [pendingVotes]);
 
+  // Um toque por vez: toque duplo não marca e desmarca em seguida.
+  const primaryBusy = useRef(false);
   async function principal(p: Pelada) {
-    const { error } = await supabase.rpc('set_primary_pelada', { p_pelada: p.is_primary ? null : p.id });
-    if (error) return setErr(friendly(error.message));
-    setReload((n) => n + 1);
+    if (primaryBusy.current) return;
+    primaryBusy.current = true;
+    try {
+      const { error } = await supabase.rpc('set_primary_pelada', { p_pelada: p.is_primary ? null : p.id });
+      if (error) return setErr(friendly(error.message));
+      setReload((n) => n + 1);
+    } finally {
+      primaryBusy.current = false;
+    }
   }
 
   async function dispensarGuia() {
@@ -241,7 +249,7 @@ export default function Home() {
         <Card>
           <View style={{ flexDirection: 'row', alignItems: 'center' }}>
             <Text style={{ flex: 1, fontWeight: '800', color: colors.deepBlue }}>Primeiros passos</Text>
-            <Pressable accessibilityRole="button" accessibilityLabel="Dispensar o guia" onPress={dispensarGuia} style={{ minHeight: 40, justifyContent: 'center' }}>
+            <Pressable accessibilityRole="button" accessibilityLabel="Dispensar o guia" onPress={dispensarGuia} style={{ minHeight: 44, minWidth: 44, justifyContent: 'center' }}>
               <Text style={{ color: colors.muted, fontWeight: '600' }}>Dispensar</Text>
             </Pressable>
           </View>
@@ -252,8 +260,10 @@ export default function Home() {
               accessibilityState={{ checked: s.done }}
               disabled={s.done}
               onPress={s.go}
-              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 40 }}>
-              <Text style={{ fontSize: 16, color: s.done ? colors.blue : colors.line, width: 20 }}>{s.done ? '✓' : '○'}</Text>
+              style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
+              <Text style={{ fontSize: 16, color: s.done ? colors.blue : colors.muted, width: 20 }} accessibilityElementsHidden importantForAccessibility="no">
+                {s.done ? '✓' : '○'}
+              </Text>
               <Text style={{ flex: 1, color: s.done ? colors.muted : colors.ink, textDecorationLine: s.done ? 'line-through' : 'none' }}>{s.label}</Text>
               {!s.done && <Text style={{ color: colors.blue }}>›</Text>}
             </Pressable>
@@ -369,8 +379,11 @@ export default function Home() {
         </Card>
       )}
       {peladas.map((p) => (
-        <Pressable key={p.id} accessibilityRole="button" onPress={() => router.push({ pathname: '/pelada/[id]', params: { id: p.id } })}>
-          <Card>
+        <Card key={p.id}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Abrir ${p.name}`}
+            onPress={() => router.push({ pathname: '/pelada/[id]', params: { id: p.id } })}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Crest path={p.crest_path} name={p.name} size={44} />
               <View style={{ flex: 1, gap: 2 }}>
@@ -384,19 +397,19 @@ export default function Home() {
               </View>
               <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
             </View>
-            {peladas.length > 1 && (
-              <Pressable
-                accessibilityRole="button"
-                accessibilityLabel={p.is_primary ? `${p.name} é a pelada principal. Toque para desmarcar.` : `Tornar ${p.name} a pelada principal`}
-                onPress={() => principal(p)}
-                style={{ minHeight: 32, justifyContent: 'center', alignSelf: 'flex-start' }}>
-                <Text style={{ fontSize: 12, fontWeight: '700', color: p.is_primary ? colors.darkGold : colors.muted }}>
-                  {p.is_primary ? '★ Principal' : '☆ Tornar principal'}
-                </Text>
-              </Pressable>
-            )}
-          </Card>
-        </Pressable>
+          </Pressable>
+          {peladas.length > 1 && (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={p.is_primary ? `${p.name} é a pelada principal. Toque para desmarcar.` : `Tornar ${p.name} a pelada principal`}
+              onPress={() => principal(p)}
+              style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', paddingRight: 12 }}>
+              <Text style={{ fontSize: 13, fontWeight: '700', color: p.is_primary ? colors.darkGold : colors.muted }}>
+                {p.is_primary ? '★ Principal' : '☆ Tornar principal'}
+              </Text>
+            </Pressable>
+          )}
+        </Card>
       ))}
 
       {peladas.length > 0 && (
@@ -454,4 +467,4 @@ function MiniStat({ value, label }: { value: number; label: string }) {
 
 const section = { fontSize: 13, fontWeight: '800' as const, color: colors.deepBlue, letterSpacing: 0.5, marginTop: 6 };
 const cardBox = { backgroundColor: colors.white, borderRadius: 12, padding: 14, gap: 6 };
-const pendingRow = { minHeight: 40, justifyContent: 'center' as const, borderLeftWidth: 3, borderLeftColor: colors.gold, paddingLeft: 10 };
+const pendingRow = { minHeight: 44, justifyContent: 'center' as const, borderLeftWidth: 3, borderLeftColor: colors.gold, paddingLeft: 10 };

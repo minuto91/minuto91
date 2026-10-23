@@ -208,9 +208,12 @@ export function Chips<T extends string>({
             accessibilityState={{ selected: on }}
             onPress={() => onChange(o.value)}
             style={{
+              // V4.5: área de toque mínima de 44 px (era 37 px)
+              minHeight: 44,
+              justifyContent: 'center',
               paddingVertical: 8,
               paddingHorizontal: 14,
-              borderRadius: 18,
+              borderRadius: 22,
               borderWidth: 1,
               borderColor: on ? colors.blue : colors.line,
               backgroundColor: on ? colors.blue : colors.white,

@@ -145,7 +145,9 @@ const MAP: Record<string, string> = {
   FINANCE_REQUEST_ID_REQUIRED: 'Erro técnico no envio. Tente de novo.',
   // V4.4
   FINANCE_INVALID_FILTER: 'Filtro inválido. Volte e escolha de novo.',
-  FINANCE_INVALID_CURSOR: 'A lista mudou enquanto carregava. Puxe para atualizar.',
+  FINANCE_INVALID_CURSOR: 'A lista mudou enquanto carregava. Toque em "Tentar de novo".',
+  FINANCE_EXPORT_TOO_LARGE: 'Movimentações demais para um arquivo só. Exporte um período menor.',
+  PAGING_STUCK: 'A lista não terminou de carregar. Tente de novo.',
   INVALID_CURSOR: 'A lista mudou enquanto carregava. Abra de novo.',
   INVALID_TROPHY: 'Troféu inválido.',
   INVALID_GUIDE_STEP: 'Não foi possível salvar o passo do guia.',

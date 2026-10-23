@@ -1,12 +1,12 @@
 import { useFocusEffect, useLocalSearchParams } from 'expo-router';
-import { useCallback, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { Pressable, Text, View } from 'react-native';
 
 import { todayIn } from '../../../../lib/dates';
 import { friendly } from '../../../../lib/errors';
 import { exportCsvFile, Stat } from '../../../../lib/financeui';
 import { csvRow, fmtDay, formatBRL, methodLabel, monthLabel, monthShift } from '../../../../lib/money';
-import { readAllPages } from '../../../../lib/paging';
+import { ExportTotal, exportProblems } from '../../../../lib/exportCheck';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../../lib/ui';
@@ -24,7 +24,6 @@ type Report = {
   by_category: { direction: 'income' | 'expense'; category: string; amount_cents: number }[];
   by_person: { name: string; due_cents: number | null; paid_cents: number; open_total_cents: number | null }[];
 };
-type Cursor = { date: string; created_at: string; id: string };
 type Event = { id: number; event_type: string; entity: string; before: Record<string, unknown> | null; after: Record<string, unknown> | null; created_at: string; author: string | null };
 type Movement = { id: string; created_at: string; date: string; direction: string; category: string; description: string; amount_cents: number; method: string | null; status: string; author: string | null };
 
@@ -54,7 +53,7 @@ const TABS = [
 const money = (v: unknown) => (typeof v === 'number' ? formatBRL(v) : null);
 
 // Relatórios do Financeiro (V4.3): resumo mensal, por categoria e por jogador, e o histórico de auditoria (quem fez o
-// quê, quando, com valores antes e depois). Exportação simples em CSV pelo compartilhamento do celular.
+// quê, quando, com valores antes e depois). Exportação em arquivo CSV (V4.5: num único instantâneo do servidor).
 export default function Relatorio() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const today = todayIn();
@@ -89,57 +88,61 @@ export default function Relatorio() {
     }, [id, month]),
   );
 
-  // V4.4: lê TODAS as movimentações do mês em páginas de 500 e só gera o arquivo se o que leu bate com o total do
-  // servidor. Se a internet cair no meio, nada é entregue pela metade.
+  // V4.5: o mês inteiro numa chamada só (get_finance_export), lida pelo servidor num único instantâneo: um pagamento,
+  // estorno ou edição feito durante a exportação entra inteiro ou fica inteiro para a próxima (a V4.4 lia em páginas e
+  // podia misturar momentos). Linhas e totais vêm do mesmo instantâneo; se não baterem, nada é gerado.
   async function exportar() {
+    if (busy) return;
     setBusy(true);
     setMsg(null);
-    setProgress('Preparando...');
+    setProgress('Lendo as movimentações do mês...');
     const last = new Date(`${monthShift(month, 1)}T12:00:00Z`);
     last.setUTCDate(last.getUTCDate() - 1);
-    let expected: number | null = null;
     try {
-      const rows = await readAllPages<Movement, Cursor>(
-        async (after) => {
-          const { data, error } = await supabase.rpc('get_finance_ledger_page', {
-            p_pelada: id,
-            p_from: month,
-            p_to: last.toISOString().slice(0, 10),
-            p_direction: null,
-            p_category: null,
-            p_after: after,
-            p_limit: 500,
-            p_with_total: after === null,
-          });
-          if (error) throw error;
-          const p = data as { items: Movement[]; next: Cursor | null; total: { count: number } | null };
-          if (p.total) expected = p.total.count;
-          return p;
-        },
-        (n) => setProgress(`Lendo movimentações: ${n}${expected !== null ? ` de ${expected}` : ''}`),
-      );
-      if (expected !== null && rows.length !== expected) throw new Error('EXPORT_INCOMPLETE');
+      const { data, error } = await supabase.rpc('get_finance_export', {
+        p_pelada: id,
+        p_from: month,
+        p_to: last.toISOString().slice(0, 10),
+        p_direction: null,
+        p_category: null,
+      });
+      if (error) throw error;
+      const x = data as { as_of: string; items: Movement[]; total: ExportTotal };
+      const rows = x.items;
+      if (exportProblems(rows, x.total).length) throw new Error('EXPORT_INCOMPLETE');
+      const asOf = new Date(x.as_of).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' });
       const lines = rows.map((m) =>
         csvRow([fmtDay(m.date), m.direction === 'income' ? 'Receita' : 'Despesa', m.category, m.description, (m.amount_cents / 100).toFixed(2).replace('.', ','), methodLabel(m.method), STATUS_CSV[m.status] ?? m.status, m.author]),
       );
       const csv = [csvRow(['Data', 'Tipo', 'Categoria', 'Descrição', 'Valor (R$)', 'Forma', 'Situação', 'Responsável']), ...lines].join('\n');
-      setProgress(`${rows.length} ${rows.length === 1 ? 'movimentação' : 'movimentações'} na planilha.`);
+      setProgress(`${rows.length} ${rows.length === 1 ? 'movimentação' : 'movimentações'} na planilha (posição de ${asOf}).`);
       await exportCsvFile(`financeiro-${month.slice(0, 7)}`, `Financeiro ${monthLabel(month)}`, csv);
     } catch (e) {
       setProgress(null);
       const m = (e as Error).message;
-      setMsg(m === 'EXPORT_INCOMPLETE' ? 'A exportação não leu todas as movimentações. Nada foi gerado: tente de novo.' : `Não foi possível exportar: ${friendly(m)}`);
+      setMsg(m === 'EXPORT_INCOMPLETE' ? 'A conferência da exportação não bateu. Nada foi gerado: tente de novo.' : `Não foi possível exportar: ${friendly(m)}`);
     }
     setBusy(false);
   }
 
+  // Um pedido por vez (toque duplo não repete a página); resposta de antes de trocar de mês/voltar à tela é ignorada.
+  const eventsBusy = useRef(false);
   async function maisEventos() {
-    if (moreEvents === null) return;
-    const { data, error } = await supabase.rpc('get_finance_history_page', { p_pelada: id, p_before: moreEvents, p_limit: 50 });
-    if (error) return setMsg(friendly(error.message));
-    const h = data as { items: Event[]; next: number | null };
-    setEvents((xs) => [...(xs ?? []), ...h.items]);
-    setMoreEvents(h.next);
+    if (moreEvents === null || eventsBusy.current) return;
+    eventsBusy.current = true;
+    const before = moreEvents;
+    try {
+      const { data, error } = await supabase.rpc('get_finance_history_page', { p_pelada: id, p_before: before, p_limit: 50 });
+      if (error) return setMsg(friendly(error.message));
+      const h = data as { items: Event[]; next: number | null };
+      setEvents((xs) => {
+        const seen = new Set((xs ?? []).map((e) => e.id));
+        return [...(xs ?? []), ...h.items.filter((e) => !seen.has(e.id))];
+      });
+      setMoreEvents(h.next);
+    } finally {
+      eventsBusy.current = false;
+    }
   }
 
   const incomeCats = report?.by_category.filter((c) => c.direction === 'income') ?? [];

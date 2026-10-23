@@ -80,7 +80,7 @@ export default function Cobrancas() {
     },
     [id, status, period, membershipFilter, payerFilter, today],
   );
-  const list = usePaged(fetchPage);
+  const list = usePaged(fetchPage, (x) => x.id);
 
   // Pessoas e partidas recentes (formulário de nova cobrança).
   useFocusEffect(
@@ -352,7 +352,11 @@ export default function Cobrancas() {
                 {p.reversed_at ? (
                   <Text style={{ fontSize: 12, color: colors.muted }}>estornado</Text>
                 ) : (
-                  <Pressable accessibilityRole="button" onPress={() => open({ charge: c.id, kind: 'reverse', payment: p.id }, c)} style={{ minHeight: 36, justifyContent: 'center' }}>
+                  <Pressable
+                    accessibilityRole="button"
+                    accessibilityLabel={`Estornar pagamento de ${formatBRL(p.amount_cents)} de ${fmtDay(p.received_on)}`}
+                    onPress={() => open({ charge: c.id, kind: 'reverse', payment: p.id }, c)}
+                    style={{ minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'flex-end' }}>
                     <Text style={{ color: colors.danger, fontSize: 13, fontWeight: '600' }}>Estornar</Text>
                   </Pressable>
                 )}
