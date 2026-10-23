@@ -1,0 +1,35 @@
+# node concurrency.mjs 15 — PostgreSQL 17.10 real (embedded-postgres), 23/10/2026
+V4.1 (até 035): Postgres 17.10, 37 migrações
+  A01 em sequência (6 votos da versão 1, correção, 7º vota a versão 2): encerrou=true | sessão=finalized | cédulas da versão antiga aceitas=6 | notas por jogador=6
+  determinístico (B segura a 1ª trava do voto, A corrige, B termina): A=DEADLOCK | B=ok | sessão=finalized
+  15 disputas reais simultâneas (28.0s):
+    11× A=ok | B=DEADLOCK | sessão=open
+    4× A=DEADLOCK | B=ok | sessão=finalized
+  deadlocks: 16; apurações com voto de versão antiga: 1
+Atual (todas): Postgres 17.10, 49 migrações
+  A01 em sequência (6 votos da versão 1, correção, 7º vota a versão 2): encerrou=false | sessão=open | cédulas da versão antiga aceitas=0 | notas por jogador=0
+  determinístico (B segura a 1ª trava do voto, A corrige, B termina): A=SHEET_LOCKED | B=ok | sessão=finalized
+  15 disputas reais simultâneas (9.6s):
+    12× A=ok | B=SHEET_NOT_CONFIRMED | sessão=open
+    3× A=SHEET_LOCKED | B=ok | sessão=finalized
+  deadlocks: 0; apurações com voto de versão antiga: 0
+V4.3 Financeiro (todas): Postgres 17.10, 49 migrações
+  15 rodadas com duas conexões (19.5s):
+    15× mesmo request_id: ok / ok
+    15× dois pagamentos que estouram a dívida: FINANCE_OVERPAYMENT / ok
+    15× estorno x pagamento: ok / ok
+  deadlocks: 0; pago ≠ soma dos pagamentos: 0; pago acima do devido: 0; mensalidade duplicada: 0 (15 geradas); request_id duplicado: 0
+V4.5 Exportação (todas): Postgres 17.10, 49 migrações
+  massa: 4000 movimentações no mês (50.9s)
+  [todas as escritas]
+  escritas concorrentes: {"pagamento":548,"estorno":549,"edicao":548,"novo":548,"cancelamento":548,"erro":0}
+  V4.4 (páginas): 15 exportações -> 0 íntegras, 0 ACEITAS com conteúdo inconsistente {}, 15 recusadas pela quantidade
+  V4.5 (um instantâneo): 15 exportações -> 15 íntegras, 0 com problema; p50 491 ms, p95 1076 ms
+  controle (mesma função VOLATILE): 0 íntegras, 15 com linhas e totais de instantes diferentes
+  [só estornos e edições (a quantidade não muda)]
+  escritas concorrentes: {"pagamento":0,"estorno":1404,"edicao":1404,"novo":0,"cancelamento":0,"erro":0}
+  V4.4 (páginas): 15 exportações -> 0 íntegras, 3 ACEITAS com conteúdo inconsistente {"repetida":3,"somas":3}, 12 recusadas pela quantidade
+  V4.5 (um instantâneo): 15 exportações -> 15 íntegras, 0 com problema; p50 608 ms, p95 1319 ms
+  controle (mesma função VOLATILE): 0 íntegras, 15 com linhas e totais de instantes diferentes
+PASS: sem deadlock, sem voto de versão antiga, Financeiro íntegro e exportação íntegra sob concorrência
+(V4.1 no mesmo roteiro: 16 deadlock(s), 1 apuração(ões) com voto de versão antiga)

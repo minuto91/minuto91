@@ -1,0 +1,728 @@
+-- v44: select public.get_player_central()
+-- comandos internos executados: 16; soma das durações: 134.3 ms
+-- abaixo, os 16 mais lentos (EXPLAIN ANALYZE, BUFFERS via auto_explain)
+
+duration: 82.904 ms  plan:
+Query Text: select public.get_player_central()
+Result  (cost=0.00..0.26 rows=1 width=32) (actual time=82.817..82.818 rows=1 loops=1)
+  Buffers: shared hit=1264 read=242
+
+-----
+
+duration: 10.343 ms  plan:
+Query Text: 
+ select jsonb_build_object('match_id', m.id, 'pelada_id', m.pelada_id, 'pelada_name', p.name, 'crest_path', p.crest_path,
+  'played_at', m.played_at, 'status', m.status, 'team_a_name', m.team_a_name, 'team_b_name', m.team_b_name,
+  'team_a_score', m.team_a_score, 'team_b_score', m.team_b_score, 'my_team', mp.team,
+  'result', case when m.team_a_score = m.team_b_score then 'draw'
+   when (m.team_a_score > m.team_b_score) = (mp.team = 'A') then 'win' else 'loss' end,
+  'goals', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'goal'), 0),
+  'assists', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'assist'), 0),
+  'official', m.status = 'finalized')
+ from public.match_participants mp
+ join public.matches m on m.id = mp.match_id
+ join public.peladas p on p.id = m.pelada_id
+ where mp.membership_id = p_membership and m.status in ('voting_open','finalizing','finalized')
+ order by m.played_at desc, m.id desc
+ limit 1;
+
+Query Parameters: $1 = '3085ccc5-dbad-4629-866d-7b377063b2a1'
+Limit  (cost=774.08..790.76 rows=1 width=56) (actual time=10.335..10.339 rows=1 loops=1)
+  Buffers: shared hit=202 read=75
+  ->  Result  (cost=774.08..3042.22 rows=136 width=56) (actual time=10.334..10.338 rows=1 loops=1)
+        Buffers: shared hit=202 read=75
+        ->  Sort  (cost=774.08..774.42 rows=136 width=133) (actual time=10.179..10.182 rows=1 loops=1)
+              Sort Key: m.played_at DESC, m.id DESC
+              Sort Method: top-N heapsort  Memory: 25kB
+              Buffers: shared hit=198 read=73
+              ->  Nested Loop  (cost=342.74..773.40 rows=136 width=133) (actual time=8.327..10.053 rows=160 loops=1)
+                    Buffers: shared hit=198 read=73
+                    ->  Hash Join  (cost=342.60..769.38 rows=136 width=90) (actual time=8.302..9.844 rows=160 loops=1)
+                          Hash Cond: (mp.match_id = m.id)
+                          Buffers: shared hit=196 read=73
+                          ->  Bitmap Heap Scan on match_participants mp  (cost=5.35..431.78 rows=136 width=34) (actual time=0.080..1.419 rows=160 loops=1)
+                                Recheck Cond: (membership_id = $1)
+                                Heap Blocks: exact=124
+                                Buffers: shared hit=53 read=73
+                                ->  Bitmap Index Scan on idx_match_participants_membership  (cost=0.00..5.31 rows=136 width=0) (actual time=0.048..0.048 rows=160 loops=1)
+                                      Index Cond: (membership_id = $1)
+                                      Buffers: shared hit=1 read=1
+                          ->  Hash  (cost=244.75..244.75 rows=7400 width=72) (actual time=8.206..8.207 rows=7400 loops=1)
+                                Buckets: 8192  Batches: 1  Memory Usage: 816kB
+                                Buffers: shared hit=143
+                                ->  Seq Scan on matches m  (cost=0.00..244.75 rows=7400 width=72) (actual time=0.017..4.777 rows=7400 loops=1)
+                                      Filter: (status = ANY ('{voting_open,finalizing,finalized}'::text[]))
+                                      Buffers: shared hit=143
+                    ->  Memoize  (cost=0.14..0.16 rows=1 width=59) (actual time=0.001..0.001 rows=1 loops=160)
+                          Cache Key: m.pelada_id
+                          Cache Mode: logical
+                          Hits: 159  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                          Buffers: shared hit=2
+                          ->  Index Scan using peladas_pkey on peladas p  (cost=0.13..0.15 rows=1 width=59) (actual time=0.016..0.016 rows=1 loops=1)
+                                Index Cond: (id = m.pelada_id)
+                                Buffers: shared hit=2
+        SubPlan 1
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (actual time=0.084..0.084 rows=1 loops=1)
+                Buffers: shared hit=1 read=2
+                ->  Index Scan using match_events_by_participant on match_events e  (cost=0.29..8.31 rows=1 width=4) (actual time=0.081..0.081 rows=0 loops=1)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'goal'::text))
+                      Rows Removed by Filter: 1
+                      Buffers: shared hit=1 read=2
+        SubPlan 2
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (actual time=0.012..0.013 rows=1 loops=1)
+                Buffers: shared hit=3
+                ->  Index Scan using match_events_by_participant on match_events e_1  (cost=0.29..8.31 rows=1 width=4) (actual time=0.008..0.009 rows=1 loops=1)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'assist'::text))
+                      Buffers: shared hit=3
+
+-----
+
+duration: 8.790 ms  plan:
+Query Text: 
+ select jsonb_build_object('match_id', m.id, 'pelada_id', m.pelada_id, 'pelada_name', p.name, 'crest_path', p.crest_path,
+  'played_at', m.played_at, 'status', m.status, 'team_a_name', m.team_a_name, 'team_b_name', m.team_b_name,
+  'team_a_score', m.team_a_score, 'team_b_score', m.team_b_score, 'my_team', mp.team,
+  'result', case when m.team_a_score = m.team_b_score then 'draw'
+   when (m.team_a_score > m.team_b_score) = (mp.team = 'A') then 'win' else 'loss' end,
+  'goals', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'goal'), 0),
+  'assists', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'assist'), 0),
+  'official', m.status = 'finalized')
+ from public.match_participants mp
+ join public.matches m on m.id = mp.match_id
+ join public.peladas p on p.id = m.pelada_id
+ where mp.membership_id = p_membership and m.status in ('voting_open','finalizing','finalized')
+ order by m.played_at desc, m.id desc
+ limit 1;
+
+Query Parameters: $1 = '30253f1e-858d-4bd8-9ec1-8a66442a386d'
+Limit  (cost=774.08..790.76 rows=1 width=56) (actual time=8.784..8.788 rows=1 loops=1)
+  Buffers: shared hit=218 read=88
+  ->  Result  (cost=774.08..3042.22 rows=136 width=56) (actual time=8.783..8.786 rows=1 loops=1)
+        Buffers: shared hit=218 read=88
+        ->  Sort  (cost=774.08..774.42 rows=136 width=133) (actual time=8.682..8.685 rows=1 loops=1)
+              Sort Key: m.played_at DESC, m.id DESC
+              Sort Method: top-N heapsort  Memory: 25kB
+              Buffers: shared hit=214 read=86
+              ->  Nested Loop  (cost=342.74..773.40 rows=136 width=133) (actual time=7.031..8.577 rows=160 loops=1)
+                    Buffers: shared hit=214 read=86
+                    ->  Hash Join  (cost=342.60..769.38 rows=136 width=90) (actual time=7.011..8.402 rows=160 loops=1)
+                          Hash Cond: (mp.match_id = m.id)
+                          Buffers: shared hit=212 read=86
+                          ->  Bitmap Heap Scan on match_participants mp  (cost=5.35..431.78 rows=136 width=34) (actual time=0.095..1.313 rows=160 loops=1)
+                                Recheck Cond: (membership_id = $1)
+                                Heap Blocks: exact=153
+                                Buffers: shared hit=69 read=86
+                                ->  Bitmap Index Scan on idx_match_participants_membership  (cost=0.00..5.31 rows=136 width=0) (actual time=0.049..0.050 rows=160 loops=1)
+                                      Index Cond: (membership_id = $1)
+                                      Buffers: shared hit=1 read=1
+                          ->  Hash  (cost=244.75..244.75 rows=7400 width=72) (actual time=6.901..6.902 rows=7400 loops=1)
+                                Buckets: 8192  Batches: 1  Memory Usage: 816kB
+                                Buffers: shared hit=143
+                                ->  Seq Scan on matches m  (cost=0.00..244.75 rows=7400 width=72) (actual time=0.015..4.002 rows=7400 loops=1)
+                                      Filter: (status = ANY ('{voting_open,finalizing,finalized}'::text[]))
+                                      Buffers: shared hit=143
+                    ->  Memoize  (cost=0.14..0.16 rows=1 width=59) (actual time=0.000..0.000 rows=1 loops=160)
+                          Cache Key: m.pelada_id
+                          Cache Mode: logical
+                          Hits: 159  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                          Buffers: shared hit=2
+                          ->  Index Scan using peladas_pkey on peladas p  (cost=0.13..0.15 rows=1 width=59) (actual time=0.013..0.013 rows=1 loops=1)
+                                Index Cond: (id = m.pelada_id)
+                                Buffers: shared hit=2
+        SubPlan 1
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (actual time=0.049..0.049 rows=1 loops=1)
+                Buffers: shared hit=1 read=2
+                ->  Index Scan using match_events_by_participant on match_events e  (cost=0.29..8.31 rows=1 width=4) (actual time=0.044..0.045 rows=1 loops=1)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'goal'::text))
+                      Buffers: shared hit=1 read=2
+        SubPlan 2
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (actual time=0.007..0.008 rows=1 loops=1)
+                Buffers: shared hit=3
+                ->  Index Scan using match_events_by_participant on match_events e_1  (cost=0.29..8.31 rows=1 width=4) (actual time=0.006..0.006 rows=0 loops=1)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'assist'::text))
+                      Rows Removed by Filter: 1
+                      Buffers: shared hit=3
+
+-----
+
+duration: 8.084 ms  plan:
+Query Text: 
+ select jsonb_build_object('match_id', m.id, 'pelada_id', m.pelada_id, 'pelada_name', p.name, 'crest_path', p.crest_path,
+  'played_at', m.played_at, 'status', m.status, 'team_a_name', m.team_a_name, 'team_b_name', m.team_b_name,
+  'team_a_score', m.team_a_score, 'team_b_score', m.team_b_score, 'my_team', mp.team,
+  'result', case when m.team_a_score = m.team_b_score then 'draw'
+   when (m.team_a_score > m.team_b_score) = (mp.team = 'A') then 'win' else 'loss' end,
+  'goals', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'goal'), 0),
+  'assists', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'assist'), 0),
+  'official', m.status = 'finalized')
+ from public.match_participants mp
+ join public.matches m on m.id = mp.match_id
+ join public.peladas p on p.id = m.pelada_id
+ where mp.membership_id = p_membership and m.status in ('voting_open','finalizing','finalized')
+ order by m.played_at desc, m.id desc
+ limit 1;
+
+Query Parameters: $1 = '6bc06030-871d-4935-bc2f-1992d53cc5f0'
+Limit  (cost=774.08..790.76 rows=1 width=56) (actual time=8.075..8.081 rows=1 loops=1)
+  Buffers: shared hit=169 read=57
+  ->  Result  (cost=774.08..3042.22 rows=136 width=56) (actual time=8.074..8.079 rows=1 loops=1)
+        Buffers: shared hit=169 read=57
+        ->  Sort  (cost=774.08..774.42 rows=136 width=133) (actual time=7.963..7.965 rows=1 loops=1)
+              Sort Key: m.played_at DESC, m.id DESC
+              Sort Method: top-N heapsort  Memory: 25kB
+              Buffers: shared hit=165 read=55
+              ->  Nested Loop  (cost=342.74..773.40 rows=136 width=133) (actual time=6.934..7.901 rows=80 loops=1)
+                    Buffers: shared hit=165 read=55
+                    ->  Hash Join  (cost=342.60..769.38 rows=136 width=90) (actual time=6.913..7.792 rows=80 loops=1)
+                          Hash Cond: (mp.match_id = m.id)
+                          Buffers: shared hit=163 read=55
+                          ->  Bitmap Heap Scan on match_participants mp  (cost=5.35..431.78 rows=136 width=34) (actual time=0.107..0.887 rows=80 loops=1)
+                                Recheck Cond: (membership_id = $1)
+                                Heap Blocks: exact=73
+                                Buffers: shared hit=20 read=55
+                                ->  Bitmap Index Scan on idx_match_participants_membership  (cost=0.00..5.31 rows=136 width=0) (actual time=0.061..0.061 rows=80 loops=1)
+                                      Index Cond: (membership_id = $1)
+                                      Buffers: shared hit=1 read=1
+                          ->  Hash  (cost=244.75..244.75 rows=7400 width=72) (actual time=6.792..6.792 rows=7400 loops=1)
+                                Buckets: 8192  Batches: 1  Memory Usage: 816kB
+                                Buffers: shared hit=143
+                                ->  Seq Scan on matches m  (cost=0.00..244.75 rows=7400 width=72) (actual time=0.015..3.965 rows=7400 loops=1)
+                                      Filter: (status = ANY ('{voting_open,finalizing,finalized}'::text[]))
+                                      Buffers: shared hit=143
+                    ->  Memoize  (cost=0.14..0.16 rows=1 width=59) (actual time=0.001..0.001 rows=1 loops=80)
+                          Cache Key: m.pelada_id
+                          Cache Mode: logical
+                          Hits: 79  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                          Buffers: shared hit=2
+                          ->  Index Scan using peladas_pkey on peladas p  (cost=0.13..0.15 rows=1 width=59) (actual time=0.013..0.013 rows=1 loops=1)
+                                Index Cond: (id = m.pelada_id)
+                                Buffers: shared hit=2
+        SubPlan 1
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (actual time=0.050..0.051 rows=1 loops=1)
+                Buffers: shared hit=1 read=2
+                ->  Index Scan using match_events_by_participant on match_events e  (cost=0.29..8.31 rows=1 width=4) (actual time=0.045..0.046 rows=1 loops=1)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'goal'::text))
+                      Buffers: shared hit=1 read=2
+        SubPlan 2
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (actual time=0.008..0.009 rows=1 loops=1)
+                Buffers: shared hit=3
+                ->  Index Scan using match_events_by_participant on match_events e_1  (cost=0.29..8.31 rows=1 width=4) (actual time=0.007..0.007 rows=0 loops=1)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'assist'::text))
+                      Rows Removed by Filter: 1
+                      Buffers: shared hit=3
+
+-----
+
+duration: 7.923 ms  plan:
+Query Text: select coalesce(jsonb_agg(jsonb_build_object('id', p.id, 'name', p.name, 'crest_path', p.crest_path, 'role', pm.role,
+   'membership_id', pm.id, 'position', pm.preferred_position, 'position_code', pm.position_code,
+   'is_primary', coalesce(p.id = v_state.primary_pelada_id, false),
+   'drafts', case when pm.role in ('admin','assistant')
+     then (select count(*) from public.matches m where m.pelada_id = p.id and m.status = 'draft') else 0 end,
+   -- guide (admin steps): only for the admin, never other people's data
+   'setup', case when pm.role = 'admin' then jsonb_build_object(
+     'members', (select count(*) from public.pelada_memberships x where x.pelada_id = p.id and x.status = 'active'),
+     'matches', (select count(*) from public.matches m where m.pelada_id = p.id),
+     'configured', p.crest_path is not null or exists(select 1 from public.pelada_settings s where s.pelada_id = p.id
+        and s.updated_at > p.created_at + interval '1 minute'),
+     'invited', exists(select 1 from private.pelada_invites i where i.pelada_id = p.id)) end)
+   order by (p.id = v_state.primary_pelada_id) desc nulls last, p.name)
+ , '[]'::jsonb)
+                 from public.pelada_memberships pm join public.peladas p on p.id = pm.pelada_id
+ where pm.user_id = v_uid and pm.status = 'active'
+Aggregate  (cost=182.45..182.46 rows=1 width=32) (actual time=7.917..7.920 rows=1 loops=1)
+  Buffers: shared hit=237
+  ->  Sort  (cost=11.47..11.48 rows=2 width=101) (actual time=1.467..1.470 rows=8 loops=1)
+        Sort Key: ((p.id = $13)) DESC NULLS LAST, p.name
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=10
+        ->  Nested Loop  (cost=0.28..11.46 rows=2 width=101) (actual time=1.329..1.377 rows=8 loops=1)
+              Join Filter: (p.id = pm.pelada_id)
+              Rows Removed by Join Filter: 56
+              Buffers: shared hit=10
+              ->  Seq Scan on peladas p  (cost=0.00..1.05 rows=5 width=67) (actual time=1.228..1.232 rows=8 loops=1)
+                    Buffers: shared hit=1
+              ->  Materialize  (cost=0.28..10.27 rows=2 width=50) (actual time=0.006..0.012 rows=8 loops=8)
+                    Buffers: shared hit=9
+                    ->  Index Scan using memberships_by_user on pelada_memberships pm  (cost=0.28..10.26 rows=2 width=50) (actual time=0.037..0.066 rows=8 loops=1)
+                          Index Cond: (user_id = $2)
+                          Filter: (status = 'active'::text)
+                          Buffers: shared hit=9
+  SubPlan 1
+    ->  Aggregate  (cost=4.30..4.31 rows=1 width=8) (actual time=0.008..0.008 rows=1 loops=8)
+          Buffers: shared hit=16
+          ->  Index Only Scan using matches_by_status on matches m  (cost=0.28..4.30 rows=1 width=0) (actual time=0.007..0.007 rows=0 loops=8)
+                Index Cond: ((pelada_id = p.id) AND (status = 'draft'::text))
+                Heap Fetches: 0
+                Buffers: shared hit=16
+  SubPlan 2
+    ->  Aggregate  (cost=34.06..34.07 rows=1 width=8) (actual time=0.310..0.310 rows=1 loops=8)
+          Buffers: shared hit=152
+          ->  Seq Scan on pelada_memberships x  (cost=0.00..33.58 rows=194 width=0) (actual time=0.221..0.297 rows=120 loops=8)
+                Filter: ((pelada_id = p.id) AND (status = 'active'::text))
+                Rows Removed by Filter: 843
+                Buffers: shared hit=152
+  SubPlan 3
+    ->  Aggregate  (cost=37.88..37.89 rows=1 width=8) (actual time=0.155..0.155 rows=1 loops=8)
+          Buffers: shared hit=20
+          ->  Index Only Scan using matches_by_status on matches m_1  (cost=0.28..34.18 rows=1480 width=0) (actual time=0.005..0.099 rows=925 loops=8)
+                Index Cond: (pelada_id = p.id)
+                Heap Fetches: 0
+                Buffers: shared hit=20
+  SubPlan 4
+    ->  Seq Scan on pelada_settings s  (cost=0.00..1.09 rows=1 width=0) (actual time=0.147..0.147 rows=0 loops=8)
+          Filter: ((pelada_id = p.id) AND (updated_at > (p.created_at + '00:01:00'::interval)))
+          Rows Removed by Filter: 8
+          Buffers: shared hit=8
+  SubPlan 5
+    ->  Seq Scan on pelada_invites i  (cost=0.00..8.10 rows=1 width=0) (actual time=0.148..0.148 rows=1 loops=8)
+          Filter: (pelada_id = p.id)
+          Rows Removed by Filter: 4
+          Buffers: shared hit=31
+
+-----
+
+duration: 7.609 ms  plan:
+Query Text: 
+ select jsonb_build_object('match_id', m.id, 'pelada_id', m.pelada_id, 'pelada_name', p.name, 'crest_path', p.crest_path,
+  'played_at', m.played_at, 'status', m.status, 'team_a_name', m.team_a_name, 'team_b_name', m.team_b_name,
+  'team_a_score', m.team_a_score, 'team_b_score', m.team_b_score, 'my_team', mp.team,
+  'result', case when m.team_a_score = m.team_b_score then 'draw'
+   when (m.team_a_score > m.team_b_score) = (mp.team = 'A') then 'win' else 'loss' end,
+  'goals', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'goal'), 0),
+  'assists', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'assist'), 0),
+  'official', m.status = 'finalized')
+ from public.match_participants mp
+ join public.matches m on m.id = mp.match_id
+ join public.peladas p on p.id = m.pelada_id
+ where mp.membership_id = p_membership and m.status in ('voting_open','finalizing','finalized')
+ order by m.played_at desc, m.id desc
+ limit 1;
+
+Query Parameters: $1 = '433e4e7c-91fe-40a1-ba03-27db621d8685'
+Limit  (cost=774.08..790.76 rows=1 width=56) (actual time=7.599..7.605 rows=1 loops=1)
+  Buffers: shared hit=195 read=17
+  ->  Result  (cost=774.08..3042.22 rows=136 width=56) (actual time=7.598..7.603 rows=1 loops=1)
+        Buffers: shared hit=195 read=17
+        ->  Sort  (cost=774.08..774.42 rows=136 width=133) (actual time=7.461..7.464 rows=1 loops=1)
+              Sort Key: m.played_at DESC, m.id DESC
+              Sort Method: top-N heapsort  Memory: 25kB
+              Buffers: shared hit=192 read=16
+              ->  Nested Loop  (cost=342.74..773.40 rows=136 width=133) (actual time=6.992..7.405 rows=96 loops=1)
+                    Buffers: shared hit=192 read=16
+                    ->  Hash Join  (cost=342.60..769.38 rows=136 width=90) (actual time=6.974..7.303 rows=96 loops=1)
+                          Hash Cond: (mp.match_id = m.id)
+                          Buffers: shared hit=190 read=16
+                          ->  Bitmap Heap Scan on match_participants mp  (cost=5.35..431.78 rows=136 width=34) (actual time=0.106..0.347 rows=96 loops=1)
+                                Recheck Cond: (membership_id = $1)
+                                Heap Blocks: exact=61
+                                Buffers: shared hit=47 read=16
+                                ->  Bitmap Index Scan on idx_match_participants_membership  (cost=0.00..5.31 rows=136 width=0) (actual time=0.060..0.060 rows=96 loops=1)
+                                      Index Cond: (membership_id = $1)
+                                      Buffers: shared hit=1 read=1
+                          ->  Hash  (cost=244.75..244.75 rows=7400 width=72) (actual time=6.841..6.841 rows=7400 loops=1)
+                                Buckets: 8192  Batches: 1  Memory Usage: 816kB
+                                Buffers: shared hit=143
+                                ->  Seq Scan on matches m  (cost=0.00..244.75 rows=7400 width=72) (actual time=0.016..3.865 rows=7400 loops=1)
+                                      Filter: (status = ANY ('{voting_open,finalizing,finalized}'::text[]))
+                                      Buffers: shared hit=143
+                    ->  Memoize  (cost=0.14..0.16 rows=1 width=59) (actual time=0.000..0.000 rows=1 loops=96)
+                          Cache Key: m.pelada_id
+                          Cache Mode: logical
+                          Hits: 95  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                          Buffers: shared hit=2
+                          ->  Index Scan using peladas_pkey on peladas p  (cost=0.13..0.15 rows=1 width=59) (actual time=0.010..0.010 rows=1 loops=1)
+                                Index Cond: (id = m.pelada_id)
+                                Buffers: shared hit=2
+        SubPlan 1
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (actual time=0.049..0.050 rows=1 loops=1)
+                Buffers: shared hit=1 read=1
+                ->  Index Scan using match_events_by_participant on match_events e  (cost=0.29..8.31 rows=1 width=4) (actual time=0.046..0.046 rows=0 loops=1)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'goal'::text))
+                      Buffers: shared hit=1 read=1
+        SubPlan 2
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (actual time=0.008..0.009 rows=1 loops=1)
+                Buffers: shared hit=2
+                ->  Index Scan using match_events_by_participant on match_events e_1  (cost=0.29..8.31 rows=1 width=4) (actual time=0.006..0.007 rows=0 loops=1)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'assist'::text))
+                      Buffers: shared hit=2
+
+-----
+
+duration: 7.220 ms  plan:
+Query Text: 
+ select jsonb_build_object('match_id', m.id, 'pelada_id', m.pelada_id, 'pelada_name', p.name, 'crest_path', p.crest_path,
+  'played_at', m.played_at, 'status', m.status, 'team_a_name', m.team_a_name, 'team_b_name', m.team_b_name,
+  'team_a_score', m.team_a_score, 'team_b_score', m.team_b_score, 'my_team', mp.team,
+  'result', case when m.team_a_score = m.team_b_score then 'draw'
+   when (m.team_a_score > m.team_b_score) = (mp.team = 'A') then 'win' else 'loss' end,
+  'goals', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'goal'), 0),
+  'assists', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'assist'), 0),
+  'official', m.status = 'finalized')
+ from public.match_participants mp
+ join public.matches m on m.id = mp.match_id
+ join public.peladas p on p.id = m.pelada_id
+ where mp.membership_id = p_membership and m.status in ('voting_open','finalizing','finalized')
+ order by m.played_at desc, m.id desc
+ limit 1;
+
+Query Parameters: $1 = '05c6d73f-9515-4914-a2ec-1f55f460182b'
+Limit  (cost=774.08..790.76 rows=1 width=56) (actual time=7.214..7.217 rows=1 loops=1)
+  Buffers: shared hit=177 read=2
+  ->  Result  (cost=774.08..3042.22 rows=136 width=56) (actual time=7.213..7.216 rows=1 loops=1)
+        Buffers: shared hit=177 read=2
+        ->  Sort  (cost=774.08..774.42 rows=136 width=133) (actual time=7.089..7.091 rows=1 loops=1)
+              Sort Key: m.played_at DESC, m.id DESC
+              Sort Method: top-N heapsort  Memory: 25kB
+              Buffers: shared hit=173
+              ->  Nested Loop  (cost=342.74..773.40 rows=136 width=133) (actual time=6.871..7.042 rows=80 loops=1)
+                    Buffers: shared hit=173
+                    ->  Hash Join  (cost=342.60..769.38 rows=136 width=90) (actual time=6.850..6.957 rows=80 loops=1)
+                          Hash Cond: (mp.match_id = m.id)
+                          Buffers: shared hit=171
+                          ->  Bitmap Heap Scan on match_participants mp  (cost=5.35..431.78 rows=136 width=34) (actual time=0.038..0.077 rows=80 loops=1)
+                                Recheck Cond: (membership_id = $1)
+                                Heap Blocks: exact=26
+                                Buffers: shared hit=28
+                                ->  Bitmap Index Scan on idx_match_participants_membership  (cost=0.00..5.31 rows=136 width=0) (actual time=0.015..0.015 rows=80 loops=1)
+                                      Index Cond: (membership_id = $1)
+                                      Buffers: shared hit=2
+                          ->  Hash  (cost=244.75..244.75 rows=7400 width=72) (actual time=6.798..6.798 rows=7400 loops=1)
+                                Buckets: 8192  Batches: 1  Memory Usage: 816kB
+                                Buffers: shared hit=143
+                                ->  Seq Scan on matches m  (cost=0.00..244.75 rows=7400 width=72) (actual time=0.014..3.938 rows=7400 loops=1)
+                                      Filter: (status = ANY ('{voting_open,finalizing,finalized}'::text[]))
+                                      Buffers: shared hit=143
+                    ->  Memoize  (cost=0.14..0.16 rows=1 width=59) (actual time=0.001..0.001 rows=1 loops=80)
+                          Cache Key: m.pelada_id
+                          Cache Mode: logical
+                          Hits: 79  Misses: 1  Evictions: 0  Overflows: 0  Memory Usage: 1kB
+                          Buffers: shared hit=2
+                          ->  Index Scan using peladas_pkey on peladas p  (cost=0.13..0.15 rows=1 width=59) (actual time=0.014..0.014 rows=1 loops=1)
+                                Index Cond: (id = m.pelada_id)
+                                Buffers: shared hit=2
+        SubPlan 1
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (actual time=0.076..0.076 rows=1 loops=1)
+                Buffers: shared hit=1 read=2
+                ->  Index Scan using match_events_by_participant on match_events e  (cost=0.29..8.31 rows=1 width=4) (actual time=0.071..0.072 rows=1 loops=1)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'goal'::text))
+                      Buffers: shared hit=1 read=2
+        SubPlan 2
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (actual time=0.007..0.008 rows=1 loops=1)
+                Buffers: shared hit=3
+                ->  Index Scan using match_events_by_participant on match_events e_1  (cost=0.29..8.31 rows=1 width=4) (actual time=0.006..0.006 rows=0 loops=1)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'assist'::text))
+                      Rows Removed by Filter: 1
+                      Buffers: shared hit=3
+
+-----
+
+duration: 0.414 ms  plan:
+Query Text: select coalesce(jsonb_agg(jsonb_build_object('lineup_id', l.id, 'pelada_id', l.pelada_id, 'pelada_name', p.name,
+   'label', l.label, 'my_team', lp.team, 'team_name', case lp.team when 'A' then l.team_a_name else l.team_b_name end,
+   'opponent_name', case lp.team when 'A' then l.team_b_name else l.team_a_name end, 'created_at', l.created_at)
+   order by l.created_at desc), '[]'::jsonb)
+             from (
+  select lp.lineup_id, lp.team from public.planned_lineup_players lp
+  join public.pelada_memberships pm on pm.id = lp.membership_id and pm.user_id = v_uid and pm.status = 'active') lp
+ join public.planned_lineups l on l.id = lp.lineup_id and l.status = 'active'
+ join public.peladas p on p.id = l.pelada_id
+Aggregate  (cost=11.43..11.44 rows=1 width=32) (actual time=0.409..0.411 rows=1 loops=1)
+  ->  Sort  (cost=11.42..11.42 rows=1 width=179) (actual time=0.406..0.407 rows=0 loops=1)
+        Sort Key: l.created_at DESC
+        Sort Method: quicksort  Memory: 25kB
+        ->  Nested Loop  (cost=0.28..11.41 rows=1 width=179) (actual time=0.398..0.399 rows=0 loops=1)
+              Join Filter: (p.id = l.pelada_id)
+              ->  Nested Loop  (cost=0.28..10.29 rows=1 width=168) (actual time=0.398..0.399 rows=0 loops=1)
+                    Join Filter: (lp.lineup_id = l.id)
+                    ->  Nested Loop  (cost=0.28..10.28 rows=1 width=48) (actual time=0.397..0.398 rows=0 loops=1)
+                          Join Filter: (pm.id = lp.membership_id)
+                          ->  Seq Scan on planned_lineup_players lp  (cost=0.00..0.00 rows=1 width=64) (actual time=0.396..0.396 rows=0 loops=1)
+                          ->  Index Scan using memberships_by_user on pelada_memberships pm  (cost=0.28..10.26 rows=2 width=16) (never executed)
+                                Index Cond: (user_id = $2)
+                                Filter: (status = 'active'::text)
+                    ->  Seq Scan on planned_lineups l  (cost=0.00..0.00 rows=1 width=136) (never executed)
+                          Filter: (status = 'active'::text)
+              ->  Seq Scan on peladas p  (cost=0.00..1.05 rows=5 width=27) (never executed)
+
+-----
+
+duration: 0.341 ms  plan:
+Query Text: select *              from public.user_app_state where user_id = v_uid
+Seq Scan on user_app_state  (cost=0.00..0.00 rows=1 width=80) (actual time=0.339..0.339 rows=0 loops=1)
+  Filter: (user_id = $2)
+
+-----
+
+duration: 0.325 ms  plan:
+Query Text: select coalesce(jsonb_agg(jsonb_build_object('match_id', s.match_id, 'pelada_id', s.pelada_id, 'pelada_name', p.name,
+   'closes_at', s.closes_at, 'team_a_name', m.team_a_name, 'team_b_name', m.team_b_name,
+   'team_a_score', m.team_a_score, 'team_b_score', m.team_b_score) order by s.closes_at), '[]'::jsonb)
+               from public.voting_sessions s join public.voting_eligible_members e on e.session_id = s.id
+ join public.pelada_memberships pm on pm.id = e.membership_id and pm.user_id = v_uid and pm.status = 'active'
+ join public.peladas p on p.id = s.pelada_id join public.matches m on m.id = s.match_id
+ where s.status = 'open' and s.closes_at > now()
+  and not exists(select 1 from public.vote_receipts r where r.session_id = s.id and r.membership_id = e.membership_id)
+Aggregate  (cost=19.75..19.76 rows=1 width=32) (actual time=0.320..0.322 rows=1 loops=1)
+  ->  Sort  (cost=19.73..19.74 rows=1 width=73) (actual time=0.318..0.320 rows=0 loops=1)
+        Sort Key: s.closes_at
+        Sort Method: quicksort  Memory: 25kB
+        ->  Nested Loop Anti Join  (cost=0.56..19.72 rows=1 width=73) (actual time=0.311..0.312 rows=0 loops=1)
+              Join Filter: ((r.session_id = s.id) AND (r.membership_id = e.membership_id))
+              ->  Nested Loop  (cost=0.56..19.71 rows=1 width=105) (actual time=0.311..0.312 rows=0 loops=1)
+                    ->  Nested Loop  (cost=0.28..11.41 rows=1 width=83) (actual time=0.310..0.311 rows=0 loops=1)
+                          Join Filter: (p.id = s.pelada_id)
+                          ->  Nested Loop  (cost=0.28..10.29 rows=1 width=72) (actual time=0.310..0.311 rows=0 loops=1)
+                                Join Filter: (e.membership_id = pm.id)
+                                ->  Nested Loop  (cost=0.00..0.01 rows=1 width=72) (actual time=0.310..0.310 rows=0 loops=1)
+                                      Join Filter: (e.session_id = s.id)
+                                      ->  Seq Scan on voting_sessions s  (cost=0.00..0.00 rows=1 width=56) (actual time=0.309..0.309 rows=0 loops=1)
+                                            Filter: ((status = 'open'::text) AND (closes_at > now()))
+                                      ->  Seq Scan on voting_eligible_members e  (cost=0.00..0.00 rows=1 width=32) (never executed)
+                                ->  Index Scan using memberships_by_user on pelada_memberships pm  (cost=0.28..10.26 rows=2 width=16) (never executed)
+                                      Index Cond: (user_id = $2)
+                                      Filter: (status = 'active'::text)
+                          ->  Seq Scan on peladas p  (cost=0.00..1.05 rows=5 width=27) (never executed)
+                    ->  Index Scan using matches_id_pelada_id_key on matches m  (cost=0.28..8.30 rows=1 width=38) (never executed)
+                          Index Cond: (id = s.match_id)
+              ->  Seq Scan on vote_receipts r  (cost=0.00..0.00 rows=1 width=32) (never executed)
+
+-----
+
+duration: 0.085 ms  plan:
+Query Text: 
+ select jsonb_build_object('match_id', m.id, 'pelada_id', m.pelada_id, 'pelada_name', p.name, 'crest_path', p.crest_path,
+  'played_at', m.played_at, 'status', m.status, 'team_a_name', m.team_a_name, 'team_b_name', m.team_b_name,
+  'team_a_score', m.team_a_score, 'team_b_score', m.team_b_score, 'my_team', mp.team,
+  'result', case when m.team_a_score = m.team_b_score then 'draw'
+   when (m.team_a_score > m.team_b_score) = (mp.team = 'A') then 'win' else 'loss' end,
+  'goals', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'goal'), 0),
+  'assists', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'assist'), 0),
+  'official', m.status = 'finalized')
+ from public.match_participants mp
+ join public.matches m on m.id = mp.match_id
+ join public.peladas p on p.id = m.pelada_id
+ where mp.membership_id = p_membership and m.status in ('voting_open','finalizing','finalized')
+ order by m.played_at desc, m.id desc
+ limit 1;
+
+Query Parameters: $1 = 'd966c496-056d-4de2-a161-103a666314b5'
+Limit  (cost=774.08..790.76 rows=1 width=56) (actual time=0.082..0.084 rows=0 loops=1)
+  Buffers: shared hit=1 read=1
+  ->  Result  (cost=774.08..3042.22 rows=136 width=56) (actual time=0.081..0.083 rows=0 loops=1)
+        Buffers: shared hit=1 read=1
+        ->  Sort  (cost=774.08..774.42 rows=136 width=133) (actual time=0.081..0.082 rows=0 loops=1)
+              Sort Key: m.played_at DESC, m.id DESC
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=1 read=1
+              ->  Nested Loop  (cost=342.74..773.40 rows=136 width=133) (actual time=0.071..0.072 rows=0 loops=1)
+                    Buffers: shared hit=1 read=1
+                    ->  Hash Join  (cost=342.60..769.38 rows=136 width=90) (actual time=0.071..0.072 rows=0 loops=1)
+                          Hash Cond: (mp.match_id = m.id)
+                          Buffers: shared hit=1 read=1
+                          ->  Bitmap Heap Scan on match_participants mp  (cost=5.35..431.78 rows=136 width=34) (actual time=0.070..0.070 rows=0 loops=1)
+                                Recheck Cond: (membership_id = $1)
+                                Buffers: shared hit=1 read=1
+                                ->  Bitmap Index Scan on idx_match_participants_membership  (cost=0.00..5.31 rows=136 width=0) (actual time=0.054..0.054 rows=0 loops=1)
+                                      Index Cond: (membership_id = $1)
+                                      Buffers: shared hit=1 read=1
+                          ->  Hash  (cost=244.75..244.75 rows=7400 width=72) (never executed)
+                                ->  Seq Scan on matches m  (cost=0.00..244.75 rows=7400 width=72) (never executed)
+                                      Filter: (status = ANY ('{voting_open,finalizing,finalized}'::text[]))
+                    ->  Memoize  (cost=0.14..0.16 rows=1 width=59) (never executed)
+                          Cache Key: m.pelada_id
+                          Cache Mode: logical
+                          ->  Index Scan using peladas_pkey on peladas p  (cost=0.13..0.15 rows=1 width=59) (never executed)
+                                Index Cond: (id = m.pelada_id)
+        SubPlan 1
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (never executed)
+                ->  Index Scan using match_events_by_participant on match_events e  (cost=0.29..8.31 rows=1 width=4) (never executed)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'goal'::text))
+        SubPlan 2
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (never executed)
+                ->  Index Scan using match_events_by_participant on match_events e_1  (cost=0.29..8.31 rows=1 width=4) (never executed)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'assist'::text))
+
+-----
+
+duration: 0.078 ms  plan:
+Query Text: 
+ select jsonb_build_object('match_id', m.id, 'pelada_id', m.pelada_id, 'pelada_name', p.name, 'crest_path', p.crest_path,
+  'played_at', m.played_at, 'status', m.status, 'team_a_name', m.team_a_name, 'team_b_name', m.team_b_name,
+  'team_a_score', m.team_a_score, 'team_b_score', m.team_b_score, 'my_team', mp.team,
+  'result', case when m.team_a_score = m.team_b_score then 'draw'
+   when (m.team_a_score > m.team_b_score) = (mp.team = 'A') then 'win' else 'loss' end,
+  'goals', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'goal'), 0),
+  'assists', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'assist'), 0),
+  'official', m.status = 'finalized')
+ from public.match_participants mp
+ join public.matches m on m.id = mp.match_id
+ join public.peladas p on p.id = m.pelada_id
+ where mp.membership_id = p_membership and m.status in ('voting_open','finalizing','finalized')
+ order by m.played_at desc, m.id desc
+ limit 1;
+
+Query Parameters: $1 = '5602bd50-47fd-44ba-8617-bc3638b4c889'
+Limit  (cost=774.08..790.76 rows=1 width=56) (actual time=0.075..0.077 rows=0 loops=1)
+  Buffers: shared hit=1 read=1
+  ->  Result  (cost=774.08..3042.22 rows=136 width=56) (actual time=0.074..0.076 rows=0 loops=1)
+        Buffers: shared hit=1 read=1
+        ->  Sort  (cost=774.08..774.42 rows=136 width=133) (actual time=0.074..0.075 rows=0 loops=1)
+              Sort Key: m.played_at DESC, m.id DESC
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=1 read=1
+              ->  Nested Loop  (cost=342.74..773.40 rows=136 width=133) (actual time=0.067..0.069 rows=0 loops=1)
+                    Buffers: shared hit=1 read=1
+                    ->  Hash Join  (cost=342.60..769.38 rows=136 width=90) (actual time=0.067..0.068 rows=0 loops=1)
+                          Hash Cond: (mp.match_id = m.id)
+                          Buffers: shared hit=1 read=1
+                          ->  Bitmap Heap Scan on match_participants mp  (cost=5.35..431.78 rows=136 width=34) (actual time=0.066..0.067 rows=0 loops=1)
+                                Recheck Cond: (membership_id = $1)
+                                Buffers: shared hit=1 read=1
+                                ->  Bitmap Index Scan on idx_match_participants_membership  (cost=0.00..5.31 rows=136 width=0) (actual time=0.045..0.046 rows=0 loops=1)
+                                      Index Cond: (membership_id = $1)
+                                      Buffers: shared hit=1 read=1
+                          ->  Hash  (cost=244.75..244.75 rows=7400 width=72) (never executed)
+                                ->  Seq Scan on matches m  (cost=0.00..244.75 rows=7400 width=72) (never executed)
+                                      Filter: (status = ANY ('{voting_open,finalizing,finalized}'::text[]))
+                    ->  Memoize  (cost=0.14..0.16 rows=1 width=59) (never executed)
+                          Cache Key: m.pelada_id
+                          Cache Mode: logical
+                          ->  Index Scan using peladas_pkey on peladas p  (cost=0.13..0.15 rows=1 width=59) (never executed)
+                                Index Cond: (id = m.pelada_id)
+        SubPlan 1
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (never executed)
+                ->  Index Scan using match_events_by_participant on match_events e  (cost=0.29..8.31 rows=1 width=4) (never executed)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'goal'::text))
+        SubPlan 2
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (never executed)
+                ->  Index Scan using match_events_by_participant on match_events e_1  (cost=0.29..8.31 rows=1 width=4) (never executed)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'assist'::text))
+
+-----
+
+duration: 0.057 ms  plan:
+Query Text: 
+ select jsonb_build_object('match_id', m.id, 'pelada_id', m.pelada_id, 'pelada_name', p.name, 'crest_path', p.crest_path,
+  'played_at', m.played_at, 'status', m.status, 'team_a_name', m.team_a_name, 'team_b_name', m.team_b_name,
+  'team_a_score', m.team_a_score, 'team_b_score', m.team_b_score, 'my_team', mp.team,
+  'result', case when m.team_a_score = m.team_b_score then 'draw'
+   when (m.team_a_score > m.team_b_score) = (mp.team = 'A') then 'win' else 'loss' end,
+  'goals', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'goal'), 0),
+  'assists', coalesce((select sum(e.quantity) from public.match_events e where e.match_id = m.id and e.participant_id = mp.id
+    and e.event_type = 'assist'), 0),
+  'official', m.status = 'finalized')
+ from public.match_participants mp
+ join public.matches m on m.id = mp.match_id
+ join public.peladas p on p.id = m.pelada_id
+ where mp.membership_id = p_membership and m.status in ('voting_open','finalizing','finalized')
+ order by m.played_at desc, m.id desc
+ limit 1;
+
+Query Parameters: $1 = 'a941e680-fc5f-41ca-a38a-ea48d0d46941'
+Limit  (cost=774.08..790.76 rows=1 width=56) (actual time=0.054..0.056 rows=0 loops=1)
+  Buffers: shared hit=1 read=1
+  ->  Result  (cost=774.08..3042.22 rows=136 width=56) (actual time=0.054..0.055 rows=0 loops=1)
+        Buffers: shared hit=1 read=1
+        ->  Sort  (cost=774.08..774.42 rows=136 width=133) (actual time=0.053..0.055 rows=0 loops=1)
+              Sort Key: m.played_at DESC, m.id DESC
+              Sort Method: quicksort  Memory: 25kB
+              Buffers: shared hit=1 read=1
+              ->  Nested Loop  (cost=342.74..773.40 rows=136 width=133) (actual time=0.049..0.050 rows=0 loops=1)
+                    Buffers: shared hit=1 read=1
+                    ->  Hash Join  (cost=342.60..769.38 rows=136 width=90) (actual time=0.049..0.050 rows=0 loops=1)
+                          Hash Cond: (mp.match_id = m.id)
+                          Buffers: shared hit=1 read=1
+                          ->  Bitmap Heap Scan on match_participants mp  (cost=5.35..431.78 rows=136 width=34) (actual time=0.048..0.049 rows=0 loops=1)
+                                Recheck Cond: (membership_id = $1)
+                                Buffers: shared hit=1 read=1
+                                ->  Bitmap Index Scan on idx_match_participants_membership  (cost=0.00..5.31 rows=136 width=0) (actual time=0.037..0.037 rows=0 loops=1)
+                                      Index Cond: (membership_id = $1)
+                                      Buffers: shared hit=1 read=1
+                          ->  Hash  (cost=244.75..244.75 rows=7400 width=72) (never executed)
+                                ->  Seq Scan on matches m  (cost=0.00..244.75 rows=7400 width=72) (never executed)
+                                      Filter: (status = ANY ('{voting_open,finalizing,finalized}'::text[]))
+                    ->  Memoize  (cost=0.14..0.16 rows=1 width=59) (never executed)
+                          Cache Key: m.pelada_id
+                          Cache Mode: logical
+                          ->  Index Scan using peladas_pkey on peladas p  (cost=0.13..0.15 rows=1 width=59) (never executed)
+                                Index Cond: (id = m.pelada_id)
+        SubPlan 1
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (never executed)
+                ->  Index Scan using match_events_by_participant on match_events e  (cost=0.29..8.31 rows=1 width=4) (never executed)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'goal'::text))
+        SubPlan 2
+          ->  Aggregate  (cost=8.31..8.32 rows=1 width=8) (never executed)
+                ->  Index Scan using match_events_by_participant on match_events e_1  (cost=0.29..8.31 rows=1 width=4) (never executed)
+                      Index Cond: (participant_id = mp.id)
+                      Filter: ((match_id = m.id) AND (event_type = 'assist'::text))
+
+-----
+
+duration: 0.041 ms  plan:
+Query Text: select pm.id from public.pelada_memberships pm where pm.user_id = v_uid and pm.status in ('active','left')
+Query Parameters: $1 = NULL, $2 = 'd4400000-0000-4000-8000-000000000001', $3 = NULL, $4 = NULL, $5 = NULL, $6 = NULL, $7 = NULL, $8 = NULL, $9 = NULL, $10 = NULL, $11 = NULL, $12 = NULL, $13 = NULL, $14 = NULL, $15 = NULL, $16 = NULL, $17 = NULL, $18 = NULL, $19 = NULL, $20 = NULL
+Index Scan using memberships_by_user on pelada_memberships pm  (cost=0.28..10.26 rows=2 width=16) (actual time=0.024..0.035 rows=8 loops=1)
+  Index Cond: (user_id = $2)
+  Filter: (status = ANY ('{active,left}'::text[]))
+  Buffers: shared hit=9
+
+-----
+
+duration: 0.038 ms  plan:
+Query Text: select jsonb_build_object('display_name', display_name, 'avatar_path', avatar_path, 'dominant_foot', dominant_foot)
+           from public.profiles where id = v_uid
+Index Scan using profiles_pkey on profiles  (cost=0.27..8.29 rows=1 width=32) (actual time=0.035..0.035 rows=1 loops=1)
+  Index Cond: (id = $2)
+  Buffers: shared hit=3
+
+-----
+
+duration: 0.020 ms  plan:
+Query Text: select coalesce(jsonb_agg(jsonb_build_object('pelada_id', p.id, 'pelada_name', p.name, 'membership_id', pm.id,
+   'position', pm.preferred_position) order by p.name), '[]'::jsonb)
+                   from public.pelada_memberships pm join public.peladas p on p.id = pm.pelada_id
+ where pm.user_id = v_uid and pm.status = 'active' and pm.position_code is null
+Aggregate  (cost=6.41..6.42 rows=1 width=32) (actual time=0.017..0.018 rows=1 loops=1)
+  Buffers: shared hit=1
+  ->  Sort  (cost=6.40..6.40 rows=1 width=52) (actual time=0.015..0.016 rows=0 loops=1)
+        Sort Key: p.name
+        Sort Method: quicksort  Memory: 25kB
+        Buffers: shared hit=1
+        ->  Nested Loop  (cost=0.12..6.39 rows=1 width=52) (actual time=0.008..0.009 rows=0 loops=1)
+              Join Filter: (p.id = pm.pelada_id)
+              Buffers: shared hit=1
+              ->  Index Scan using memberships_legacy_position on pelada_memberships pm  (cost=0.12..5.27 rows=1 width=41) (actual time=0.007..0.008 rows=0 loops=1)
+                    Filter: (user_id = $2)
+                    Buffers: shared hit=1
+              ->  Seq Scan on peladas p  (cost=0.00..1.05 rows=5 width=27) (never executed)

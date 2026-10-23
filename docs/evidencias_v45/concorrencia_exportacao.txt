@@ -1,0 +1,13 @@
+# ONLY_EXPORT=1 node concurrency.mjs 20 — PostgreSQL 17.10 real (embedded-postgres), 22/10/2026
+  massa: 4000 movimentações no mês (36.7s)
+  [todas as escritas]
+  escritas concorrentes: {"pagamento":823,"estorno":824,"edicao":824,"novo":824,"cancelamento":824,"erro":0}
+  V4.4 (páginas): 20 exportações -> 0 íntegras, 0 ACEITAS com conteúdo inconsistente {}, 20 recusadas pela quantidade
+  V4.5 (um instantâneo): 20 exportações -> 20 íntegras, 0 com problema; p50 534 ms, p95 1729 ms
+  controle (mesma função VOLATILE): 0 íntegras, 20 com linhas e totais de instantes diferentes
+  [só estornos e edições (a quantidade não muda)]
+  escritas concorrentes: {"pagamento":0,"estorno":1454,"edicao":1454,"novo":0,"cancelamento":0,"erro":0}
+  V4.4 (páginas): 20 exportações -> 0 íntegras, 7 ACEITAS com conteúdo inconsistente {"repetida":7,"somas":7}, 13 recusadas pela quantidade
+  V4.5 (um instantâneo): 20 exportações -> 20 íntegras, 0 com problema; p50 439 ms, p95 564 ms
+  controle (mesma função VOLATILE): 0 íntegras, 20 com linhas e totais de instantes diferentes
+PASS: sem deadlock, sem voto de versão antiga, Financeiro íntegro e exportação íntegra sob concorrência

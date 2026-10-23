@@ -1,0 +1,463 @@
+-- v44: select public.get_finance_charges_page($1,null,'open',null,null,null,null,30)
+-- comandos internos executados: 41; soma das durações: 100.6 ms
+-- abaixo, os 25 mais lentos (EXPLAIN ANALYZE, BUFFERS via auto_explain)
+
+duration: 65.322 ms  plan:
+Query Text: select public.get_finance_charges_page($1,null,'open',null,null,null,null,30)
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=0.00..0.26 rows=1 width=32) (actual time=64.871..64.872 rows=1 loops=1)
+  Buffers: shared hit=430
+
+-----
+
+duration: 16.968 ms  plan:
+Query Text: SELECT private.require_finance(p_pelada, false)
+Result  (cost=0.00..0.26 rows=1 width=4) (actual time=16.964..16.965 rows=1 loops=1)
+  Buffers: shared hit=9
+
+-----
+
+duration: 12.434 ms  plan:
+Query Text: 
+ with t as (select private.pelada_today(p_pelada) today),
+ ids as (select u.id, u.ord from unnest(p_ids) with ordinality u(id, ord)),
+ pay as (
+  select p.charge_id, jsonb_agg(jsonb_build_object('id', p.id, 'amount_cents', p.amount_cents, 'received_on', p.received_on,
+    'method', p.method, 'notes', p.notes, 'created_at', p.created_at, 'reversed_at', p.reversed_at,
+    'reverse_reason', p.reverse_reason, 'created_by_name', pr.display_name) order by p.received_on, p.created_at) items
+  from public.finance_payments p left join public.profiles pr on pr.id = p.created_by
+  where p.pelada_id = p_pelada and p.charge_id = any(p_ids)
+  group by p.charge_id)
+ select coalesce(jsonb_agg(jsonb_build_object('id', c.id, 'kind', c.kind, 'finance_member_id', c.finance_member_id,
+   'membership_id', c.membership_id, 'payer_id', c.payer_id, 'person_name', coalesce(m.player_name, fp.display_name, '-'),
+   'match_id', c.match_id, 'reference_month', c.reference_month, 'description', c.description,
+   'amount_due_cents', c.amount_due_cents, 'amount_paid_cents', c.amount_paid_cents,
+   'outstanding_cents', case when c.status = 'cancelled' then 0 else c.amount_due_cents - c.amount_paid_cents end,
+   'due_date', c.due_date, 'status', c.status,
+   'overdue', c.status in ('pending','partial') and c.due_date < t.today,
+   'version', c.version, 'created_at', c.created_at, 'cancelled_at', c.cancelled_at, 'cancel_reason', c.cancel_reason,
+   'payments', coalesce(pay.items, '[]'::jsonb)) order by ids.ord), '[]'::jsonb)
+ from ids join public.finance_charges c on c.id = ids.id and c.pelada_id = p_pelada
+ cross join t
+ left join public.pelada_memberships m on m.id = c.membership_id
+ left join public.finance_payers fp on fp.id = c.payer_id
+ left join pay on pay.charge_id = c.id;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68', $2 = '{f000000c-0000-4000-8000-000000002710,f0000015-0000-4000-8000-000000002710,f0000018-0000-4000-8000-000000002710,f000001e-0000-4000-8000-000000002710,f0000024-0000-4000-8000-000000002710,f0000030-0000-4000-8000-000000002710,f0000033-0000-4000-8000-000000002710,f000003c-0000-4000-8000-000000002710,f0000048-0000-4000-8000-000000002710,f0000051-0000-4000-8000-000000002710,f0000054-0000-4000-8000-000000002710,f000005a-0000-4000-8000-000000002710,f0000060-0000-4000-8000-000000002710,f000006c-0000-4000-8000-000000002710,f000006f-0000-4000-8000-000000002710,f0000078-0000-4000-8000-000000002710,f0000084-0000-4000-8000-000000002710,f000008d-0000-4000-8000-000000002710,f0000090-0000-4000-8000-000000002710,f0000096-0000-4000-8000-000000002710,f000009c-0000-4000-8000-000000002710,f00000a8-0000-4000-8000-000000002710,f00000ab-0000-4000-8000-000000002710,f00000b4-0000-4000-8000-000000002710,f00000c0-0000-4000-8000-000000002710,f00000c9-0000-4000-8000-000000002710,f00000cc-0000-4000-8000-000000002710,f00000d2-0000-4000-8000-000000002710,f00000d8-0000-4000-8000-000000002710,f00000e4-0000-4000-8000-000000002710}'
+Aggregate  (cost=153.00..153.01 rows=1 width=32) (actual time=12.398..12.405 rows=1 loops=1)
+  Buffers: shared hit=235
+  ->  Nested Loop Left Join  (cost=72.36..152.21 rows=3 width=254) (actual time=0.617..2.683 rows=30 loops=1)
+        Join Filter: (pay.charge_id = c.id)
+        Rows Removed by Join Filter: 414
+        Buffers: shared hit=205
+        ->  Nested Loop Left Join  (cost=0.56..80.17 rows=3 width=222) (actual time=0.084..1.460 rows=30 loops=1)
+              Join Filter: (fp.id = c.payer_id)
+              Buffers: shared hit=180
+              ->  Nested Loop Left Join  (cost=0.56..80.13 rows=3 width=190) (actual time=0.054..0.936 rows=30 loops=1)
+                    Buffers: shared hit=180
+                    ->  Nested Loop  (cost=0.28..79.13 rows=3 width=179) (actual time=0.044..0.633 rows=30 loops=1)
+                          Buffers: shared hit=90
+                          ->  Function Scan on unnest u  (cost=0.00..0.10 rows=10 width=24) (actual time=0.017..0.055 rows=30 loops=1)
+                          ->  Index Scan using finance_charges_pkey on finance_charges c  (cost=0.28..7.90 rows=1 width=171) (actual time=0.014..0.014 rows=1 loops=30)
+                                Index Cond: (id = u.id)
+                                Filter: (pelada_id = $1)
+                                Buffers: shared hit=90
+                    ->  Index Scan using pelada_memberships_pkey on pelada_memberships m  (cost=0.28..0.33 rows=1 width=27) (actual time=0.007..0.007 rows=1 loops=30)
+                          Index Cond: (id = c.membership_id)
+                          Buffers: shared hit=90
+              ->  Seq Scan on finance_payers fp  (cost=0.00..0.00 rows=1 width=48) (actual time=0.002..0.002 rows=0 loops=30)
+        ->  Materialize  (cost=71.80..71.91 rows=3 width=48) (actual time=0.018..0.035 rows=15 loops=30)
+              Buffers: shared hit=25
+              ->  Subquery Scan on pay  (cost=71.80..71.90 rows=3 width=48) (actual time=0.526..0.982 rows=23 loops=1)
+                    Buffers: shared hit=25
+                    ->  GroupAggregate  (cost=71.80..71.87 rows=3 width=48) (actual time=0.526..0.975 rows=23 loops=1)
+                          Group Key: p.charge_id
+                          Buffers: shared hit=25
+                          ->  Sort  (cost=71.80..71.81 rows=3 width=109) (actual time=0.474..0.483 rows=23 loops=1)
+                                Sort Key: p.charge_id, p.received_on, p.created_at
+                                Sort Method: quicksort  Memory: 27kB
+                                Buffers: shared hit=25
+                                ->  Hash Right Join  (cost=51.89..71.78 rows=3 width=109) (actual time=0.432..0.448 rows=23 loops=1)
+                                      Hash Cond: (pr.id = p.created_by)
+                                      Buffers: shared hit=25
+                                      ->  Seq Scan on profiles pr  (cost=0.00..18.00 rows=500 width=27) (actual time=0.037..0.176 rows=500 loops=1)
+                                            Buffers: shared hit=13
+                                      ->  Hash  (cost=51.85..51.85 rows=3 width=114) (actual time=0.148..0.149 rows=23 loops=1)
+                                            Buckets: 1024  Batches: 1  Memory Usage: 11kB
+                                            Buffers: shared hit=12
+                                            ->  Index Scan using finance_payments_by_charge on finance_payments p  (cost=0.28..51.85 rows=3 width=114) (actual time=0.045..0.125 rows=23 loops=1)
+                                                  Index Cond: (charge_id = ANY ($2))
+                                                  Filter: (pelada_id = $1)
+                                                  Buffers: shared hit=12
+
+-----
+
+duration: 3.665 ms  plan:
+Query Text: select jsonb_build_object('count', count(*),
+   'outstanding_cents', coalesce(sum(c.amount_due_cents - c.amount_paid_cents) filter (where c.status in ('pending','partial')), 0),
+   'partial_count', count(*) filter (where c.status = 'partial'))
+                   from public.finance_charges c
+  where c.pelada_id = p_pelada and (v_from is null or c.due_date between v_from and v_to)
+   and (p_status is null or c.status = p_status or (p_status = 'open' and c.status in ('pending','partial'))
+        or (p_status = 'overdue' and c.status in ('pending','partial') and c.due_date < v_today))
+   and (p_membership is null or c.membership_id = p_membership) and (p_payer is null or c.payer_id = p_payer)
+   and (p_kind is null or c.kind = p_kind)
+Aggregate  (cost=324.00..324.01 rows=1 width=32) (actual time=3.661..3.661 rows=1 loops=1)
+  Buffers: shared hit=164
+  ->  Seq Scan on finance_charges c  (cost=0.00..304.00 rows=1333 width=13) (actual time=0.666..3.035 rows=1333 loops=1)
+        Filter: ((pelada_id = '39a4974e-59ff-48f4-9f5b-628294480e68'::uuid) AND ((status = 'open'::text) OR (status = ANY ('{pending,partial}'::text[]))))
+        Rows Removed by Filter: 6667
+        Buffers: shared hit=164
+
+-----
+
+duration: 1.273 ms  plan:
+Query Text: p_pelada is null or not exists(select 1 from public.peladas where id=p_pelada)
+Result  (cost=1.06..1.07 rows=1 width=1) (actual time=1.269..1.270 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on peladas  (cost=0.00..1.06 rows=1 width=0) (actual time=1.266..1.267 rows=1 loops=1)
+          Filter: (id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.073 ms  plan:
+Query Text: select c.id, c.due_date, c.created_at from public.finance_charges c
+  where c.pelada_id = p_pelada and (v_from is null or c.due_date between v_from and v_to)
+   and (p_status is null or c.status = p_status or (p_status = 'open' and c.status in ('pending','partial'))
+        or (p_status = 'overdue' and c.status in ('pending','partial') and c.due_date < v_today))
+   and (p_membership is null or c.membership_id = p_membership) and (p_payer is null or c.payer_id = p_payer)
+   and (p_kind is null or c.kind = p_kind)
+   and (p_after is null or (c.due_date, c.created_at, c.id) > (a_due, a_created, a_id))
+  order by c.due_date, c.created_at, c.id
+  limit v_lim + 1
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68', $2 = NULL, $3 = 'open', $4 = NULL, $5 = NULL, $6 = NULL, $7 = NULL, $8 = NULL, $9 = NULL, $10 = NULL, $11 = NULL, $12 = '2026-10-22', $13 = '30', $14 = NULL, $15 = NULL, $16 = NULL, $17 = NULL, $18 = NULL, $19 = NULL, $20 = NULL, $21 = NULL, $22 = NULL, $23 = NULL, $24 = NULL, $25 = NULL, $26 = NULL, $27 = NULL
+Limit  (cost=0.28..21.92 rows=31 width=28) (actual time=0.022..0.066 rows=31 loops=1)
+  Buffers: shared hit=8
+  ->  Index Scan using finance_charges_page on finance_charges c  (cost=0.28..930.70 rows=1333 width=28) (actual time=0.021..0.062 rows=31 loops=1)
+        Index Cond: (pelada_id = '39a4974e-59ff-48f4-9f5b-628294480e68'::uuid)
+        Filter: ((status = 'open'::text) OR (status = ANY ('{pending,partial}'::text[])))
+        Rows Removed by Filter: 46
+        Buffers: shared hit=8
+
+-----
+
+duration: 0.044 ms  plan:
+Query Text: 
+ select exists(select 1 from public.pelada_memberships m where m.pelada_id=p_pelada and m.user_id=(select auth.uid())
+  and m.status='active' and (m.role='admin' or (m.role='assistant' and private.is_active_staff(p_pelada)
+   and exists(select 1 from public.finance_access a where a.pelada_id=p_pelada and a.membership_id=m.id))));
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=8.57..8.58 rows=1 width=1) (actual time=0.042..0.043 rows=1 loops=1)
+  Buffers: shared hit=3
+  InitPlan 4
+    ->  Index Scan using memberships_by_user on pelada_memberships m  (cost=0.30..8.57 rows=1 width=0) (actual time=0.041..0.041 rows=1 loops=1)
+          Index Cond: ((user_id = (InitPlan 1).col1) AND (pelada_id = $1))
+          Filter: ((status = 'active'::text) AND ((role = 'admin'::text) OR ((role = 'assistant'::text) AND private.is_active_staff($1) AND EXISTS(SubPlan 2))))
+          Buffers: shared hit=3
+          InitPlan 1
+            ->  Result  (cost=0.00..0.02 rows=1 width=16) (actual time=0.009..0.009 rows=1 loops=1)
+          SubPlan 2
+            ->  Seq Scan on finance_access a  (cost=0.00..0.00 rows=1 width=0) (never executed)
+                  Filter: ((pelada_id = $1) AND (membership_id = m.id))
+
+-----
+
+duration: 0.043 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.040..0.041 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.023..0.023 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.037 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.034..0.035 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.024..0.025 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.037 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.034..0.034 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.022..0.023 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.036 ms  plan:
+Query Text: SELECT private.finance_charge_filter_ok(p_status, p_kind)
+Result  (cost=0.00..0.26 rows=1 width=4) (actual time=0.033..0.033 rows=1 loops=1)
+
+-----
+
+duration: 0.033 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.030..0.030 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.020..0.021 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.033 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.031..0.032 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.022..0.023 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.032 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.030..0.030 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.022..0.022 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.031 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.029..0.029 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.020..0.020 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.030 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.028..0.029 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.021..0.022 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.029 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.028..0.028 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.021..0.021 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.028 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.026..0.026 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.018..0.018 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.027 ms  plan:
+Query Text: 
+ select coalesce((select (value)::boolean from private.app_config where key='premium_beta_open'), false)
+  or exists(select 1 from public.pelada_entitlements e where e.pelada_id=p_pelada
+   and (e.trial_ends_at > now() or e.premium_until > now()));
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.05..1.06 rows=1 width=1) (actual time=0.024..0.025 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on app_config  (cost=0.00..1.05 rows=1 width=1) (actual time=0.021..0.022 rows=1 loops=1)
+          Filter: (key = 'premium_beta_open'::text)
+          Rows Removed by Filter: 3
+          Buffers: shared hit=1
+  InitPlan 2
+    ->  Seq Scan on pelada_entitlements e  (cost=0.00..0.00 rows=1 width=0) (never executed)
+          Filter: ((pelada_id = $1) AND ((trial_ends_at > now()) OR (premium_until > now())))
+
+-----
+
+duration: 0.027 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.025..0.025 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.019..0.019 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.026 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.024..0.024 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.017..0.017 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.026 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.024..0.025 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.017..0.018 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.026 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.025..0.025 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.017..0.018 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.025 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.023..0.023 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.017..0.017 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1
+
+-----
+
+duration: 0.025 ms  plan:
+Query Text: 
+ select (now() at time zone coalesce(
+  (select timezone from public.pelada_settings where pelada_id=p_pelada),
+  'America/Sao_Paulo'))::date;
+
+Query Parameters: $1 = '39a4974e-59ff-48f4-9f5b-628294480e68'
+Result  (cost=1.06..1.08 rows=1 width=4) (actual time=0.023..0.024 rows=1 loops=1)
+  Buffers: shared hit=1
+  InitPlan 1
+    ->  Seq Scan on pelada_settings  (cost=0.00..1.06 rows=1 width=18) (actual time=0.017..0.018 rows=1 loops=1)
+          Filter: (pelada_id = $1)
+          Rows Removed by Filter: 7
+          Buffers: shared hit=1

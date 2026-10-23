@@ -1,0 +1,188 @@
+v44: 48 migrações (3.4s)
+  massa esportiva: 163.3s { users_and_peladas_s: 1.7, sports_s: 161.6 }
+v45: 49 migrações (3.2s)
+  massa esportiva: 126.5s { users_and_peladas_s: 0.8, sports_s: 125.7 }
+volume: {
+  partidas: '7400',
+  resultados: '118400',
+  premios: '15043',
+  membros: '870',
+  temporadas: '25'
+}
+
+Financeiro (admin, Pelada Premium; todas as movimentações no mês atual):
+  [v44] relatório do mês (1000 mov.)                                     p50      9.3 ms  p95     48.3 ms       5.2 KB
+  [v44] categorias de receita 2240799 x total 2240799 → IGUAIS
+  [v44] painel (1000 mov.)                                               p50      9.9 ms  p95     12.7 ms         3 KB
+  [v44] cobranças: lista inteira da V4.3 (500)                           p50     50.7 ms  p95     57.5 ms     343.9 KB
+  [v44] pessoas e mensalistas (1000 mov.)                                p50      3.2 ms  p95      4.9 ms       2.4 KB
+  [v44] cobranças: 1ª página de 30 + resumo (500)                        p50      7.9 ms  p95     10.1 ms      20.9 KB
+  [v44] cobranças: em aberto, 1ª página                                  p50      8.4 ms  p95     11.7 ms      20.4 KB
+  [v44] livro-caixa: 1ª página de 40 + total                             p50      8.4 ms  p95     10.2 ms      12.5 KB
+  [v44] exportação completa: 950/950 linhas em 2 páginas, 72 ms → COMPLETA
+  [v45] relatório do mês (1000 mov.)                                     p50      8.6 ms  p95       40 ms       5.2 KB
+  [v45] categorias de receita 2240799 x total 2240799 → IGUAIS
+  [v45] painel (1000 mov.)                                               p50      8.7 ms  p95     12.3 ms         3 KB
+  [v45] cobranças: lista inteira da V4.3 (500)                           p50     47.5 ms  p95     56.4 ms     343.9 KB
+  [v45] pessoas e mensalistas (1000 mov.)                                p50      2.9 ms  p95      5.4 ms       2.4 KB
+  [v45] cobranças: 1ª página de 30 + resumo (500)                        p50      7.9 ms  p95       10 ms      20.9 KB
+  [v45] cobranças: em aberto, 1ª página                                  p50      8.3 ms  p95      9.9 ms      20.4 KB
+  [v45] livro-caixa: 1ª página de 40 + total                             p50      8.9 ms  p95     10.9 ms      12.5 KB
+  [v45] exportação completa: 950/950 linhas em 2 páginas, 65 ms → COMPLETA
+  [v45] exportação num instantâneo: 950 linhas, p50 89.4 ms, p95 108.7 ms, 289 KB → COMPLETA
+  [v44] relatório do mês (5000 mov.)                                     p50     31.2 ms  p95     60.5 ms       5.3 KB
+  [v44] categorias de receita 12368081 x total 12368081 → IGUAIS
+  [v44] painel (5000 mov.)                                               p50     14.6 ms  p95       19 ms         3 KB
+  [v44] cobranças: lista inteira da V4.3 (2500)                          p50    666.4 ms  p95    763.8 ms    1716.5 KB
+  [v44] pessoas e mensalistas (5000 mov.)                                p50      2.9 ms  p95      6.2 ms       2.4 KB
+  [v44] cobranças: 1ª página de 30 + resumo (2500)                       p50      8.6 ms  p95     11.8 ms      20.9 KB
+  [v44] cobranças: em aberto, 1ª página                                  p50      9.3 ms  p95     12.1 ms      20.4 KB
+  [v44] livro-caixa: 1ª página de 40 + total                             p50       12 ms  p95     14.2 ms      13.3 KB
+  [v44] exportação completa: 4750/4750 linhas em 10 páginas, 348 ms → COMPLETA
+  [v45] relatório do mês (5000 mov.)                                     p50     36.5 ms  p95    101.9 ms       5.3 KB
+  [v45] categorias de receita 12368081 x total 12368081 → IGUAIS
+  [v45] painel (5000 mov.)                                               p50     16.7 ms  p95     19.2 ms         3 KB
+  [v45] cobranças: lista inteira da V4.3 (2500)                          p50    685.4 ms  p95    779.5 ms    1721.3 KB
+  [v45] pessoas e mensalistas (5000 mov.)                                p50      3.2 ms  p95      6.1 ms       2.4 KB
+  [v45] cobranças: 1ª página de 30 + resumo (2500)                       p50        9 ms  p95     11.7 ms      20.9 KB
+  [v45] cobranças: em aberto, 1ª página                                  p50      9.9 ms  p95     10.9 ms      20.4 KB
+  [v45] livro-caixa: 1ª página de 40 + total                             p50     13.3 ms  p95     17.4 ms      13.3 KB
+  [v45] exportação completa: 4750/4750 linhas em 10 páginas, 355 ms → COMPLETA
+  [v45] exportação num instantâneo: 4750 linhas, p50 280.1 ms, p95 297.2 ms, 1448 KB → COMPLETA
+  [v44] relatório do mês (10000 mov.)                                    p50     63.8 ms  p95     82.7 ms       5.3 KB
+  [v44] categorias de receita 27654826 x total 27654826 → IGUAIS
+  [v44] painel (10000 mov.)                                              p50     26.7 ms  p95     32.3 ms         3 KB
+  [v44] cobranças: lista inteira da V4.3 (5000)                          p50   2194.4 ms  p95   2595.7 ms    3443.9 KB
+  [v44] pessoas e mensalistas (10000 mov.)                               p50      2.8 ms  p95      3.7 ms       2.4 KB
+  [v44] cobranças: 1ª página de 30 + resumo (5000)                       p50      9.9 ms  p95     12.9 ms        21 KB
+  [v44] cobranças: em aberto, 1ª página                                  p50     10.9 ms  p95     14.4 ms      20.4 KB
+  [v44] livro-caixa: 1ª página de 40 + total                             p50     19.3 ms  p95     28.9 ms      13.3 KB
+  [v44] exportação completa: 9500/9500 linhas em 19 páginas, 742 ms → COMPLETA
+  [v45] relatório do mês (10000 mov.)                                    p50     63.3 ms  p95     80.1 ms       5.3 KB
+  [v45] categorias de receita 27654826 x total 27654826 → IGUAIS
+  [v45] painel (10000 mov.)                                              p50       22 ms  p95     31.9 ms         3 KB
+  [v45] cobranças: lista inteira da V4.3 (5000)                          p50     2231 ms  p95   2610.1 ms    3443.7 KB
+  [v45] pessoas e mensalistas (10000 mov.)                               p50        3 ms  p95      3.5 ms       2.4 KB
+  [v45] cobranças: 1ª página de 30 + resumo (5000)                       p50     10.6 ms  p95     13.2 ms      20.9 KB
+  [v45] cobranças: em aberto, 1ª página                                  p50     11.2 ms  p95     13.8 ms      20.4 KB
+  [v45] livro-caixa: 1ª página de 40 + total                             p50     15.8 ms  p95     23.1 ms      13.3 KB
+  [v45] exportação completa: 9500/9500 linhas em 19 páginas, 711 ms → COMPLETA
+  [v45] exportação num instantâneo: 9500 linhas, p50 571.9 ms, p95 646.4 ms, 2898 KB → COMPLETA
+
+Central do Jogador e Minha Carreira (usuário 2: joga em todas as peladas):
+  [v44] Central do Jogador (get_player_central)                          p50     39.4 ms  p95    147.5 ms       2.6 KB
+  [v44] Resumo da carreira (get_player_career_summary)                   p50      8.4 ms  p95     66.8 ms      16.4 KB
+  [v44] Troféus: Craque, 1ª página de 20                                 p50       17 ms  p95     22.7 ms       8.5 KB
+  [v44] Histórico de partidas: 1ª página de 20                           p50     29.2 ms  p95     36.8 ms       6.6 KB
+  [v44] Histórico de partidas: página 22 (antiga)                        p50     36.4 ms  p95     41.2 ms       6.6 KB
+  [v44] Carreira V4.3 (get_player_career, com conquistas)                p50     18.8 ms  p95     34.6 ms      24.5 KB
+  [v44] Início V4.3 (get_my_home)                                        p50      3.2 ms  p95        4 ms       1.8 KB
+
+Telas da pelada por tamanho (usuário 2, RLS):
+  [v44] P20: Elenco (cards + membros)                                    p50      4.4 ms  p95     17.4 ms         0 KB
+  [v44] P20: partidas (página de 30)                                     p50      1.6 ms  p95      2.2 ms         0 KB
+  [v44] P20: ranking de gols da temporada                                p50      1.7 ms  p95      9.9 ms         0 KB
+  [v44] P20: ranking de overall da temporada                             p50      1.5 ms  p95        2 ms         0 KB
+  [v44] P20: recordes da temporada                                       p50      5.1 ms  p95      6.3 ms       1.9 KB
+  [v44] P50: Elenco (cards + membros)                                    p50      4.4 ms  p95        5 ms         0 KB
+  [v44] P50: partidas (página de 30)                                     p50      1.7 ms  p95        2 ms         0 KB
+  [v44] P50: ranking de gols da temporada                                p50      1.6 ms  p95      1.8 ms         0 KB
+  [v44] P50: ranking de overall da temporada                             p50      1.6 ms  p95      1.8 ms         0 KB
+  [v44] P50: recordes da temporada                                       p50      5.2 ms  p95      6.6 ms       3.4 KB
+  [v44] P100: Elenco (cards + membros)                                   p50      4.1 ms  p95      5.6 ms         0 KB
+  [v44] P100: partidas (página de 30)                                    p50      1.6 ms  p95      1.7 ms         0 KB
+  [v44] P100: ranking de gols da temporada                               p50      1.8 ms  p95      2.6 ms         0 KB
+  [v44] P100: ranking de overall da temporada                            p50      1.7 ms  p95        2 ms         0 KB
+  [v44] P100: recordes da temporada                                      p50      5.9 ms  p95      6.6 ms       8.8 KB
+  [v44] P200: Elenco (cards + membros)                                   p50      4.9 ms  p95        6 ms         0 KB
+  [v44] P200: partidas (página de 30)                                    p50      2.1 ms  p95      2.4 ms         0 KB
+  [v44] P200: ranking de gols da temporada                               p50        2 ms  p95      2.7 ms         0 KB
+  [v44] P200: ranking de overall da temporada                            p50      1.9 ms  p95      2.2 ms         0 KB
+  [v44] P200: recordes da temporada                                      p50      6.9 ms  p95      8.6 ms      11.3 KB
+  [v44] P500: Elenco (cards + membros)                                   p50      5.7 ms  p95      9.1 ms         0 KB
+  [v44] P500: partidas (página de 30)                                    p50      1.6 ms  p95      2.1 ms         0 KB
+  [v44] P500: ranking de gols da temporada                               p50      2.7 ms  p95      3.3 ms         0 KB
+  [v44] P500: ranking de overall da temporada                            p50      2.6 ms  p95      3.3 ms         0 KB
+  [v44] P500: recordes da temporada                                      p50     10.8 ms  p95     12.3 ms      33.8 KB
+
+Sorteio no servidor (admin, Pelada Premium):
+  sorteio único, 20 jogadores: 104 ms
+  sorteio único, 50 jogadores: 208.4 ms
+  sorteio único, 100 jogadores: 523.3 ms
+
+Concorrência (leituras simultâneas, conexões separadas):
+  [v44] 10 conexões: 100 aberturas da Central, p50 184.8 ms, p95 366 ms, total 2178 ms; 1ª chamada de cada conexão (fria): mediana 833 ms
+  [v44] 30 conexões: 300 aberturas da Central, p50 470 ms, p95 904.3 ms, total 5349 ms; 1ª chamada de cada conexão (fria): mediana 2335 ms
+
+Central do Jogador e Minha Carreira (usuário 2: joga em todas as peladas):
+  [v45] Central do Jogador (get_player_central)                          p50     45.6 ms  p95      184 ms       2.6 KB
+  [v45] Resumo da carreira (get_player_career_summary)                   p50     11.6 ms  p95     40.9 ms      16.4 KB
+  [v45] Troféus: Craque, 1ª página de 20                                 p50     21.2 ms  p95     37.1 ms       8.5 KB
+  [v45] Histórico de partidas: 1ª página de 20                           p50     20.3 ms  p95     31.5 ms       6.6 KB
+  [v45] Histórico de partidas: página 22 (antiga)                        p50     10.1 ms  p95     14.3 ms       6.6 KB
+  [v45] Carreira V4.3 (get_player_career, com conquistas)                p50     20.8 ms  p95     42.2 ms      24.8 KB
+  [v45] Início V4.3 (get_my_home)                                        p50      3.6 ms  p95        5 ms       1.8 KB
+
+Telas da pelada por tamanho (usuário 2, RLS):
+  [v45] P20: Elenco (cards + membros)                                    p50      5.8 ms  p95       18 ms         0 KB
+  [v45] P20: partidas (página de 30)                                     p50      3.9 ms  p95      4.7 ms         0 KB
+  [v45] P20: ranking de gols da temporada                                p50      2.4 ms  p95     13.5 ms         0 KB
+  [v45] P20: ranking de overall da temporada                             p50      1.7 ms  p95      1.9 ms         0 KB
+  [v45] P20: recordes da temporada                                       p50      4.8 ms  p95      7.4 ms       1.7 KB
+  [v45] P50: Elenco (cards + membros)                                    p50        5 ms  p95      6.8 ms         0 KB
+  [v45] P50: partidas (página de 30)                                     p50      1.6 ms  p95      1.8 ms         0 KB
+  [v45] P50: ranking de gols da temporada                                p50        2 ms  p95      2.2 ms         0 KB
+  [v45] P50: ranking de overall da temporada                             p50      1.6 ms  p95      2.6 ms         0 KB
+  [v45] P50: recordes da temporada                                       p50      5.4 ms  p95      6.7 ms       3.4 KB
+  [v45] P100: Elenco (cards + membros)                                   p50      5.8 ms  p95      6.3 ms         0 KB
+  [v45] P100: partidas (página de 30)                                    p50      1.7 ms  p95      2.7 ms         0 KB
+  [v45] P100: ranking de gols da temporada                               p50        2 ms  p95      2.5 ms         0 KB
+  [v45] P100: ranking de overall da temporada                            p50      1.6 ms  p95      1.9 ms         0 KB
+  [v45] P100: recordes da temporada                                      p50      8.6 ms  p95      9.2 ms       8.7 KB
+  [v45] P200: Elenco (cards + membros)                                   p50      5.9 ms  p95      7.1 ms         0 KB
+  [v45] P200: partidas (página de 30)                                    p50      1.8 ms  p95      2.4 ms         0 KB
+  [v45] P200: ranking de gols da temporada                               p50      2.3 ms  p95      3.3 ms         0 KB
+  [v45] P200: ranking de overall da temporada                            p50      2.6 ms  p95      2.7 ms         0 KB
+  [v45] P200: recordes da temporada                                      p50      9.8 ms  p95     10.8 ms      11.5 KB
+  [v45] P500: Elenco (cards + membros)                                   p50      5.3 ms  p95      6.2 ms         0 KB
+  [v45] P500: partidas (página de 30)                                    p50      1.9 ms  p95      2.4 ms         0 KB
+  [v45] P500: ranking de gols da temporada                               p50      3.2 ms  p95      3.8 ms         0 KB
+  [v45] P500: ranking de overall da temporada                            p50      2.5 ms  p95      3.8 ms         0 KB
+  [v45] P500: recordes da temporada                                      p50     13.8 ms  p95     16.5 ms      34.6 KB
+
+Sorteio no servidor (admin, Pelada Premium):
+  sorteio único, 20 jogadores: 98.5 ms
+  sorteio único, 50 jogadores: 203.4 ms
+  sorteio único, 100 jogadores: 542.7 ms
+
+Concorrência (leituras simultâneas, conexões separadas):
+  [v45] 10 conexões: 100 aberturas da Central, p50 179.7 ms, p95 333.1 ms, total 2135 ms; 1ª chamada de cada conexão (fria): mediana 917 ms
+  [v45] 30 conexões: 300 aberturas da Central, p50 498.1 ms, p95 983.5 ms, total 5398 ms; 1ª chamada de cada conexão (fria): mediana 2444 ms
+
+A/B intercalado (v44 e v45 alternados a cada repetição):
+  Financeiro: relatório do mês (10000 mov.)            v44 p50      69 p95    92.2 | v45 p50    65.2 p95    88.9 ms
+  Financeiro: painel (10000 mov.)                      v44 p50    24.7 p95    30.8 | v45 p50    21.9 p95    28.9 ms
+  Financeiro: cobranças em aberto, 1ª página de 30     v44 p50    11.1 p95    13.4 | v45 p50    11.8 p95    13.4 ms
+  Financeiro: livro-caixa, 1ª página de 40 + total     v44 p50    18.6 p95    20.9 | v45 p50    16.4 p95    17.7 ms
+  Central do Jogador                                   v44 p50    37.6 p95    45.2 | v45 p50    36.1 p95    42.5 ms
+  Resumo da carreira                                   v44 p50     7.9 p95    10.6 | v45 p50     7.7 p95      10 ms
+  Troféus: Craque, 1ª página de 20                     v44 p50    14.7 p95      16 | v45 p50    15.4 p95    20.7 ms
+  Histórico de partidas: 1ª página de 20               v44 p50    34.1 p95    41.6 | v45 p50    14.2 p95      18 ms
+  P20: Elenco (cards + membros, RLS)                   v44 p50     4.2 p95     5.2 | v45 p50     4.2 p95     5.5 ms
+  P20: ranking de gols                                 v44 p50     1.5 p95     1.9 | v45 p50     1.6 p95     2.3 ms
+  P20: recordes                                        v44 p50     4.7 p95     5.9 | v45 p50     4.8 p95     6.1 ms
+  P50: Elenco (cards + membros, RLS)                   v44 p50     4.1 p95     5.3 | v45 p50     4.2 p95     6.1 ms
+  P50: ranking de gols                                 v44 p50       2 p95     3.3 | v45 p50       2 p95     2.4 ms
+  P50: recordes                                        v44 p50     5.3 p95     7.4 | v45 p50     5.2 p95     7.7 ms
+  P100: Elenco (cards + membros, RLS)                  v44 p50     4.3 p95     5.4 | v45 p50     4.3 p95     5.3 ms
+  P100: ranking de gols                                v44 p50     1.7 p95     2.2 | v45 p50     1.7 p95     2.3 ms
+  P100: recordes                                       v44 p50       6 p95     7.1 | v45 p50       6 p95       8 ms
+  P200: Elenco (cards + membros, RLS)                  v44 p50     4.8 p95     6.5 | v45 p50     4.7 p95     6.3 ms
+  P200: ranking de gols                                v44 p50     1.9 p95     2.2 | v45 p50       2 p95     2.4 ms
+  P200: recordes                                       v44 p50     6.6 p95      10 | v45 p50     6.7 p95     9.2 ms
+  P500: Elenco (cards + membros, RLS)                  v44 p50     5.1 p95     6.3 | v45 p50       5 p95     6.7 ms
+  P500: ranking de gols                                v44 p50     2.6 p95     3.4 | v45 p50     2.6 p95     3.1 ms
+  P500: recordes                                       v44 p50    10.7 p95    12.3 | v45 p50    10.9 p95    13.8 ms
+  exportação do mês: v44 (páginas) p50 706 p95 1047 | v45 (um instantâneo) p50 569 p95 832 ms, 2898 KB
+
+Resultados em docs/evidencias_v45/perf_resultados.json
