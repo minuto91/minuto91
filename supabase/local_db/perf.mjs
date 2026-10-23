@@ -7,6 +7,8 @@
 // vão para ../../docs/evidencias_v44/explain_*.txt e o resumo para ../../docs/evidencias_v44/perf_resultados.json.
 // Limites (documentados no relatório): um computador só, sem rede (o Supabase soma ~20-80 ms de rede por chamada),
 // Postgres com configuração padrão, massa sintética.
+// V4.5: PERF_COMPARE=v45 node perf.mjs compara v44 (migrações até a 046) x v45 (todas) com a mesma massa, mede as telas
+// nos DOIS bancos com p50 e p95 (REPS repetições, padrão 15) e grava em ../../docs/evidencias_v45/.
 import EmbeddedPostgres from 'embedded-postgres';
 import { mkdirSync, mkdtempSync, readdirSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -14,11 +16,17 @@ import { join } from 'node:path';
 import pg from 'pg';
 
 const SMALL = !!process.env.SMALL;
+const V45 = process.env.PERF_COMPARE === 'v45';
+const REPS = Number(process.env.REPS ?? (V45 ? 15 : 5));
 const root = join(import.meta.dirname, '..');
-const out = join(root, '..', 'docs', 'evidencias_v44');
+const out = join(root, '..', 'docs', V45 ? 'evidencias_v45' : 'evidencias_v44');
 mkdirSync(out, { recursive: true });
 const all = readdirSync(join(root, 'migrations')).filter((f) => f.endsWith('.sql')).sort();
 const upTo43 = all.filter((f) => f < '044');
+const upTo46 = all.filter((f) => f < '047');
+const PAIRS = V45 ? [['v44', upTo46], ['v45', all]] : [['v43', upTo43], ['v44', all]];
+const hasPages = (db) => db.name !== 'v43';
+const hasExport = (db) => db.name === 'v45';
 
 // Peladas: jogadores cadastrados x partidas históricas. O usuário 1 administra todas; o 2 joga em todas.
 const PELADAS = SMALL
@@ -188,7 +196,7 @@ async function asUser(c, n) {
   await c.query(`set role authenticated`);
 }
 
-async function timeIt(c, sql, params, reps = 5) {
+async function timeIt(c, sql, params, reps = REPS) {
   const times = [];
   let row;
   for (let i = 0; i < reps; i++) {
@@ -199,14 +207,15 @@ async function timeIt(c, sql, params, reps = 5) {
   }
   times.sort((a, b) => a - b);
   const bytes = row ? Buffer.byteLength(JSON.stringify(row)) : 0;
-  return { median_ms: +times[Math.floor(times.length / 2)].toFixed(1), max_ms: +times[times.length - 1].toFixed(1), bytes, row };
+  const p95 = times[Math.min(times.length - 1, Math.ceil(0.95 * times.length) - 1)];
+  return { median_ms: +times[Math.floor(times.length / 2)].toFixed(1), p95_ms: +p95.toFixed(1), max_ms: +times[times.length - 1].toFixed(1), reps, bytes, row };
 }
 
 async function measure(db, label, area, sql, params, extra = {}) {
   const r = await timeIt(db.c, sql, params);
-  const m = { db: db.name, area, label, median_ms: r.median_ms, max_ms: r.max_ms, response_kb: +(r.bytes / 1024).toFixed(1), ...extra };
+  const m = { db: db.name, area, label, median_ms: r.median_ms, p95_ms: r.p95_ms, max_ms: r.max_ms, reps: r.reps, response_kb: +(r.bytes / 1024).toFixed(1), ...extra };
   results.measures.push(m);
-  log(`  [${db.name}] ${label.padEnd(64)} ${String(r.median_ms).padStart(8)} ms  ${String(m.response_kb).padStart(8)} KB`);
+  log(`  [${db.name}] ${label.padEnd(64)} p50 ${String(r.median_ms).padStart(8)} ms  p95 ${String(r.p95_ms).padStart(8)} ms  ${String(m.response_kb).padStart(8)} KB`);
   return r.row;
 }
 
@@ -242,7 +251,7 @@ async function explain(db, file, sql, params) {
 const srv = await startServer();
 try {
   const dbs = [];
-  for (const [name, files] of [['v43', upTo43], ['v44', all]]) {
+  for (const [name, files] of PAIRS) {
     const t = performance.now();
     const db = await makeDb(srv, name, files);
     log(`${name}: ${files.length} migrações (${((performance.now() - t) / 1000).toFixed(1)}s)`);
@@ -288,7 +297,7 @@ try {
       await measure(db, `painel (${n} mov.)`, 'financeiro', `select public.get_finance_overview($1) r`, [pid], tag);
       await measure(db, `cobranças: lista inteira da V4.3 (${n / 2})`, 'financeiro', `select public.get_finance_charges($1) r`, [pid], tag);
       await measure(db, `pessoas e mensalistas (${n} mov.)`, 'financeiro', `select public.get_finance_people($1) r`, [pid], tag);
-      if (db.name === 'v44') {
+      if (hasPages(db)) {
         await measure(db, `cobranças: 1ª página de 30 + resumo (${n / 2})`, 'financeiro', `select public.get_finance_charges_page($1,null,null,null,null,null,null,30) r`, [pid], tag);
         await measure(db, `cobranças: em aberto, 1ª página`, 'financeiro', `select public.get_finance_charges_page($1,null,'open',null,null,null,null,30) r`, [pid], tag);
         await measure(db, `livro-caixa: 1ª página de 40 + total`, 'financeiro', `select public.get_finance_ledger_page($1,$2,null,null,null,null,40,true) r`, [pid, month], tag);
@@ -309,6 +318,14 @@ try {
         const ms = performance.now() - t;
         results.measures.push({ db: db.name, area: 'financeiro', label: `exportação completa (${n} mov.)`, total_ms: +ms.toFixed(0), pages, rows: count, expected: total, complete: count === total, ...tag });
         log(`  [${db.name}] exportação completa: ${count}/${total} linhas em ${pages} páginas, ${ms.toFixed(0)} ms → ${count === total ? 'COMPLETA' : 'INCOMPLETA'}`);
+        if (hasExport(db)) {
+          // V4.5: uma chamada, um instantâneo
+          const e = await timeIt(db.c, `select public.get_finance_export($1,$2,($2::date + interval '1 month - 1 day')::date) r`, [pid, month], 5);
+          const rows = e.row.r.items.length;
+          const okx = rows === Number(e.row.r.total.count);
+          results.measures.push({ db: db.name, area: 'financeiro', label: `exportação num instantâneo (${n} mov.)`, median_ms: e.median_ms, p95_ms: e.p95_ms, max_ms: e.max_ms, reps: e.reps, response_kb: +(e.bytes / 1024).toFixed(1), rows, complete: okx, ...tag });
+          log(`  [${db.name}] exportação num instantâneo: ${rows} linhas, p50 ${e.median_ms} ms, p95 ${e.p95_ms} ms, ${(e.bytes / 1024).toFixed(0)} KB → ${okx ? 'COMPLETA' : 'INCOMPLETA'}`);
+        }
       } else {
         const r = await measure(db, `exportação V4.3 (ledger 1000)`, 'financeiro', `select jsonb_array_length(public.get_finance_ledger($1,$2,null,null,1000)) n`, [pid, month], tag);
         // verdade: quantas movimentações existem no mês (10% das cobranças ficaram sem pagamento)
@@ -330,15 +347,16 @@ try {
     const month = (await db.c.query(`select date_trunc('month', now())::date m`)).rows[0].m;
     await explain(db, `explain_${db.name}_relatorio_${big}.txt`, `select public.get_finance_report($1, $2)`, [pid, month]);
     await explain(db, `explain_${db.name}_painel_${big}.txt`, `select public.get_finance_overview($1)`, [pid]);
-    if (db.name === 'v44') {
-      await explain(db, `explain_v44_cobrancas_pagina_${big}.txt`, `select public.get_finance_charges_page($1,null,'open',null,null,null,null,30)`, [pid]);
-      await explain(db, `explain_v44_livro_caixa_pagina_${big}.txt`, `select public.get_finance_ledger_page($1,$2,null,null,null,null,500,true)`, [pid, month]);
+    if (hasPages(db)) {
+      await explain(db, `explain_${db.name}_cobrancas_pagina_${big}.txt`, `select public.get_finance_charges_page($1,null,'open',null,null,null,null,30)`, [pid]);
+      if (hasExport(db)) await explain(db, `explain_${db.name}_exportacao_${big}.txt`, `select public.get_finance_export($1,$2,($2::date + interval '1 month - 1 day')::date)`, [pid, month]);
+      await explain(db, `explain_${db.name}_livro_caixa_pagina_${big}.txt`, `select public.get_finance_ledger_page($1,$2,null,null,null,null,500,true)`, [pid, month]);
     }
     await db.c.query('reset role');
   }
 
   // ---------- Central do Jogador, carreira e telas da pelada ----------
-  const v44 = dbs[1];
+  for (const v44 of V45 ? dbs : [dbs[1]]) {
   log('\nCentral do Jogador e Minha Carreira (usuário 2: joga em todas as peladas):');
   await asUser(v44.c, 2);
   await measure(v44, 'Central do Jogador (get_player_central)', 'central', `select public.get_player_central() r`, []);
@@ -350,7 +368,7 @@ try {
   if (after) await measure(v44, 'Histórico de partidas: página 22 (antiga)', 'carreira', `select public.get_my_match_history(null,$1,20) r`, [after]);
   await measure(v44, 'Carreira V4.3 (get_player_career, com conquistas)', 'carreira', `select public.get_player_career($1) r`, [uid(2)]);
   await measure(v44, 'Início V4.3 (get_my_home)', 'central', `select public.get_my_home() r`, []);
-  await explain(v44, 'explain_v44_central.txt', `select public.get_player_central()`, []);
+  await explain(v44, `explain_${v44.name}_central.txt`, `select public.get_player_central()`, []);
   await v44.c.query('reset role');
 
   log('\nTelas da pelada por tamanho (usuário 2, RLS):');
@@ -375,10 +393,10 @@ try {
     const ids = (await v44.c.query(`select array_agg(id) a from (select id from public.pelada_memberships where pelada_id=$1 and status='active' order by id limit $2) x`, [v44.ids[bigKey], n])).rows[0].a;
     try {
       const r = await timeIt(v44.c, `select public.create_team_draw($1, $2::uuid[], 'single', 1) r`, [v44.ids[bigKey], ids], 3);
-      results.measures.push({ db: 'v44', area: 'sorteio', label: `sorteio único, ${n} jogadores`, median_ms: r.median_ms, max_ms: r.max_ms, players: n });
+      results.measures.push({ db: v44.name, area: 'sorteio', label: `sorteio único, ${n} jogadores`, median_ms: r.median_ms, max_ms: r.max_ms, players: n });
       log(`  sorteio único, ${n} jogadores: ${r.median_ms} ms`);
     } catch (e) {
-      results.measures.push({ db: 'v44', area: 'sorteio', label: `sorteio único, ${n} jogadores`, error: e.message, players: n });
+      results.measures.push({ db: v44.name, area: 'sorteio', label: `sorteio único, ${n} jogadores`, error: e.message, players: n });
       log(`  sorteio único, ${n} jogadores: ERRO ${e.message}`);
     }
   }
@@ -415,15 +433,103 @@ try {
     const wall = performance.now() - t;
     lat.sort((a, b) => a - b);
     const p = (q) => +lat[Math.min(lat.length - 1, Math.floor(q * lat.length))].toFixed(1);
-    results.measures.push({ db: 'v44', area: 'concorrencia', label: `${conns} usuários x 10 aberturas da Central`, connections: conns, requests: lat.length, p50_ms: p(0.5), p95_ms: p(0.95), max_ms: p(1), wall_ms: +wall.toFixed(0),
+    results.measures.push({ db: v44.name, area: 'concorrencia', label: `${conns} usuários x 10 aberturas da Central`, connections: conns, requests: lat.length, p50_ms: p(0.5), p95_ms: p(0.95), max_ms: p(1), wall_ms: +wall.toFixed(0),
       cold_first_call_median_ms: +cold[Math.floor(cold.length / 2)].toFixed(1), cold_first_call_max_ms: +cold[cold.length - 1].toFixed(1) });
-    log(`  ${conns} conexões: ${lat.length} aberturas da Central, p50 ${p(0.5)} ms, p95 ${p(0.95)} ms, total ${wall.toFixed(0)} ms; 1ª chamada de cada conexão (fria): mediana ${cold[Math.floor(cold.length / 2)].toFixed(0)} ms`);
+    log(`  [${v44.name}] ${conns} conexões: ${lat.length} aberturas da Central, p50 ${p(0.5)} ms, p95 ${p(0.95)} ms, total ${wall.toFixed(0)} ms; 1ª chamada de cada conexão (fria): mediana ${cold[Math.floor(cold.length / 2)].toFixed(0)} ms`);
     await Promise.all(clients.map((cl) => cl.end()));
+  }
+  }
+
+  // ---------- V4.5: A/B intercalado ----------
+  // O computador é compartilhado (outros processos mudam a carga ao longo da rodada). Medir v44 inteiro e depois v45
+  // inteiro mistura a versão com a hora da medição. Aqui cada repetição chama v44 e v45 em seguida (ordem alternada),
+  // então a deriva de carga afeta os dois igualmente. Mesma massa, mesmas chamadas, mesmos usuários.
+  if (V45) {
+    log('\nA/B intercalado (v44 e v45 alternados a cada repetição):');
+    const N = Number(process.env.AB_REPS ?? 31);
+    const big = FIN[FIN.length - 1];
+    const bigKey = PELADAS[PELADAS.length - 1].key;
+    const ctx = {};
+    for (const db of dbs) {
+      await db.c.query('reset role');
+      const month = (await db.c.query(`select date_trunc('month', now())::date m`)).rows[0].m;
+      const seasons = {};
+      for (const p of PELADAS) seasons[p.key] = (await db.c.query(`select id from public.seasons where pelada_id=$1 order by starts_on desc limit 1`, [db.ids[p.key]])).rows[0].id;
+      ctx[db.name] = { pid: db.fin[big], month, seasons };
+    }
+    const calls = [
+      { label: `Financeiro: relatório do mês (${big} mov.)`, user: 1, sql: 'select public.get_finance_report($1,$2) r', args: (x) => [x.pid, x.month] },
+      { label: `Financeiro: painel (${big} mov.)`, user: 1, sql: 'select public.get_finance_overview($1) r', args: (x) => [x.pid] },
+      { label: 'Financeiro: cobranças em aberto, 1ª página de 30', user: 1, sql: `select public.get_finance_charges_page($1,null,'open',null,null,null,null,30) r`, args: (x) => [x.pid] },
+      { label: 'Financeiro: livro-caixa, 1ª página de 40 + total', user: 1, sql: 'select public.get_finance_ledger_page($1,$2,null,null,null,null,40,true) r', args: (x) => [x.pid, x.month] },
+      { label: 'Central do Jogador', user: 2, sql: 'select public.get_player_central() r', args: () => [] },
+      { label: 'Resumo da carreira', user: 2, sql: 'select public.get_player_career_summary($1) r', args: () => [uid(2)] },
+      { label: 'Troféus: Craque, 1ª página de 20', user: 2, sql: `select public.get_trophy_history($1,'match_craque',null,20) r`, args: () => [uid(2)] },
+      { label: 'Histórico de partidas: 1ª página de 20', user: 2, sql: 'select public.get_my_match_history(null,null,20) r', args: () => [] },
+      ...PELADAS.flatMap((p) => [
+        { label: `${p.key}: Elenco (cards + membros, RLS)`, user: 2, sql: `select (select count(*) from public.player_cards where season_id=$1) + (select count(*) from public.pelada_memberships where pelada_id=$2 and status='active') n`, args: (x, db) => [x.seasons[p.key], db.ids[p.key]] },
+        { label: `${p.key}: ranking de gols`, user: 2, sql: `select count(*) n from public.get_season_ranking($1,'goals')`, args: (x) => [x.seasons[p.key]] },
+        { label: `${p.key}: recordes`, user: 2, sql: 'select public.get_season_records($1) r', args: (x) => [x.seasons[p.key]] },
+      ]),
+    ];
+    for (const call of calls) {
+      const t = { v44: [], v45: [] };
+      let kb = 0;
+      for (const db of dbs) {
+        await asUser(db.c, call.user);
+        await db.c.query(call.sql, call.args(ctx[db.name], db)); // aquece (compila na sessão)
+      }
+      for (let i = 0; i < N; i++) {
+        for (const db of i % 2 ? [...dbs].reverse() : dbs) {
+          const s = performance.now();
+          const res = await db.c.query(call.sql, call.args(ctx[db.name], db));
+          t[db.name].push(performance.now() - s);
+          if (db.name === 'v45') kb = Buffer.byteLength(JSON.stringify(res.rows[0])) / 1024;
+        }
+      }
+      const q = (xs, f) => +[...xs].sort((a, b) => a - b)[Math.min(xs.length - 1, Math.ceil(f * xs.length) - 1)].toFixed(1);
+      const row = { area: 'ab', label: call.label, reps: N, v44_p50: q(t.v44, 0.5), v44_p95: q(t.v44, 0.95), v45_p50: q(t.v45, 0.5), v45_p95: q(t.v45, 0.95), response_kb: +kb.toFixed(1) };
+      results.measures.push(row);
+      log(`  ${call.label.padEnd(52)} v44 p50 ${String(row.v44_p50).padStart(7)} p95 ${String(row.v44_p95).padStart(7)} | v45 p50 ${String(row.v45_p50).padStart(7)} p95 ${String(row.v45_p95).padStart(7)} ms`);
+      for (const db of dbs) await db.c.query('reset role');
+    }
+    // Exportação do mês maior: V4.4 (páginas de 500, como o app V4.4) x V4.5 (uma chamada), intercalado
+    const ex = { v44: [], v45: [] };
+    let exKb = 0;
+    for (let i = 0; i < 9; i++) {
+      for (const db of i % 2 ? [...dbs].reverse() : dbs) {
+        await asUser(db.c, 1);
+        const x = ctx[db.name];
+        const s = performance.now();
+        if (db.name === 'v44') {
+          let after = null;
+          for (;;) {
+            const p = (await db.c.query('select public.get_finance_ledger_page($1,$2,null,null,null,$3,500,$4) r', [x.pid, x.month, after, after === null])).rows[0].r;
+            if (!p.next) break;
+            after = p.next;
+          }
+        } else {
+          const res = await db.c.query(`select public.get_finance_export($1,$2,($2::date + interval '1 month - 1 day')::date) r`, [x.pid, x.month]);
+          exKb = Buffer.byteLength(JSON.stringify(res.rows[0])) / 1024;
+        }
+        ex[db.name].push(performance.now() - s);
+        await db.c.query('reset role');
+      }
+    }
+    const q = (xs, f) => +[...xs].sort((a, b) => a - b)[Math.min(xs.length - 1, Math.ceil(f * xs.length) - 1)].toFixed(0);
+    results.measures.push({ area: 'ab', label: `Exportação do mês (${big} mov.): V4.4 páginas x V4.5 um instantâneo`, reps: 9, v44_p50: q(ex.v44, 0.5), v44_p95: q(ex.v44, 0.95), v45_p50: q(ex.v45, 0.5), v45_p95: q(ex.v45, 0.95), response_kb: +exKb.toFixed(0) });
+    log(`  exportação do mês: v44 (páginas) p50 ${q(ex.v44, 0.5)} p95 ${q(ex.v44, 0.95)} | v45 (um instantâneo) p50 ${q(ex.v45, 0.5)} p95 ${q(ex.v45, 0.95)} ms, ${exKb.toFixed(0)} KB`);
+    // Memória: tamanho dos bancos e uso de memória deste processo (o Postgres não expõe o pico por consulta aqui)
+    for (const db of dbs) {
+      const sz = (await db.c.query('select pg_database_size(current_database()) b')).rows[0].b;
+      results.measures.push({ area: 'memoria', db: db.name, label: 'tamanho do banco', mb: +(Number(sz) / 1048576).toFixed(0) });
+    }
+    results.measures.push({ area: 'memoria', label: 'processo Node do teste (rss)', mb: +(process.memoryUsage().rss / 1048576).toFixed(0) });
   }
 
   for (const db of dbs) results.measures.forEach((m) => delete m.row);
   writeFileSync(join(out, SMALL ? 'perf_resultados_small.json' : 'perf_resultados.json'), JSON.stringify(results, null, 1));
-  log(`\nResultados em docs/evidencias_v44/${SMALL ? 'perf_resultados_small.json' : 'perf_resultados.json'}`);
+  log(`\nResultados em docs/${V45 ? 'evidencias_v45' : 'evidencias_v44'}/${SMALL ? 'perf_resultados_small.json' : 'perf_resultados.json'}`);
   for (const db of dbs) await db.c.end();
 } finally {
   await srv.server.stop();

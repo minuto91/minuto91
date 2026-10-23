@@ -30,3 +30,10 @@ leituras simultâneas) e grava `docs/evidencias_v44/perf_resultados.json` e os p
 BUFFERS das consultas internas via auto_explain). Leva ~15 min; `SMALL=1 node perf.mjs` é a versão rápida. Pelada com mais de
 100 jogadores é montada direto no banco (o servidor só aceita 100 ativos pelo convite) apenas para medir.
 Novos testes SQL: `037_v44_finance_reports` (2.350 movimentações no mês, ~1 min no PGlite) e `038_v44_central_career`.
+
+V4.5: `ONLY_EXPORT=1 node concurrency.mjs 20` roda só a **exportação concorrente** (leitor exporta o mês enquanto outra conexão
+registra, estorna, edita e cancela; compara as páginas da V4.4 com `get_finance_export` e com um controle VOLATILE que
+precisa falhar). `node concurrency.mjs 15` roda tudo (votação, Financeiro e exportação). `PERF_COMPARE=v45 node perf.mjs`
+compara V4.4 (migrações até a 046) × V4.5 (todas) com a mesma massa, mede as telas nos dois bancos com p50 e p95 (`REPS`,
+padrão 15) e grava em `docs/evidencias_v45/`. `node --test` inclui `pager_logic.test.mjs` (paginação do app sob pedidos
+simultâneos e respostas fora de ordem) e a conferência da exportação. Novo teste SQL: `039_v45_finance_export`.
