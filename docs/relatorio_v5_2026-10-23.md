@@ -1,7 +1,7 @@
 # Minuto 91 — V5: motor de OVR e votação pós-partida (Prompt Master v2.0)
 
 23/10/2026. Diagnóstico e plano: `docs/v5_fase_a_b_diagnostico_2026-10-23.md` (C1–C5 e D1–D8 aprovados pelo fundador).
-**Nada foi aplicado no Supabase dev nem em produção.** As migrações 050–052 rodaram só no banco local (PGlite e
+**Migrações 050–052 aplicadas no Supabase dev em 23/10/2026 (pelo fundador, no SQL Editor); testes 042, 009, 010, 013 e 027 com PASS no dev.** Antes disso, rodaram no banco local (PGlite e
 PostgreSQL 17 embutido).
 
 ## 1. O que mudou para o jogador e o admin
@@ -102,7 +102,7 @@ O teste 042 cobre os itens 1–34 da lista 23.4 que dependem do banco. Ficam de 
 
 ## 7. Pendências e limitações
 
-- **Aplicar 050–052 no Supabase dev e rodar o teste 042 no SQL Editor** (precisa da sua confirmação).
+- [x] 050–052 aplicadas no dev; 042, 009, 010, 013 e 027 com PASS (23/10).
   Também é preciso ligar o agendador: `select cron.schedule('minuto91-rating-votes','*/5 * * * *','select private.rating_vote_tick()')`,
   que a migração faz sozinha quando o pg_cron está ativo.
 - Testar no iPhone o fluxo completo com contas reais: abrir, votar, pular, revisar, publicar.
