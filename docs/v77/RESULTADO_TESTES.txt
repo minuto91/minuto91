@@ -67,3 +67,7 @@ tsc: sem erros
 # tests 26
 # pass 26
 # fail 0
+
+## Supabase dev (minuto91-dev), 24/10/2026, executado pelo fundador no SQL Editor
+Migrações 053, 054, 055, 056 e 057 aplicadas sem erro.
+044_v77_integrity: PASS (erro proposital "PASS: 044_v77_integrity").
