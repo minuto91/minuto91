@@ -76,7 +76,11 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
       inFlight.current = true;
       setBusy(true);
       setErr(null);
-      const { data, error } = await supabase.rpc(fn, args);
+      // V6.1: sem resposta em 15 s, desiste e pede para tentar de novo (a nota é regravada no servidor, sem duplicar).
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 15_000);
+      const { data, error } = await supabase.rpc(fn, args).abortSignal(ctrl.signal);
+      clearTimeout(timer);
       inFlight.current = false;
       setBusy(false);
       if (error) {
@@ -243,9 +247,13 @@ function Awards({ v, onSaved }: { v: RatingVote; onSaved: (r: RatingVote) => voi
   const [bola, setBola] = useState<string | null>(v.my_awards?.bola_murcha ?? null);
   const [msg, setMsg] = useState<string | null>(null);
   const options = (v.targets ?? []).map((t) => ({ value: t.membership_id, label: t.name }));
+  // V6.1: toques seguidos geram várias gravações; só a resposta da última atualiza a tela.
+  const seq = useRef(0);
   async function save(c: string | null, b: string | null) {
     setMsg(null);
+    const mine = ++seq.current;
     const { error } = await supabase.rpc('set_rating_vote_awards', { p_session: v.session_id, p_craque: c, p_bola_murcha: b });
+    if (mine !== seq.current) return;
     if (error) return setMsg('Não foi possível salvar. Tente de novo.');
     onSaved({ ...v, my_awards: { craque: c ?? undefined, bola_murcha: b ?? undefined } });
   }
