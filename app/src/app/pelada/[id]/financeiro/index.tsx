@@ -212,9 +212,8 @@ export default function Financeiro() {
                   justifyContent: 'center',
                   paddingHorizontal: 12,
                   borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: colors.line,
-                  backgroundColor: pressed ? colors.bg : colors.white,
+                  backgroundColor: colors.bg,
+                  opacity: pressed ? 0.7 : 1,
                 })}>
                 <Text style={{ color: colors.deepBlue, fontWeight: '700' }}>{t} ›</Text>
               </Pressable>

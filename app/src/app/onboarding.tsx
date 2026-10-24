@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Switch, View } from 'react-native';
+import { Pressable, Switch, View } from 'react-native';
 import { Text } from '../lib/text';
 
 import { friendly } from '../lib/errors';
@@ -103,9 +103,15 @@ export default function Onboarding() {
 
 function Row({ value, onChange, label }: { value: boolean; onChange: (v: boolean) => void; label: string }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
-      <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.blue }} accessibilityLabel={label} />
+    // V6.2: tocar no texto também liga/desliga (o alvo era só o Switch).
+    <Pressable
+      onPress={() => onChange(!value)}
+      accessibilityRole="switch"
+      accessibilityState={{ checked: value }}
+      accessibilityLabel={label}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
+      <Switch value={value} onValueChange={onChange} trackColor={{ true: colors.blue }} importantForAccessibility="no-hide-descendants" accessibilityElementsHidden />
       <Text style={{ flex: 1, color: colors.ink }}>{label}</Text>
-    </View>
+    </Pressable>
   );
 }

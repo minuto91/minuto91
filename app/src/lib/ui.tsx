@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, TextInputProps, View } from 'react-native';
 import { Text, TextInput } from './text';
 
-import { colors, POSITIONS, Position, radius, Sector, SECTORS, shadow, type } from './theme';
+import { colors, POSITIONS, Position, radius, Sector, SECTORS, type } from './theme';
 
 export function Screen({ children }: { children: ReactNode }) {
   return (
@@ -335,13 +335,12 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   stepTxt: { fontSize: 20, fontWeight: '700', color: colors.blue },
+  // V6.2: superfície cinza-clara sem borda nem sombra. Separa o conteúdo pelo tom, não por moldura; campos e botões
+  // brancos por dentro ganham contraste. Destaques (placar, voto urgente) usam os componentes de lib/domain.tsx.
   card: {
-    backgroundColor: colors.white,
+    backgroundColor: colors.bg,
     borderRadius: radius.card,
-    borderWidth: 1,
-    borderColor: colors.line,
     padding: 16,
     gap: 6,
-    ...shadow.card,
   },
 });

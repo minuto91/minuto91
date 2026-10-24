@@ -65,7 +65,7 @@ export type People = {
 export function Stat({ label, cents, tone, hint }: { label: string; cents: number; tone?: 'blue' | 'danger' | 'gold' | 'ink'; hint?: string }) {
   const color = tone === 'danger' ? colors.danger : tone === 'gold' ? colors.darkGold : tone === 'ink' ? colors.ink : colors.deepBlue;
   return (
-    <View style={{ flexBasis: '47%', flexGrow: 1, borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 12, gap: 2 }}>
+    <View style={{ flexBasis: '47%', flexGrow: 1, backgroundColor: colors.bg, borderRadius: 12, padding: 12, gap: 2 }}>
       <Text style={{ fontSize: 12, color: colors.muted, fontWeight: '600' }}>{label}</Text>
       <Text style={{ fontSize: 20, fontWeight: '800', color, fontVariant: ['tabular-nums'] }}>{formatBRL(cents)}</Text>
       {hint ? <Text style={{ fontSize: 11, color: colors.muted }}>{hint}</Text> : null}

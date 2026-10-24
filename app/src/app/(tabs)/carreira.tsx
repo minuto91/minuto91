@@ -268,7 +268,7 @@ function MatchHistory({ peladaId, showPelada }: { peladaId: string | null; showP
           key={m.match_id}
           accessibilityRole="button"
           onPress={() => router.push({ pathname: '/partida/[id]', params: { id: m.match_id } })}
-          style={{ borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 12, gap: 2 }}>
+          style={{ backgroundColor: colors.bg, borderRadius: 12, padding: 12, gap: 2 }}>
           <Body>
             {m.team_a_name} {m.team_a_score} x {m.team_b_score} {m.team_b_name}
           </Body>
