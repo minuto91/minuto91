@@ -8,14 +8,14 @@ import { currentSeason, loadSeasons } from '../../../lib/career';
 import { Crest } from '../../../lib/crest';
 import { confirm } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
-import { Icon, IconName } from '../../../lib/icons';
+import { Icon } from '../../../lib/icons';
 import { fmtDate, fmtTime, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match';
 import { AdminPending } from '../../../lib/pending';
 import { CardsTracking, PositionRequests } from '../../../lib/ratingadmin';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { Body, Button, ErrorText, Screen, Sub } from '../../../lib/ui';
+import { Badge, Button, ErrorState, ListGroup, ListItemProps, MatchStatusBadge, Notice, Scoreboard, Screen, SectionHeader, Sub } from '../../../lib/ui';
 
 type Member = { id: string; user_id: string | null; player_name: string; role: string; preferred_position: string; position_code?: string | null };
 type Highlight = { match_id: string; membership_id: string; highlight_type: string };
@@ -170,29 +170,46 @@ export default function CentralDaRodada() {
     );
   }
 
-  // V4.6: a pelada em três grupos claros (protótipo aprovado): Jogo, Desempenho e Gestão (conforme as permissões).
-  // Linhas com ícone, nome e uma linha de apoio, em vez de uma grade de atalhos pequenos. Recursos da Pelada Premium
-  // levam a marca dourada quando a pelada ainda está no Básico.
+  // V6.0: a pelada é a protagonista. Conteúdo esportivo primeiro (rodada, elenco, desempenho, histórico) e a
+  // administração agrupada por contexto (Rodadas, Jogadores, Financeiro, Configurações), cada grupo com uma
+  // ação principal. As permissões são as mesmas da V4.6; só a organização mudou.
   const go = (pathname: Parameters<typeof router.push>[0]) => () => router.push(pathname);
+  const pro = (on?: boolean) => (on && !premium ? 'Premium' : undefined);
   const jogo: GroupItem[] = [
-    { icon: 'partidas', label: 'Partidas', sub: 'Súmula, votação e resultado', onPress: go({ pathname: '/pelada/[id]/partidas', params: { id } }) },
-    { icon: 'elenco', label: 'Elenco', sub: loaded ? `${members.length} ${members.length === 1 ? 'jogador' : 'jogadores'}` : 'Jogadores da pelada', onPress: go({ pathname: '/pelada/[id]/elenco', params: { id } }) },
-    { icon: 'escalacao', label: 'Escalações', sub: 'Times da próxima rodada', onPress: go({ pathname: '/pelada/[id]/escalacoes', params: { id } }) },
-    ...(isStaff ? [{ icon: 'sorteio' as const, label: 'Sorteio', sub: 'Times equilibrados por posição', premium: true, onPress: go({ pathname: '/pelada/[id]/sorteio', params: { id } }) }] : []),
-    { icon: 'duelo', label: 'Duelo', sub: 'Compare dois jogadores', premium: true, onPress: go({ pathname: '/pelada/[id]/duelo', params: { id } }) },
+    { icon: 'escalacao', title: 'Escalações', sub: 'Times da próxima rodada', onPress: go({ pathname: '/pelada/[id]/escalacoes', params: { id } }) },
+    { icon: 'elenco', title: 'Elenco', sub: loaded ? `${members.length} ${members.length === 1 ? 'jogador' : 'jogadores'}` : 'Jogadores da pelada', onPress: go({ pathname: '/pelada/[id]/elenco', params: { id } }) },
+    { icon: 'duelo', title: 'Duelo', sub: 'Compare dois jogadores', badge: pro(true), onPress: go({ pathname: '/pelada/[id]/duelo', params: { id } }) },
   ];
   const desempenho: GroupItem[] = [
-    { icon: 'rankings', label: 'Rankings', sub: 'Overall, gols, assistências e prêmios do mês', onPress: go({ pathname: '/pelada/[id]/rankings', params: { id } }) },
-    ...(me ? [{ icon: 'card' as const, label: 'Meu Card', sub: 'Overall, atributos e álbum', onPress: go({ pathname: '/jogador/[id]', params: { id: me.id } }) }] : []),
-    { icon: 'jogadores', label: 'Jogadores e estatísticas', sub: 'Cards e números de cada um', onPress: go({ pathname: '/pelada/[id]/jogadores', params: { id } }) },
-    { icon: 'retro', label: 'Retrospectiva', sub: 'Resumo da temporada', onPress: go({ pathname: '/pelada/[id]/retrospectiva', params: { id } }) },
-    { icon: 'temporadas', label: 'Temporadas', sub: 'Atual e anteriores', onPress: go({ pathname: '/pelada/[id]/temporadas', params: { id } }) },
+    { icon: 'rankings', title: 'Rankings', sub: 'Overall, gols, assistências e prêmios do mês', onPress: go({ pathname: '/pelada/[id]/rankings', params: { id } }) },
+    ...(me ? [{ icon: 'card' as const, title: 'Meu Card', sub: 'Overall, atributos e álbum', onPress: go({ pathname: '/jogador/[id]', params: { id: me.id } }) }] : []),
+    { icon: 'jogadores', title: 'Jogadores e estatísticas', sub: 'Cards e números de cada um', onPress: go({ pathname: '/pelada/[id]/jogadores', params: { id } }) },
   ];
-  const gestao: GroupItem[] = [
-    ...(isAdmin ? [{ icon: 'convite' as const, label: 'Convidar jogadores', sub: 'Link de convite', onPress: convidar }] : []),
-    // Financeiro (V4.3): só admin e assistentes com permissão financeira; nenhum valor aparece fora dele.
-    ...(finance ? [{ icon: 'financeiro' as const, label: 'Financeiro', sub: 'Mensalidades, cobranças e relatórios', premium: true, onPress: go({ pathname: '/pelada/[id]/financeiro', params: { id } }) }] : []),
-    ...(isAdmin ? [{ icon: 'config' as const, label: 'Configurações', sub: 'Escudo, votação, assistentes e Premium', onPress: go({ pathname: '/pelada/[id]/configuracoes', params: { id } }) }] : []),
+  const historico: GroupItem[] = [
+    { icon: 'partidas', title: 'Partidas', sub: 'Súmula, votação e resultado', onPress: go({ pathname: '/pelada/[id]/partidas', params: { id } }) },
+    { icon: 'retro', title: 'Retrospectiva', sub: 'Resumo da temporada', onPress: go({ pathname: '/pelada/[id]/retrospectiva', params: { id } }) },
+    { icon: 'temporadas', title: 'Temporadas', sub: 'Atual e anteriores', onPress: go({ pathname: '/pelada/[id]/temporadas', params: { id } }) },
+  ];
+  // Gestão por contexto (só aparece o que a pessoa pode usar).
+  const rodadas: GroupItem[] = isStaff
+    ? [
+        { icon: 'sorteio', title: 'Sorteio de times', sub: 'Times equilibrados por posição', badge: pro(true), onPress: go({ pathname: '/pelada/[id]/sorteio', params: { id } }) },
+        { icon: 'partidas', title: 'Súmulas e votações', sub: 'Rascunhos, correções, prorrogação e publicação', onPress: go({ pathname: '/pelada/[id]/partidas', params: { id } }) },
+      ]
+    : [];
+  const jogadores: GroupItem[] = isAdmin
+    ? [
+        { icon: 'convite', title: 'Convidar jogadores', sub: 'Link de convite', onPress: convidar },
+        { icon: 'jogadores', title: 'Assistentes e sucessor', sub: 'Funções dos membros da pelada', onPress: go({ pathname: '/pelada/[id]/jogadores', params: { id } }) },
+      ]
+    : [];
+  // Financeiro (V4.3): só admin e assistentes com permissão financeira; nenhum valor aparece fora dele.
+  const financeiro: GroupItem[] = finance
+    ? [{ icon: 'financeiro', title: 'Financeiro', sub: 'Mensalidades, cobranças e relatórios', badge: pro(true), onPress: go({ pathname: '/pelada/[id]/financeiro', params: { id } }) }]
+    : [];
+  const ajustes: GroupItem[] = [
+    ...(isAdmin ? [{ icon: 'config' as const, title: 'Configurações', sub: 'Escudo, votação, assistentes', onPress: go({ pathname: '/pelada/[id]/configuracoes', params: { id } }) }] : []),
+    { icon: 'card', title: 'Pelada Premium', sub: premium ? 'Ativa nesta pelada' : 'Recursos extras para a pelada', onPress: go({ pathname: '/pelada/[id]/premium', params: { id } }) },
   ];
 
   // Dia habitual (004), se o admin tiver definido. Não é uma partida agendada.
@@ -205,10 +222,11 @@ export default function CentralDaRodada() {
   return (
     <Screen>
       {/* Cabeçalho: escudo, nome, temporada e o essencial. Configurações discretas, só para o admin. */}
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-        {pelada ? <Crest path={pelada.crest_path} name={pelada.name} size={56} /> : <View style={{ width: 56, height: 56 }} />}
-        <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.deepBlue }} numberOfLines={2}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.divider }}>
+        {pelada ? <Crest path={pelada.crest_path} name={pelada.name} size={64} /> : <View style={{ width: 64, height: 64 }} />}
+        <View style={{ flex: 1, gap: 3 }}>
+          {premium && <Badge label="Pelada Premium" tone="gold" />}
+          <Text style={{ fontSize: 24, lineHeight: 30, fontWeight: '800', color: colors.deepBlue }} numberOfLines={2} accessibilityRole="header">
             {pelada?.name ?? ' '}
           </Text>
           <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={2}>
@@ -224,27 +242,22 @@ export default function CentralDaRodada() {
             accessibilityLabel="Configurações da pelada"
             hitSlop={8}
             onPress={() => router.push({ pathname: '/pelada/[id]/configuracoes', params: { id } })}
-            style={{ padding: 6 }}>
+            style={{ width: 44, height: 44, alignItems: 'center', justifyContent: 'center' }}>
             <Icon name="config" size={24} color={colors.muted} />
           </Pressable>
         )}
       </View>
-      {pelada?.status === 'restricted' && <Sub>Pelada restrita: sem administrador elegível.</Sub>}
-      <ErrorText>{msg}</ErrorText>
-      {msg && <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />}
+      {pelada?.status === 'restricted' && <Notice tone="warning">Pelada restrita: sem administrador elegível.</Notice>}
+      {msg && <ErrorState message={msg} onRetry={() => setReload((n) => n + 1)} />}
 
       {/* Pendência pessoal: o meu voto. */}
       {myVotes.map((v) => {
         const m = matches.find((x) => x.id === v.matchId);
         return (
           <Pressable key={v.matchId} accessibilityRole="button" onPress={() => openMatch(v.matchId)}>
-            <View style={[box, { borderColor: colors.blue, borderWidth: 1.5 }]}>
+            <View style={[box, { borderColor: colors.blue, borderWidth: 1.5, backgroundColor: colors.blueSoft }]}>
               <Text style={label(colors.blue)}>Falta o seu voto</Text>
-              {m && (
-                <Body>
-                  {m.team_a_name} {m.team_a_score} x {m.team_b_score} {m.team_b_name}
-                </Body>
-              )}
+              {m && <Scoreboard teamA={m.team_a_name} teamB={m.team_b_name} scoreA={m.team_a_score} scoreB={m.team_b_score} />}
               <Sub>Votação até {fmtDate(v.closesAt)}, {fmtTime(v.closesAt)}</Sub>
               <Text style={{ color: colors.blue, fontWeight: '700' }}>Votar ›</Text>
             </View>
@@ -269,13 +282,12 @@ export default function CentralDaRodada() {
         .map((m) => (
           <Pressable key={m.id} accessibilityRole="button" onPress={() => openMatch(m.id)}>
             <View style={box}>
-              <Text style={label(colors.deepBlue)}>Rodada em votação</Text>
-              <Body>
-                {m.team_a_name} {m.team_a_score} x {m.team_b_score} {m.team_b_name}
-              </Body>
-              <Sub>
-                {fmtDate(m.played_at)} · {STATUS_LABEL[m.status]}. O Craque e as notas saem quando a votação fechar.
-              </Sub>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={[label(colors.deepBlue), { flex: 1 }]}>Rodada em votação</Text>
+                <MatchStatusBadge status={m.status} />
+              </View>
+              <Scoreboard teamA={m.team_a_name} teamB={m.team_b_name} scoreA={m.team_a_score} scoreB={m.team_b_score} />
+              <Sub>{fmtDate(m.played_at)} · O Craque e as notas saem quando a votação fechar.</Sub>
             </View>
           </Pressable>
         ))}
@@ -284,8 +296,11 @@ export default function CentralDaRodada() {
       {lastFinal && (
         <Pressable accessibilityRole="button" accessibilityHint="Abre a partida, com súmula, notas e artes para compartilhar" onPress={() => openMatch(lastFinal.id)}>
           <View style={box}>
-            <Text style={label(colors.deepBlue)}>Última rodada · {fmtDate(lastFinal.played_at)}</Text>
-            <Scoreboard m={lastFinal} />
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={[label(colors.deepBlue), { flex: 1 }]}>Último resultado · {fmtDate(lastFinal.played_at)}</Text>
+              <MatchStatusBadge status={lastFinal.status} />
+            </View>
+            <Scoreboard teamA={lastFinal.team_a_name} teamB={lastFinal.team_b_name} scoreA={lastFinal.team_a_score} scoreB={lastFinal.team_b_score} size="lg" />
             {Object.keys(HIGHLIGHT_LABEL)
               .filter((t) => lastHighlights.some((h) => h.highlight_type === t))
               .map((t) => (
@@ -343,64 +358,56 @@ export default function CentralDaRodada() {
       {isStaff && !empty && <Button title="Lançar partida" onPress={lancarPartida} loading={busy} />}
       {isStaff && empty && <Button title="Lançar a primeira partida" kind={isAdmin ? 'secondary' : 'primary'} onPress={lancarPartida} loading={busy} />}
 
-      <Group title="Jogo" items={jogo} premium={premium} />
+      <ListGroup title="Rodada e elenco" items={jogo} />
 
       {recent.length > 0 && (
         <View style={{ gap: 2 }}>
-          <Text style={section}>Partidas recentes</Text>
+          <SectionHeader title="Partidas recentes" action="Ver todas" onAction={() => router.push({ pathname: '/pelada/[id]/partidas', params: { id } })} />
           {recent.map((x) => (
             <Pressable
               key={x.id}
               accessibilityRole="button"
+              accessibilityLabel={`${x.team_a_name} ${x.team_a_score} x ${x.team_b_score} ${x.team_b_name}, ${fmtDate(x.played_at)}, ${STATUS_LABEL[x.status] ?? x.status}`}
               onPress={() => openMatch(x.id)}
-              style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: colors.ink, fontSize: 15 }} numberOfLines={1}>
-                  {x.team_a_name} {x.team_a_score} x {x.team_b_score} {x.team_b_name}
+              style={{ minHeight: 56, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.divider, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <View style={{ flex: 1, gap: 4 }}>
+                <Text style={{ color: colors.ink, fontSize: 15, fontWeight: '600' }} numberOfLines={1}>
+                  {x.team_a_name} <Text style={{ color: colors.deepBlue, fontWeight: '800', fontVariant: ['tabular-nums'] }}>{x.team_a_score} x {x.team_b_score}</Text> {x.team_b_name}
                 </Text>
-                <Text style={{ color: x.status === 'annulled' ? colors.danger : colors.muted, fontSize: 13 }}>
-                  {fmtDate(x.played_at)} · {STATUS_LABEL[x.status] ?? x.status}
-                </Text>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Text style={{ color: colors.muted, fontSize: 13 }}>{fmtDate(x.played_at)}</Text>
+                  <MatchStatusBadge status={x.status} />
+                </View>
               </View>
               <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
             </Pressable>
           ))}
-          <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/pelada/[id]/partidas', params: { id } })}>
-            <Text style={{ color: colors.blue, fontWeight: '700', paddingVertical: 8 }}>Ver todas as partidas ›</Text>
-          </Pressable>
         </View>
       )}
 
-      <Group title="Desempenho" items={desempenho} premium={premium} />
-      {gestao.length > 0 && <Group title="Gestão" items={gestao} premium={premium} />}
-      <Text style={section}>Pelada</Text>
-      <Row title="Pelada Premium" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
-      <Row title="Sair da pelada" danger onPress={sair} />
+      <ListGroup title="Desempenho" items={desempenho} />
+      <ListGroup title="Histórico" items={historico} />
+
+      {(rodadas.length > 0 || jogadores.length > 0 || financeiro.length > 0) && (
+        <View style={{ gap: 4, marginTop: 14, paddingTop: 14, borderTopWidth: 1, borderTopColor: colors.divider }}>
+          <Text style={{ ...section, marginTop: 0 }} accessibilityRole="header">
+            Administração
+          </Text>
+          <Sub>Ferramentas de quem organiza a pelada, separadas por assunto.</Sub>
+        </View>
+      )}
+      {rodadas.length > 0 && <ListGroup title="Rodadas e resultados" items={rodadas} />}
+      {jogadores.length > 0 && <ListGroup title="Jogadores" items={jogadores} />}
+      {financeiro.length > 0 && <ListGroup title="Financeiro" items={financeiro} />}
+      <ListGroup title="Pelada" items={ajustes}>
+        <ListItemDanger onPress={sair} />
+      </ListGroup>
       {me && (
         <View style={{ marginTop: 6 }}>
           <ReportLink peladaId={id} targetType="pelada" targetId={id} label="Denunciar nome ou imagem da pelada" />
         </View>
       )}
     </Screen>
-  );
-}
-
-function Scoreboard({ m }: { m: Match }) {
-  const aWon = m.team_a_score > m.team_b_score;
-  const bWon = m.team_b_score > m.team_a_score;
-  const team = (name: string, won: boolean, align: 'left' | 'right') => (
-    <Text style={{ flex: 1, textAlign: align, fontSize: 15, fontWeight: won ? '800' : '500', color: colors.ink }} numberOfLines={2}>
-      {name}
-    </Text>
-  );
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 }}>
-      {team(m.team_a_name, aWon, 'left')}
-      <Text style={{ fontSize: 30, fontWeight: '800', color: colors.deepBlue, fontVariant: ['tabular-nums'] }}>
-        {m.team_a_score} x {m.team_b_score}
-      </Text>
-      {team(m.team_b_name, bWon, 'right')}
-    </View>
   );
 }
 
@@ -418,60 +425,20 @@ function Step({ n, title, text }: { n: number; title: string; text: string }) {
   );
 }
 
-type GroupItem = { icon: IconName; label: string; sub: string; premium?: boolean; onPress: () => void };
+type GroupItem = ListItemProps;
 
-function Group({ title, items, premium }: { title: string; items: GroupItem[]; premium: boolean }) {
-  return (
-    <View style={{ gap: 8, marginTop: 10 }}>
-      <Text style={{ fontSize: 19, lineHeight: 25, fontWeight: '700', color: colors.deepBlue }} accessibilityRole="header">
-        {title}
-      </Text>
-      <View style={{ borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.white, overflow: 'hidden' }}>
-        {items.map((a, n) => (
-          <Pressable
-            key={a.label}
-            accessibilityRole="button"
-            accessibilityLabel={a.premium && !premium ? `${a.label}, recurso da Pelada Premium` : a.label}
-            accessibilityHint={a.sub}
-            onPress={a.onPress}
-            style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-              minHeight: 60,
-              paddingHorizontal: 14,
-              borderTopWidth: n ? 1 : 0,
-              borderTopColor: '#EEF2F8',
-              backgroundColor: pressed ? colors.bg : colors.white,
-            })}>
-            <Icon name={a.icon} size={22} />
-            <View style={{ flex: 1, paddingVertical: 8 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.ink }}>{a.label}</Text>
-              <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
-                {a.sub}
-              </Text>
-            </View>
-            {a.premium && !premium && <Text style={{ fontSize: 12, fontWeight: '700', color: colors.darkGold }}>Premium</Text>}
-            <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text>
-          </Pressable>
-        ))}
-      </View>
-    </View>
-  );
-}
-
-function Row({ title, onPress, danger }: { title: string; onPress: () => void; danger?: boolean }) {
+// "Sair da pelada" fecha o grupo Pelada, em vermelho e sem seta (ação destrutiva com confirmação).
+function ListItemDanger({ onPress }: { onPress: () => void }) {
   return (
     <Pressable
       accessibilityRole="button"
       onPress={onPress}
-      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}>
-      <Text style={{ flex: 1, fontSize: 15, color: danger ? colors.danger : colors.ink, fontWeight: '500' }}>{title}</Text>
-      {!danger && <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>}
+      style={({ pressed }) => ({ minHeight: 52, paddingHorizontal: 14, justifyContent: 'center', borderTopWidth: 1, borderTopColor: colors.divider, backgroundColor: pressed ? colors.bg : colors.white })}>
+      <Text style={{ fontSize: 16, fontWeight: '600', color: colors.danger }}>Sair da pelada</Text>
     </Pressable>
   );
 }
 
-const box = { backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.line, padding: 14, gap: 6 };
+const box = { backgroundColor: colors.white, borderRadius: 14, borderWidth: 1, borderColor: colors.line, padding: 14, gap: 6 };
 const label = (color: string) => ({ fontSize: 14, fontWeight: '700' as const, color });
 const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 10 };

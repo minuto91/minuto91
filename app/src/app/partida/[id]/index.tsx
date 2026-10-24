@@ -39,7 +39,7 @@ import { FieldPlayer, SelectionField, TeamColorPicker, TeamLegend, teamHex } fro
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, positionLabel } from '../../../lib/theme';
-import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, ErrorText, MatchStatusBadge, Scoreboard, Screen, Sub } from '../../../lib/ui';
 
 type Session = {
   id: string;
@@ -311,13 +311,27 @@ export default function Partida() {
 
   return (
     <Screen>
-      <Title>
-        {match.team_a_name} {match.team_a_score} x {match.team_b_score} {match.team_b_name}
-      </Title>
-      <Sub>
-        {fmtDate(match.played_at)} · {STATUS_LABEL[match.status] ?? match.status}
-        {match.sheet_version > 1 ? ` · súmula versão ${match.sheet_version}` : ''}
-      </Sub>
+      {/* V6.0: o placar é o protagonista da partida; estado em selo com texto. */}
+      <View style={{ gap: 10, paddingBottom: 14, borderBottomWidth: 1, borderBottomColor: colors.divider }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
+          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted, flex: 1 }} numberOfLines={1}>
+            {[peladaName, fmtDate(match.played_at), match.sheet_version > 1 ? `súmula v${match.sheet_version}` : null].filter(Boolean).join(' · ')}
+          </Text>
+          <MatchStatusBadge status={match.status} />
+        </View>
+        <Text accessibilityRole="header" style={{ position: 'absolute', width: 1, height: 1, opacity: 0 }}>
+          {`${match.team_a_name} ${match.team_a_score} x ${match.team_b_score} ${match.team_b_name}, ${STATUS_LABEL[match.status] ?? match.status}`}
+        </Text>
+        <Scoreboard
+          teamA={match.team_a_name}
+          teamB={match.team_b_name}
+          scoreA={match.team_a_score}
+          scoreB={match.team_b_score}
+          colorA={teamColors.A ?? undefined}
+          colorB={teamColors.B ?? undefined}
+          size="lg"
+        />
+      </View>
       <ErrorText>{msg}</ErrorText>
 
       {match.status === 'draft' && isStaff && (

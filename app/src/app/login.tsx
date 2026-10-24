@@ -9,7 +9,8 @@ import { Text } from '../lib/text';
 import { friendly } from '../lib/errors';
 import { supabase } from '../lib/supabase';
 import { colors } from '../lib/theme';
-import { Body, Button, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
+import { BrandSymbol } from '../lib/brand';
+import { Button, ErrorText, Input, Notice, Screen, Sub, Title } from '../lib/ui';
 
 WebBrowser.maybeCompleteAuthSession();
 
@@ -118,22 +119,43 @@ export default function Login() {
 
   return (
     <Screen>
-      <View style={{ height: 40 }} />
-      <Title>Minuto 91</Title>
-      <Sub>O jogo acaba. A resenha começa.</Sub>
-      <View style={{ height: 12 }} />
-      <Input placeholder="e-mail" keyboardType="email-address" value={email} onChangeText={setEmail} />
+      {/* V6.0: marca no topo, formulário com rótulos visíveis e provedores separados por "ou". */}
+      <View style={{ width: '100%', maxWidth: 440, alignSelf: 'center', gap: 12 }}>
+      <View style={{ alignItems: 'center', gap: 10, paddingTop: 36, paddingBottom: 16 }}>
+        <BrandSymbol size={56} />
+        <Title>Minuto 91</Title>
+        <Sub>O jogo acaba. A resenha começa.</Sub>
+      </View>
+      <Text style={fieldLabel}>E-mail</Text>
+      <Input
+        placeholder="voce@exemplo.com"
+        keyboardType="email-address"
+        autoComplete="email"
+        textContentType="emailAddress"
+        accessibilityLabel="E-mail"
+        value={email}
+        onChangeText={setEmail}
+      />
       {forgot ? (
         <>
           <Sub>Digite o e-mail da conta. Vamos mandar um link para criar uma senha nova.</Sub>
           <ErrorText>{msg}</ErrorText>
-          {info && <Body>{info}</Body>}
+          {info && <Notice tone="success">{info}</Notice>}
           <Button title="Enviar link" onPress={recuperar} loading={busy === 'recuperar'} />
           <Button title="Voltar para entrar" kind="secondary" onPress={() => { setForgot(false); setMsg(null); setInfo(null); }} />
         </>
       ) : (
         <>
-          <Input placeholder="senha (6 ou mais caracteres)" secureTextEntry value={senha} onChangeText={setSenha} />
+          <Text style={fieldLabel}>Senha</Text>
+          <Input
+            placeholder="6 ou mais caracteres"
+            secureTextEntry
+            autoComplete="password"
+            textContentType="password"
+            accessibilityLabel="Senha"
+            value={senha}
+            onChangeText={setSenha}
+          />
           <ErrorText>{msg}</ErrorText>
           <Button title="Entrar" onPress={entrar} loading={busy === 'entrar'} />
           <Button title="Criar conta" kind="secondary" onPress={cadastrar} loading={busy === 'cadastrar'} />
@@ -142,7 +164,11 @@ export default function Login() {
           </Pressable>
         </>
       )}
-      <View style={{ height: 8 }} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 4 }} importantForAccessibility="no-hide-descendants">
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
+        <Text style={{ color: colors.muted, fontSize: 13 }}>ou</Text>
+        <View style={{ flex: 1, height: 1, backgroundColor: colors.line }} />
+      </View>
       <Button title="Continuar com Google" kind="secondary" onPress={google} loading={busy === 'google'} />
       <Text style={{ color: colors.muted, fontSize: 13, textAlign: 'center' }}>
         Ao continuar você poderá ler os{' '}
@@ -152,6 +178,9 @@ export default function Login() {
       {appleOk && (
         <Button title="Continuar com Apple" kind="secondary" onPress={apple} loading={busy === 'apple'} />
       )}
+      </View>
     </Screen>
   );
 }
+
+const fieldLabel = { fontSize: 13, fontWeight: '600' as const, color: colors.ink, marginBottom: -6 };

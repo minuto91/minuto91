@@ -9,7 +9,7 @@ import { friendly } from '../../../lib/errors';
 import { fmtRating, loadMembers, Member } from '../../../lib/match';
 import { supabase } from '../../../lib/supabase';
 import { colors } from '../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Button, Chips, EmptyState, ErrorText, Loading, Screen, Section, Sub, Title } from '../../../lib/ui';
 
 // Em destaque: Artilharia, Assistências e Overall. As demais classificações oficiais continuam em "Mais".
 const MAIN = [
@@ -202,35 +202,50 @@ export default function Rankings() {
       <ErrorText>{msg}</ErrorText>
 
       {rows === null ? (
-        <Sub>Carregando...</Sub>
+        <Loading label="Carregando ranking..." />
       ) : sorted.length === 0 ? (
-        !msg && <Sub>Ainda sem dados nesta temporada.</Sub>
+        !msg && <EmptyState title="Ainda sem dados nesta temporada" hint="O ranking aparece depois das primeiras partidas finalizadas." />
       ) : (
         <View>
           {sorted.slice(0, limit).map((r) => {
             const m = member(r.membership_id);
             const tier = tiers[r.membership_id] ? TIER[tiers[r.membership_id]] : null;
-            const first = Number(r.rank_position) === 1;
+            const pos = Number(r.rank_position);
+            const first = pos === 1;
+            // V6.0: destaque moderado do pódio (posição vem do servidor; nenhum desempate novo).
+            const medal = pos === 1 ? colors.gold : pos === 2 ? '#9AA6B8' : pos === 3 ? '#B07A4F' : null;
             return (
               <Pressable
                 key={r.membership_id}
                 accessibilityRole="button"
                 accessibilityLabel={`${r.rank_position}º lugar${tied(r) ? ', empatado' : ''}: ${nameOf(r.membership_id)}, ${fmt(r.metric_value)} ${unit(r.metric_value)}`}
                 onPress={() => openCard(r.membership_id)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+                style={({ pressed }) => ({
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 10,
+                  minHeight: 60,
+                  paddingVertical: medal ? 12 : 10,
+                  paddingHorizontal: 8,
+                  borderRadius: first ? 12 : 0,
+                  backgroundColor: pressed ? colors.bg : first ? colors.goldSoft : colors.white,
+                  borderBottomWidth: first ? 0 : 1,
+                  borderBottomColor: colors.divider,
+                })}>
                 <View
                   style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
+                    width: 34,
+                    height: 34,
+                    borderRadius: 17,
                     alignItems: 'center',
                     justifyContent: 'center',
-                    borderWidth: first ? 2 : 0,
-                    borderColor: colors.gold,
+                    borderWidth: medal ? 2 : 0,
+                    borderColor: medal ?? 'transparent',
+                    backgroundColor: colors.white,
                   }}>
-                  <Text style={{ fontWeight: '800', fontSize: 15, color: first ? colors.darkGold : colors.deepBlue }}>{r.rank_position}º</Text>
+                  <Text style={{ fontWeight: '800', fontSize: 15, color: first ? colors.darkGold : colors.deepBlue, fontVariant: ['tabular-nums'] }}>{r.rank_position}º</Text>
                 </View>
-                <Avatar path={m?.user_id && m.status !== 'retired' ? photos[m.user_id] : null} name={nameOf(r.membership_id)} size={36} />
+                <Avatar path={m?.user_id && m.status !== 'retired' ? photos[m.user_id] : null} name={nameOf(r.membership_id)} size={medal ? 44 : 36} />
                 <View style={{ flex: 1, gap: 2 }}>
                   <Text style={{ fontSize: 15, color: colors.ink, fontWeight: first ? '700' : '500' }} numberOfLines={1}>
                     {nameOf(r.membership_id)}
@@ -245,7 +260,7 @@ export default function Rankings() {
                   </View>
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ color: colors.deepBlue, fontWeight: '800', fontSize: 18, fontVariant: ['tabular-nums'] }}>{fmt(r.metric_value)}</Text>
+                  <Text style={{ color: colors.deepBlue, fontWeight: '800', fontSize: medal ? 22 : 18, fontVariant: ['tabular-nums'] }}>{fmt(r.metric_value)}</Text>
                   {unit(r.metric_value) ? <Text style={{ color: colors.muted, fontSize: 11 }}>{unit(r.metric_value)}</Text> : null}
                 </View>
                 <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
@@ -261,33 +276,39 @@ export default function Rankings() {
       )}
 
       {month.length > 0 && (
-        <Card>
-          <Body>Prêmios de {fmtMonth(month[0].period_month)}</Body>
+        <View style={{ gap: 4 }}>
+          <Section>Prêmios de {fmtMonth(month[0].period_month)}</Section>
           {['monthly_king', 'top_scorer', 'monthly_garcom', 'most_improved'].map((t) => {
             const who = month.filter((a) => a.award_type === t).map((a) => nameOf(a.membership_id));
-            return who.length ? (
-              <Sub key={t}>
-                {AWARD_LABEL[t]}: {who.join(', ')}
-              </Sub>
-            ) : null;
+            return who.length ? <Fact key={t} label={AWARD_LABEL[t]} value={who.join(', ')} gold /> : null;
           })}
-        </Card>
+        </View>
       )}
 
       {records && (
-        <Card>
-          <Body>Recordes da temporada</Body>
-          <Sub>
-            Maior goleada:{' '}
-            {records.biggest_win?.length ? records.biggest_win.map((b) => `${b.team_a_score} x ${b.team_b_score}`).join(', ') : '–'}
-          </Sub>
-          <Sub>Mais gols numa partida: {holders(records.most_goals_in_match)}</Sub>
-          <Sub>Maior nota: {holders(records.best_final_rating, fmtRating)}</Sub>
-          <Sub>Mais vitórias seguidas: {holders(records.best_win_streak)}</Sub>
-          <Sub>Mais jogos sem perder: {holders(records.best_unbeaten_streak)}</Sub>
-          <Sub>Mais notas 8+ seguidas: {holders(records.best_high_rating_streak)}</Sub>
-        </Card>
+        <View style={{ gap: 4 }}>
+          <Section>Recordes da temporada</Section>
+          <Fact
+            label="Maior goleada"
+            value={records.biggest_win?.length ? records.biggest_win.map((b) => `${b.team_a_score} x ${b.team_b_score}`).join(', ') : '–'}
+          />
+          <Fact label="Mais gols numa partida" value={holders(records.most_goals_in_match)} />
+          <Fact label="Maior nota" value={holders(records.best_final_rating, fmtRating)} />
+          <Fact label="Mais vitórias seguidas" value={holders(records.best_win_streak)} />
+          <Fact label="Mais jogos sem perder" value={holders(records.best_unbeaten_streak)} />
+          <Fact label="Mais notas 8+ seguidas" value={holders(records.best_high_rating_streak)} />
+        </View>
       )}
     </Screen>
+  );
+}
+
+// Linha de fato (prêmio ou recorde): rótulo à esquerda, valor à direita, divisor fino; sem caixa própria.
+function Fact({ label, value, gold }: { label: string; value: string; gold?: boolean }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.divider }} accessible accessibilityLabel={`${label}: ${value}`}>
+      <Text style={{ flex: 1, fontSize: 14, color: gold ? colors.darkGold : colors.muted, fontWeight: gold ? '700' : '500' }}>{label}</Text>
+      <Text style={{ flex: 1.3, fontSize: 14, color: colors.ink, fontWeight: '600', textAlign: 'right' }}>{value}</Text>
+    </View>
   );
 }

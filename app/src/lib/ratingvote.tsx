@@ -12,7 +12,7 @@ import { friendly } from './errors';
 import { fmtDate, fmtTime } from './match';
 import { supabase } from './supabase';
 import { Text } from './text';
-import { colors } from './theme';
+import { colors, shadow } from './theme';
 import { Body, Button, Card, Chips, ErrorText, Sub } from './ui';
 
 export type RatingTarget = {
@@ -94,7 +94,9 @@ export function RatingSlider({ value, onChange, disabled }: { value: number; onC
   const step = (d: number) => onChange(Math.min(10, Math.max(0, value + d)));
   return (
     <View style={{ gap: 10, opacity: disabled ? 0.5 : 1 }} pointerEvents={disabled ? 'none' : 'auto'}>
-      <Text style={{ fontSize: 44, fontWeight: '900', color: colors.deepBlue, textAlign: 'center' }}>{fmtScore(value)}</Text>
+      <Text style={{ fontSize: 52, lineHeight: 58, fontWeight: '900', color: colors.deepBlue, textAlign: 'center', fontVariant: ['tabular-nums'] }} accessibilityLiveRegion="polite">
+        {fmtScore(value)}
+      </Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Pressable onPress={() => step(-0.5)} accessibilityRole="button" accessibilityLabel="Diminuir meio ponto" style={stepBtn}>
           <Text style={stepTxt}>−</Text>
@@ -109,21 +111,28 @@ export function RatingSlider({ value, onChange, disabled }: { value: number; onC
           accessibilityActions={[{ name: 'increment' }, { name: 'decrement' }]}
           onAccessibilityAction={(e) => step(e.nativeEvent.actionName === 'increment' ? 0.5 : -0.5)}
           {...pan.panHandlers}>
-          <View pointerEvents="none" style={{ height: 6, borderRadius: 3, backgroundColor: colors.line }}>
-            <View style={{ width: `${value * 10}%`, height: 6, borderRadius: 3, backgroundColor: colors.blue }} />
+          {/* V6.0: trilho mais grosso, marcas a cada ponto e polegar maior (mesma escala 0–10, passos de 0,5). */}
+          <View pointerEvents="none" style={{ height: 10, borderRadius: 5, backgroundColor: colors.line }}>
+            <View style={{ width: `${value * 10}%`, height: 10, borderRadius: 5, backgroundColor: colors.blue }} />
+          </View>
+          <View pointerEvents="none" style={{ position: 'absolute', left: 0, right: 0, flexDirection: 'row', justifyContent: 'space-between' }}>
+            {Array.from({ length: 11 }, (_, i) => (
+              <View key={i} style={{ width: 2, height: i % 5 === 0 ? 14 : 8, borderRadius: 1, backgroundColor: i <= value ? 'rgba(255,255,255,0.7)' : '#C3CDDD' }} />
+            ))}
           </View>
           <View
             pointerEvents="none"
             style={{
               position: 'absolute',
               left: `${value * 10}%`,
-              marginLeft: -13,
-              width: 26,
-              height: 26,
-              borderRadius: 13,
+              marginLeft: -16,
+              width: 32,
+              height: 32,
+              borderRadius: 16,
               backgroundColor: colors.white,
-              borderWidth: 3,
+              borderWidth: 4,
               borderColor: colors.blue,
+              ...shadow.card,
             }}
           />
         </View>

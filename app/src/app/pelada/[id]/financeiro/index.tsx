@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable, Switch, View } from 'react-native';
+import { Switch, View } from 'react-native';
 import { Text } from '../../../../lib/text';
 
 import { friendly } from '../../../../lib/errors';
@@ -8,7 +8,7 @@ import { Stat } from '../../../../lib/financeui';
 import { fmtDay, formatBRL, monthLabel } from '../../../../lib/money';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../../lib/ui';
+import { Body, Button, Card, EmptyState, ErrorText, ListGroup, Loading, Notice, Screen, SectionHeader, Sub, Title } from '../../../../lib/ui';
 
 type Access = {
   can_access: boolean;
@@ -140,7 +140,7 @@ export default function Financeiro() {
       <Title>Financeiro</Title>
       <Sub>{ov ? `Caixa da pelada · ${monthLabel(ov.month)}` : 'Caixa da pelada'}</Sub>
       <ErrorText>{msg}</ErrorText>
-      {!ov && !msg && <Sub>Carregando...</Sub>}
+      {!ov && !msg && <Loading label="Carregando o caixa..." />}
       {ov && (
         <>
           <View style={{ borderRadius: 14, backgroundColor: colors.deepBlue, padding: 16, gap: 4 }}>
@@ -156,10 +156,10 @@ export default function Financeiro() {
             <Stat label="A receber" cents={ov.receivable_cents} tone="gold" hint={ov.overdue_cents > 0 ? `${formatBRL(ov.overdue_cents)} vencido` : 'nada vencido'} />
             <Stat label="Despesas pendentes" cents={ov.pending_expense_cents} tone={ov.pending_expense_cents > 0 ? 'danger' : 'ink'} />
           </View>
+          {/* V6.0: pendências em faixa de alerta (só quando existem) e atalhos numa lista única. */}
           {((ov.overdue_count ?? 0) > 0 || (ov.partial_count ?? 0) > 0) && (
-            <Card>
-              <Body>Pendências</Body>
-              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
+            <Notice tone={(ov.overdue_count ?? 0) > 0 ? 'danger' : 'warning'} title="Pendências">
+              <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap', marginTop: 4 }}>
                 {(ov.overdue_count ?? 0) > 0 && (
                   <View style={{ flex: 1, minWidth: 140 }}>
                     <Button title={`${ov.overdue_count} ${ov.overdue_count === 1 ? 'vencida' : 'vencidas'}`} kind="danger" onPress={() => go('cobrancas', 'overdue')} />
@@ -172,59 +172,31 @@ export default function Financeiro() {
                 )}
               </View>
               <Sub>Toque para registrar o pagamento direto na lista.</Sub>
-            </Card>
+            </Notice>
           )}
-          <Card>
-            <Body>Mensalistas</Body>
-            <Sub>
-              {ov.monthly_active} {ov.monthly_active === 1 ? 'ativo' : 'ativos'} · {ov.monthly_active - ov.monthly_late} em dia ·{' '}
-              <Text style={{ color: ov.monthly_late ? colors.danger : colors.muted }}>
-                {ov.monthly_late} {ov.monthly_late === 1 ? 'atrasado' : 'atrasados'}
-              </Text>
-            </Sub>
-            <Sub>Avulsos neste mês: {ov.single_count_month}</Sub>
-            {ov.month_charges_missing > 0 && (
-              <Button
-                title={`Gerar mensalidades de ${monthLabel(ov.month)} (${ov.month_charges_missing})`}
-                onPress={gerar}
-                loading={busy === 'gerar'}
-              />
-            )}
-          </Card>
+          {ov.month_charges_missing > 0 && (
+            <Button title={`Gerar mensalidades de ${monthLabel(ov.month)} (${ov.month_charges_missing})`} onPress={gerar} loading={busy === 'gerar'} />
+          )}
 
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {(
-              [
-                ['cobrancas', 'Cobranças e pendências'],
-                ['mensalistas', 'Mensalistas'],
-                ['lancamentos', 'Receitas e despesas'],
-                ['relatorio', 'Relatórios'],
-              ] as const
-            ).map(([p, t]) => (
-              <Pressable
-                key={p}
-                accessibilityRole="button"
-                onPress={() => go(p)}
-                style={({ pressed }) => ({
-                  flexBasis: '47%',
-                  flexGrow: 1,
-                  minHeight: 56,
-                  justifyContent: 'center',
-                  paddingHorizontal: 12,
-                  borderRadius: 12,
-                  borderWidth: 1,
-                  borderColor: colors.line,
-                  backgroundColor: pressed ? colors.bg : colors.white,
-                })}>
-                <Text style={{ color: colors.deepBlue, fontWeight: '700' }}>{t} ›</Text>
-              </Pressable>
-            ))}
-          </View>
+          <ListGroup
+            title="Operação"
+            items={[
+              { icon: 'financeiro', title: 'Cobranças e pendências', sub: 'Registrar pagamentos', onPress: () => go('cobrancas') },
+              {
+                icon: 'elenco',
+                title: 'Mensalistas',
+                sub: `${ov.monthly_active} ${ov.monthly_active === 1 ? 'ativo' : 'ativos'} · ${ov.monthly_late} ${ov.monthly_late === 1 ? 'atrasado' : 'atrasados'} · ${ov.single_count_month} avulsos no mês`,
+                onPress: () => go('mensalistas'),
+              },
+              { icon: 'partidas', title: 'Receitas e despesas', sub: 'Lançamentos do caixa', onPress: () => go('lancamentos') },
+              { icon: 'rankings', title: 'Relatórios', sub: 'Resumo por período e exportação', onPress: () => go('relatorio') },
+            ]}
+          />
 
-          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.deepBlue, letterSpacing: 0.5, marginTop: 6 }}>Últimas movimentações</Text>
-          {ov.latest.length === 0 && <Sub>Nada registrado ainda.</Sub>}
+          <SectionHeader title="Últimas movimentações" />
+          {ov.latest.length === 0 && <EmptyState title="Nada registrado ainda" hint="Receitas, despesas e pagamentos aparecem aqui." />}
           {ov.latest.map((m) => (
-            <View key={`${m.source}-${m.id}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.line }}>
+            <View key={`${m.source}-${m.id}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 52, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.divider }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.ink }} numberOfLines={1}>
                   {m.description}

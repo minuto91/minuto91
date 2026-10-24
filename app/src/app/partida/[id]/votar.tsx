@@ -124,9 +124,27 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
         </Sub>
         <Sub>{left}</Sub>
       </View>
-      <View style={{ height: 4, borderRadius: 2, backgroundColor: colors.line }}>
-        <View style={{ width: `${targets.length ? ((v.rated ?? 0) / targets.length) * 100 : 0}%`, height: 4, borderRadius: 2, backgroundColor: colors.blue }} />
+      {/* V6.0: um segmento por jogador. Confirmado = azul cheio; pulado = contorno dourado (nunca igual ao confirmado). */}
+      <View style={{ flexDirection: 'row', gap: 3, marginTop: 4 }} importantForAccessibility="no-hide-descendants">
+        {targets.map((t) => (
+          <View
+            key={t.membership_id}
+            style={{
+              flex: 1,
+              height: 6,
+              borderRadius: 3,
+              backgroundColor: t.my_rating !== null ? colors.blue : colors.line,
+              borderWidth: t.my_rating === null && t.skipped ? 1.5 : 0,
+              borderColor: colors.gold,
+            }}
+          />
+        ))}
       </View>
+      {targets.some((t) => t.my_rating === null && t.skipped) && (
+        <Text style={{ fontSize: 12, color: colors.muted }}>
+          {targets.filter((t) => t.my_rating === null && t.skipped).length} pulado(s) · contorno dourado
+        </Text>
+      )}
     </View>
   );
 
@@ -217,18 +235,25 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
 
 function PlayerBox({ t, team }: { t: RatingTarget; team: string }) {
   return (
-    <Card>
-      <View style={{ alignItems: 'center', gap: 6 }}>
-        <Avatar path={t.avatar_path} name={t.name} size={88} />
-        <Text style={{ fontSize: 20, fontWeight: '800', color: colors.deepBlue, textAlign: 'center' }}>{t.name}</Text>
-        <Sub>
-          {positionLabel(t.position)} · {team} · {t.is_teammate ? 'seu time' : 'adversário'}
-        </Sub>
-        <Body>
-          {t.goals} {t.goals === 1 ? 'gol' : 'gols'} · {t.assists} {t.assists === 1 ? 'assistência' : 'assistências'}
-        </Body>
+    <View style={{ alignItems: 'center', gap: 8, paddingVertical: 18, borderRadius: 20, backgroundColor: colors.bg }}>
+      <Avatar path={t.avatar_path} name={t.name} size={96} />
+      <Text style={{ fontSize: 22, lineHeight: 28, fontWeight: '800', color: colors.deepBlue, textAlign: 'center' }} accessibilityRole="header">
+        {t.name}
+      </Text>
+      <Sub>
+        {positionLabel(t.position)} · {team} · {t.is_teammate ? 'seu time' : 'adversário'}
+      </Sub>
+      <View style={{ flexDirection: 'row', gap: 28, marginTop: 4 }}>
+        <View style={{ alignItems: 'center' }} accessible accessibilityLabel={`${t.goals} ${t.goals === 1 ? 'gol' : 'gols'}`}>
+          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.deepBlue, fontVariant: ['tabular-nums'] }}>{t.goals}</Text>
+          <Text style={{ fontSize: 12, fontWeight: '600', color: colors.muted }}>{t.goals === 1 ? 'Gol' : 'Gols'}</Text>
+        </View>
+        <View style={{ alignItems: 'center' }} accessible accessibilityLabel={`${t.assists} ${t.assists === 1 ? 'assistência' : 'assistências'}`}>
+          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.deepBlue, fontVariant: ['tabular-nums'] }}>{t.assists}</Text>
+          <Text style={{ fontSize: 12, fontWeight: '600', color: colors.muted }}>{t.assists === 1 ? 'Assistência' : 'Assistências'}</Text>
+        </View>
       </View>
-    </Card>
+    </View>
   );
 }
 

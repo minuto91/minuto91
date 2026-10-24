@@ -2,13 +2,17 @@ import { ReactNode } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, TextInputProps, View } from 'react-native';
 import { Text, TextInput } from './text';
 
-import { colors, POSITIONS, Position, radius, Sector, SECTORS, shadow, type } from './theme';
+import { Icon, IconName } from './icons';
+import { colors, POSITIONS, Position, radius, Sector, SECTORS, shadow, space, touch, type } from './theme';
 
 export function Screen({ children }: { children: ReactNode }) {
   return (
     <ScrollView
       style={{ backgroundColor: colors.white }}
-      contentContainerStyle={{ padding: 20, gap: 12, flexGrow: 1 }}
+      contentContainerStyle={{ padding: space.xl, paddingBottom: space.xxxl, gap: space.md, flexGrow: 1 }}
+      // V6.0: formulários utilizáveis com o teclado aberto (iOS ajusta a área rolável).
+      automaticallyAdjustKeyboardInsets
+      keyboardDismissMode="interactive"
       keyboardShouldPersistTaps="handled">
       {children}
     </ScrollView>
@@ -41,7 +45,7 @@ export function ListScreen<T>({
   return (
     <FlatList
       style={{ backgroundColor: colors.white }}
-      contentContainerStyle={{ padding: 20, flexGrow: 1 }}
+      contentContainerStyle={{ padding: space.xl, paddingBottom: space.xxxl, flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
       data={data ?? []}
       keyExtractor={keyExtractor}
@@ -312,6 +316,244 @@ export const ErrorText = ({ children }: { children?: string | null }) =>
     </Text>
   ) : null;
 
+// ---------------------------------------------------------------------------------------------------------------
+// V6.0 — componentes consolidados do Design System (docs/v6_design_system.md). Substituem as versões locais
+// repetidas em cada tela (grupos de atalhos, linhas, placar, selos de estado, avisos e estados de erro).
+// ---------------------------------------------------------------------------------------------------------------
+
+export type Tone = 'neutral' | 'info' | 'success' | 'warning' | 'danger' | 'gold';
+const TONE: Record<Tone, { fg: string; bg: string }> = {
+  neutral: { fg: colors.muted, bg: colors.bg },
+  info: { fg: colors.blue, bg: colors.blueSoft },
+  success: { fg: colors.success, bg: colors.successSoft },
+  warning: { fg: colors.warning, bg: colors.warningSoft },
+  danger: { fg: colors.danger, bg: colors.dangerSoft },
+  gold: { fg: colors.darkGold, bg: colors.goldSoft },
+};
+
+/** Selo curto com texto (o estado nunca depende só da cor). */
+export function Badge({ label, tone = 'neutral' }: { label: string; tone?: Tone }) {
+  const t = TONE[tone];
+  return (
+    <View style={{ alignSelf: 'flex-start', flexDirection: 'row', alignItems: 'center', gap: 5, paddingHorizontal: 8, paddingVertical: 3, borderRadius: radius.pill, backgroundColor: t.bg }}>
+      <View style={{ width: 6, height: 6, borderRadius: 3, backgroundColor: t.fg }} />
+      <Text style={{ fontSize: 12, lineHeight: 16, fontWeight: '700', color: t.fg }} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+// Estados da partida (só apresentação; as transições continuam no servidor).
+const MATCH_STATUS: Record<string, { label: string; tone: Tone }> = {
+  draft: { label: 'Em preparação', tone: 'neutral' },
+  voting_open: { label: 'Votação aberta', tone: 'info' },
+  finalizing: { label: 'Aguardando publicação', tone: 'warning' },
+  finalized: { label: 'Resultado publicado', tone: 'success' },
+  annulled: { label: 'Anulada', tone: 'danger' },
+};
+export function MatchStatusBadge({ status }: { status: string }) {
+  const s = MATCH_STATUS[status] ?? { label: status, tone: 'neutral' as Tone };
+  return <Badge label={s.label} tone={s.tone} />;
+}
+
+/** Título de seção com ação opcional à direita ("Ver todas"). */
+export function SectionHeader({ title, action, onAction, first }: { title: string; action?: string; onAction?: () => void; first?: boolean }) {
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: first ? 0 : space.sm, gap: space.sm }}>
+      <Text style={[type.section, { flex: 1 }]} accessibilityRole="header">
+        {title}
+      </Text>
+      {action && onAction ? (
+        <Pressable onPress={onAction} accessibilityRole="button" hitSlop={8} style={{ minHeight: touch.min, justifyContent: 'center' }}>
+          <Text style={{ color: colors.blue, fontWeight: '700', fontSize: 15 }}>{action} ›</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+export type ListItemProps = {
+  title: string;
+  sub?: string;
+  icon?: IconName;
+  leading?: ReactNode;
+  trailing?: ReactNode;
+  badge?: string;
+  danger?: boolean;
+  onPress?: () => void;
+  a11yLabel?: string;
+};
+
+/** Linha de lista: ícone ou foto, título, apoio e seta. Toque mínimo de 56 px. */
+export function ListItem({ title, sub, icon, leading, trailing, badge, danger, onPress, a11yLabel, first }: ListItemProps & { first?: boolean }) {
+  return (
+    <Pressable
+      disabled={!onPress}
+      accessibilityRole={onPress ? 'button' : undefined}
+      accessibilityLabel={a11yLabel ?? (badge ? `${title}, ${badge}` : title)}
+      accessibilityHint={sub}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: space.md,
+        minHeight: 56,
+        paddingHorizontal: 14,
+        borderTopWidth: first ? 0 : 1,
+        borderTopColor: colors.divider,
+        backgroundColor: pressed ? colors.bg : colors.white,
+      })}>
+      {leading ?? (icon ? <Icon name={icon} size={22} color={danger ? colors.danger : undefined} /> : null)}
+      <View style={{ flex: 1, minWidth: 0, paddingVertical: 9 }}>
+        <Text style={{ fontSize: 16, fontWeight: '600', color: danger ? colors.danger : colors.ink }} numberOfLines={1}>
+          {title}
+        </Text>
+        {sub ? (
+          <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
+            {sub}
+          </Text>
+        ) : null}
+      </View>
+      {badge ? <Text style={{ fontSize: 12, fontWeight: '700', color: colors.darkGold }}>{badge}</Text> : null}
+      {trailing}
+      {onPress && !danger ? <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text> : null}
+    </Pressable>
+  );
+}
+
+/** Grupo de linhas sob um título: uma só moldura, divisores finos (sem cartão dentro de cartão). */
+export function ListGroup({ title, items, children }: { title?: string; items?: ListItemProps[]; children?: ReactNode }) {
+  return (
+    <View style={{ gap: space.sm, marginTop: title ? space.sm : 0 }}>
+      {title ? (
+        <Text style={type.section} accessibilityRole="header">
+          {title}
+        </Text>
+      ) : null}
+      <View style={{ borderRadius: radius.card, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.white, overflow: 'hidden' }}>
+        {items?.map((it, n) => <ListItem key={it.title} {...it} first={n === 0} />)}
+        {children}
+      </View>
+    </View>
+  );
+}
+
+/** Placar: o protagonista visual da partida. Vencedor em negrito (não só por cor). */
+export function Scoreboard({
+  teamA,
+  teamB,
+  scoreA,
+  scoreB,
+  size = 'md',
+  colorA,
+  colorB,
+}: {
+  teamA: string;
+  teamB: string;
+  scoreA: number;
+  scoreB: number;
+  size?: 'md' | 'lg';
+  colorA?: string;
+  colorB?: string;
+}) {
+  const aWon = scoreA > scoreB;
+  const bWon = scoreB > scoreA;
+  const big = size === 'lg';
+  const side = (name: string, won: boolean, align: 'left' | 'right', dot?: string) => (
+    <View style={{ flex: 1, minWidth: 0, flexDirection: align === 'left' ? 'row' : 'row-reverse', alignItems: 'center', gap: 6 }}>
+      {dot ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: dot, borderWidth: 1, borderColor: colors.line }} /> : null}
+      <Text style={{ flexShrink: 1, textAlign: align, fontSize: big ? 16 : 15, fontWeight: won ? '800' : '500', color: colors.ink }} numberOfLines={2}>
+        {name}
+      </Text>
+    </View>
+  );
+  return (
+    <View
+      accessible
+      accessibilityLabel={`${teamA} ${scoreA}, ${teamB} ${scoreB}`}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: space.md, paddingVertical: big ? space.sm : space.xs }}>
+      {side(teamA, aWon, 'left', colorA)}
+      <Text style={[big ? type.display : { ...type.number, fontSize: 30, lineHeight: 36 }, { textAlign: 'center' }]}>
+        {scoreA}
+        <Text style={{ color: colors.muted, fontWeight: '500' }}> x </Text>
+        {scoreB}
+      </Text>
+      {side(teamB, bWon, 'right', colorB)}
+    </View>
+  );
+}
+
+/** Número esportivo com rótulo (estatísticas em linha, sem caixa própria). */
+export function StatItem({ value, label }: { value: number | string; label: string }) {
+  return (
+    <View style={{ flex: 1, minWidth: 0 }} accessible accessibilityLabel={`${label}: ${value}`}>
+      <Text style={type.numberSm} numberOfLines={1}>
+        {value}
+      </Text>
+      <Text style={type.label} numberOfLines={1}>
+        {label}
+      </Text>
+    </View>
+  );
+}
+
+export function StatRow({ items }: { items: { value: number | string; label: string }[] }) {
+  return (
+    <View style={{ flexDirection: 'row', gap: space.sm }}>
+      {items.map((i) => (
+        <StatItem key={i.label} {...i} />
+      ))}
+    </View>
+  );
+}
+
+export const Divider = () => <View style={{ height: 1, backgroundColor: colors.divider }} />;
+
+/** Aviso em faixa: informação, alerta, sucesso (só após confirmação do servidor) ou erro. */
+export function Notice({ tone = 'info', title, children, action, onAction }: { tone?: Tone; title?: string; children?: ReactNode; action?: string; onAction?: () => void }) {
+  const t = TONE[tone];
+  return (
+    <View
+      accessibilityRole={tone === 'danger' || tone === 'warning' ? 'alert' : undefined}
+      accessibilityLiveRegion="polite"
+      style={{ backgroundColor: t.bg, borderRadius: radius.md, padding: 14, gap: 4, borderLeftWidth: 3, borderLeftColor: t.fg }}>
+      {title ? <Text style={{ fontSize: 15, fontWeight: '700', color: t.fg }}>{title}</Text> : null}
+      {typeof children === 'string' ? <Text style={{ ...type.caption, color: colors.ink }}>{children}</Text> : children}
+      {action && onAction ? (
+        <Pressable onPress={onAction} accessibilityRole="button" hitSlop={8} style={{ minHeight: touch.min, justifyContent: 'center', alignSelf: 'flex-start' }}>
+          <Text style={{ color: t.fg, fontWeight: '700', fontSize: 15 }}>{action} ›</Text>
+        </Pressable>
+      ) : null}
+    </View>
+  );
+}
+
+/** Erro de carregamento com "Tentar de novo" (erro de rede nunca vira "sem dados"). */
+export function ErrorState({ message, onRetry }: { message: string; onRetry?: () => void }) {
+  return (
+    <View style={{ gap: space.md, paddingVertical: space.lg }} accessibilityRole="alert">
+      <Text style={type.cardTitle}>Não foi possível carregar</Text>
+      <Text style={type.caption}>{message}</Text>
+      {onRetry ? <Button title="Tentar de novo" kind="secondary" onPress={onRetry} /> : null}
+    </View>
+  );
+}
+
+/** Sem permissão: explica quem pode fazer, sem esconder que a tela existe. */
+export const NoPermission = ({ who = 'o administrador da pelada' }: { who?: string }) => (
+  <EmptyState title="Acesso restrito" hint={`Somente ${who} pode ver e usar esta área.`} />
+);
+
+/** Bloco de espera do tamanho do conteúdo (evita salto de layout). */
+export const Skeleton = ({ height = 72 }: { height?: number }) => (
+  <View
+    accessibilityLabel="Carregando"
+    accessibilityLiveRegion="polite"
+    style={{ height, borderRadius: radius.card, backgroundColor: colors.bg }}
+  />
+);
+
 const styles = StyleSheet.create({
   input: {
     borderWidth: 1,
@@ -340,7 +582,7 @@ const styles = StyleSheet.create({
     borderRadius: radius.card,
     borderWidth: 1,
     borderColor: colors.line,
-    padding: 16,
+    padding: space.lg,
     gap: 6,
     ...shadow.card,
   },
