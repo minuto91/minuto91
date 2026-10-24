@@ -238,7 +238,7 @@ export default function Rankings() {
                   <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
                     {tier && (
                       <View style={{ paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, backgroundColor: tier.bg, borderWidth: 1, borderColor: tier.frame }}>
-                        <Text style={{ fontSize: 10, fontWeight: '800', color: tier.deep }}>{tier.label.toUpperCase()}</Text>
+                        <Text style={{ fontSize: 12, fontWeight: '800', color: tier.deep }}>{tier.label.toUpperCase()}</Text>
                       </View>
                     )}
                     {tied(r) && <Text style={{ fontSize: 12, color: colors.muted }}>empatado</Text>}
@@ -246,7 +246,7 @@ export default function Rankings() {
                 </View>
                 <View style={{ alignItems: 'flex-end' }}>
                   <Text style={{ color: colors.deepBlue, fontWeight: '800', fontSize: 18, fontVariant: ['tabular-nums'] }}>{fmt(r.metric_value)}</Text>
-                  {unit(r.metric_value) ? <Text style={{ color: colors.muted, fontSize: 11 }}>{unit(r.metric_value)}</Text> : null}
+                  {unit(r.metric_value) ? <Text style={{ color: colors.muted, fontSize: 12 }}>{unit(r.metric_value)}</Text> : null}
                 </View>
                 <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
               </Pressable>
