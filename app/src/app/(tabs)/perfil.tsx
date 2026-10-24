@@ -1,6 +1,6 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Text } from '../../lib/text';
 
 import { Avatar, pickAndUploadAvatar, removeAvatar } from '../../lib/avatar';
@@ -20,13 +20,13 @@ import {
   VISIBILITY,
   Visibility,
 } from '../../lib/profile';
-import { useAuth } from '../../lib/session';
+import { signOut, useAuth } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, FEET, Foot, footLabel } from '../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../../lib/ui';
+import { Body, Button, Card, Chips, ErrorState, Input, ListGroup, Loading, Notice, Screen, Sub, Title } from '../../lib/ui';
 
 const TABS = [
-  { value: 'geral', label: 'Visão geral' },
+  { value: 'geral', label: 'Perfil' },
   { value: 'carreira', label: 'Carreira' },
   { value: 'peladas', label: 'Peladas' },
   { value: 'conquistas', label: 'Conquistas' },
@@ -136,8 +136,7 @@ export default function Perfil() {
   if (!me || !career || !player) {
     return (
       <Screen>
-        <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {msg ? <ErrorState message={msg} onRetry={() => { setMsg(null); setReload((n) => n + 1); }} /> : <Loading label="Carregando perfil..." />}
       </Screen>
     );
   }
@@ -152,20 +151,31 @@ export default function Perfil() {
         <Avatar path={me.avatar_path} name={me.display_name} size={72} />
         <View style={{ flex: 1, gap: 2 }}>
           <Title>{me.display_name}</Title>
-          <Sub>{me.dominant_foot ? footLabel(me.dominant_foot) : 'Meu perfil'}</Sub>
+          <Sub>{session?.user.email ?? 'Meu perfil'}</Sub>
         </View>
       </View>
       <Chips options={TABS} value={tab} onChange={(v) => { setOk(null); setTab(v); }} />
-      <ErrorText>{msg}</ErrorText>
-      {ok && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{ok}</Text>}
+      {msg && <Notice tone="danger">{msg}</Notice>}
+      {/* Sucesso só depois da resposta do servidor (o texto é definido após o RPC). */}
+      {ok && <Notice tone="success">{ok}</Notice>}
 
+      {/* V6.0: Perfil em quatro grupos — dados pessoais, dados esportivos, preferências e conta. Os números da
+          carreira ficam em Minha Carreira (aba Carreira), sem repetição aqui. */}
       {tab === 'geral' && (
         <>
-          {career.visible && <CareerSummary career={career} />}
           {!editing ? (
-            <Button title="Editar foto, nome e pé" kind="secondary" onPress={() => setEditing(true)} />
+            <ListGroup
+              title="Dados pessoais"
+              items={[
+                { icon: 'elenco', title: me.display_name, sub: 'Nome que aparece nas suas peladas', onPress: () => setEditing(true), a11yLabel: `Nome: ${me.display_name}. Editar` },
+                { icon: 'card', title: me.avatar_path ? 'Foto do perfil' : 'Adicionar foto', sub: 'Aparece no perfil e nos seus Cards', onPress: () => setEditing(true) },
+              ]}
+            />
           ) : (
             <>
+              <Text style={section} accessibilityRole="header">
+                Editar dados pessoais
+              </Text>
               <Card>
                 <View style={{ alignItems: 'center', gap: 10, paddingVertical: 6 }}>
                   <Avatar path={me.avatar_path} name={me.display_name} size={120} />
@@ -185,18 +195,44 @@ export default function Perfil() {
               <Card>
                 <Body>Nome</Body>
                 <Sub>É o nome que aparece nas suas peladas.</Sub>
-                <Input value={name} onChangeText={setName} maxLength={80} autoCapitalize="words" placeholder="Seu apelido" />
+                <Input value={name} onChangeText={setName} maxLength={80} autoCapitalize="words" placeholder="Seu apelido" accessibilityLabel="Nome" />
                 <Body>Pé dominante</Body>
                 <Sub>Opcional. Só informativo: não muda nota nem Card.</Sub>
                 <Chips options={FEET} value={foot} onChange={(v) => setFoot(v === foot ? null : v)} />
               </Card>
               <Button title="Salvar" onPress={salvar} loading={busy === 'salvar'} disabled={!changed || !name.trim() || !!busy} />
-              <Button title="Cancelar" kind="secondary" onPress={() => setEditing(false)} />
+              <Button title="Cancelar" kind="ghost" onPress={() => setEditing(false)} />
             </>
           )}
-          <Sub>A posição é escolhida em cada pelada: abra o seu Card na pelada para mudar.</Sub>
-          <Button title="Minha Carreira (Card, evolução e troféus)" onPress={() => router.push('/carreira')} />
-          <Button title="Minha conta" kind="secondary" onPress={() => router.push('/conta')} />
+          <ListGroup
+            title="Dados esportivos"
+            items={[
+              { icon: 'duelo', title: me.dominant_foot ? footLabel(me.dominant_foot) : 'Pé dominante', sub: me.dominant_foot ? 'Toque para alterar' : 'Não informado', onPress: () => setEditing(true) },
+              { icon: 'escalacao', title: 'Posição', sub: 'Escolhida em cada pelada, no seu Card da pelada', onPress: () => setTab('peladas') },
+              { icon: 'rankings', title: 'Minha Carreira', sub: 'Card, evolução, troféus e histórico', onPress: () => router.push('/carreira') },
+            ]}
+          />
+          <ListGroup
+            title="Preferências"
+            items={[
+              { icon: 'config', title: 'Notificações', sub: 'Avisos de votação, resultados e prêmios', onPress: () => router.push('/conta') },
+              { icon: 'card', title: 'Privacidade do perfil e da carreira', sub: `Perfil: ${visLabel(me.profile_visibility)} · Carreira: ${visLabel(me.career_visibility)}`, onPress: () => setTab('privacidade') },
+            ]}
+          />
+          <ListGroup
+            title="Conta"
+            items={[
+              { icon: 'config', title: 'Minha conta', sub: 'Segurança, transferência, bloqueados e exclusão', onPress: () => router.push('/conta') },
+              { icon: 'retro', title: 'Termos de Uso', onPress: () => router.push('/termos') },
+              { icon: 'retro', title: 'Política de Privacidade', onPress: () => router.push('/privacidade') },
+            ]}>
+            <Pressable
+              accessibilityRole="button"
+              onPress={signOut}
+              style={({ pressed }) => ({ minHeight: 52, paddingHorizontal: 14, justifyContent: 'center', borderTopWidth: 1, borderTopColor: colors.divider, backgroundColor: pressed ? colors.bg : colors.white })}>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.danger }}>Sair da conta</Text>
+            </Pressable>
+          </ListGroup>
         </>
       )}
 
@@ -243,3 +279,5 @@ export default function Perfil() {
     </Screen>
   );
 }
+
+const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 8 };

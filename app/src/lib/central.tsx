@@ -428,7 +428,7 @@ function Stat({ value, label }: { value: number | string; label: string }) {
       <Text style={{ fontSize: 20, lineHeight: 24, fontWeight: '800', color: colors.deepBlue, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
         {value}
       </Text>
-      <Text style={{ fontSize: 12, color: colors.muted }} numberOfLines={2}>
+      <Text style={{ fontSize: 12, color: colors.muted }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.8}>
         {label}
       </Text>
     </View>
@@ -460,9 +460,26 @@ export function CareerHero({
   const tier = (r?.tier ?? card?.tier ?? null) as keyof typeof TIER | null;
   const showOfficialCard = !!card && (ovr !== null || isV2(card));
 
+  // V6.0: o OVR aparece só dentro da carta compacta. A lateral traz a variação desde a última publicação e os
+  // números da temporada; o bloco inteiro abre Minha Carreira.
+  const delta = rating?.delta ?? null;
+  const a11y = [
+    `${data.name}, ${positionLabel(data.position)}`,
+    ovr !== null ? `OVR ${ovr}${tier ? `, ${TIER[tier].label}` : ''}` : `avaliação em andamento, ${Math.min(played, 5)} de 5 partidas`,
+    ovr !== null && delta !== null ? `variação ${deltaA11y(delta)}` : null,
+    `${data.season?.matches_played ?? 0} jogos, ${data.season?.goals ?? 0} gols, ${data.season?.assists ?? 0} assistências`,
+    'Abrir Minha Carreira',
+  ]
+    .filter(Boolean)
+    .join('. ');
+
   return (
-    <View style={{ ...box, padding: 14, gap: 12 }}>
-      <View style={{ flexDirection: 'row', gap: narrow ? 12 : 16, alignItems: 'center' }}>
+    <Pressable
+      onPress={onCareer}
+      accessibilityRole="button"
+      accessibilityLabel={a11y}
+      style={({ pressed }) => ({ ...box, padding: 14, gap: 12, opacity: pressed ? 0.92 : 1 })}>
+      <View style={{ flexDirection: 'row', gap: narrow ? 12 : 16, alignItems: 'center' }} importantForAccessibility="no-hide-descendants">
         {showOfficialCard ? (
           <PlayerCard
             card={{ id: 'central', ...card! }}
@@ -479,31 +496,30 @@ export function CareerHero({
           <EvaluatingCard width={cardW} name={data.name} avatarPath={data.avatarPath} position={data.position} />
         )}
 
-        <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted }} numberOfLines={1}>
-            {positionLabel(data.position)}
-            {tier && ovr !== null ? ` · ${TIER[tier].label}` : ''}
-          </Text>
+        <View style={{ flex: 1, minWidth: 0, gap: 10 }}>
+          <View style={{ gap: 2 }}>
+            <Text style={{ ...type.cardTitle, color: colors.deepBlue }} numberOfLines={1}>
+              {data.name}
+            </Text>
+            <Text style={type.meta} numberOfLines={1}>
+              {positionLabel(data.position)}
+              {tier && ovr !== null ? ` · ${TIER[tier].label}` : ''}
+            </Text>
+          </View>
           {ovr !== null ? (
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
-              <View accessibilityLabel={`OVR ${ovr}`}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.muted, letterSpacing: 0.6 }}>OVR</Text>
-                <Text
-                  style={{
-                    fontSize: narrow ? 36 : 42,
-                    lineHeight: narrow ? 40 : 46,
-                    fontWeight: '900',
-                    color: tier ? TIER[tier].color : colors.deepBlue,
-                    fontVariant: ['tabular-nums'],
-                  }}>
-                  {ovr}
-                </Text>
-              </View>
-              <View style={{ paddingBottom: 6 }}>{ratingLoading ? null : <OvrDelta delta={rating?.delta ?? null} />}</View>
+            <View style={{ gap: 4 }}>
+              <Text style={eyebrow}>Desde a última publicação</Text>
+              {ratingLoading ? (
+                <View style={{ height: 22, width: 56, borderRadius: radius.pill, backgroundColor: colors.bg }} />
+              ) : delta !== null ? (
+                <OvrDelta delta={delta} />
+              ) : (
+                <Text style={type.meta}>Sem publicação anterior</Text>
+              )}
             </View>
           ) : (
-            <View style={{ gap: 6 }} accessibilityLabel={`Avaliação em andamento: ${played} de 5 partidas`}>
-              <Text style={{ fontSize: 17, fontWeight: '800', color: colors.deepBlue }}>Avaliação em andamento</Text>
+            <View style={{ gap: 6 }}>
+              <Text style={{ fontSize: 15, fontWeight: '800', color: colors.deepBlue }}>Avaliação em andamento</Text>
               <View style={{ flexDirection: 'row', gap: 4 }}>
                 {[0, 1, 2, 3, 4].map((i) => (
                   <View key={i} style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: i < played ? colors.blue : colors.line }} />
@@ -515,29 +531,26 @@ export function CareerHero({
               </Text>
             </View>
           )}
-          <View style={{ flexDirection: 'row', gap: 6 }}>
+          <View style={{ flexDirection: 'row', gap: 6, borderTopWidth: 1, borderTopColor: '#EEF2F8', paddingTop: 10 }}>
             <Stat value={data.season?.matches_played ?? 0} label="Jogos" />
             <Stat value={data.season?.goals ?? 0} label="Gols" />
             <Stat value={data.season?.assists ?? 0} label="Assist." />
           </View>
         </View>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEF2F8', paddingTop: 10 }}>
+      <View
+        style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEF2F8', paddingTop: 10, minHeight: 34 }}
+        importantForAccessibility="no-hide-descendants">
         <Text style={{ ...type.meta, flex: 1 }} numberOfLines={1}>
           {data.seasonName ?? data.peladaName}
         </Text>
-        <Pressable
-          onPress={onCareer}
-          accessibilityRole="button"
-          accessibilityLabel="Abrir Minha Carreira"
-          hitSlop={8}
-          style={{ minHeight: 44, justifyContent: 'center' }}>
-          <Text style={link}>Minha Carreira ›</Text>
-        </Pressable>
+        <Text style={link}>Minha Carreira ›</Text>
       </View>
-    </View>
+    </Pressable>
   );
 }
+
+const eyebrow = { fontSize: 12, fontWeight: '600' as const, color: colors.muted };
 
 // ---------------------------------------------------------------------------------------------------------------
 // Próxima rodada (escalação planejada; o app não tem data, local nem confirmação de presença)

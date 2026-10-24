@@ -5,7 +5,7 @@ import { Text } from '../../lib/text';
 
 import { PlayerCard } from '../../lib/arts';
 import { Avatar } from '../../lib/avatar';
-import { overallLabel, plural } from '../../lib/career';
+import { cardOverall, overallLabel, plural, TIER } from '../../lib/career';
 import { CareerSummary, latestCard, loadCareerSummary, markGuide, referencePelada, SummaryPelada } from '../../lib/careerv2';
 import { friendly } from '../../lib/errors';
 import { EvolutionChart, useEvolution } from '../../lib/evolution';
@@ -15,7 +15,7 @@ import { useAuth } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, footLabel, positionLabel } from '../../lib/theme';
 import { TrophyRoom } from '../../lib/trophies';
-import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../lib/ui';
+import { Badge, Button, Chips, EmptyState, ErrorState, ListGroup, Loading, Screen, SectionHeader, Sub, Tone } from '../../lib/ui';
 
 type Me = { display_name: string; avatar_path: string | null; dominant_foot: string | null };
 type HistoryItem = {
@@ -86,12 +86,16 @@ export default function Carreira() {
   if (!career || !me) {
     return (
       <Screen>
-        <ErrorText>{err}</ErrorText>
-        {err ? <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} /> : <Sub>Carregando...</Sub>}
+        {err ? <ErrorState message={err} onRetry={() => setReload((n) => n + 1)} /> : <Loading label="Carregando sua carreira..." />}
       </Screen>
     );
   }
-  if (!career.visible) return <Screen><Sub>Carreira indisponível.</Sub></Screen>;
+  if (!career.visible)
+    return (
+      <Screen>
+        <EmptyState title="Carreira indisponível" hint="Os dados da carreira não estão disponíveis para esta conta agora." />
+      </Screen>
+    );
 
   const ref = referencePelada(career.peladas, primary);
   const selected: SummaryPelada | null = scope === 'all' ? null : (career.peladas.find((p) => p.pelada_id === scope) ?? null);
@@ -100,21 +104,35 @@ export default function Carreira() {
   const seasonRow = selected ? (selected.seasons.find((s) => s.season_id === season) ?? selected.seasons[0] ?? null) : null;
   const totals = selected ? (seasonRow && season ? seasonRow : selected.totals) : career.totals;
   const position = cardPelada ? (cardPelada.position_code ?? cardPelada.position) : null;
+  const ovr = latest ? cardOverall(latest.card) : null;
+  const tier = latest && ovr !== null ? TIER[latest.card.tier] : null;
 
   return (
     <Screen>
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
-        <Avatar path={me.avatar_path} name={me.display_name} size={72} />
-        <View style={{ flex: 1, gap: 2 }}>
-          <Title>{me.display_name}</Title>
-          <Sub>
-            {position ? positionLabel(position) : 'Posição não informada'}
-            {cardPelada && career.peladas.length > 1 ? ` em ${cardPelada.name}` : ''}
-            {me.dominant_foot ? ` · ${footLabel(me.dominant_foot)}` : ''}
-          </Sub>
+      {/* V6.0: cabeçalho da carreira (foto, nome, posição, pelada, OVR e categoria) em faixa azul. */}
+      <View style={hero}>
+        <Avatar path={me.avatar_path} name={me.display_name} size={76} />
+        <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+          <Text style={{ fontSize: 24, lineHeight: 30, fontWeight: '800', color: colors.white }} numberOfLines={2} accessibilityRole="header">
+            {me.display_name}
+          </Text>
+          <Text style={{ fontSize: 14, color: '#CFDCF5' }} numberOfLines={2}>
+            {[position ? positionLabel(position) : 'Posição não informada', cardPelada?.name, me.dominant_foot ? footLabel(me.dominant_foot) : null]
+              .filter(Boolean)
+              .join(' · ')}
+          </Text>
         </View>
+        {ovr !== null && tier ? (
+          <View style={{ alignItems: 'center' }} accessible accessibilityLabel={`OVR ${ovr}, ${tier.label}`}>
+            <Text style={{ fontSize: 36, lineHeight: 40, fontWeight: '900', color: colors.white, fontVariant: ['tabular-nums'] }}>{ovr}</Text>
+            <View style={{ marginTop: 2, paddingHorizontal: 8, paddingVertical: 2, borderRadius: 11, backgroundColor: tier.bg }}>
+              <Text style={{ fontSize: 12, fontWeight: '800', color: tier.deep }}>{tier.label}</Text>
+            </View>
+          </View>
+        ) : null}
       </View>
-      <Button title="Editar perfil e privacidade" kind="secondary" onPress={() => router.push('/perfil')} />
+
+      <Button title="Editar perfil e privacidade" kind="ghost" onPress={() => router.push('/perfil')} />
 
       {career.peladas.length > 1 && (
         <Chips
@@ -127,9 +145,9 @@ export default function Carreira() {
         />
       )}
 
-      <Text style={section}>Card oficial</Text>
+      <SectionHeader title="Card oficial" />
       {latest && cardPelada ? (
-        <View style={{ alignItems: 'center', gap: 6 }}>
+        <View style={{ alignItems: 'center', gap: 10, paddingVertical: 20, borderRadius: 20, backgroundColor: colors.bg }}>
           <PlayerCard
             card={{ ...latest.card, id: `${cardPelada.membership_id}-${latest.season.season_id}` }}
             playerName={me.display_name}
@@ -141,7 +159,7 @@ export default function Carreira() {
           />
           <Sub>
             {overallLabel(latest.card)}
-            {latest.card.is_provisional ? ' (provisório)' : ''} · {cardPelada.name} · {latest.season.name}
+            {latest.card.is_provisional ? ' (provisório)' : ''} · {latest.season.name}
           </Sub>
           {scope === 'all' && career.peladas.length > 1 && <Sub>O Card é de cada pelada. Escolha outra pelada acima para ver o Card dela.</Sub>}
           <Button
@@ -151,11 +169,14 @@ export default function Carreira() {
           />
         </View>
       ) : (
-        <Sub>O Card aparece depois da primeira partida finalizada {cardPelada ? `em ${cardPelada.name}` : 'numa pelada'}.</Sub>
+        <EmptyState
+          title="Seu Card ainda não saiu"
+          hint={`O Card aparece depois da primeira partida finalizada ${cardPelada ? `em ${cardPelada.name}` : 'numa pelada'}.`}
+        />
       )}
 
-      <Text style={section}>Estatísticas</Text>
-      <Card>
+      <SectionHeader title="Estatísticas" />
+      <View style={{ gap: 10 }}>
         <Sub>
           {selected
             ? season && seasonRow
@@ -179,9 +200,9 @@ export default function Carreira() {
         {career.partial && !selected && (
           <Sub>Temporadas antigas de peladas no Básico ficam de fora; o histórico completo é da Pelada Premium de cada pelada.</Sub>
         )}
-      </Card>
+      </View>
 
-      <Text style={section}>Evolução</Text>
+      <SectionHeader title="Evolução" />
       {selected ? (
         selected.seasons.length > 0 ? (
           <Evolution membershipId={selected.membership_id} seasonId={season ?? selected.seasons[0].season_id} />
@@ -195,23 +216,23 @@ export default function Carreira() {
         <Button title={`Ver evolução em ${career.peladas[0].name}`} kind="secondary" onPress={() => setScope(career.peladas[0].pelada_id)} />
       )}
 
-      <Text style={section}>Sala de Troféus</Text>
+      {/* Conquistas: troféus (únicos, prêmios) e figurinhas (colecionáveis e marcos) seguem separados. */}
+      <SectionHeader title="Conquistas" />
+      <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }}>Sala de Troféus</Text>
       <TrophyRoom userId={uid} counts={career.trophies} partial={career.partial} />
+      <ListGroup
+        title="Álbum de Figurinhas"
+        items={career.peladas
+          .filter((p) => p.status === 'active' && (!selected || p.pelada_id === selected.pelada_id))
+          .map((p) => ({
+            icon: 'card' as const,
+            title: p.name,
+            sub: 'Colecionáveis e marcos da carreira',
+            onPress: () => router.push({ pathname: '/jogador/[id]/album', params: { id: p.membership_id } }),
+          }))}
+      />
 
-      <Text style={section}>Álbum de Figurinhas</Text>
-      <Sub>O álbum guarda colecionáveis e marcos (ex.: 5 e 10 vezes Craque da Partida). Os troféus acima são os prêmios conquistados.</Sub>
-      {career.peladas
-        .filter((p) => p.status === 'active' && (!selected || p.pelada_id === selected.pelada_id))
-        .map((p) => (
-          <Button
-            key={p.membership_id}
-            title={`Álbum · ${p.name}`}
-            kind="secondary"
-            onPress={() => router.push({ pathname: '/jogador/[id]/album', params: { id: p.membership_id } })}
-          />
-        ))}
-
-      <Text style={section}>Histórico de partidas</Text>
+      <SectionHeader title="Histórico de partidas" />
       <MatchHistory peladaId={selected?.pelada_id ?? null} showPelada={!selected && career.peladas.length > 1} />
     </Screen>
   );
@@ -219,8 +240,8 @@ export default function Carreira() {
 
 function Evolution({ membershipId, seasonId }: { membershipId: string; seasonId: string }) {
   const { data, error } = useEvolution(membershipId, seasonId);
-  if (error) return <Sub>{error}</Sub>;
-  if (!data) return <Sub>Carregando...</Sub>;
+  if (error) return <ErrorState message={error} />;
+  if (!data) return <Loading label="Carregando evolução..." />;
   return <EvolutionChart evolution={data} />;
 }
 
@@ -258,31 +279,58 @@ function MatchHistory({ peladaId, showPelada }: { peladaId: string | null; showP
     setNext(p.next);
   }
 
-  if (msg) return <ErrorText>{msg}</ErrorText>;
-  if (!items) return <Sub>Carregando...</Sub>;
-  if (items.length === 0) return <Sub>Nenhuma partida finalizada ainda.</Sub>;
+  if (msg) return <ErrorState message={msg} />;
+  if (!items) return <Loading label="Carregando partidas..." />;
+  if (items.length === 0) return <EmptyState title="Nenhuma partida finalizada ainda" hint="Suas partidas aparecem aqui depois de publicadas." />;
   return (
-    <View style={{ gap: 8 }}>
-      {items.map((m) => (
-        <Pressable
-          key={m.match_id}
-          accessibilityRole="button"
-          onPress={() => router.push({ pathname: '/partida/[id]', params: { id: m.match_id } })}
-          style={{ borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 12, gap: 2 }}>
-          <Body>
-            {m.team_a_name} {m.team_a_score} x {m.team_b_score} {m.team_b_name}
-          </Body>
-          <Sub>
-            {fmtDate(m.played_at)}
-            {showPelada ? ` · ${m.pelada_name}` : ''} · {RESULT[m.match_result]}
-            {m.goals ? ` · ${plural(m.goals, 'gol', 'gols')}` : ''}
-            {m.assists ? ` · ${plural(m.assists, 'assistência', 'assistências')}` : ''}
-          </Sub>
-        </Pressable>
-      ))}
+    <View style={{ gap: 12 }}>
+      <ListGroup>
+        {items.map((m, n) => (
+          <Pressable
+            key={m.match_id}
+            accessibilityRole="button"
+            accessibilityLabel={`${RESULT[m.match_result]}: ${m.team_a_name} ${m.team_a_score} x ${m.team_b_score} ${m.team_b_name}, ${fmtDate(m.played_at)}`}
+            onPress={() => router.push({ pathname: '/partida/[id]', params: { id: m.match_id } })}
+            style={({ pressed }) => ({
+              paddingHorizontal: 14,
+              paddingVertical: 12,
+              gap: 4,
+              borderTopWidth: n ? 1 : 0,
+              borderTopColor: colors.divider,
+              backgroundColor: pressed ? colors.bg : colors.white,
+            })}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ flex: 1, fontSize: 15, fontWeight: '600', color: colors.ink }} numberOfLines={1}>
+                {m.team_a_name}{' '}
+                <Text style={{ color: colors.deepBlue, fontWeight: '800', fontVariant: ['tabular-nums'] }}>
+                  {m.team_a_score} x {m.team_b_score}
+                </Text>{' '}
+                {m.team_b_name}
+              </Text>
+              <Badge label={RESULT[m.match_result]} tone={RESULT_TONE[m.match_result]} />
+            </View>
+            <Sub>
+              {fmtDate(m.played_at)}
+              {showPelada ? ` · ${m.pelada_name}` : ''}
+              {m.goals ? ` · ${plural(m.goals, 'gol', 'gols')}` : ''}
+              {m.assists ? ` · ${plural(m.assists, 'assistência', 'assistências')}` : ''}
+            </Sub>
+          </Pressable>
+        ))}
+      </ListGroup>
       {next && <Button title="Ver mais partidas" kind="secondary" onPress={more} loading={busy} />}
     </View>
   );
 }
 
-const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 8 };
+const RESULT_TONE: Record<HistoryItem['match_result'], Tone> = { win: 'success', draw: 'neutral', loss: 'danger' };
+const hero = {
+  flexDirection: 'row' as const,
+  alignItems: 'center' as const,
+  gap: 14,
+  padding: 18,
+  borderRadius: 20,
+  backgroundColor: colors.deepBlue,
+  borderBottomWidth: 3,
+  borderBottomColor: colors.gold,
+};

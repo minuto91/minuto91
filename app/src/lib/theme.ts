@@ -12,11 +12,25 @@ export const colors = {
   white: '#FFFFFF',
   danger: '#B42318',
   line: '#D9E0EC',
+  // V6.0: tons de apoio consolidados (antes repetidos como literais em cada tela).
+  divider: '#EEF2F8', // separador interno de listas e blocos
+  blueSoft: '#EAF1FD', // fundo de destaque informativo
+  goldSoft: '#FBF4E2', // fundo de conquista
+  success: '#0B6B3A',
+  successSoft: '#E7F5EC',
+  warning: '#9A3412',
+  warningSoft: '#FDEEE6',
+  dangerSoft: '#FDECEA',
 };
 
 // V4.6 — Design System (docs/v46_design_system.md). Inter é a fonte única (lib/text.tsx).
 // Escala de texto: título 26, seção 19, cartão 17, texto 15–16, legenda 13–14, metadados 12–13, números 28–36.
-export const type: Record<'title' | 'section' | 'cardTitle' | 'body' | 'bodySm' | 'caption' | 'meta' | 'number', TextStyle> = {
+export const type: Record<
+  'display' | 'title' | 'section' | 'cardTitle' | 'body' | 'bodySm' | 'caption' | 'meta' | 'label' | 'number' | 'numberSm',
+  TextStyle
+> = {
+  // V6.0: números esportivos (placar, OVR) e rótulos curtos acima de valores.
+  display: { fontSize: 40, lineHeight: 46, fontWeight: '800', color: '#103675', fontVariant: ['tabular-nums'] },
   title: { fontSize: 26, lineHeight: 32, fontWeight: '700', color: '#103675' },
   section: { fontSize: 19, lineHeight: 25, fontWeight: '700', color: '#103675' },
   cardTitle: { fontSize: 17, lineHeight: 23, fontWeight: '600', color: '#15243B' },
@@ -24,13 +38,17 @@ export const type: Record<'title' | 'section' | 'cardTitle' | 'body' | 'bodySm' 
   bodySm: { fontSize: 15, lineHeight: 21, fontWeight: '400', color: '#15243B' },
   caption: { fontSize: 14, lineHeight: 20, fontWeight: '400', color: '#5E6E86' },
   meta: { fontSize: 13, lineHeight: 18, fontWeight: '500', color: '#5E6E86' },
+  label: { fontSize: 12, lineHeight: 16, fontWeight: '600', color: '#5E6E86', letterSpacing: 0.2 },
+  numberSm: { fontSize: 20, lineHeight: 24, fontWeight: '800', color: '#103675', fontVariant: ['tabular-nums'] },
   number: { fontSize: 32, lineHeight: 38, fontWeight: '800', color: '#103675', fontVariant: ['tabular-nums'] },
 };
 
 /** Raios: campos e botões 12, cartões 14, folhas e modais 20, chips 22 (pílula). */
 export const radius = { sm: 8, md: 12, card: 14, lg: 20, pill: 22 } as const;
 /** Espaçamento em múltiplos de 4. */
-export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28 } as const;
+export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28, xxxl: 40 } as const;
+/** Área de toque mínima (44) e altura dos botões (48). */
+export const touch = { min: 44, button: 48 } as const;
 /** Sombra moderada dos cartões (iOS/web) e elevação equivalente (Android). */
 export const shadow = {
   card: { shadowColor: '#103675', shadowOpacity: 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },

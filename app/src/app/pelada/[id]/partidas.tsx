@@ -1,6 +1,6 @@
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
-import { Pressable } from 'react-native';
+import { Pressable, View } from 'react-native';
 import { Text } from '../../../lib/text';
 
 import { friendly } from '../../../lib/errors';
@@ -8,7 +8,7 @@ import { fmtDate, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match'
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors } from '../../../lib/theme';
-import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Button, EmptyState, ErrorText, ListGroup, Loading, MatchStatusBadge, Scoreboard, Screen, Title } from '../../../lib/ui';
 
 const PAGE = 30;
 
@@ -71,26 +71,36 @@ export default function Partidas() {
       <ErrorText>{msg}</ErrorText>
       {isStaff && <Button title="Lançar partida" onPress={lancarPartida} loading={busy} />}
       {matches === null ? (
-        !msg && <Sub>Carregando...</Sub>
+        !msg && <Loading label="Carregando partidas..." />
       ) : matches.length === 0 ? (
-        <Sub>{isStaff ? 'Nenhuma partida ainda. Lance a primeira depois do jogo.' : 'Nenhuma partida ainda.'}</Sub>
+        <EmptyState
+          title="Nenhuma partida ainda"
+          hint={isStaff ? 'Lance a primeira depois do jogo: times, placar, gols e assistências.' : 'Quando a súmula for lançada, a partida aparece aqui.'}
+        />
       ) : (
-        matches.map((x) => (
-          <Pressable key={x.id} accessibilityRole="button" onPress={() => router.push({ pathname: '/partida/[id]', params: { id: x.id } })}>
-            <Card>
-              <Body>
-                {x.team_a_name} {x.team_a_score} x {x.team_b_score} {x.team_b_name}
-              </Body>
-              <Text
-                style={{
-                  color: x.status === 'voting_open' ? colors.blue : x.status === 'annulled' ? colors.danger : colors.muted,
-                  fontWeight: x.status === 'voting_open' ? '700' : '400',
-                }}>
-                {fmtDate(x.played_at)} · {STATUS_LABEL[x.status] ?? x.status}
-              </Text>
-            </Card>
-          </Pressable>
-        ))
+        <ListGroup>
+          {matches.map((x, n) => (
+            <Pressable
+              key={x.id}
+              accessibilityRole="button"
+              accessibilityLabel={`${x.team_a_name} ${x.team_a_score} x ${x.team_b_score} ${x.team_b_name}, ${fmtDate(x.played_at)}, ${STATUS_LABEL[x.status] ?? x.status}`}
+              onPress={() => router.push({ pathname: '/partida/[id]', params: { id: x.id } })}
+              style={({ pressed }) => ({
+                paddingHorizontal: 14,
+                paddingVertical: 12,
+                gap: 6,
+                borderTopWidth: n ? 1 : 0,
+                borderTopColor: colors.divider,
+                backgroundColor: pressed ? colors.bg : colors.white,
+              })}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={{ flex: 1, fontSize: 13, color: colors.muted }}>{fmtDate(x.played_at)}</Text>
+                <MatchStatusBadge status={x.status} />
+              </View>
+              <Scoreboard teamA={x.team_a_name} teamB={x.team_b_name} scoreA={x.team_a_score} scoreB={x.team_b_score} />
+            </Pressable>
+          ))}
+        </ListGroup>
       )}
       {more && <Button title="Carregar mais" kind="secondary" onPress={() => setLimit(limit + PAGE)} />}
     </Screen>
