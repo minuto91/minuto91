@@ -153,7 +153,7 @@ export default function Financeiro() {
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <Stat label="Receitas do mês" cents={ov.month_income_cents} />
             <Stat label="Despesas do mês" cents={ov.month_expense_cents} tone="ink" />
-            <Stat label="A receber" cents={ov.receivable_cents} tone="gold" hint={ov.overdue_cents > 0 ? `${formatBRL(ov.overdue_cents)} vencido` : 'nada vencido'} />
+            <Stat label="A receber" cents={ov.receivable_cents} tone="blue" hint={ov.overdue_cents > 0 ? `${formatBRL(ov.overdue_cents)} vencido` : 'nada vencido'} />
             <Stat label="Despesas pendentes" cents={ov.pending_expense_cents} tone={ov.pending_expense_cents > 0 ? 'danger' : 'ink'} />
           </View>
           {((ov.overdue_count ?? 0) > 0 || (ov.partial_count ?? 0) > 0) && (

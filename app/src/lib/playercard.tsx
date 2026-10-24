@@ -360,6 +360,9 @@ export function PlayerCard({
   const areaH = px(PHOTO_BOTTOM - PHOTO_TOP);
   const side = areaW;
   const colW = (ROW_R - ROW_L) / attrs.length;
+  // V6.1: com colunas estreitas demais para o texto mínimo de 9 px (Elenco em 320 px), a linha de atributos some
+  // como na miniatura, em vez de sair cortada; os atributos continuam no Card completo.
+  const showAttrs = !mini && px(colW) >= 24;
 
   return (
     <View
@@ -420,7 +423,7 @@ export function PlayerCard({
         {playerName}
       </Text>
 
-      {!mini && (
+      {showAttrs && (
         <View style={{ position: 'absolute', top: px(ROW_TOP), left: px(ROW_L), width: px(ROW_R - ROW_L), flexDirection: 'row' }}>
           {attrs.map((a) => (
             <View key={a.key} style={{ width: px(colW), alignItems: 'center' }} accessibilityLabel={`${a.label} ${Math.round(Number(card[a.key]))}`}>
