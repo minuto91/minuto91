@@ -9,9 +9,10 @@ import { Crest } from '../../../lib/crest';
 import { confirm } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import { Icon, IconName } from '../../../lib/icons';
-import { fmtDate, fmtTime, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match';
+import { fmtDate, fmtTime, Match, MATCH_COLUMNS, scoreLine, STATUS_LABEL } from '../../../lib/match';
 import { AdminPending } from '../../../lib/pending';
 import { CardsTracking, PositionRequests } from '../../../lib/ratingadmin';
+import { SecondaryRequests } from '../../../lib/secondary';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
@@ -243,7 +244,7 @@ export default function CentralDaRodada() {
               <Text style={label(colors.blue)}>Falta o seu voto</Text>
               {m && (
                 <Body>
-                  {m.team_a_name} {m.team_a_score} x {m.team_b_score} {m.team_b_name}
+                  {scoreLine(m)}
                 </Body>
               )}
               <Sub>Votação até {fmtDate(v.closesAt)}, {fmtTime(v.closesAt)}</Sub>
@@ -260,6 +261,7 @@ export default function CentralDaRodada() {
       {isAdmin && loaded && (
         <>
           <PositionRequests peladaId={id} isAdmin={isAdmin} />
+          <SecondaryRequests peladaId={id} isAdmin={isAdmin} />
           <CardsTracking peladaId={id} isAdmin={isAdmin} />
         </>
       )}
@@ -272,7 +274,7 @@ export default function CentralDaRodada() {
             <View style={box}>
               <Text style={label(colors.deepBlue)}>Rodada em votação</Text>
               <Body>
-                {m.team_a_name} {m.team_a_score} x {m.team_b_score} {m.team_b_name}
+                {scoreLine(m)}
               </Body>
               <Sub>
                 {fmtDate(m.played_at)} · {STATUS_LABEL[m.status]}. O Craque e as notas saem quando a votação fechar.
@@ -367,9 +369,9 @@ export default function CentralDaRodada() {
               style={{ paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
               <View style={{ flex: 1 }}>
                 <Text style={{ color: colors.ink, fontSize: 15 }} numberOfLines={1}>
-                  {x.team_a_name} {x.team_a_score} x {x.team_b_score} {x.team_b_name}
+                  {scoreLine(x)}
                 </Text>
-                <Text style={{ color: x.status === 'annulled' ? colors.danger : colors.muted, fontSize: 13 }}>
+                <Text style={{ color: colors.muted, fontSize: 13 }}>
                   {fmtDate(x.played_at)} · {STATUS_LABEL[x.status] ?? x.status}
                 </Text>
               </View>

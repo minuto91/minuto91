@@ -13,8 +13,10 @@ test('todos os tipos produzidos pelo banco têm texto, menos Bola Murcha', () =>
   for (const t of ['voting_opened', 'voting_closing_soon', 'sheet_corrected', 'voting_restarted', 'result_published', 'match_annulled',
     'admin_succession', 'subscription_changed', 'account_transferred', 'role_changed', 'successor_designated', 'sticker_unlocked',
     'season_review', 'award_match_craque', 'award_monthly_king', 'award_top_scorer', 'award_top_assist', 'award_most_improved',
-    'award_match_garcom', 'award_monthly_garcom'])
+    'award_monthly_garcom', 'match_restored', 'voting_extended', 'voting_reopened', 'rating_vote_publish_failed'])
     assert.ok(texts(t, {}, 'Pelada X'), t);
+  // V7.7: Garçom da Partida excluído; não há texto (e o banco não gera mais o aviso).
+  assert.equal(texts('award_match_garcom', {}, 'Pelada X'), null);
   assert.equal(texts('award_bola_murcha', {}, 'Pelada X'), null);
   assert.equal(texts('tipo_desconhecido', {}, 'Pelada X'), null);
 });

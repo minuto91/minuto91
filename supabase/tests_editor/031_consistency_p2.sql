@@ -2,6 +2,9 @@
 -- A08 figurinha do Rei do Mês, A09 nome do onboarding, A12 início por pelada, A18 aceite versionado,
 -- A20 retrospectiva agregada com empates, 8.3 Card corrigido após anulação.
 -- Cole no SQL Editor do Supabase DEV. Termina SEMPRE com o erro proposital "PASS: 031_consistency_p2".
+-- V7.7 (054): anulação com prévia (token) e id do pedido.
+create function pg_temp.annul(p_match uuid, p_cat text, p_desc text) returns jsonb language sql as
+ $$ select public.annul_match(p_match,p_cat,p_desc,true,public.preview_match_annulment(p_match)->>'preview_token',gen_random_uuid()) $$;
 create function pg_temp.uid(n int) returns uuid language sql as
  $$ select ('95000000-0000-4000-8000-' || lpad(n::text,12,'0'))::uuid $$;
 create function pg_temp.as_user(n int) returns void language plpgsql as
@@ -87,7 +90,7 @@ execute 'reset role';
 select overall into v_ov_before from public.player_cards where season_id=v_cur and membership_id=v_m2;
 perform set_config('role','authenticated',true);
 perform pg_temp.as_user(1);
-perform public.annul_match(v_xa,'sheet_error','gols lançados na partida errada',true);
+perform pg_temp.annul(v_xa,'sheet_error','gols lançados na partida errada');
 execute 'reset role';
 set constraints all immediate; -- dispara agora os gatilhos que rodariam no commit
 select overall into v_ov_after from public.player_cards where season_id=v_cur and membership_id=v_m2;
@@ -157,12 +160,12 @@ perform pg_temp.assert((select (x->>'drafts')::int=0 from jsonb_array_elements(p
 -- ================= A18: aceite versionado =================
 perform pg_temp.as_user(5);
 perform pg_temp.assert(not (public.get_legal_status()->>'accepted')::boolean,'sem aceite registrado');
-perform pg_temp.expect_error('select public.accept_legal_documents(''1.0'',''1.2'')','LEGAL_VERSION_OUTDATED');
-perform public.accept_legal_documents('1.1','1.2');
+perform pg_temp.expect_error('select public.accept_legal_documents(''1.1'',''1.2'')','LEGAL_VERSION_OUTDATED');
+perform public.accept_legal_documents('1.2','1.3'); -- V7.7 (057)
 perform pg_temp.assert((public.get_legal_status()->>'accepted')::boolean,'aceite da versão vigente');
 perform pg_temp.assert((select count(*)=2 from public.legal_acceptances where user_id=pg_temp.uid(5)),'documento + versão + momento');
 execute 'reset role';
-update private.app_config set value='{"terms":"1.2","privacy":"1.2"}'::jsonb where key='legal_versions';
+update private.app_config set value='{"terms":"1.3","privacy":"1.3"}'::jsonb where key='legal_versions';
 perform set_config('role','authenticated',true);
 perform pg_temp.assert(not (public.get_legal_status()->>'accepted')::boolean,'versão nova pede novo aceite');
 

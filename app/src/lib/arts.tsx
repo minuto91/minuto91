@@ -140,7 +140,6 @@ export type ResultArtData = {
   players: number; // quantos jogaram
   craque: { name: string; rating: number | null }[];
   scorers: { name: string; goals: number }[];
-  garcom: { name: string; assists: number }[];
   top: { pos: number; name: string; rating: number }[]; // vazio para quem não vê as notas
 };
 
@@ -170,11 +169,6 @@ export function ResultArt({ data }: { data: ResultArtData }) {
         <Text style={s.center} numberOfLines={2}>
           Gols: {scorers.map((g) => (g.goals > 1 ? `${g.name} (${g.goals})` : g.name)).join(', ')}
           {data.scorers.length > scorers.length ? ' e outros' : ''}
-        </Text>
-      )}
-      {data.garcom.length > 0 && (
-        <Text style={s.center} numberOfLines={2}>
-          Garçom: {data.garcom.map((g) => g.name).join(', ')} ({data.garcom[0].assists} assist.)
         </Text>
       )}
       {/* Notas: top 3 nos Stories; no 4:5 a arte fica só com o resultado (não cabe com qualidade). */}

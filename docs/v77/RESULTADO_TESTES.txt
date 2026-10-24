@@ -1,0 +1,73 @@
+# Evidências V7.7 — 2026-10-24T21:28Z
+
+## cd supabase/local_db; node run.mjs
+59 migrações aplicadas (3.7s)
+PASS 001_smoke.sql (0.2s)
+PASS 002_negative.sql (0.1s)
+PASS 003_seasons.sql (0.1s)
+PASS 004_matches.sql (0.2s)
+PASS 005_participants_events.sql (0.2s)
+PASS 006_sheet_versions.sql (0.2s)
+PASS 007_voting_sessions.sql (0.6s)
+PASS 008_ballots_submit.sql (0.2s)
+PASS 009_finalization.sql (0.6s)
+PASS 010_stats_rankings_selection.sql (0.6s)
+PASS 011_stickers.sql (0.3s)
+PASS 012_premium.sql (0.2s)
+PASS 013_annulment.sql (0.5s)
+PASS 014_account_deletion.sql (0.3s)
+PASS 015_notifications_jobs.sql (0.5s)
+PASS 016_reports_blocks.sql (0.1s)
+PASS 017_account_transfer.sql (0.2s)
+PASS 018_pelada_settings.sql (0.1s)
+PASS 019_premium_store_events.sql (0.2s)
+PASS 020_security_invariants.sql (0.1s)
+PASS 021_profile_photo_foot.sql (0.1s)
+PASS 022_pelada_crest.sql (0.1s)
+PASS 023_privacy_career.sql (0.5s)
+PASS 024_trial_protection.sql (0.2s)
+PASS 025_blocks_both_ways.sql (0.1s)
+PASS 026_multi_pelada_premium.sql (0.1s)
+PASS 027_player_evolution.sql (0.3s)
+PASS 028_invite_preview.sql (0.1s)
+PASS 029_push_delivery.sql (0.1s)
+PASS 030_p1_integrity.sql (0.7s)
+PASS 031_consistency_p2.sql (0.6s)
+PASS 032_draws_duel_lineups.sql (10.2s)
+PASS 033_v43_audit_fixes.sql (3.8s)
+PASS 034_v43_positions_formations.sql (0.8s)
+PASS 035_v43_draw_property.sql (54.2s)
+PASS 036_v43_finance.sql (0.4s)
+PASS 037_v44_finance_reports.sql (25.7s)
+PASS 038_v44_central_career.sql (0.5s)
+PASS 039_v45_finance_export.sql (2.5s)
+PASS 040_v46_payment_order.sql (0.0s)
+PASS 041_v46_garcom_awards.sql (0.7s)
+PASS 042_v5_rating_votes.sql (3.1s)
+PASS 043_v61_isolation.sql (0.4s)
+PASS 044_v77_integrity.sql (2.2s)
+todos os 44 passaram
+
+## node --test (local_db)
+# tests 43
+# pass 43
+# fail 0
+
+## node rating_concurrency.mjs 10 (PostgreSQL 17.10 real, todas as migrações)
+10/10 iterações sem problemas (envio duplo, notas simultâneas, voto x prorrogação, rajada no prazo, publicação dupla)
+
+## node rating/simulate.mjs 1000 30
+{"peladas":1000,"rodadas":30,"jogadores":32314,"elegiveis_ovr":32275,"partidas":29990,"segundos":20.38} 
+OVR mediano por posição: { GOL: 68, ZAG: 69, LAT: 69, VOL: 69, MEI: 68, ATA: 68, PON: 67 }
+Comparação com docs/v5_simulacao_resultados.json: idêntico exceto o campo 'segundos' (tempo de execução).
+
+## cd app; npm run lint; npx tsc --noEmit; npm test
+
+tsc: sem erros
+# tests 26
+# pass 26
+# fail 0
+
+## Supabase dev (minuto91-dev), 24/10/2026, executado pelo fundador no SQL Editor
+Migrações 053, 054, 055, 056 e 057 aplicadas sem erro.
+044_v77_integrity: PASS (erro proposital "PASS: 044_v77_integrity").

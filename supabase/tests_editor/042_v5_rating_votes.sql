@@ -142,6 +142,7 @@ perform pg_temp.as_user(3); perform public.set_rating_vote_awards(v_s, pg_temp.m
 perform pg_temp.expect_error(format('select public.set_rating_vote_awards(%L,%L,null)',v_s,pg_temp.mem(v_a,3)),'SELF_VOTE_NOT_ALLOWED');
 -- Voto 2 do jogador 2 sobre o 5 e o 14 entrou no fluxo (6 ou 9,5): sobrescreve com valores conhecidos.
 execute 'reset role';
+perform set_config('minuto91.vote_purge','on',true); -- só o teste: V7.7 (053) proíbe apagar voto
 delete from private.rating_votes where session_id=v_s and voter_membership_id=pg_temp.mem(v_a,2)
  and target_membership_id in (pg_temp.mem(v_a,5), pg_temp.mem(v_a,14), pg_temp.mem(v_a,3));
 perform set_config('role','authenticated',true);
@@ -149,7 +150,9 @@ perform set_config('role','authenticated',true);
 -- ===== Resumo do admin: só agregados =====
 perform pg_temp.as_user(1);
 r := public.get_rating_vote_admin(v_s);
-perform pg_temp.assert((r->>'participants')::int=24 and (r->>'voters_participated')::int >= 6, 'contagens do admin');
+perform set_config('minuto91.vote_purge','',true);
+perform pg_temp.assert((r->>'participants')::int=24 and (r->>'voters_complete')::int + (r->>'voters_in_progress')::int >= 6, 'contagens do admin');
+perform pg_temp.assert(not (r ? 'average_rating') and not exists(select 1 from jsonb_array_elements(r->'players') x), 'V7.7: sem média nem validade provisória');
 perform pg_temp.assert(not (r::text like '%voter%rating%') and not exists(select 1 from jsonb_array_elements(r->'players') x
  where x ? 'rating' or x ? 'votes' or x ? 'voters'), 'resumo do admin sem autoria nem notas individuais');
 perform pg_temp.as_user(5);
@@ -204,7 +207,7 @@ perform pg_temp.expect_error(format('select public.extend_rating_vote(%L,60)',v_
 perform pg_temp.assert(public.get_rating_vote(v_m)->>'state'='awaiting_publication', 'prazo vencido = aguardando publicação');
 execute 'reset role';
 perform private.rating_vote_tick();
-perform pg_temp.assert((select status from public.rating_vote_sessions where id=v_s)='awaiting_publication', 'encerramento automático');
+perform pg_temp.assert((select status from public.rating_vote_sessions where id=v_s)='published', 'V7.7: encerramento e publicação automáticos');
 perform pg_temp.assert(pg_temp.notifs('voting_closing_soon',8)=3, 'sessão encerrada não gera lembrete');
 perform set_config('role','authenticated',true);
 
@@ -240,8 +243,19 @@ perform pg_temp.assert((public.get_player_rating(pg_temp.mem(v_a,5))->>'ovr') is
 perform pg_temp.assert(exists(select 1 from public.player_rating_history where membership_id=pg_temp.mem(v_a,5) and event='votes_published' and kind='original'),
  'histórico registra a publicação');
 perform pg_temp.as_user(1);
-perform pg_temp.expect_error(format('select public.correct_match_sheet(%L,%L,%L,%L)',v_m,pg_temp.sheet(v_a,1,24),'[]','x pós')
- ,'SHEET_LOCKED');
+-- V7.7 (054): depois da publicação só a correção excepcional, sem mudar eleitorado; nota publicada não muda.
+v_ev := jsonb_build_array(jsonb_build_object('membership_id',pg_temp.mem(v_a,3),'type','goal','quantity',2),
+  jsonb_build_object('membership_id',pg_temp.mem(v_a,5),'type','goal','quantity',1),
+  jsonb_build_object('membership_id',pg_temp.mem(v_a,4),'type','assist','quantity',1));
+perform pg_temp.expect_error(format('select public.correct_match_sheet(%L,%L,%L,%L)',v_m,pg_temp.sheet(v_a,1,23),v_ev,'tirar um jogador'),'CORRECTION_CHANGES_ELECTORATE');
+r := public.correct_match_sheet(v_m, pg_temp.sheet(v_a,1,24), '[]', 'x pós');
+perform pg_temp.assert((r->>'exceptional')::boolean, 'correção excepcional aceita');
+perform pg_temp.assert((select final_rating from public.match_player_results where match_id=v_m and membership_id=pg_temp.mem(v_a,5))=8, 'nota publicada intacta');
+perform pg_temp.assert((select status from public.rating_vote_sessions where id=v_s)='published', 'continua publicada, sem nova publicação');
+perform public.correct_match_sheet(v_m, pg_temp.sheet(v_a,1,24), v_ev, 'volta os gols');
+perform pg_temp.as_user(5);
+perform pg_temp.expect_error(format('select public.correct_match_sheet(%L,%L,%L,%L)',v_m,pg_temp.sheet(v_a,1,24),'[]','x pós'),'STAFF_REQUIRED');
+perform pg_temp.as_user(1);
 -- Isolamento: o jogador 2 não tem nada na pelada B.
 perform pg_temp.assert(not exists(select 1 from public.player_ratings where membership_id=pg_temp.mem(v_b,2) and matches_played>0), 'peladas isoladas');
 

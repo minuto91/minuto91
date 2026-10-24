@@ -18,6 +18,8 @@ const fmtDay = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
 export default function Conta() {
   const router = useRouter();
   const [purgeAfter, setPurgeAfter] = useState<string | null>(null);
+  // V7.7 (055): 'recoverable' (30 dias) ou 'finalizing' (prazo vencido, exclusão em andamento; sem recuperação).
+  const [canRecover, setCanRecover] = useState(true);
   const [blocked, setBlocked] = useState<Blocked[]>([]);
   const [code, setCode] = useState<string | null>(null);
   const [redeem, setRedeem] = useState('');
@@ -41,6 +43,7 @@ export default function Conta() {
         : { data: [] };
       if (!alive) return;
       setPurgeAfter((st as { deletion_pending: boolean; purge_after: string | null })?.purge_after ?? null);
+      setCanRecover((st as { can_recover?: boolean } | null)?.can_recover ?? true);
       setBlocked(ids.map((u) => ({ user_id: u, name: ms?.find((m) => m.user_id === u)?.player_name ?? 'Jogador' })));
     })();
     return () => {
@@ -77,9 +80,13 @@ export default function Conta() {
   }
 
   async function recuperar() {
-    const r = await run<{ restored_memberships: number }>('recuperar', 'cancel_account_deletion');
+    const r = await run<{ restored_memberships: number; not_restored?: { pelada_id: string }[] }>('recuperar', 'cancel_account_deletion');
     if (!r.ok) return;
-    setOk(`Conta recuperada. Você voltou a ${r.data.restored_memberships} pelada(s), como jogador.`);
+    const blocked = r.data.not_restored?.length ?? 0;
+    setOk(
+      `Conta recuperada. Você voltou a ${r.data.restored_memberships} pelada(s), como jogador.` +
+        (blocked ? ` ${blocked} pelada(s) estavam cheias antes da reserva de vaga: peça um convite ao administrador.` : ''),
+    );
     setReload((n) => n + 1);
   }
 
@@ -93,11 +100,22 @@ export default function Conta() {
       <Screen>
         <Title>Conta em exclusão</Title>
         <Card>
-          <Body>Sua conta será apagada em {fmtDay(purgeAfter)}.</Body>
-          <Sub>Até lá, você pode recuperar a conta e voltar às suas peladas com o seu histórico, como jogador.</Sub>
+          {canRecover ? (
+            <>
+              <Body>Sua conta será apagada em {fmtDay(purgeAfter)}.</Body>
+              <Sub>
+                Até lá, sua vaga em cada pelada fica reservada e você pode recuperar a conta e voltar com o seu histórico, como jogador.
+              </Sub>
+            </>
+          ) : (
+            <>
+              <Body>O prazo de recuperação terminou e a exclusão está sendo concluída.</Body>
+              <Sub>A conta fica bloqueada até o fim. Os resultados oficiais das partidas continuam, sem o seu nome.</Sub>
+            </>
+          )}
         </Card>
         <ErrorText>{msg}</ErrorText>
-        <Button title="Recuperar minha conta" onPress={recuperar} loading={busy === 'recuperar'} />
+        {canRecover && <Button title="Recuperar minha conta" onPress={recuperar} loading={busy === 'recuperar'} />}
         <Button title="Sair da conta" kind="secondary" onPress={signOut} />
       </Screen>
     );

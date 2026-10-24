@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react';
 import { Pressable, View } from 'react-native';
 import { Text } from './text';
 
-import { fmtDate, fmtTime, Match } from './match';
+import { fmtDate, fmtTime, Match, scoreLine } from './match';
 import { supabase } from './supabase';
 import { colors } from './theme';
 
@@ -81,7 +81,7 @@ export function AdminPending({
     items.push({
       key: `v-${v.id}`,
       title: expired ? 'Prazo da votação acabou' : 'Votação aberta',
-      detail: `${m.team_a_name} ${m.team_a_score} x ${m.team_b_score} ${m.team_b_name} · ${fmtDate(m.played_at)} · ${v.voted} de ${v.eligible_voter_count} votaram${
+      detail: `${scoreLine(m)} · ${fmtDate(m.played_at)} · ${v.voted} de ${v.eligible_voter_count} votaram${
         expired ? '' : ` · fecha às ${fmtTime(v.closes_at)}`
       }`,
       action: expired ? 'Encerrar votação' : 'Ver quem falta votar',

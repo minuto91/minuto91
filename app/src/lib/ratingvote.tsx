@@ -1,5 +1,7 @@
-// V5: votação pós-partida (Prompt Master v2.0). Tudo que é regra fica no servidor (migração 052):
-// prazo, elegibilidade, ordem, progresso e sigilo. Aqui só a apresentação.
+// V5: votação pós-partida (Prompt Master v2.0). Tudo que é regra fica no servidor (migrações 052-054):
+// prazo, elegibilidade, ordem, progresso, versões e sigilo. Aqui só a apresentação.
+// V7.7: publicação automática no fechamento; uma prorrogação comum; votação suspensa (partida anulada) e
+// interrompida (restaurada, aguardando a decisão da administração: retomar, publicar ou reabrir 1-24 h).
 // - RatingSlider: controle de 0 a 10 em passos de 0,5 (arrastar ou -/+).
 // - RatingVotePanel: bloco da partida (estado da votação, ação do jogador e, para a gestão, abrir, prorrogar,
 //   acompanhar só por números e publicar com confirmação).
@@ -13,7 +15,7 @@ import { fmtDate, fmtTime } from './match';
 import { supabase } from './supabase';
 import { Text } from './text';
 import { colors } from './theme';
-import { Body, Button, Card, Chips, ErrorText, Sub } from './ui';
+import { Body, Button, Card, Chips, ErrorText, Input, Sub } from './ui';
 
 export type RatingTarget = {
   membership_id: string;
@@ -28,7 +30,7 @@ export type RatingTarget = {
   skipped: boolean;
 };
 export type RatingVote = {
-  state: 'unavailable' | 'ready' | 'legacy' | 'open' | 'awaiting_publication' | 'published' | 'cancelled';
+  state: 'unavailable' | 'ready' | 'legacy' | 'open' | 'awaiting_publication' | 'published' | 'cancelled' | 'suspended' | 'interrupted';
   session_id?: string;
   opened_at?: string;
   closes_at?: string;
@@ -43,16 +45,20 @@ export type RatingVote = {
   bola_murcha_enabled?: boolean;
   my_awards?: { craque?: string; bola_murcha?: string };
   published_at?: string | null;
+  original_closes_at?: string;
+  is_former_member?: boolean;
+  reopened?: boolean;
+  extension_used?: boolean;
+  interruption?: { previous_status: 'open' | 'awaiting_publication' | 'published'; divergent: boolean } | null;
 };
+// Só progresso operacional: nunca notas, médias ou resultado provisório (053).
 type AdminSummary = {
   participants: number;
-  voters_participated: number;
-  votes: number;
-  coverage: number;
-  players_valid: number;
-  players_insufficient: number;
-  average_rating: number | null;
-  players: { membership_id: string; name: string; team: 'A' | 'B'; valid: boolean }[];
+  voters_complete: number;
+  voters_in_progress: number;
+  voters_not_started: number;
+  voters: { membership_id: string; name: string; team: 'A' | 'B'; progress: 'complete' | 'in_progress' | 'not_started' }[];
+  extension_used: boolean;
 };
 
 export const fmtScore = (v: number) => v.toFixed(1).replace('.', ',');
@@ -147,9 +153,11 @@ const STATE_LABEL: Record<string, string> = {
   ready: 'Pronta para abrir.',
   legacy: 'Esta partida usou a votação antiga.',
   open: 'Aberta.',
-  awaiting_publication: 'Prazo encerrado. Aguardando a publicação pelo administrador.',
-  published: 'Notas publicadas.',
-  cancelled: 'Cancelada (partida anulada).',
+  awaiting_publication: 'Prazo encerrado. O resultado é publicado automaticamente em instantes.',
+  published: 'Resultado publicado.',
+  cancelled: 'Votação encerrada sem resultado.',
+  suspended: 'Votação suspensa: a partida foi anulada. Os votos ficam guardados.',
+  interrupted: 'Votação interrompida pela anulação. Aguardando a decisão da administração.',
 };
 
 // Bloco da votação na tela da partida.
@@ -159,7 +167,9 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
   const [admin, setAdmin] = useState<AdminSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [extra, setExtra] = useState<'30' | '60' | '120'>('60');
+  const [extra, setExtra] = useState<'15' | '60' | '180' | '720'>('60');
+  const [hours, setHours] = useState<'1' | '3' | '6' | '12' | '24'>('3');
+  const [reason, setReason] = useState('');
   const [reload, setReload] = useState(0);
   const left = useServerCountdown(v?.state === 'open' ? v.closes_at : undefined, v?.server_now);
 
@@ -172,7 +182,7 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
       if (error) return setErr(friendly(error.message));
       const r = data as RatingVote;
       setV(r);
-      if (r.can_manage && r.session_id && r.state !== 'published') {
+      if (r.can_manage && r.session_id && (r.state === 'open' || r.state === 'awaiting_publication')) {
         const a = await supabase.rpc('get_rating_vote_admin', { p_session: r.session_id });
         if (alive) setAdmin((a.data as AdminSummary) ?? null);
       } else setAdmin(null);
@@ -183,6 +193,7 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
   }, [matchId, reload]);
 
   async function run(fn: string, args: Record<string, unknown>) {
+    if (busy) return;
     setBusy(true);
     setErr(null);
     const { error } = await supabase.rpc(fn, args);
@@ -202,7 +213,12 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
       {v.state === 'open' && (
         <Sub>
           Até {fmtDate(v.closes_at!)}, {fmtTime(v.closes_at!)} · {left}
+          {v.reopened ? ' · reabertura excepcional' : ''}
         </Sub>
+      )}
+      {v.is_former_member && v.is_voter && <Sub>Você saiu da pelada, mas jogou esta partida: seu voto continua valendo.</Sub>}
+      {v.is_voter && v.session_id && (v.state === 'published' || (v.rated ?? 0) > 0) && (
+        <Button title="Ver meu histórico de votos" kind="ghost" onPress={() => router.push({ pathname: '/partida/[id]/meus-votos', params: { id: matchId } })} />
       )}
       {v.state === 'open' && v.is_voter && (
         <Button
@@ -227,42 +243,95 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
       {admin && (
         <View style={{ gap: 4, marginTop: 6 }}>
           <Sub>
-            {admin.voters_participated} de {admin.participants} participantes votaram · {admin.votes} notas registradas · cobertura{' '}
-            {Math.round(admin.coverage * 100)}%
+            {admin.voters_complete} concluíram · {admin.voters_in_progress} em andamento · {admin.voters_not_started} não começaram (de{' '}
+            {admin.participants})
           </Sub>
-          <Sub>
-            Com avaliação válida: {admin.players_valid} · Avaliação insuficiente até agora: {admin.players_insufficient}
-          </Sub>
-          <Sub>Por sigilo, ninguém (nem o administrador) vê quem deu cada nota.</Sub>
+          {admin.voters.some((x) => x.progress !== 'complete') && (
+            <Sub>Pendentes: {admin.voters.filter((x) => x.progress !== 'complete').map((x) => x.name).join(', ')}</Sub>
+          )}
+          <Sub>Por sigilo, ninguém (nem a administração) vê notas, escolhas ou resultado antes da publicação.</Sub>
         </View>
       )}
-      {v.can_manage && v.state === 'open' && (
+      {v.can_manage && v.state === 'open' && !v.extension_used && (
         <>
+          <Sub>Prorrogação (uma vez por votação; só quem ainda não concluiu é avisado)</Sub>
           <Chips
             options={[
-              { value: '30', label: '+30 min' },
+              { value: '15', label: '+15 min' },
               { value: '60', label: '+1 h' },
-              { value: '120', label: '+2 h' },
+              { value: '180', label: '+3 h' },
+              { value: '720', label: '+12 h' },
             ]}
             value={extra}
             onChange={(x) => setExtra(x)}
           />
-          <Button title="Prorrogar para todos" kind="secondary" disabled={busy} onPress={() => run('extend_rating_vote', { p_session: v.session_id, p_minutes: Number(extra) })} />
+          <Button
+            title="Prorrogar"
+            kind="secondary"
+            disabled={busy}
+            onPress={() =>
+              confirm('Prorrogar a votação?', 'A prorrogação só pode ser usada uma vez nesta votação.', 'Prorrogar', () =>
+                run('extend_rating_vote', { p_session: v.session_id, p_minutes: Number(extra) }),
+              )
+            }
+          />
         </>
       )}
+      {v.can_manage && v.state === 'open' && v.extension_used && <Sub>A prorrogação desta votação já foi usada.</Sub>}
       {v.can_manage && v.state === 'awaiting_publication' && (
-        <Button
-          title="Publicar notas"
-          disabled={busy}
-          onPress={() =>
-            confirm(
-              'Publicar as notas?',
-              `${admin?.players_valid ?? 0} jogadores com nota válida e ${admin?.players_insufficient ?? 0} com avaliação insuficiente. Depois de publicar não dá para desfazer.`,
-              'Publicar',
-              () => run('publish_rating_vote', { p_session: v.session_id }),
-            )
-          }
-        />
+        // O servidor publica sozinho; o botão só adianta (mesma operação, idempotente).
+        <Button title="Publicar agora" kind="secondary" disabled={busy} onPress={() => run('publish_rating_vote', { p_session: v.session_id })} />
+      )}
+      {v.can_manage && v.state === 'interrupted' && v.session_id && (
+        <View style={{ gap: 8, marginTop: 6 }}>
+          {v.interruption?.previous_status === 'published' ? (
+            <>
+              <Body>A súmula mudou desde a publicação: o resultado da votação está suspenso.</Body>
+              <Sub>Corrija a súmula (sem mudar quem jogou) e recupere a publicação original.</Sub>
+            </>
+          ) : (
+            <Body>A partida foi restaurada. A votação não reabre sozinha: escolha o que fazer.</Body>
+          )}
+          <Input placeholder="motivo (obrigatório)" value={reason} onChangeText={setReason} accessibilityLabel="Motivo da decisão" />
+          {v.interruption?.previous_status === 'published' ? (
+            <Button title="Recuperar publicação original" disabled={busy || reason.trim().length < 3} onPress={() => run('reactivate_rating_vote', { p_session: v.session_id, p_mode: 'restore_publication', p_hours: null, p_reason: reason })} />
+          ) : (
+            <>
+              <Button title="Retomar no prazo original" kind="secondary" disabled={busy || reason.trim().length < 3} onPress={() => run('reactivate_rating_vote', { p_session: v.session_id, p_mode: 'resume', p_hours: null, p_reason: reason })} />
+              <Button
+                title="Publicar os votos guardados"
+                kind="secondary"
+                disabled={busy || reason.trim().length < 3}
+                onPress={() =>
+                  confirm('Publicar os votos guardados?', 'O resultado sai com os votos já registrados, sem nova votação.', 'Publicar', () =>
+                    run('reactivate_rating_vote', { p_session: v.session_id, p_mode: 'publish', p_hours: null, p_reason: reason }),
+                  )
+                }
+              />
+              <Sub>Ou reabrir excepcionalmente (uma vez por anulação/restauração; os votos já dados continuam valendo):</Sub>
+              <Chips
+                options={[
+                  { value: '1', label: '1 h' },
+                  { value: '3', label: '3 h' },
+                  { value: '6', label: '6 h' },
+                  { value: '12', label: '12 h' },
+                  { value: '24', label: '24 h' },
+                ]}
+                value={hours}
+                onChange={setHours}
+              />
+              <Button
+                title={`Reabrir por ${hours} h`}
+                disabled={busy || reason.trim().length < 3}
+                onPress={() =>
+                  confirm('Reabrir a votação?', `Novo prazo: ${hours} h a partir de agora. Só quem jogou a partida vota.`, 'Reabrir', () =>
+                    run('reactivate_rating_vote', { p_session: v.session_id, p_mode: 'reopen', p_hours: Number(hours), p_reason: reason }),
+                  )
+                }
+              />
+            </>
+          )}
+        </View>
       )}
       <ErrorText>{err}</ErrorText>
     </Card>

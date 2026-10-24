@@ -63,6 +63,10 @@ Testes: `supabase/tests_editor/001..024_*.sql` (020 = invariantes de segurança 
 Fórmulas de nota e carta validadas em `docs/simulacao_formulas.xlsx` (aprovada).
 
 ## 6. Decisões de produto já tomadas (fora ou além dos docs)
+> **V7.7 (24/10/2026) substitui os itens abaixo onde houver conflito**: ver `docs/v77/DECISOES_CONSOLIDADAS.md`.
+> Sem quórum de 50%; anulação a qualquer tempo, com restauração; Garçom da Partida excluído; Seleção com posição secundária
+> confirmada (otimização global); publicação automática da votação; uma prorrogação; vaga reservada na exclusão de conta.
+
 - Temporada personalizada (Premium): com temporada em andamento o admin escolhe "encerrar e iniciar" ou
   "manter a atual" (muda nome/fim); exige confirmação explícita.
 - Partida: data só até hoje; rascunho pode ser excluído; para publicar precisa de jogadores nos dois times.

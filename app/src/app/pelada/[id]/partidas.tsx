@@ -4,7 +4,8 @@ import { Pressable } from 'react-native';
 import { Text } from '../../../lib/text';
 
 import { friendly } from '../../../lib/errors';
-import { fmtDate, Match, MATCH_COLUMNS, STATUS_LABEL } from '../../../lib/match';
+import { AnnulledBadge } from '../../../lib/annul';
+import { fmtDate, Match, MATCH_COLUMNS, scoreLine, STATUS_LABEL } from '../../../lib/match';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors } from '../../../lib/theme';
@@ -13,7 +14,7 @@ import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/
 const PAGE = 30;
 
 // Todas as partidas da pelada, da mais recente para a mais antiga, em páginas de 30.
-// Rascunhos só chegam para admin e assistentes (RLS); anuladas continuam listadas como anuladas.
+// Rascunhos só chegam para admin e assistentes (RLS); anuladas continuam na lista, com selo e sem placar.
 export default function Partidas() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { session } = useAuth();
@@ -78,12 +79,12 @@ export default function Partidas() {
         matches.map((x) => (
           <Pressable key={x.id} accessibilityRole="button" onPress={() => router.push({ pathname: '/partida/[id]', params: { id: x.id } })}>
             <Card>
-              <Body>
-                {x.team_a_name} {x.team_a_score} x {x.team_b_score} {x.team_b_name}
-              </Body>
+              {/* V7.7: anulada fica na ordem cronológica, com selo e sem placar. */}
+              <Body>{scoreLine(x)}</Body>
+              {x.status === 'annulled' && <AnnulledBadge />}
               <Text
                 style={{
-                  color: x.status === 'voting_open' ? colors.blue : x.status === 'annulled' ? colors.danger : colors.muted,
+                  color: x.status === 'voting_open' ? colors.blue : colors.muted,
                   fontWeight: x.status === 'voting_open' ? '700' : '400',
                 }}>
                 {fmtDate(x.played_at)} · {STATUS_LABEL[x.status] ?? x.status}

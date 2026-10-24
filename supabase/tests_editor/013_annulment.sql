@@ -22,7 +22,10 @@ create function pg_temp.active(p_mem uuid) returns text[] language sql as
     join public.sticker_definitions d on d.id=u.sticker_definition_id
     where u.membership_id=p_mem and u.status='active' $$;
 create function pg_temp.annul_sql(p_match uuid, p_cat text, p_desc text, p_confirm boolean) returns text language sql as
- $$ select format('select public.annul_match(%L,%L,%L,%L)',p_match,p_cat,p_desc,p_confirm) $$;
+ $$ select format('select public.annul_match(%L,%L,%L,%L,%L,%L)',p_match,p_cat,p_desc,p_confirm,'token-velho',gen_random_uuid()) $$;
+-- V7.7 (054): prévia com token + id do pedido.
+create function pg_temp.annul(p_match uuid, p_cat text, p_desc text, p_req uuid default gen_random_uuid()) returns jsonb language sql as
+ $$ select public.annul_match(p_match,p_cat,p_desc,true,public.preview_match_annulment(p_match)->>'preview_token',p_req) $$;
 
 do $test$
 declare
@@ -84,20 +87,25 @@ execute 'reset role';
 update public.matches set finalized_at=now()-interval '8 days' where id=v_x[1];
 perform set_config('role','authenticated',true);
 perform pg_temp.as_user(1);
-perform pg_temp.expect_error(pg_temp.annul_sql(v_x[1],'duplicate_match','Partida lançada duas vezes',true),'ANNULMENT_WINDOW_EXPIRED');
+-- V7.7: sem limite de 7 dias.
+perform pg_temp.assert((public.preview_match_annulment(v_x[1])->>'can_annul')::boolean and not (public.preview_match_annulment(v_x[1]) ? 'deadline'),'anulável depois de 7 dias');
+perform pg_temp.expect_error(pg_temp.annul_sql(v_x[3],'sheet_error','Placar lançado errado',true),'PREVIEW_OUTDATED');
 
 -- ===== Prévia dos efeitos =====
 v_r := public.preview_match_annulment(v_x[3]);
 perform pg_temp.assert((v_r->>'can_annul')::boolean and (v_r->>'players_affected')::int=11
-  and jsonb_array_length(v_r->'awards_revoked')=1 and (v_r->>'has_round_selection')::boolean
-  and (v_r->>'month_awards_recomputed')::boolean,'prévia: '||v_r::text);
+  and (v_r->>'awards')::int=1 and (v_r->>'has_round_selection')::boolean
+  and (v_r->>'month_closed')::boolean and (v_r->>'goals')::int=1,'prévia: '||v_r::text);
 
 -- ===== Anular a partida 3 =====
-v_r := public.annul_match(v_x[3],'match_not_played','Essa partida não aconteceu, foi lançada por engano',true);
-perform pg_temp.assert((v_r->>'annulled')::boolean and not (v_r->>'already_annulled')::boolean,'anulada');
-v_r := public.annul_match(v_x[3],'other','Repetindo a anulação para testar',true);
-perform pg_temp.assert((v_r->>'already_annulled')::boolean,'idempotente');
-perform pg_temp.assert((select count(*)=1 from public.match_annulments where match_id=v_x[3]),'membro vê a anulação');
+v_id := gen_random_uuid();
+v_r := pg_temp.annul(v_x[3],'match_not_played','Essa partida não aconteceu, foi lançada por engano',v_id);
+perform pg_temp.assert((v_r->>'annulled')::boolean and not (v_r->>'already_processed')::boolean,'anulada');
+v_r := public.annul_match(v_x[3],'match_not_played','Essa partida não aconteceu, foi lançada por engano',true,'qualquer',v_id);
+perform pg_temp.assert((v_r->>'already_processed')::boolean,'retry do mesmo pedido é idempotente');
+perform pg_temp.expect_error(pg_temp.annul_sql(v_x[3],'other','Repetindo a anulação para testar',true),'MATCH_ALREADY_ANNULLED');
+perform pg_temp.assert(jsonb_array_length(public.get_match_status_history(v_x[3])->'events')=1,'membro vê a linha do tempo');
+perform pg_temp.assert(not (public.get_match_status_history(v_x[3])::text like '%não aconteceu%'),'linha do tempo sem descrição');
 execute 'reset role';
 
 perform pg_temp.assert((select status='annulled' from public.matches where id=v_x[3]),'partida não apagada, só anulada');
@@ -116,7 +124,8 @@ perform pg_temp.assert((select count(*)=1 from private.audit_events where pelada
 
 perform set_config('role','authenticated',true);
 perform pg_temp.as_user(12);
-perform pg_temp.assert((select count(*)=0 from public.match_annulments where match_id=v_x[3]),'de fora não vê');
+perform pg_temp.expect_error(format('select public.get_match_status_history(%L)',v_x[3]),'MATCH_NOT_FOUND');
+perform pg_temp.expect_error('select count(*) from public.match_annulments','permission denied');
 
   raise exception 'PASS: 013_annulment (rollback proposital - nada foi gravado)';
 end

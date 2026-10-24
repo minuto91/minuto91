@@ -1,10 +1,11 @@
-// Texto oficial, sem edição, de docs/Minuto91_Termos_de_Uso_v1.1.pdf e docs/Minuto91_Politica_de_Privacidade_v1.2.pdf
-// (extraído com pdftotext; só cabeçalhos/rodapés de página removidos). Ao trocar a versão, trocar também
-// private.app_config.legal_versions (migração 037), para o app pedir o novo aceite.
-export const LEGAL_VERSIONS = { terms: '1.1', privacy: '1.2' } as const;
+// Texto de docs/Minuto91_Termos_de_Uso_v1.1.pdf e docs/Minuto91_Politica_de_Privacidade_v1.2.pdf (extraído com
+// pdftotext), com as cláusulas alteradas pela V7.7 (Termos 1.2 e Política 1.3, MINUTAS: votação sem quórum percentual,
+// anulação a qualquer tempo e restauração, reserva de vaga na exclusão). Ao trocar a versão, trocar também
+// private.app_config.legal_versions (migração 057), para o app pedir o novo aceite. [VALIDAR COM ADVOGADO]
+export const LEGAL_VERSIONS = { terms: '1.2', privacy: '1.3' } as const;
 
 export const TERMS: string[] = [
- "TERMOS DE USO — MINUTO 91 Versão: 1.1 — Minuta para revisão jurídica (alinhada ao PRD v2.5 e aos Documentos 02 v3.1, 03 v2.1 e 04 v1.1) Última atualização: 21 de outubro de 2026 Aplicação: Aplicativo Minuto 91 e serviços digitais associados",
+ "TERMOS DE USO — MINUTO 91 Versão: 1.2 — Minuta para revisão jurídica (V7.7: cláusulas 6.6, 6.8, 8.2 e 10 revistas) (alinhada ao PRD v2.5 e aos Documentos 02 v3.1, 03 v2.1 e 04 v1.1) Última atualização: 21 de outubro de 2026 Aplicação: Aplicativo Minuto 91 e serviços digitais associados",
  "1. Identificação e aceitação",
  "1.1. O Minuto 91 é uma plataforma digital destinada à organização de partidas de futebol amador, ao registro de resultados e estatísticas, à avaliação de desempenho e à disponibilização de funcionalidades de acompanhamento esportivo e colecionáveis digitais.",
  "1.2. A plataforma é disponibilizada por [RAZÃO SOCIAL OU NOME DO RESPONSÁVEL], inscrito no [CNPJ OU CPF, CONFORME A ESTRUTURA JURÍDICA], com endereço em [ENDEREÇO COMERCIAL], doravante denominado Minuto 91.",
@@ -41,9 +42,9 @@ export const TERMS: string[] = [
  "6.3. As notas individuais atribuídas por cada votante não serão exibidas ao administrador, aos assistentes ou aos demais jogadores.",
  "6.4. O administrador poderá visualizar informações operacionais sobre a conclusão da votação, inclusive quem já votou, sem acesso à associação entre o votante e suas notas individuais.",
  "6.5. Enquanto a votação estiver aberta, o aplicativo poderá manter temporariamente uma associação técnica protegida entre o votante e seu registro de avaliação, exclusivamente para viabilizar as operações previstas, como alterações permitidas e prevenção de duplicidades.",
- "6.6. Após a finalização da votação, essa associação deverá ser eliminada conforme a arquitetura aprovada, sem prejuízo dos registros técnicos estritamente necessários à segurança e ao cumprimento de obrigações legais. [VALIDAR COM ADVOGADO] (prazo e forma de retenção das avaliações anônimas, inclusive até o fim da temporada, a definir e ser descrito na Política de Privacidade).",
+ "6.6. O próprio votante pode consultar o histórico das suas notas e escolhas enquanto a conta existir; ninguém mais, inclusive a administração, tem acesso a esse histórico. Após a finalização da votação, a associação técnica deverá ser eliminada conforme a arquitetura aprovada, sem prejuízo dos registros técnicos estritamente necessários à segurança e ao cumprimento de obrigações legais. [VALIDAR COM ADVOGADO] (prazo e forma de retenção das avaliações anônimas, inclusive até o fim da temporada, a definir e ser descrito na Política de Privacidade).",
  "6.7. As notas e resultados consolidados poderão integrar o histórico esportivo e alimentar cartas, rankings e premiações.",
- "6.8. A votação será encerrada automaticamente quando forem atendidas as condições de finalização estabelecidas para a partida, inclusive prazo aplicável ou conclusão dos votos elegíveis. A votação só ocorre quando a partida tiver ao menos 6 eleitores elegíveis. Com menos de 6, a partida é finalizada sem votação, apenas com as estatísticas objetivas (placar, gols, assistências e cartões). A votação é válida quando pelo menos 50% dos eleitores elegíveis a concluírem e houver no mínimo 3 votos; caso contrário, a partida é finalizada sem os efeitos da votação.",
+ "6.8. A votação é aberta pela administração depois que a partida se torna oficial e é encerrada e publicada automaticamente pelo servidor ao fim do prazo. A administração pode prorrogá-la uma única vez, de 15 minutos a 12 horas. As notas e escolhas podem ser alteradas até o prazo; vale a última versão válida, e cada versão fica registrada. Não há quórum percentual: cada jogador só recebe nota quando houver avaliações suficientes de companheiros e de adversários; caso contrário, aparece “Avaliação insuficiente”, sem nota inventada. Craque e Bola Murcha são apurados à parte e exigem ao menos 3 escolhas válidas; empate no primeiro lugar gera premiação compartilhada. [VALIDAR COM ADVOGADO]",
  "6.9. O sigilo das avaliações não autoriza ofensas, fraudes ou outros usos indevidos da plataforma.",
  "7. Cartas digitais e overall",
  "7.1. As cartas digitais representam o desempenho dos jogadores no contexto da respectiva pelada.",
@@ -55,7 +56,7 @@ export const TERMS: string[] = [
  "7.6. O compartilhamento de cartas deverá respeitar a privacidade e os direitos de imagem dos participantes.",
  "8. Premiações, rankings e Seleção da Rodada",
  "8.1. O aplicativo poderá atribuir premiações como Craque da Partida, Bola Murcha e Rei do Mês. A Bola Murcha é recurso Premium, vem ligada por padrão e pode ser desligada pelo administrador da pelada.",
- "8.2. A Seleção da Rodada será formada segundo critérios técnicos previamente definidos, com formação-base 4-3-3 e adaptações quando necessárias.",
+ "8.2. A Seleção da Rodada é formada automaticamente em 4-3-3, com pelo menos 11 jogadores com nota oficial válida, incluindo goleiro. A posição secundária confirmada pela administração vale tanto quanto a principal; a escolha considera a melhor combinação de jogadores e posições, e a administração não altera a seleção.",
  "8.3. Os resultados serão gerados a partir dos dados oficiais registrados no aplicativo.",
  "8.4. Premiações e rankings possuem caráter recreativo e não constituem reconhecimento profissional.",
  "8.5. Os usuários não poderão manipular registros ou votações para obter vantagens indevidas.",
@@ -68,10 +69,12 @@ export const TERMS: string[] = [
  "9.5. Uma figurinha poderá voltar ao estado bloqueado quando correções ou anulações válidas eliminarem o requisito que justificou seu desbloqueio.",
  "9.6. As figurinhas são elementos digitais de personalização e reconhecimento, sem valor monetário, direito de revenda ou possibilidade de conversão em dinheiro.",
  "10. Anulação e correção de partidas",
- "10.1. Em situações excepcionais, somente o administrador da pelada poderá anular uma partida, em até 7 dias após a sua finalização. Assistentes não possuem essa permissão.",
+ "10.1. Em situações excepcionais, somente o administrador da pelada poderá anular uma partida, a qualquer tempo, com categoria de motivo, justificativa, prévia dos efeitos e confirmação. Assistentes não possuem essa permissão.",
  "10.2. A anulação deverá exigir justificativa registrada e poderá estar sujeita a mecanismos de auditoria.",
  "10.3. A anulação produzirá os ajustes necessários nos dados derivados da partida, incluindo estatísticas, classificações, cartas, premiações e figurinhas.",
- "10.4. A anulação não reabre a votação e não pode ser desfeita. Todos os jogadores da pelada serão avisados da anulação.",
+ "10.4. A partida anulada permanece no histórico com a indicação “Anulada”, sem exibir placar, gols, cartões, notas ou premiações. A votação fica suspensa, com os votos preservados. Fechamentos financeiros já encerrados não são alterados.",
+ "10.4-A. Em caráter excepcional, o administrador poderá restaurar uma partida anulada, com justificativa e confirmação; os dados válidos voltam a contar. Uma votação já publicada volta com o mesmo resultado; uma votação interrompida só volta por decisão da administração, que poderá reabri-la uma única vez por anulação, por 1 a 24 horas, apenas para quem participou da partida.",
+ "10.4-B. Os integrantes atuais da pelada recebem um aviso por anulação ou restauração concluída. Os jogadores veem a data e o motivo geral; a justificativa detalhada e a identidade de quem administrou ficam restritas à administração. [VALIDAR COM ADVOGADO]",
  "10.5. O uso abusivo dessa funcionalidade poderá resultar em medidas de moderação e revisão de permissões.",
  "11. Plano gratuito e assinatura Premium",
  "11.1. O Minuto 91 poderá disponibilizar uma modalidade gratuita e uma modalidade Premium por pelada.",
@@ -146,7 +149,7 @@ export const TERMS: string[] = [
 export const PRIVACY: string[] = [
  "POLÍTICA DE PRIVACIDADE",
  "MINUTO 91",
- "Versão: 1.2 — Minuta para revisão jurídica (alinhada aos Termos de Uso v1.1 e ao Documento 04 v1.1)",
+ "Versão: 1.3 — Minuta para revisão jurídica (alinhada aos Termos de Uso v1.2; V7.7: seção 12 revista)",
  "Última atualização: 21 de outubro de 2026",
  "1. Introdução",
  "A sua privacidade é importante para o Minuto 91. Esta Política de Privacidade explica como coletamos, utilizamos, armazenamos, compartilhamos e protegemos dados pessoais relacionados ao uso do aplicativo Minuto 91. O Minuto 91 é uma plataforma para organização de partidas de futebol amador, registro de estatísticas, avaliações de jogadores, rankings, cartas digitais, premiações e conquistas. O tratamento dos dados pessoais observará a Lei Geral de Proteção de Dados Pessoais (Lei nº 13.709/2018), o Marco Civil da Internet e as demais normas brasileiras aplicáveis.",
@@ -220,6 +223,7 @@ export const PRIVACY: string[] = [
  "Você poderá solicitar a exclusão da conta pelo mecanismo disponibilizado no aplicativo ou pelo e-mail de privacidade. Se você for administrador de uma pelada, a administração será transferida automaticamente antes da exclusão, na ordem prevista nos Termos de Uso.",
  "Após o recebimento do pedido, o Minuto 91 verificará quais dados deverão ser eliminados e quais poderão ou deverão ser conservados em razão de obrigações legais ou outras hipóteses previstas na LGPD.",
  "A exclusão da conta poderá resultar na remoção da fotografia, dos dados cadastrais e de outros identificadores. A exclusão da conta não cancela assinaturas feitas na Apple ou no Google; o cancelamento deve ser feito na respectiva loja.",
+ "Durante os 30 dias em que a exclusão ainda pode ser cancelada, a conta fica bloqueada para uso normal e a sua vaga em cada pelada fica reservada; se você cancelar a exclusão nesse prazo, volta às suas peladas com o seu histórico. Depois desse prazo a exclusão é concluída: a vaga é liberada, os dados cadastrais são eliminados, as escolhas individuais de votações já publicadas são eliminadas e os resultados esportivos oficiais permanecem sem vínculo com você. [VALIDAR COM ADVOGADO]",
  "Para preservar a compreensão de registros esportivos históricos, o aplicativo poderá utilizar a identificação genérica “Aposentado” até o fim da temporada, desde que essa solução seja compatível com a legislação aplicável. [VALIDAR COM ADVOGADO]",
  "A substituição do nome não será considerada anonimização efetiva quando outras informações ainda permitirem identificar o jogador.",
  "Não manteremos dados pessoais identificáveis indefinidamente apenas para preservar rankings ou estatísticas.",

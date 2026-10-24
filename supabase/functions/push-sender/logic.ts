@@ -37,7 +37,6 @@ const AWARD: Record<string, string> = {
   monthly_king: 'Você é o Rei do Mês',
   top_scorer: 'Você é o Artilheiro do mês',
   top_assist: 'Você é o Garçom do mês',
-  match_garcom: 'Você foi o Garçom da Partida',
   monthly_garcom: 'Você é o Garçom do Mês',
   most_improved: 'Você teve a Maior evolução do mês',
 };
@@ -63,6 +62,14 @@ export function texts(eventType: string, payload: Record<string, unknown>, pelad
       return { title: 'Resultado publicado', body: `Saiu o resultado da partida ${p}: notas, Craque e Cards atualizados.` };
     case 'match_annulled':
       return { title: 'Partida anulada', body: `Uma partida ${da} foi anulada. Os números foram recalculados.` };
+    case 'match_restored':
+      return { title: 'Partida restaurada', body: `Uma partida ${da} anulada voltou a contar. Os números foram recalculados.` };
+    case 'voting_extended':
+      return { title: 'Votação prorrogada', body: `A votação ${da} ganhou mais tempo e ainda falta o seu voto.` };
+    case 'voting_reopened':
+      return { title: 'Votação reaberta', body: `A votação de uma partida ${da} foi reaberta por um novo prazo.` };
+    case 'rating_vote_publish_failed':
+      return { title: 'Publicação pendente', body: `O resultado de uma votação ${da} ainda não foi publicado. O servidor segue tentando.` };
     case 'admin_succession':
       return { title: 'Administração da pelada', body: `A administração ${da} mudou.` };
     case 'subscription_changed':

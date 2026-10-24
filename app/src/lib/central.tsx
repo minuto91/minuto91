@@ -555,7 +555,7 @@ export function useLastGame(peladaId: string | null, membershipId: string | null
     (async () => {
       const { data: m, error } = await supabase
         .from('matches')
-        .select('id, played_at, status, team_a_name, team_b_name, team_a_score, team_b_score')
+        .select('id, played_at, status, team_a_name, team_b_name, team_a_score:public_team_a_score, team_b_score:public_team_b_score')
         .eq('pelada_id', peladaId)
         .in('status', ['voting_open', 'finalizing', 'finalized'])
         .order('played_at', { ascending: false })
