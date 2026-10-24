@@ -46,7 +46,8 @@ export default function TabsLayout() {
       }}>
       <Tabs.Screen
         name="index"
-        options={{ title: 'Início', headerTitle: 'Central do Jogador', tabBarIcon: ({ color }) => <Icon name="inicio" color={String(color)} /> }}
+        // Central 2.0: cabeçalho próprio (foto, saudação, "Central do Jogador" e avisos), com a área segura do topo.
+        options={{ title: 'Início', headerShown: false, tabBarIcon: ({ color }) => <Icon name="inicio" color={String(color)} /> }}
       />
       <Tabs.Screen
         name="peladas"

@@ -319,6 +319,7 @@ export function PlayerCard({
   width = CARD_W,
   photoUrl,
   crestUrl,
+  mini = false,
 }: {
   card: CardData;
   playerName: string;
@@ -333,6 +334,8 @@ export function PlayerCard({
   /** URLs já resolvidas (vitrine de desenvolvimento); no app vêm de photoPath e crestPath. */
   photoUrl?: string | null;
   crestUrl?: string | null;
+  /** Central 2.0: miniatura sem a linha de atributos (ilegível nesse tamanho; os atributos ficam em Minha Carreira). */
+  mini?: boolean;
 }) {
   const tier = card.tier as Tier;
   const f = FINISH[tier];
@@ -417,14 +420,16 @@ export function PlayerCard({
         {playerName}
       </Text>
 
-      <View style={{ position: 'absolute', top: px(ROW_TOP), left: px(ROW_L), width: px(ROW_R - ROW_L), flexDirection: 'row' }}>
-        {attrs.map((a) => (
-          <View key={a.key} style={{ width: px(colW), alignItems: 'center' }} accessibilityLabel={`${a.label} ${Math.round(Number(card[a.key]))}`}>
-            <Text style={{ fontSize: font(3.9), fontWeight: '700', color: f.accent, letterSpacing: compact ? 0 : px(0.2) }}>{a.code}</Text>
-            <Text style={{ fontSize: font(6.8), lineHeight: font(7.6), fontWeight: '800', color: f.light }}>{Math.round(Number(card[a.key]))}</Text>
-          </View>
-        ))}
-      </View>
+      {!mini && (
+        <View style={{ position: 'absolute', top: px(ROW_TOP), left: px(ROW_L), width: px(ROW_R - ROW_L), flexDirection: 'row' }}>
+          {attrs.map((a) => (
+            <View key={a.key} style={{ width: px(colW), alignItems: 'center' }} accessibilityLabel={`${a.label} ${Math.round(Number(card[a.key]))}`}>
+              <Text style={{ fontSize: font(3.9), fontWeight: '700', color: f.accent, letterSpacing: compact ? 0 : px(0.2) }}>{a.code}</Text>
+              <Text style={{ fontSize: font(6.8), lineHeight: font(7.6), fontWeight: '800', color: f.light }}>{Math.round(Number(card[a.key]))}</Text>
+            </View>
+          ))}
+        </View>
+      )}
 
       {/* V4.6: o rodapé mostra só o ano da temporada do Card (sem "Temporada" e sem o nome da marca). */}
       {!compact && !!year && (
