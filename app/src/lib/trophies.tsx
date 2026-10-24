@@ -5,12 +5,13 @@
 // Desenho: todos dividem o mesmo pedestal azul com friso dourado, o mesmo tamanho e o mesmo acabamento dourado. Os dois
 // Garçons são a mesma escultura (mão dourada, bandeja e bola) com placas diferentes no pedestal.
 import { useState } from 'react';
-import { Pressable, View } from 'react-native';
+import { View } from 'react-native';
 import { Text } from './text';
 import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Polygon, Rect, Stop, Text as SvgText } from 'react-native-svg';
 
 import { friendly } from './errors';
 import { fmtDate } from './match';
+import { TrophyTile } from './domain';
 import { supabase } from './supabase';
 import { colors } from './theme';
 import { Button, Sub } from './ui';
@@ -196,29 +197,14 @@ export function TrophyRoom({ userId, counts, partial }: { userId: string; counts
           const n = counts[t.type] ?? 0;
           const on = open === t.type;
           return (
-            <Pressable
+            <TrophyTile
               key={t.type}
-              accessibilityRole="button"
-              accessibilityLabel={`${t.label}: ${n} ${n === 1 ? 'vez' : 'vezes'}. Toque para ver o histórico.`}
-              accessibilityState={{ expanded: on }}
+              art={<TrophyArt type={t.type} size={72} dim={n === 0} />}
+              label={t.label}
+              count={n}
+              open={on}
               onPress={() => toggle(t.type)}
-              style={{
-                width: '31%',
-                minWidth: 96,
-                alignItems: 'center',
-                paddingVertical: 10,
-                borderRadius: 14,
-                borderWidth: on ? 2 : 1,
-                borderColor: on ? colors.gold : colors.line,
-                backgroundColor: colors.white,
-                gap: 4,
-              }}>
-              <TrophyArt type={t.type} size={72} dim={n === 0} />
-              <Text style={{ fontSize: 12, fontWeight: '700', color: colors.deepBlue, textAlign: 'center' }} numberOfLines={2}>
-                {t.label}
-              </Text>
-              <Text style={{ fontSize: 18, fontWeight: '900', color: n ? colors.darkGold : colors.muted, fontVariant: ['tabular-nums'] }}>× {n}</Text>
-            </Pressable>
+            />
           );
         })}
       </View>

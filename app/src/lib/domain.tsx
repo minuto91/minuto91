@@ -169,3 +169,118 @@ export function VotePendingRow({
     </Pressable>
   );
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// RankingRow: posição, foto, nome, nível do Card e o número do ranking, separados por filete (sem cartão).
+// A posição e o empate chegam do servidor; aqui só se desenha.
+// ---------------------------------------------------------------------------------------------------------------
+export function RankingRow({
+  position,
+  name,
+  avatar,
+  badge,
+  tied,
+  value,
+  unit,
+  onPress,
+}: {
+  position: number;
+  name: string;
+  avatar: ReactNode;
+  badge?: ReactNode;
+  tied?: boolean;
+  value: string;
+  unit?: string;
+  onPress: () => void;
+}) {
+  const first = position === 1;
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${position}º lugar${tied ? ', empatado' : ''}: ${name}, ${value}${unit ? ` ${unit}` : ''}`}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: 10,
+        minHeight: 56,
+        paddingVertical: 8,
+        borderBottomWidth: 1,
+        borderBottomColor: hair,
+        opacity: pressed ? 0.6 : 1,
+      })}>
+      <View
+        style={{
+          width: 32,
+          height: 32,
+          borderRadius: 16,
+          alignItems: 'center',
+          justifyContent: 'center',
+          borderWidth: first ? 2 : 0,
+          borderColor: colors.gold,
+        }}>
+        <Text style={{ fontWeight: '800', fontSize: 15, color: first ? colors.darkGold : colors.deepBlue, fontVariant: ['tabular-nums'] }}>{position}º</Text>
+      </View>
+      {avatar}
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+        <Text style={{ fontSize: 15, color: colors.ink, fontWeight: first ? '700' : '500' }} numberOfLines={1}>
+          {name}
+        </Text>
+        {(badge || tied) && (
+          <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
+            {badge}
+            {tied && <Text style={{ fontSize: 12, color: colors.muted }}>empatado</Text>}
+          </View>
+        )}
+      </View>
+      <View style={{ alignItems: 'flex-end' }}>
+        <Text style={{ color: colors.deepBlue, fontWeight: '800', fontSize: 18, fontVariant: ['tabular-nums'] }}>{value}</Text>
+        {unit ? <Text style={{ color: colors.muted, fontSize: 12 }}>{unit}</Text> : null}
+      </View>
+      <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// TrophyTile: troféu com a quantidade. Conquistado = dourado; nunca conquistado = apagado sobre o cinza-claro.
+// ---------------------------------------------------------------------------------------------------------------
+export function TrophyTile({
+  art,
+  label,
+  count,
+  open,
+  onPress,
+}: {
+  art: ReactNode;
+  label: string;
+  count: number;
+  open: boolean;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      accessibilityLabel={`${label}: ${count} ${count === 1 ? 'vez' : 'vezes'}. Toque para ver o histórico.`}
+      accessibilityState={{ expanded: open }}
+      onPress={onPress}
+      style={({ pressed }) => ({
+        width: '31%',
+        minWidth: 96,
+        alignItems: 'center',
+        paddingVertical: 10,
+        borderRadius: radius.card,
+        borderWidth: open ? 2 : 0,
+        borderColor: colors.gold,
+        backgroundColor: count ? '#FBF6EA' : colors.bg,
+        opacity: pressed ? 0.7 : 1,
+        gap: 4,
+      })}>
+      {art}
+      <Text style={{ fontSize: 12, fontWeight: '700', color: colors.deepBlue, textAlign: 'center' }} numberOfLines={2}>
+        {label}
+      </Text>
+      <Text style={{ fontSize: 18, fontWeight: '900', color: count ? colors.darkGold : colors.muted, fontVariant: ['tabular-nums'] }}>× {count}</Text>
+    </Pressable>
+  );
+}

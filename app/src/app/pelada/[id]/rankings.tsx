@@ -10,6 +10,7 @@ import { fmtRating, loadMembers, Member } from '../../../lib/match';
 import { supabase } from '../../../lib/supabase';
 import { colors } from '../../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { RankingRow } from '../../../lib/domain';
 
 // Em destaque: Artilharia, Assistências e Overall. As demais classificações oficiais continuam em "Mais".
 const MAIN = [
@@ -210,46 +211,24 @@ export default function Rankings() {
           {sorted.slice(0, limit).map((r) => {
             const m = member(r.membership_id);
             const tier = tiers[r.membership_id] ? TIER[tiers[r.membership_id]] : null;
-            const first = Number(r.rank_position) === 1;
             return (
-              <Pressable
+              <RankingRow
                 key={r.membership_id}
-                accessibilityRole="button"
-                accessibilityLabel={`${r.rank_position}º lugar${tied(r) ? ', empatado' : ''}: ${nameOf(r.membership_id)}, ${fmt(r.metric_value)} ${unit(r.metric_value)}`}
+                position={Number(r.rank_position)}
+                name={nameOf(r.membership_id)}
+                avatar={<Avatar path={m?.user_id && m.status !== 'retired' ? photos[m.user_id] : null} name={nameOf(r.membership_id)} size={36} />}
+                badge={
+                  tier ? (
+                    <View style={{ paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, backgroundColor: tier.bg, borderWidth: 1, borderColor: tier.frame }}>
+                      <Text style={{ fontSize: 12, fontWeight: '800', color: tier.deep }}>{tier.label.toUpperCase()}</Text>
+                    </View>
+                  ) : undefined
+                }
+                tied={tied(r)}
+                value={fmt(r.metric_value)}
+                unit={unit(r.metric_value) || undefined}
                 onPress={() => openCard(r.membership_id)}
-                style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.line }}>
-                <View
-                  style={{
-                    width: 32,
-                    height: 32,
-                    borderRadius: 16,
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    borderWidth: first ? 2 : 0,
-                    borderColor: colors.gold,
-                  }}>
-                  <Text style={{ fontWeight: '800', fontSize: 15, color: first ? colors.darkGold : colors.deepBlue }}>{r.rank_position}º</Text>
-                </View>
-                <Avatar path={m?.user_id && m.status !== 'retired' ? photos[m.user_id] : null} name={nameOf(r.membership_id)} size={36} />
-                <View style={{ flex: 1, gap: 2 }}>
-                  <Text style={{ fontSize: 15, color: colors.ink, fontWeight: first ? '700' : '500' }} numberOfLines={1}>
-                    {nameOf(r.membership_id)}
-                  </Text>
-                  <View style={{ flexDirection: 'row', gap: 6, alignItems: 'center' }}>
-                    {tier && (
-                      <View style={{ paddingHorizontal: 6, paddingVertical: 1, borderRadius: 6, backgroundColor: tier.bg, borderWidth: 1, borderColor: tier.frame }}>
-                        <Text style={{ fontSize: 12, fontWeight: '800', color: tier.deep }}>{tier.label.toUpperCase()}</Text>
-                      </View>
-                    )}
-                    {tied(r) && <Text style={{ fontSize: 12, color: colors.muted }}>empatado</Text>}
-                  </View>
-                </View>
-                <View style={{ alignItems: 'flex-end' }}>
-                  <Text style={{ color: colors.deepBlue, fontWeight: '800', fontSize: 18, fontVariant: ['tabular-nums'] }}>{fmt(r.metric_value)}</Text>
-                  {unit(r.metric_value) ? <Text style={{ color: colors.muted, fontSize: 12 }}>{unit(r.metric_value)}</Text> : null}
-                </View>
-                <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
-              </Pressable>
+              />
             );
           })}
           {sorted.length > limit && (
