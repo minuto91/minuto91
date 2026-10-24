@@ -3,7 +3,7 @@
 // formatos diferentes (transparentes) e o tamanho pequeno do Elenco. Valores de exemplo, nunca do banco.
 import { Image } from 'expo-image';
 import { useLocalSearchParams } from 'expo-router';
-import { useRef, useState } from 'react';
+import { ComponentRef, useRef, useState } from 'react';
 import { ScrollView, View } from 'react-native';
 import { Text } from '../lib/text';
 import { captureRef } from 'react-native-view-shot';
@@ -44,7 +44,7 @@ const base: CardData = {
 
 export default function DevCards() {
   const { foto } = useLocalSearchParams<{ foto?: string }>();
-  const ref = useRef<View>(null);
+  const ref = useRef<ComponentRef<typeof View>>(null);
   const [shot, setShot] = useState<string | null>(null);
   if (!__DEV__) return null;
   const gerar = async () => setShot(await captureRef(ref, { format: 'png', result: 'data-uri', width: 1080, height: 1920 }));

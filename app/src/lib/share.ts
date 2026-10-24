@@ -1,12 +1,12 @@
 // Compartilhar uma View como imagem PNG. No celular abre a folha de compartilhamento (WhatsApp etc.);
 // na web usa o compartilhamento do navegador quando existe, senão baixa o arquivo.
 import * as Sharing from 'expo-sharing';
-import type { RefObject } from 'react';
+import type { ComponentRef, RefObject } from 'react';
 import { PixelRatio, Platform, View } from 'react-native';
 import { captureRef } from 'react-native-view-shot';
 
 export async function shareViewAsImage(
-  ref: RefObject<View | null>,
+  ref: RefObject<ComponentRef<typeof View> | null>,
   fileName: string,
   title: string,
   size: { width: number; height: number } = { width: 1080, height: 1920 },
