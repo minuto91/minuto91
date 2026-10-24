@@ -130,8 +130,8 @@ const PANEL_FROM = 70; // onde o painel escuro começa a aparecer
 const PANEL_SOLID = 95; // daqui para baixo o painel é sólido
 const ROW_L = 16;
 const ROW_R = 84;
-const ROW_TOP = 108;
-const ROW_BOTTOM = 120.5;
+const ROW_TOP = 104; // V7.7: bloco do nome e atributos 4 unidades acima (não encostar na borda inferior)
+const ROW_BOTTOM = 116.5;
 
 // V4.3: a sigla oficial (GOL, ZAG, LD...) quando a posição atual é do setor do Card; senão, o setor do Card
 // (um Card de temporada antiga não muda de setor). Layout e fórmulas do Modelo A intactos.
@@ -408,7 +408,7 @@ export function PlayerCard({
       <Text
         style={{
           position: 'absolute',
-          top: px(95),
+          top: px(91),
           left: px(10),
           right: px(10),
           textAlign: 'center',
