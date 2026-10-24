@@ -6,7 +6,7 @@ import { useWindowDimensions, View } from 'react-native';
 import { Text } from './text';
 import Svg, { Circle, Line, Path, Text as SvgText } from 'react-native-svg';
 
-import { ATTRIBUTES, ATTRIBUTES_V2 } from './career';
+import { ATTRIBUTES, ATTRIBUTES_V2, attributesV3 } from './career';
 import { friendly } from './errors';
 import { supabase } from './supabase';
 import { colors } from './theme';
@@ -25,6 +25,10 @@ type Values = {
   peq?: number | null;
   res?: number | null;
   dis?: number | null;
+  def?: number | null;
+  sec?: number | null;
+  apr?: number | null;
+  sec_code?: 'LET' | 'REF' | null;
   formula_version?: number | null;
 };
 export type EvoPoint = Values & { match_id: string; played_at: string; played: boolean; tier: string; position: string; is_provisional: boolean };
@@ -60,17 +64,19 @@ export function useEvolution(membershipId: string, seasonId: string | null) {
   return { data, error };
 }
 
-type Series = 'overall' | (typeof ATTRIBUTES)[number]['key'] | (typeof ATTRIBUTES_V2)[number]['key'];
+type Series = 'overall' | (typeof ATTRIBUTES)[number]['key'] | (typeof ATTRIBUTES_V2)[number]['key'] | 'def' | 'sec' | 'apr';
 const shortDate = (iso: string) => new Date(iso).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
 
 export function EvolutionChart({ evolution }: { evolution: Evolution }) {
   const { width } = useWindowDimensions();
   const [series, setSeries] = useState<Series>('overall');
-  const v2 = (evolution.current?.formula_version ?? 1) >= 2;
-  const attrs: readonly { key: Series; label: string; code: string }[] = v2 ? ATTRIBUTES_V2 : ATTRIBUTES;
+  const fv = evolution.current?.formula_version ?? 1;
+  const v2 = fv >= 2;
+  const attrs: readonly { key: Series; label: string; code: string }[] = fv >= 3 ? attributesV3(evolution.current?.sec_code) : v2 ? ATTRIBUTES_V2 : ATTRIBUTES;
   const SERIES = [{ value: 'overall' as Series, label: 'Overall' }, ...attrs.map((a) => ({ value: a.key, label: a.code }))];
   // Só os pontos com valor (na V5, antes de 5 partidas não há OVR e esses pontos ficam fora do gráfico).
-  const points = evolution.points.filter((p) => p[series] !== null && p[series] !== undefined && (!v2 || (p.formula_version ?? 1) >= 2));
+  // V7.7: só pontos da mesma fórmula da carta atual (a troca de fórmula na temporada não vira "evolução").
+  const points = evolution.points.filter((p) => p[series] !== null && p[series] !== undefined && (!v2 || (p.formula_version ?? 1) === fv));
   const label = series === 'overall' ? 'Overall' : (attrs.find((a) => a.key === series)?.label ?? '');
 
   if (points.length < 2) {

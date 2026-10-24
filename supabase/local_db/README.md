@@ -37,3 +37,15 @@ precisa falhar). `node concurrency.mjs 15` roda tudo (votação, Financeiro e ex
 compara V4.4 (migrações até a 046) × V4.5 (todas) com a mesma massa, mede as telas nos dois bancos com p50 e p95 (`REPS`,
 padrão 15) e grava em `docs/evidencias_v45/`. `node --test` inclui `pager_logic.test.mjs` (paginação do app sob pedidos
 simultâneos e respostas fora de ordem) e a conferência da exportação. Novo teste SQL: `039_v45_finance_export`.
+
+V7.7 (motor `formula_version 3`, migrações 053-054; relatório em `docs/relatorio_v77_2026-10-24.md`):
+- `node --test rating_v77.test.mjs` — fórmulas, regressões (LET 91,60) e conferência com o protótipo Python
+  (`rating/v77_reference/`, precisa de `python3`).
+- `node --test rating_v77_sql.test.mjs` — SQL (`private.v77_*`) = JS (`rating/v77.mjs`) rodada a rodada.
+- `node --test rating_v77_integration.test.mjs` — fluxo real do app (súmula, notas, resenha, defesas, cartões, correção,
+  anulação, troca de posição, duas temporadas, rollback) com o resultado do servidor conferido contra o JS.
+- `node rating_v77_concurrency.mjs 10` — concorrência do motor num PostgreSQL 17 real.
+- `PLAYERS=40 MATCHES=200 node rating_v77_perf.mjs` — custo do recálculo completo de uma pelada.
+- `node rating/simulate_v77.mjs 1000 30 20` — simulação populacional (grava `docs/v77_simulacao_resultados.json`).
+- Teste SQL novo: `044_v77_engine`. O `042_v5_rating_votes` roda com a V5 ativa (caminho de rollback).
+Rodando como root (contêineres), os scripts com `embedded-postgres` passam a pasta temporária para o usuário `postgres`.

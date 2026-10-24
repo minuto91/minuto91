@@ -3,10 +3,11 @@
 // Cenários: mesmo voto enviado duas vezes ao mesmo tempo; duas notas diferentes ao mesmo tempo; voto x prorrogação;
 // voto disparado em cima do prazo; publicação dupla simultânea; reprocessamento do pós-partida.
 import EmbeddedPostgres from 'embedded-postgres';
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { chownSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import pg from 'pg';
+import { execFileSync } from 'node:child_process';
 
 const root = join(import.meta.dirname, '..');
 const ITER = Number(process.argv[2] ?? 10);
@@ -37,6 +38,10 @@ end $$;
 `;
 
 const dir = mkdtempSync(join(tmpdir(), 'm91-rv-'));
+// Como root, o embedded-postgres roda o initdb como o usuário postgres: a pasta precisa ser dele.
+if (process.getuid?.() === 0) {
+  chownSync(dir, Number(execFileSync('id', ['-u', 'postgres'])), Number(execFileSync('id', ['-g', 'postgres'])));
+}
 const port = 56000 + Math.floor(Math.random() * 500);
 const server = new EmbeddedPostgres({ databaseDir: dir, user: 'postgres', password: 'postgres', port, persistent: false, onLog: () => {} });
 await server.initialise();

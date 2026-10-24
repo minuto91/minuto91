@@ -1,0 +1,6 @@
+Postgres 17.10: 100 jogadores, 300 partidas montadas em 1368 ms
+reprocessamento completo (sem cache): 2451 / 2483 / 2785 ms
+reprocessamento com entrada idêntica (cache): 876 / 819 / 735 ms
+só montar as entradas: 604 / 599 / 817 ms
+cadeia completa pós-partida (notas + cartas): 3966 / 2942 / 2871 ms
+jogadores com nota: 100 (34 com OVR publicado), OVR de 64.47 a 86.65

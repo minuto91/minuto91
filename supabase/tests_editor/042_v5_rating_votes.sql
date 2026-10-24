@@ -42,6 +42,9 @@ declare v_a uuid; v_b uuid; v_tok text; v_tok_b text; i int; v_m uuid; v_draft u
  r jsonb; r2 jsonb; v_cur uuid; v_first uuid; v_seq1 jsonb; v_n int; v_ok boolean; v_x numeric; v_m2 uuid; v_req uuid;
  v_gk uuid; v_ev jsonb;
 begin
+-- V7.7 (053): este teste confere as fórmulas da V5; roda com a V5 ativa, que é exatamente o caminho de rollback
+-- (desativar a versão 2 de private.rating_params). A V7.7 tem o teste 044.
+update private.rating_params set active=false where version=2;
 insert into auth.users (id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
 select pg_temp.uid(n),'00000000-0000-0000-0000-000000000000','authenticated','authenticated',
  'm91-v5-'||n||'@example.invalid','',now(),now(),now() from generate_series(1,30) n;

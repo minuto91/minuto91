@@ -73,7 +73,7 @@ export default function Elenco() {
       const [{ data: cs, error: e1 }, { data: ms, error: e2 }] = await Promise.all([
         supabase
           .from('player_cards')
-          .select('id, membership_id, position, finishing, assisting, attendance, winning, peer_rating, overall, tier, is_provisional, matches_played, formula_version, atu, est, peq, res, dis, ovr_display')
+          .select('id, membership_id, position, finishing, assisting, attendance, winning, peer_rating, overall, tier, is_provisional, matches_played, formula_version, atu, est, peq, res, dis, ovr_display, def, sec, apr, sec_code')
           .eq('season_id', seasonId),
         supabase.from('pelada_memberships').select('id, user_id, player_name, position_code').eq('pelada_id', id).eq('status', 'active'),
       ]);

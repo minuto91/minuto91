@@ -43,6 +43,10 @@ export type RatingVote = {
   bola_murcha_enabled?: boolean;
   my_awards?: { craque?: string; bola_murcha?: string };
   published_at?: string | null;
+  /** V7.7 (054): pergunta da resenha. my_resenha null = ainda não respondeu; [] = "ninguém ficou". */
+  resenha_enabled?: boolean;
+  my_resenha?: string[] | null;
+  resenha_answers?: number | null;
 };
 type AdminSummary = {
   participants: number;
@@ -233,6 +237,11 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
           <Sub>
             Com avaliação válida: {admin.players_valid} · Avaliação insuficiente até agora: {admin.players_insufficient}
           </Sub>
+          {v.resenha_answers !== null && v.resenha_answers !== undefined && (
+            <Sub>
+              Pergunta da resenha: {v.resenha_answers} de {admin.participants} responderam.
+            </Sub>
+          )}
           <Sub>Por sigilo, ninguém (nem o administrador) vê quem deu cada nota.</Sub>
         </View>
       )}

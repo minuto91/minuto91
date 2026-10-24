@@ -1,0 +1,45 @@
+== rating_v77_concurrency.mjs 10
+Postgres 17.10; motor ativo formula_version 3
+iteração 1: publicações simultâneas ok/ok, defesas x disciplina x publicação ok/ok/ok, duas peladas ok/ok/ok, publicação dupla ok/ok, anulação x reprocessamento ok/ok (1016 ms)
+iteração 2: publicações simultâneas ok/ok, defesas x disciplina x publicação ok/ok/ok, duas peladas ok/ok/ok, publicação dupla ok/ok, anulação x reprocessamento ok/ok (1125 ms)
+iteração 3: publicações simultâneas ok/ok, defesas x disciplina x publicação ok/ok/ok, duas peladas ok/ok/ok, publicação dupla ok/ok, anulação x reprocessamento ok/ok (1024 ms)
+iteração 4: publicações simultâneas ok/ok, defesas x disciplina x publicação ok/ok/ok, duas peladas ok/ok/ok, publicação dupla ok/ok, anulação x reprocessamento ok/ok (1113 ms)
+iteração 5: publicações simultâneas ok/ok, defesas x disciplina x publicação ok/ok/ok, duas peladas ok/ok/ok, publicação dupla ok/ok, anulação x reprocessamento ok/ok (1135 ms)
+iteração 6: publicações simultâneas ok/ok, defesas x disciplina x publicação ok/ok/ok, duas peladas ok/ok/ok, publicação dupla ok/ok, anulação x reprocessamento ok/ok (1258 ms)
+iteração 7: publicações simultâneas ok/ok, defesas x disciplina x publicação ok/ok/ok, duas peladas ok/ok/ok, publicação dupla ok/ok, anulação x reprocessamento ok/ok (1186 ms)
+iteração 8: publicações simultâneas ok/ok, defesas x disciplina x publicação ok/ok/ok, duas peladas ok/ok/ok, publicação dupla ok/ok, anulação x reprocessamento ok/ok (1147 ms)
+iteração 9: publicações simultâneas ok/ok, defesas x disciplina x publicação ok/ok/ok, duas peladas ok/ok/ok, publicação dupla ok/ok, anulação x reprocessamento ok/ok (1195 ms)
+iteração 10: publicações simultâneas ok/ok, defesas x disciplina x publicação ok/ok/ok, duas peladas ok/ok/ok, publicação dupla ok/ok, anulação x reprocessamento ok/ok (1170 ms)
+execuções do motor registradas: 430, média 23 ms, até 8 jogadores por pelada
+sem problemas em 10 iterações
+exit 0
+== rating_concurrency.mjs 10 (votação V5/V7.7)
+Postgres 17.10
+iteração 1: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 5 aceitos / 15 recusados, publicação dupla ok/ok
+iteração 2: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 6 aceitos / 14 recusados, publicação dupla ok/ok
+iteração 3: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 6 aceitos / 14 recusados, publicação dupla ok/ok
+iteração 4: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 6 aceitos / 14 recusados, publicação dupla ok/ok
+iteração 5: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 5 aceitos / 15 recusados, publicação dupla ok/ok
+iteração 6: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 5 aceitos / 15 recusados, publicação dupla ok/ok
+iteração 7: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 5 aceitos / 15 recusados, publicação dupla ok/ok
+iteração 8: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 5 aceitos / 15 recusados, publicação dupla ok/ok
+iteração 9: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 6 aceitos / 14 recusados, publicação dupla ok/ok
+iteração 10: envio duplo ok/ok, notas simultâneas ok/ok, voto x prorrogação ok/ok, rajada no prazo 6 aceitos / 14 recusados, publicação dupla ok/ok
+sem problemas em 10 iterações
+exit 0
+== concurrency.mjs 5 (votação antiga, Financeiro, exportação)
+V4.1 (até 035): Postgres 17.10, 37 migrações
+V4.6 (até 051): Postgres 17.10, 53 migrações
+V4.3 Financeiro (todas): Postgres 17.10, 56 migrações
+V4.5 Exportação (todas): Postgres 17.10, 56 migrações
+PASS: sem deadlock, sem voto de versão antiga, Financeiro íntegro e exportação íntegra sob concorrência
+(V4.1 no mesmo roteiro: 6 deadlock(s), 1 apuração(ões) com voto de versão antiga)
+exit 0
+== rating_v77_perf.mjs 40x200
+Postgres 17.10: 40 jogadores, 200 partidas montadas em 727 ms
+reprocessamento completo (sem cache): 1390 / 1291 / 1354 ms
+reprocessamento com entrada idêntica (cache): 418 / 423 / 389 ms
+só montar as entradas: 343 / 364 / 569 ms
+cadeia completa pós-partida (notas + cartas): 1911 / 1420 / 1555 ms
+jogadores com nota: 40 (34 com OVR publicado), OVR de 65.48 a 87.04
+exit 0

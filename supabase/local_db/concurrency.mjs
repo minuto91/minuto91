@@ -5,7 +5,8 @@
 // V4.3: também disputa o Financeiro (043) com admin e assistente ao mesmo tempo (invariantes contábeis).
 // V4.5: exporta o mês enquanto outra conexão escreve (ONLY_EXPORT=1 node concurrency.mjs 30 roda só essa parte).
 import EmbeddedPostgres from 'embedded-postgres';
-import { mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
+import { execFileSync } from 'node:child_process';
+import { chownSync, mkdtempSync, readdirSync, readFileSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import pg from 'pg';
@@ -50,6 +51,8 @@ end $$;
 
 async function startDb(label, files) {
   const dir = mkdtempSync(join(tmpdir(), 'm91-pg-'));
+  // Como root, o embedded-postgres roda o initdb como o usuário postgres: a pasta precisa ser dele.
+  if (process.getuid?.() === 0) chownSync(dir, Number(execFileSync('id', ['-u', 'postgres'])), Number(execFileSync('id', ['-g', 'postgres'])));
   const port = 55400 + Math.floor(Math.random() * 500);
   const server = new EmbeddedPostgres({ databaseDir: dir, user: 'postgres', password: 'postgres', port, persistent: false, onLog: () => {} });
   await server.initialise();
