@@ -276,7 +276,12 @@ export default function Sumula() {
                     {nameOf(p)}
                     {p.guest_id ? ' (convidado)' : ''}
                   </Body>
-                  <Pressable onPress={() => remove(p.key)}>
+                  <Pressable
+                    onPress={() => remove(p.key)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Tirar ${nameOf(p)} da súmula`}
+                    hitSlop={8}
+                    style={{ minHeight: 44, minWidth: 44, alignItems: 'flex-end', justifyContent: 'center' }}>
                     <Text style={{ color: colors.danger, fontWeight: '600' }}>Tirar</Text>
                   </Pressable>
                 </View>
@@ -368,7 +373,9 @@ function BenchRow({ name, sub, onAdd }: { name: string; sub: string; onAdd: (t: 
             <Pressable
               key={t}
               onPress={() => onAdd(t)}
-              style={{ paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.blue }}>
+              accessibilityRole="button"
+              accessibilityLabel={`Adicionar ${name} ao time ${t}`}
+              style={{ minHeight: 44, minWidth: 48, alignItems: 'center', justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.blue }}>
               <Text style={{ color: colors.blue, fontWeight: '700' }}>+ {t}</Text>
             </Pressable>
           ))}

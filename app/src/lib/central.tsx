@@ -4,7 +4,7 @@
 // valor é inventado para preencher a interface. As fórmulas (ATU, EST, PEQ, RES, DIS, OVR) e a votação não mudam aqui.
 import { type ReactNode, useEffect, useState } from 'react';
 import { Pressable, ScrollView, useWindowDimensions, View, type ViewStyle } from 'react-native';
-import Svg, { Circle, Path } from 'react-native-svg';
+import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from './avatar';
@@ -17,6 +17,7 @@ import { CARD_RATIO, PlayerCard } from './playercard';
 import { supabase } from './supabase';
 import { Text } from './text';
 import { colors, positionLabel, positionShort, radius, shadow, type } from './theme';
+import { hair, MatchScore, PlayerOVR, StatStrip, VotePendingRow } from './domain';
 
 const box: ViewStyle = {
   backgroundColor: colors.white,
@@ -65,10 +66,7 @@ export function CentralHeader({
         style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, minHeight: 48 }}>
         <Avatar path={avatarPath} name={name ?? ' '} size={44} />
         <View style={{ flex: 1 }}>
-          <Text style={{ ...type.meta, color: colors.muted }} numberOfLines={1}>
-            Central do Jogador
-          </Text>
-          <Text style={{ fontSize: 20, lineHeight: 26, fontWeight: '800', color: colors.deepBlue }} numberOfLines={1}>
+          <Text style={{ fontSize: 22, lineHeight: 28, fontWeight: '800', color: colors.deepBlue }} numberOfLines={1}>
             {name ? `${greeting(new Date().getHours())}, ${first}` : ' '}
           </Text>
         </View>
@@ -127,8 +125,8 @@ export function PeladaSwitcher({
     );
   }
   return (
-    <View accessibilityRole="tablist" accessibilityLabel="Escolher a pelada">
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingRight: 4 }}>
+    <View accessibilityRole="tablist" accessibilityLabel="Escolher a pelada" style={{ backgroundColor: colors.bg, borderRadius: radius.pill, padding: 4 }}>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
         {peladas.map((p) => {
           const on = p.id === selected;
           return (
@@ -147,13 +145,12 @@ export function PeladaSwitcher({
                 paddingLeft: 6,
                 paddingRight: 14,
                 borderRadius: radius.pill,
-                borderWidth: 1.5,
-                borderColor: on ? colors.blue : colors.line,
-                backgroundColor: on ? '#EAF1FD' : colors.white,
+                backgroundColor: on ? colors.white : 'transparent',
+                ...(on ? shadow.card : null),
               }}>
               <Crest path={p.crest_path} name={p.name} size={26} />
               <Text
-                style={{ fontSize: 14, fontWeight: on ? '700' : '500', color: on ? colors.deepBlue : colors.ink, flexShrink: 1 }}
+                style={{ fontSize: 14, fontWeight: on ? '700' : '500', color: on ? colors.deepBlue : colors.muted, flexShrink: 1 }}
                 numberOfLines={1}>
                 {p.name}
               </Text>
@@ -190,25 +187,26 @@ export function UrgentVote({ vote, offset, onPress }: { vote: VoteItem; offset: 
   const left = leftLabel(vote.closes_at, offset);
   return (
     <View
-      style={{ ...box, borderColor: colors.gold, borderWidth: 1.5, backgroundColor: '#FFFBF0' }}
+      style={{ backgroundColor: colors.deepBlue, borderRadius: radius.card, padding: 16, gap: 10 }}
       accessibilityRole="summary"
       accessibilityLabel={`Votação perto do fim. ${scoreLine(vote)}. ${left}.`}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <View style={{ width: 8, height: 8, borderRadius: 4, backgroundColor: colors.darkGold }} />
-        <Text style={{ fontSize: 14, fontWeight: '700', color: colors.darkGold, flex: 1 }} numberOfLines={1}>
-          Última hora
+        <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 0.8, color: '#9DB8E8', flex: 1 }} numberOfLines={1}>
+          ÚLTIMA HORA
         </Text>
-        <Text style={{ fontSize: 14, fontWeight: '800', color: colors.darkGold, fontVariant: ['tabular-nums'] }}>{left}</Text>
+        <View style={{ backgroundColor: colors.white, borderRadius: radius.pill, paddingHorizontal: 10, paddingVertical: 3 }}>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.danger, fontVariant: ['tabular-nums'] }}>{left}</Text>
+        </View>
       </View>
-      <Text style={type.cardTitle} numberOfLines={2}>
+      <Text style={{ fontSize: 18, lineHeight: 24, fontWeight: '700', color: colors.white }} numberOfLines={2}>
         {scoreLine(vote)}
       </Text>
       {progress !== null && (
         <View style={{ gap: 4 }}>
-          <View style={{ height: 6, borderRadius: 3, backgroundColor: '#F1E6C8', overflow: 'hidden' }}>
-            <View style={{ width: `${Math.round(progress * 100)}%`, height: 6, backgroundColor: colors.blue }} />
+          <View style={{ height: 4, borderRadius: 2, backgroundColor: 'rgba(255,255,255,0.2)', overflow: 'hidden' }}>
+            <View style={{ width: `${Math.round(progress * 100)}%`, height: 4, backgroundColor: colors.white }} />
           </View>
-          <Text style={type.meta}>
+          <Text style={{ fontSize: 13, color: '#C9D6EE' }}>
             Você avaliou {vote.rated} de {vote.total}
           </Text>
         </View>
@@ -219,13 +217,12 @@ export function UrgentVote({ vote, offset, onPress }: { vote: VoteItem; offset: 
         style={({ pressed }) => ({
           minHeight: 48,
           borderRadius: radius.md,
-          backgroundColor: colors.blue,
+          backgroundColor: colors.white,
           opacity: pressed ? 0.85 : 1,
           alignItems: 'center',
           justifyContent: 'center',
-          marginTop: 2,
         })}>
-        <Text style={{ color: colors.white, fontWeight: '700', fontSize: 16 }}>{vote.v2 && vote.started ? 'Continuar votação' : 'Votar agora'}</Text>
+        <Text style={{ color: colors.blue, fontWeight: '800', fontSize: 16 }}>{vote.v2 && vote.started ? 'Continuar votação' : 'Votar agora'}</Text>
       </Pressable>
     </View>
   );
@@ -239,43 +236,16 @@ export function PendingList({ items }: { items: PendingItem[] }) {
   if (items.length === 0) return null;
   const shown = open ? items : items.slice(0, 3);
   return (
-    <View style={{ ...box, paddingVertical: 4, gap: 0 }}>
+    <View>
       {shown.map((p, i) => (
-        <Pressable
-          key={p.key}
-          onPress={p.onPress}
-          accessibilityRole="button"
-          accessibilityLabel={`${p.title}${p.detail ? `. ${p.detail}` : ''}. ${p.action}`}
-          style={({ pressed }) => ({
-            flexDirection: 'row',
-            alignItems: 'center',
-            gap: 12,
-            minHeight: 60,
-            paddingVertical: 8,
-            borderTopWidth: i ? 1 : 0,
-            borderTopColor: '#EEF2F8',
-            opacity: pressed ? 0.7 : 1,
-          })}>
-          <View style={{ width: 4, alignSelf: 'stretch', borderRadius: 2, backgroundColor: p.tone === 'blue' ? colors.blue : colors.gold }} />
-          <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ fontSize: 15, fontWeight: '600', color: colors.ink }} numberOfLines={2}>
-              {p.title}
-            </Text>
-            {p.detail ? (
-              <Text style={type.meta} numberOfLines={2}>
-                {p.detail}
-              </Text>
-            ) : null}
-          </View>
-          <Text style={{ ...link, fontSize: 14 }}>{p.action} ›</Text>
-        </Pressable>
+        <VotePendingRow key={p.key} first={i === 0} title={p.title} detail={p.detail} action={p.action} tone={p.tone} onPress={p.onPress} />
       ))}
       {items.length > 3 && (
         <Pressable
           onPress={() => setOpen((o) => !o)}
           accessibilityRole="button"
           accessibilityState={{ expanded: open }}
-          style={{ minHeight: 44, justifyContent: 'center', borderTopWidth: 1, borderTopColor: '#EEF2F8' }}>
+          style={{ minHeight: 44, justifyContent: 'center', borderTopWidth: 1, borderTopColor: hair }}>
           <Text style={{ ...link, fontSize: 14 }}>{open ? 'Mostrar menos' : `Ver todas (${items.length})`}</Text>
         </Pressable>
       )}
@@ -422,19 +392,6 @@ function EvaluatingCard({
   );
 }
 
-function Stat({ value, label }: { value: number | string; label: string }) {
-  return (
-    <View style={{ flex: 1, minWidth: 0 }} accessibilityLabel={`${label}: ${value}`}>
-      <Text style={{ fontSize: 20, lineHeight: 24, fontWeight: '800', color: colors.deepBlue, fontVariant: ['tabular-nums'] }} numberOfLines={1}>
-        {value}
-      </Text>
-      <Text style={{ fontSize: 12, color: colors.muted }} numberOfLines={2}>
-        {label}
-      </Text>
-    </View>
-  );
-}
-
 export function CareerHero({
   data,
   rating,
@@ -461,7 +418,7 @@ export function CareerHero({
   const showOfficialCard = !!card && (ovr !== null || isV2(card));
 
   return (
-    <View style={{ ...box, padding: 14, gap: 12 }}>
+    <View style={{ backgroundColor: colors.bg, borderRadius: radius.lg, padding: narrow ? 12 : 16, gap: 12 }}>
       <View style={{ flexDirection: 'row', gap: narrow ? 12 : 16, alignItems: 'center' }}>
         {showOfficialCard ? (
           <PlayerCard
@@ -485,22 +442,12 @@ export function CareerHero({
             {tier && ovr !== null ? ` · ${TIER[tier].label}` : ''}
           </Text>
           {ovr !== null ? (
-            <View style={{ flexDirection: 'row', alignItems: 'flex-end', gap: 8, flexWrap: 'wrap' }}>
-              <View accessibilityLabel={`OVR ${ovr}`}>
-                <Text style={{ fontSize: 11, fontWeight: '700', color: colors.muted, letterSpacing: 0.6 }}>OVR</Text>
-                <Text
-                  style={{
-                    fontSize: narrow ? 36 : 42,
-                    lineHeight: narrow ? 40 : 46,
-                    fontWeight: '900',
-                    color: tier ? TIER[tier].color : colors.deepBlue,
-                    fontVariant: ['tabular-nums'],
-                  }}>
-                  {ovr}
-                </Text>
-              </View>
-              <View style={{ paddingBottom: 6 }}>{ratingLoading ? null : <OvrDelta delta={rating?.delta ?? null} />}</View>
-            </View>
+            <PlayerOVR
+              ovr={ovr}
+              color={tier ? TIER[tier].color : colors.deepBlue}
+              narrow={narrow}
+              aside={ratingLoading ? null : <OvrDelta delta={rating?.delta ?? null} />}
+            />
           ) : (
             <View style={{ gap: 6 }} accessibilityLabel={`Avaliação em andamento: ${played} de 5 partidas`}>
               <Text style={{ fontSize: 17, fontWeight: '800', color: colors.deepBlue }}>Avaliação em andamento</Text>
@@ -515,14 +462,17 @@ export function CareerHero({
               </Text>
             </View>
           )}
-          <View style={{ flexDirection: 'row', gap: 6 }}>
-            <Stat value={data.season?.matches_played ?? 0} label="Jogos" />
-            <Stat value={data.season?.goals ?? 0} label="Gols" />
-            <Stat value={data.season?.assists ?? 0} label="Assist." />
-          </View>
+          <StatStrip
+            size="sm"
+            items={[
+              { value: data.season?.matches_played ?? 0, label: 'Jogos' },
+              { value: data.season?.goals ?? 0, label: 'Gols' },
+              { value: data.season?.assists ?? 0, label: 'Assist.' },
+            ]}
+          />
         </View>
       </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: '#EEF2F8', paddingTop: 10 }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 4 }}>
         <Text style={{ ...type.meta, flex: 1 }} numberOfLines={1}>
           {data.seasonName ?? data.peladaName}
         </Text>
@@ -550,23 +500,24 @@ export function NextRound({ round, more, onPress }: { round: NextRoundData; more
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Próxima rodada: ${round.label}. ${round.team_name} contra ${round.opponent_name}. Você está no ${round.team_name}. Ver rodada.`}>
-      <View style={box}>
-        <Text style={{ ...type.meta, color: colors.muted }} numberOfLines={1}>
-          {round.label} · {round.pelada_name}
-        </Text>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-          <Text style={{ ...type.cardTitle, flex: 1, textAlign: 'right' }} numberOfLines={1}>
-            {round.team_name}
-          </Text>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.muted }}>×</Text>
-          <Text style={{ ...type.cardTitle, flex: 1 }} numberOfLines={1}>
-            {round.opponent_name}
-          </Text>
-        </View>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+      <View style={{ gap: 8 }}>
+        <MatchScore
+          a={round.team_name}
+          b={round.opponent_name}
+          scoreA={null}
+          scoreB={null}
+          mine="A"
+          light
+          top={
+            <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: colors.muted }} numberOfLines={1}>
+              {round.label.toUpperCase()} · {round.pelada_name}
+            </Text>
+          }
+        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}>
           <Text style={{ ...type.meta, flex: 1 }} numberOfLines={2}>
-            Você está escalado no {round.team_name}
-            {more > 0 ? ` · +${more} ${more === 1 ? 'rodada' : 'rodadas'}` : ''}
+            Escalado no {round.team_name}
+            {more > 0 ? ` · +${more} ${more === 1 ? 'rodada' : 'rodadas'} planejadas` : ''}
           </Text>
           <Text style={link}>Ver rodada ›</Text>
         </View>
@@ -653,7 +604,7 @@ export function useLastGame(peladaId: string | null, membershipId: string | null
 }
 
 const RESULT = { win: 'Vitória', draw: 'Empate', loss: 'Derrota' } as const;
-const RESULT_COLOR = { win: colors.blue, draw: colors.darkGold, loss: colors.danger } as const;
+const RESULT_COLOR = { win: colors.blue, draw: colors.muted, loss: colors.danger } as const;
 const fmtRating = (v: number) => v.toFixed(1).replace('.', ',');
 
 export function LastGame({ game, onPress }: { game: LastGameData; onPress: () => void }) {
@@ -663,49 +614,35 @@ export function LastGame({ game, onPress }: { game: LastGameData; onPress: () =>
   const mineB = game.me?.team === 'B';
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityHint="Abre os detalhes da partida">
-      <View style={box}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-          <Text style={{ ...type.meta, flex: 1 }} numberOfLines={1}>
-            {fmtDate(game.played_at)}
-            {official ? '' : ' · resultado ainda não oficial'}
-          </Text>
-          {res && (
-            <View
-              style={{
-                paddingHorizontal: 8,
-                paddingVertical: 2,
-                borderRadius: radius.pill,
-                backgroundColor: res === 'win' ? '#EAF1FD' : res === 'loss' ? '#FDECEA' : '#FBF3DF',
-              }}>
-              <Text style={{ fontSize: 12, fontWeight: '800', color: RESULT_COLOR[res] }}>{RESULT[res]}</Text>
+      <View style={{ gap: 10 }}>
+        <MatchScore
+          a={game.team_a_name}
+          b={game.team_b_name}
+          scoreA={game.team_a_score}
+          scoreB={game.team_b_score}
+          mine={mineA ? 'A' : mineB ? 'B' : null}
+          top={
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.4, color: '#9DB8E8', flex: 1 }} numberOfLines={1}>
+                {fmtDate(game.played_at).toUpperCase()}
+                {official ? '' : ' · NÃO OFICIAL'}
+              </Text>
+              {res && (
+                <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: colors.white }}>
+                  <Text style={{ fontSize: 12, fontWeight: '800', color: RESULT_COLOR[res] }}>{RESULT[res]}</Text>
+                </View>
+              )}
             </View>
-          )}
-        </View>
-        <View
-          style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 }}
-          accessibilityLabel={`${game.team_a_name} ${game.team_a_score} a ${game.team_b_score} ${game.team_b_name}`}>
-          <Text
-            style={{ ...type.cardTitle, flex: 1, textAlign: 'right', fontWeight: mineA ? '800' : '500', color: mineA ? colors.deepBlue : colors.ink }}
-            numberOfLines={2}>
-            {game.team_a_name}
-          </Text>
-          <Text style={{ fontSize: 28, lineHeight: 34, fontWeight: '900', color: colors.deepBlue, fontVariant: ['tabular-nums'] }}>
-            {game.team_a_score}
-            <Text style={{ color: colors.muted, fontWeight: '600' }}> – </Text>
-            {game.team_b_score}
-          </Text>
-          <Text
-            style={{ ...type.cardTitle, flex: 1, fontWeight: mineB ? '800' : '500', color: mineB ? colors.deepBlue : colors.ink }}
-            numberOfLines={2}>
-            {game.team_b_name}
-          </Text>
-        </View>
+          }
+        />
         {game.me ? (
-          <View style={{ flexDirection: 'row', gap: 6, borderTopWidth: 1, borderTopColor: '#EEF2F8', paddingTop: 10 }}>
-            <Stat value={game.me.goals} label={game.me.goals === 1 ? 'Gol' : 'Gols'} />
-            <Stat value={game.me.assists} label="Assist." />
-            <RatingCell rating={game.rating} />
-          </View>
+          <StatStrip
+            items={[
+              { value: game.me.goals, label: game.me.goals === 1 ? 'Gol' : 'Gols' },
+              { value: game.me.assists, label: 'Assist.' },
+              ratingItem(game.rating),
+            ]}
+          />
         ) : (
           <Text style={type.meta}>Você não jogou esta partida.</Text>
         )}
@@ -715,19 +652,10 @@ export function LastGame({ game, onPress }: { game: LastGameData; onPress: () =>
   );
 }
 
-function RatingCell({ rating }: { rating: MatchRating }) {
-  if (rating.kind === 'rated') return <Stat value={fmtRating(rating.value)} label="Nota da partida" />;
-  const text = rating.kind === 'pending' ? 'Aguardando publicação' : rating.kind === 'insufficient' ? 'Avaliação insuficiente' : 'Sem votação';
-  return (
-    <View style={{ flex: 1.4, minWidth: 0 }} accessibilityLabel={`Nota da partida: ${text}`}>
-      <Text
-        style={{ fontSize: 13, lineHeight: 17, fontWeight: '700', color: colors.muted, minHeight: 24 }}
-        numberOfLines={2}>
-        {text}
-      </Text>
-      <Text style={{ fontSize: 12, color: colors.muted }}>Nota da partida</Text>
-    </View>
-  );
+function ratingItem(rating: MatchRating) {
+  if (rating.kind === 'rated') return { value: fmtRating(rating.value), label: 'Nota da partida' };
+  const text = rating.kind === 'pending' ? 'Aguardando' : rating.kind === 'insufficient' ? 'Insuficiente' : 'Sem votação';
+  return { value: <Text style={{ fontSize: 14, lineHeight: 18, fontWeight: '700', color: colors.muted }}>{text}</Text>, label: 'Nota da partida', a11y: `Nota da partida: ${text}` };
 }
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -747,31 +675,21 @@ export function CareerRecap({
   const winRate = totals.matches_played ? Math.round((totals.wins / totals.matches_played) * 100) : null;
   return (
     <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Ver o histórico em Minha Carreira">
-      <View style={box}>
-        <View style={{ flexDirection: 'row', gap: 6 }}>
-          <Stat value={totals.matches_played} label="Jogos" />
-          <Stat value={winRate === null ? '–' : `${winRate}%`} label="Vitórias" />
-          <Stat value={totals.goals + totals.assists} label="Gols e assist." />
-          <View style={{ flex: 1, minWidth: 0 }} accessibilityLabel={`Prêmios: ${conquests}`}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Svg width={14} height={14} viewBox="0 0 24 24">
-                <Circle cx={12} cy={9} r={6} stroke={colors.gold} strokeWidth={2.2} fill="none" />
-                <Path d="M8.5 14 7 21l5-2.5L17 21l-1.5-7" stroke={colors.gold} strokeWidth={2.2} fill="none" strokeLinejoin="round" />
-              </Svg>
-              <Text style={{ fontSize: 20, lineHeight: 24, fontWeight: '800', color: colors.darkGold, fontVariant: ['tabular-nums'] }}>
-                {conquests}
-              </Text>
-            </View>
-            <Text style={{ fontSize: 12, color: colors.muted }} numberOfLines={2}>
-              Prêmios
-            </Text>
-          </View>
+      <View style={{ gap: 10 }}>
+        <StatStrip
+          items={[
+            { value: totals.matches_played, label: 'Jogos' },
+            { value: winRate === null ? '–' : `${winRate}%`, label: 'Vitórias' },
+            { value: totals.goals + totals.assists, label: 'Gols e assist.' },
+            { value: conquests, label: 'Prêmios', gold: true, a11y: `Prêmios: ${conquests}` },
+          ]}
+        />
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}>
+          <Text style={{ ...type.meta, flex: 1 }} numberOfLines={2}>
+            Desde o primeiro jogo nesta pelada{hiddenSeasons > 0 ? ' (temporadas antigas no plano)' : ''}
+          </Text>
+          <Text style={link}>Carreira ›</Text>
         </View>
-        <Text style={type.meta}>
-          Toda a sua história nesta pelada
-          {hiddenSeasons > 0 ? ' (temporadas disponíveis no plano)' : ''}.
-        </Text>
-        <Text style={link}>Ver histórico completo ›</Text>
       </View>
     </Pressable>
   );

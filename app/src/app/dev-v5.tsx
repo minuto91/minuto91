@@ -31,7 +31,12 @@ const base: CardData = {
   ovr_display: 81,
 };
 
-export default function DevV5() {
+// V6.1: só em desenvolvimento (antes abria com login em produção).
+export default function DevV5Route() {
+  return __DEV__ ? <DevV5 /> : null;
+}
+
+function DevV5() {
   const [nota, setNota] = useState(7);
   return (
     <ScrollView contentContainerStyle={{ padding: 20, gap: 16, backgroundColor: '#FFFFFF' }}>

@@ -366,7 +366,8 @@ export default function Partida() {
 
       {match.status === 'finalized' && (
         <Card>
-          {!voting && <Sub>Finalizada sem votação (menos de 6 jogadores com conta). Contam gols, assistências e presença.</Sub>}
+          {/* V6.1: desde a V5 a súmula publicada finaliza sem a cédula antiga; a avaliação fica no painel acima. */}
+          {!voting && <Sub>Resultado oficial. Contam gols, assistências e presença.</Sub>}
           {voting && voting.is_valid === false && (
             // A27: mesma regra do servidor (013/036): válida com pelo menos metade dos eleitores E pelo menos 3 votos.
             <Sub>

@@ -4,7 +4,7 @@
 // 7,0 não vale como voto até ser confirmada. Pular não registra nota; o pulado volta uma vez no fim e
 // depois fica na revisão. Ninguém vê as notas que recebeu. Votações abertas antes da V5 seguem o fluxo antigo.
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Avatar } from '../../../lib/avatar';
@@ -54,6 +54,10 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
   // Nota escolhida por jogador (ainda não confirmada); sem escolha vale a já dada ou 7,0.
   const [picked, setPicked] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
+  // V6.1: trava síncrona contra duplo toque (o estado busy só vale no próximo render).
+  const inFlight = useRef(false);
+  // Toques que chegam logo depois de avançar são o resto do duplo toque: não podem avaliar o próximo jogador.
+  const advancedAt = useRef(0);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const left = useServerCountdown(v.closes_at, v.server_now);
@@ -70,15 +74,23 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
 
   const call = useCallback(
     async (fn: string, args: Record<string, unknown>) => {
+      if (inFlight.current || Date.now() - advancedAt.current < 700) return false;
+      inFlight.current = true;
       setBusy(true);
       setErr(null);
-      const { data, error } = await supabase.rpc(fn, args);
+      // V6.1: sem resposta em 15 s, desiste e pede para tentar de novo (a nota é regravada no servidor, sem duplicar).
+      const ctrl = new AbortController();
+      const timer = setTimeout(() => ctrl.abort(), 15_000);
+      const { data, error } = await supabase.rpc(fn, args).abortSignal(ctrl.signal);
+      clearTimeout(timer);
+      inFlight.current = false;
       setBusy(false);
       if (error) {
         // Sem confirmação do servidor nada avança: a nota escolhida continua na tela.
         setErr(error.message.includes('VOTING_CLOSED') ? 'A votação já foi encerrada. Esta nota não foi registrada.' : 'O envio não foi confirmado. Verifique a internet e tente de novo.');
         return false;
       }
+      advancedAt.current = Date.now();
       setV(data as RatingVote);
       return true;
     },
@@ -238,9 +250,13 @@ function Awards({ v, onSaved }: { v: RatingVote; onSaved: (r: RatingVote) => voi
   const [bola, setBola] = useState<string | null>(v.my_awards?.bola_murcha ?? null);
   const [msg, setMsg] = useState<string | null>(null);
   const options = (v.targets ?? []).map((t) => ({ value: t.membership_id, label: t.name }));
+  // V6.1: toques seguidos geram várias gravações; só a resposta da última atualiza a tela.
+  const seq = useRef(0);
   async function save(c: string | null, b: string | null) {
     setMsg(null);
+    const mine = ++seq.current;
     const { error } = await supabase.rpc('set_rating_vote_awards', { p_session: v.session_id, p_craque: c, p_bola_murcha: b });
+    if (mine !== seq.current) return;
     if (error) return setMsg('Não foi possível salvar. Tente de novo.');
     onSaved({ ...v, my_awards: { craque: c ?? undefined, bola_murcha: b ?? undefined } });
   }
