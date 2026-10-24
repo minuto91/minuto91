@@ -39,7 +39,8 @@ import { FieldPlayer, SelectionField, TeamColorPicker, TeamLegend, teamHex } fro
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, positionLabel } from '../../../lib/theme';
-import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, ErrorText, Screen, Sub } from '../../../lib/ui';
+import { MatchScore } from '../../../lib/domain';
 
 type Session = {
   id: string;
@@ -311,13 +312,20 @@ export default function Partida() {
 
   return (
     <Screen>
-      <Title>
-        {match.team_a_name} {match.team_a_score} x {match.team_b_score} {match.team_b_name}
-      </Title>
-      <Sub>
-        {fmtDate(match.played_at)} · {STATUS_LABEL[match.status] ?? match.status}
-        {match.sheet_version > 1 ? ` · súmula versão ${match.sheet_version}` : ''}
-      </Sub>
+      {/* V6.2: placar editorial no topo (mesmo componente da Central e da pelada). */}
+      <MatchScore
+        a={match.team_a_name}
+        b={match.team_b_name}
+        scoreA={match.team_a_score}
+        scoreB={match.team_b_score}
+        mine={null}
+        top={
+          <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.4, color: '#9DB8E8' }} numberOfLines={2}>
+            {fmtDate(match.played_at).toUpperCase()} · {(STATUS_LABEL[match.status] ?? match.status).toUpperCase()}
+            {match.sheet_version > 1 ? ` · SÚMULA V${match.sheet_version}` : ''}
+          </Text>
+        }
+      />
       <ErrorText>{msg}</ErrorText>
 
       {match.status === 'draft' && isStaff && (

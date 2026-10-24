@@ -16,6 +16,7 @@ import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { Body, Button, ErrorText, Screen, Sub } from '../../../lib/ui';
+import { MatchScore } from '../../../lib/domain';
 
 type Member = { id: string; user_id: string | null; player_name: string; role: string; preferred_position: string; position_code?: string | null };
 type Highlight = { match_id: string; membership_id: string; highlight_type: string };
@@ -283,9 +284,19 @@ export default function CentralDaRodada() {
       {/* Última rodada finalizada. O compartilhamento usa as artes da tela da partida (V3). */}
       {lastFinal && (
         <Pressable accessibilityRole="button" accessibilityHint="Abre a partida, com súmula, notas e artes para compartilhar" onPress={() => openMatch(lastFinal.id)}>
-          <View style={box}>
-            <Text style={label(colors.deepBlue)}>Última rodada · {fmtDate(lastFinal.played_at)}</Text>
-            <Scoreboard m={lastFinal} />
+          <View style={{ gap: 8 }}>
+            <MatchScore
+              a={lastFinal.team_a_name}
+              b={lastFinal.team_b_name}
+              scoreA={lastFinal.team_a_score}
+              scoreB={lastFinal.team_b_score}
+              mine={null}
+              top={
+                <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: '#9DB8E8' }} numberOfLines={1}>
+                  ÚLTIMA RODADA · {fmtDate(lastFinal.played_at).toUpperCase()}
+                </Text>
+              }
+            />
             {Object.keys(HIGHLIGHT_LABEL)
               .filter((t) => lastHighlights.some((h) => h.highlight_type === t))
               .map((t) => (
@@ -385,25 +396,6 @@ export default function CentralDaRodada() {
   );
 }
 
-function Scoreboard({ m }: { m: Match }) {
-  const aWon = m.team_a_score > m.team_b_score;
-  const bWon = m.team_b_score > m.team_a_score;
-  const team = (name: string, won: boolean, align: 'left' | 'right') => (
-    <Text style={{ flex: 1, textAlign: align, fontSize: 15, fontWeight: won ? '800' : '500', color: colors.ink }} numberOfLines={2}>
-      {name}
-    </Text>
-  );
-  return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, paddingVertical: 4 }}>
-      {team(m.team_a_name, aWon, 'left')}
-      <Text style={{ fontSize: 30, fontWeight: '800', color: colors.deepBlue, fontVariant: ['tabular-nums'] }}>
-        {m.team_a_score} x {m.team_b_score}
-      </Text>
-      {team(m.team_b_name, bWon, 'right')}
-    </View>
-  );
-}
-
 function Step({ n, title, text }: { n: number; title: string; text: string }) {
   return (
     <View style={{ flexDirection: 'row', gap: 10 }}>
@@ -426,7 +418,7 @@ function Group({ title, items, premium }: { title: string; items: GroupItem[]; p
       <Text style={{ fontSize: 19, lineHeight: 25, fontWeight: '700', color: colors.deepBlue }} accessibilityRole="header">
         {title}
       </Text>
-      <View style={{ borderRadius: 14, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.white, overflow: 'hidden' }}>
+      <View>
         {items.map((a, n) => (
           <Pressable
             key={a.label}
@@ -439,10 +431,10 @@ function Group({ title, items, premium }: { title: string; items: GroupItem[]; p
               alignItems: 'center',
               gap: 12,
               minHeight: 60,
-              paddingHorizontal: 14,
+              paddingHorizontal: 4,
               borderTopWidth: n ? 1 : 0,
-              borderTopColor: '#EEF2F8',
-              backgroundColor: pressed ? colors.bg : colors.white,
+              borderTopColor: '#E6EBF3',
+              opacity: pressed ? 0.6 : 1,
             })}>
             <Icon name={a.icon} size={22} />
             <View style={{ flex: 1, paddingVertical: 8 }}>
@@ -451,7 +443,7 @@ function Group({ title, items, premium }: { title: string; items: GroupItem[]; p
                 {a.sub}
               </Text>
             </View>
-            {a.premium && !premium && <Text style={{ fontSize: 12, fontWeight: '700', color: colors.darkGold }}>Premium</Text>}
+            {a.premium && !premium && <Text style={{ fontSize: 12, fontWeight: '700', color: colors.blue }}>Premium</Text>}
             <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text>
           </Pressable>
         ))}
@@ -472,6 +464,6 @@ function Row({ title, onPress, danger }: { title: string; onPress: () => void; d
   );
 }
 
-const box = { backgroundColor: colors.white, borderRadius: 12, borderWidth: 1, borderColor: colors.line, padding: 14, gap: 6 };
+const box = { backgroundColor: colors.bg, borderRadius: 12, padding: 14, gap: 6 };
 const label = (color: string) => ({ fontSize: 14, fontWeight: '700' as const, color });
 const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 10 };
