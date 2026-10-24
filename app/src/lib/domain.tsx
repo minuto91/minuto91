@@ -14,7 +14,8 @@ export const hair = '#E6EBF3';
 export type StatItem = { value: ReactNode; label: string; a11y?: string; gold?: boolean };
 
 export function StatStrip({ items, size = 'md' }: { items: StatItem[]; size?: 'sm' | 'md' }) {
-  const big = size === 'md' ? 22 : 18;
+  // Quatro números ou mais: corpo menor, para "100%" caber inteiro em 320 px.
+  const big = size === 'md' && items.length < 4 ? 22 : 18;
   return (
     <View style={{ flexDirection: 'row' }}>
       {items.map((s, i) => (

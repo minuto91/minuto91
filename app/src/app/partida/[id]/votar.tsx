@@ -56,6 +56,8 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
   const [busy, setBusy] = useState(false);
   // V6.1: trava síncrona contra duplo toque (o estado busy só vale no próximo render).
   const inFlight = useRef(false);
+  // Toques que chegam logo depois de avançar são o resto do duplo toque: não podem avaliar o próximo jogador.
+  const advancedAt = useRef(0);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const left = useServerCountdown(v.closes_at, v.server_now);
@@ -72,7 +74,7 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
 
   const call = useCallback(
     async (fn: string, args: Record<string, unknown>) => {
-      if (inFlight.current) return false;
+      if (inFlight.current || Date.now() - advancedAt.current < 700) return false;
       inFlight.current = true;
       setBusy(true);
       setErr(null);
@@ -88,6 +90,7 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
         setErr(error.message.includes('VOTING_CLOSED') ? 'A votação já foi encerrada. Esta nota não foi registrada.' : 'O envio não foi confirmado. Verifique a internet e tente de novo.');
         return false;
       }
+      advancedAt.current = Date.now();
       setV(data as RatingVote);
       return true;
     },
