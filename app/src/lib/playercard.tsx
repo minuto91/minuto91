@@ -2,7 +2,7 @@
 // Uma única silhueta (topo com vértice central, laterais retas, base pontiaguda) para as três
 // categorias; muda só o acabamento: bronze com contorno simples, prata com contorno duplo e recortes
 // laterais, ouro com moldura em camadas e detalhes no topo e nas laterais.
-// Camadas: corpo metálico (SVG) → foto → degradês, brilho e moldura (SVG) → textos (Views).
+// Camadas: corpo metálico e brilho (SVG) → foto → degradês e moldura (SVG) → textos (Views).
 // A moldura fica por cima da foto, então ela recorta as laterais da foto sem máscara de imagem
 // (a captura da web, html2canvas, não respeita máscara nem "cover"; por isso o recorte da foto
 // quadrada também é feito à mão, com overflow).
@@ -151,8 +151,24 @@ function Back({ tier }: { tier: Tier }) {
           <Stop offset="0.5" stopColor={f.body[1]} />
           <Stop offset="1" stopColor={f.body[2]} />
         </LinearGradient>
+        {/* Brilho mais forte no alto e quase transparente no meio da carta (onde fica o rosto da foto). */}
+        <LinearGradient id={`${id}s`} x1="0" y1="0" x2="0" y2={VB_H} gradientUnits="userSpaceOnUse">
+          <Stop offset="0" stopColor="#FFFFFF" stopOpacity={f.sheen} />
+          <Stop offset="0.2" stopColor="#FFFFFF" stopOpacity={f.sheen * 0.6} />
+          <Stop offset="0.38" stopColor="#FFFFFF" stopOpacity={f.sheen * 0.15} />
+          <Stop offset="0.6" stopColor="#FFFFFF" stopOpacity={f.sheen * 0.15} />
+          <Stop offset="0.75" stopColor="#FFFFFF" stopOpacity={f.sheen * 0.5} />
+        </LinearGradient>
+        <ClipPath id={`${id}bc`}>
+          <Path d={PATHS[tier].inner} />
+        </ClipPath>
       </Defs>
       <Path d={PATHS[tier].inner} fill={`url(#${id}b)`} />
+      {/* Brilho metálico: duas faixas diagonais ATRÁS da foto (a foto fica por cima), somem sob o painel escuro. */}
+      <G clipPath={`url(#${id}bc)`}>
+        <Path d="M58 0 L76 0 L22 144 L4 144 Z" fill={`url(#${id}s)`} />
+        <Path d="M82 0 L88 0 L34 144 L28 144 Z" fill={`url(#${id}s)`} fillOpacity={0.7} />
+      </G>
     </Svg>
   );
 }
@@ -198,9 +214,6 @@ function Front({ tier }: { tier: Tier }) {
         {/* Halo do metal atrás do overall e do escudo, para lerem bem sobre qualquer foto. */}
         <Ellipse cx="19" cy="27" rx="21" ry="20" fill={`url(#${id}g)`} />
         <Ellipse cx="82.5" cy="25.5" rx="17" ry="16" fill={`url(#${id}g)`} />
-        {/* Brilho metálico: duas faixas diagonais discretas, que somem sob o painel escuro. */}
-        <Path d="M58 0 L76 0 L22 144 L4 144 Z" fill="#FFFFFF" fillOpacity={f.sheen} />
-        <Path d="M82 0 L88 0 L34 144 L28 144 Z" fill="#FFFFFF" fillOpacity={f.sheen * 0.7} />
         <Rect x="0" y={PANEL_FROM} width={VB_W} height={PANEL_SOLID - PANEL_FROM} fill={`url(#${id}d)`} />
         <Rect x="0" y={PANEL_SOLID - 0.1} width={VB_W} height={VB_H} fill={f.dark} fillOpacity="0.97" />
         {/* Linha sobre os atributos e separadores entre eles. */}
