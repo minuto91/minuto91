@@ -84,7 +84,12 @@ const vote = (mins: number): VoteItem => ({
 });
 const noop = () => {};
 
-export default function DevCentral() {
+// V6.1: fora do __DEV__ a rota existe no bundle, mas não mostra nada (antes abria com login em produção).
+export default function DevCentralRoute() {
+  return __DEV__ ? <DevCentral /> : null;
+}
+
+function DevCentral() {
   const { s = 'ovr-up' } = useLocalSearchParams<{ s?: string }>();
   const delta = s === 'ovr-down' ? -3 : s === 'ovr-neutro' ? 0 : s === 'ovr-up' ? 2 : null;
   const evaluating = s === 'avaliacao';

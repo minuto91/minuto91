@@ -4,7 +4,7 @@
 // 7,0 não vale como voto até ser confirmada. Pular não registra nota; o pulado volta uma vez no fim e
 // depois fica na revisão. Ninguém vê as notas que recebeu. Votações abertas antes da V5 seguem o fluxo antigo.
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Avatar } from '../../../lib/avatar';
@@ -54,6 +54,8 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
   // Nota escolhida por jogador (ainda não confirmada); sem escolha vale a já dada ou 7,0.
   const [picked, setPicked] = useState<Record<string, number>>({});
   const [busy, setBusy] = useState(false);
+  // V6.1: trava síncrona contra duplo toque (o estado busy só vale no próximo render).
+  const inFlight = useRef(false);
   const [err, setErr] = useState<string | null>(null);
   const [done, setDone] = useState(false);
   const left = useServerCountdown(v.closes_at, v.server_now);
@@ -70,9 +72,12 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
 
   const call = useCallback(
     async (fn: string, args: Record<string, unknown>) => {
+      if (inFlight.current) return false;
+      inFlight.current = true;
       setBusy(true);
       setErr(null);
       const { data, error } = await supabase.rpc(fn, args);
+      inFlight.current = false;
       setBusy(false);
       if (error) {
         // Sem confirmação do servidor nada avança: a nota escolhida continua na tela.
