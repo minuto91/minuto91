@@ -283,7 +283,7 @@ export default function Home() {
   const season = cp?.seasons[0] ?? null;
   const cardSeason = cp?.seasons.find((s) => s.card) ?? null;
   const conquests = cp
-    ? cp.trophies.match_craque + cp.trophies.monthly_king + (cp.trophies.match_garcom ?? 0) + (cp.trophies.monthly_garcom ?? 0)
+    ? cp.trophies.match_craque + cp.trophies.monthly_king + (cp.trophies.monthly_garcom ?? 0)
     : 0; // Bola Murcha não é conquista
   const rounds = ofPelada(data?.next_rounds ?? [], pid);
   const steps = data ? guideSteps(data, (h) => router.push(h)) : [];

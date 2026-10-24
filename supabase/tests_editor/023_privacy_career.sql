@@ -1,6 +1,9 @@
 -- Privacidade do perfil e da carreira e carreira global (migrações 029 e 030). Cole no SQL Editor do Supabase DEV.
 -- Termina SEMPRE com o erro proposital "PASS: 023_privacy_career" = tudo certo, nada gravado.
 -- Os resultados das partidas são gravados direto (como a finalização da 013 faria), como no teste 010.
+-- V7.7 (054): anulação com prévia (token) e id do pedido.
+create function pg_temp.annul(p_match uuid, p_cat text, p_desc text) returns jsonb language sql as
+ $$ select public.annul_match(p_match,p_cat,p_desc,true,public.preview_match_annulment(p_match)->>'preview_token',gen_random_uuid()) $$;
 create function pg_temp.uid(n int) returns uuid language sql as
  $$ select ('c2830000-0000-4000-8000-' || lpad(n::text,12,'0'))::uuid $$;
 create function pg_temp.as_user(n int) returns void language plpgsql as
@@ -86,7 +89,7 @@ perform set_config('role','authenticated',true);
 
 -- ===== Anulação tira a partida dos totais e o prêmio das conquistas =====
 perform pg_temp.as_user(1);
-perform public.annul_match(v_m2,'match_not_played','Partida lançada por engano no teste',true);
+perform pg_temp.annul(v_m2,'match_not_played','Partida lançada por engano no teste');
 
 -- ===== Pelada grátis: só temporada atual e anterior =====
 c := pg_temp.career(1);

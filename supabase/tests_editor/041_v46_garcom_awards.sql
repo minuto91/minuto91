@@ -1,6 +1,5 @@
 -- V4.6 (migração 049): Garçom da Partida, Garçom do Mês e cor dos times.
---  1) Garçom da Partida: mínimo 1 assistência, empate premia todos, sem assistência sem prêmio, correção reprocessa,
---     rodar de novo não muda nada (idempotente), uma pelada não mexe na outra.
+--  1) Garçom da Partida: excluído na V7.7 (056); não é concedido nem aparece na Sala de Troféus.
 --  2) Garçom do Mês: mínimo 2, data da partida no fuso da pelada, desempates (total, média exata, partidas com
 --     assistência, todos), top_assist não é mais concedido, reprocessamento recria o mesmo resultado.
 --  3) Sala de Troféus com os cinco troféus; histórico do Garçom.
@@ -71,44 +70,19 @@ perform pg_temp.as_user(7); v_b := public.create_pelada('Pelada B','GOL'); v_tok
 perform pg_temp.as_user(2); perform public.join_pelada(v_tok_b,'CA');
 execute 'reset role';
 
--- ===== 1) Garçom da Partida =====
--- Empate em 2 assistências: os dois recebem, compartilhado; quem deu 1 não recebe.
+-- ===== 1) Garçom da Partida: excluído na V7.7 (056) =====
 v_m1 := pg_temp.finish(v_a, pg_temp.at(2026,8,5), 3, 2,
  '[{"m":2,"team":"A","pos":"midfielder","a":2},{"m":3,"team":"A","pos":"midfielder","a":2},{"m":4,"team":"B","pos":"midfielder","a":1},{"m":5,"team":"B","pos":"midfielder","a":1}]');
-perform pg_temp.assert(pg_temp.match_winners(v_m1) = array[2,3], 'Garçom da Partida: empate premia todos os líderes');
-perform pg_temp.assert((select bool_and(is_shared) from public.awards where match_id=v_m1 and award_type='match_garcom' and status='active'),
- 'empate marcado como compartilhado');
--- Sem assistência: sem prêmio.
+perform pg_temp.assert(pg_temp.match_winners(v_m1) = '{}', 'V7.7: Garçom da Partida não é mais concedido');
 v_m2 := pg_temp.finish(v_a, pg_temp.at(2026,8,12), 1, 0, '[{"m":2,"team":"A","pos":"midfielder","g":1},{"m":3,"team":"B","pos":"midfielder"}]');
-perform pg_temp.assert(pg_temp.match_winners(v_m2) = '{}', 'ninguém com assistência: sem Garçom da Partida');
--- Idempotente: rodar de novo não grava nada nem avisa de novo.
 select count(*) into v_rows from public.awards where award_type in ('match_garcom','monthly_garcom');
-select count(*) into v_notif from public.notification_events;
-perform private.grant_match_garcom(v_m1); perform private.grant_match_garcom(v_m2);
-perform pg_temp.assert((select count(*) from public.awards where award_type in ('match_garcom','monthly_garcom')) = v_rows
- and (select count(*) from public.notification_events) = v_notif, 'reprocessar sem mudança não grava nem notifica');
--- Correção dos dados: o 4 passa a ter 3 assistências -> só ele, sem compartilhar; os antigos ficam revogados (histórico).
-update public.match_player_results set assists = 3 where match_id = v_m1 and membership_id = pg_temp.mem(v_a,4);
 perform private.grant_match_garcom(v_m1);
-perform pg_temp.assert(pg_temp.match_winners(v_m1) = array[4], 'correção reprocessa o Garçom da Partida');
-perform pg_temp.assert((select not is_shared from public.awards where match_id=v_m1 and award_type='match_garcom' and status='active'), 'ganhador único não é compartilhado');
-perform pg_temp.assert((select count(*) from public.awards where match_id=v_m1 and award_type='match_garcom' and status='revoked') = 2, 'revogados ficam no histórico');
-update public.match_player_results set assists = 1 where match_id = v_m1 and membership_id = pg_temp.mem(v_a,4);
-perform private.grant_match_garcom(v_m1);
-perform pg_temp.assert(pg_temp.match_winners(v_m1) = array[2,3], 'voltar o dado volta o resultado');
-perform pg_temp.assert((select count(*) from public.awards where match_id=v_m1 and award_type='match_garcom' and status='active') = 2, 'sem duplicidade');
--- Isolamento: o jogador 2 dá 5 assistências na pelada B; os prêmios de A não mudam e o de B fica em B.
+perform pg_temp.assert((select count(*) from public.awards where award_type in ('match_garcom','monthly_garcom')) = v_rows, 'chamada antiga não grava nada');
+perform pg_temp.assert(not exists(select 1 from public.awards where award_type='match_garcom' and status='active'), 'nenhum Garçom da Partida ativo');
 v_mb := pg_temp.finish(v_b, pg_temp.at(2026,8,5), 1, 0, '[{"m":2,"team":"A","pos":"attacker","a":5},{"m":7,"team":"B","pos":"goalkeeper"}]');
-perform pg_temp.assert(pg_temp.match_winners(v_mb) = array[2] and (select pelada_id from public.awards where match_id=v_mb and award_type='match_garcom') = v_b
- and (select membership_id from public.awards where match_id=v_mb and award_type='match_garcom') = pg_temp.mem(v_b,2), 'Garçom da Partida independente por pelada');
-perform pg_temp.assert(pg_temp.match_winners(v_m1) = array[2,3], 'outra pelada não mexe nos prêmios de A');
--- Partida que deixa de ser oficial (anulada): o prêmio sai.
 update public.matches set status='annulled' where id = v_m2;
-perform private.grant_match_garcom(v_m1);
 v_x := pg_temp.finish(v_a, pg_temp.at(2026,8,14), 1, 0, '[{"m":6,"team":"A","pos":"midfielder","a":1},{"m":3,"team":"B","pos":"midfielder"}]');
 update public.matches set status='annulled' where id = v_x;
-perform private.grant_match_garcom(v_x);
-perform pg_temp.assert(pg_temp.match_winners(v_x) = '{}', 'partida anulada não tem Garçom da Partida');
 
 -- ===== 2) Garçom do Mês (agosto/2026, pelada A) =====
 -- Até aqui em agosto (oficiais): v_m1 (2:2, 3:2, 4:1, 5:1), v_m2 anulada, v_x anulada.
@@ -154,13 +128,12 @@ perform pg_temp.assert(pg_temp.month_winners(v_a, date_trunc('month', now())::da
 perform set_config('role','authenticated',true);
 perform pg_temp.as_user(2);
 s := public.get_player_career_summary(pg_temp.uid(2));
-perform pg_temp.assert(s->'trophies' ?& array['match_craque','monthly_king','bola_murcha','match_garcom','monthly_garcom'], 'cinco troféus na Sala');
-perform pg_temp.assert((s->'trophies'->>'match_garcom')::int = (select count(*) from public.awards a join public.pelada_memberships pm on pm.id=a.membership_id
-  where pm.user_id=pg_temp.uid(2) and a.award_type='match_garcom' and a.status='active'), 'contagem do Garçom da Partida = prêmios ativos (A e B)');
+perform pg_temp.assert(s->'trophies' ?& array['match_craque','monthly_king','bola_murcha','monthly_garcom'] and not (s->'trophies' ? 'match_garcom'), 'quatro troféus na Sala, sem Garçom da Partida');
+perform pg_temp.assert(not exists(select 1 from jsonb_array_elements(s->'peladas') e where e->'trophies' ? 'match_garcom'), 'sem Garçom da Partida por pelada');
 perform pg_temp.assert((s->'trophies'->>'monthly_garcom')::int = 3, 'Garçom do Mês: julho e setembro em A, agosto em B');
 h := public.get_trophy_history(pg_temp.uid(2), 'monthly_garcom');
 perform pg_temp.assert(jsonb_array_length(h->'items') = 3 and (h->'items'->0->>'period_month')::date = '2026-09-01', 'histórico do Garçom do Mês, mais novo primeiro');
-perform pg_temp.assert(jsonb_array_length(public.get_trophy_history(pg_temp.uid(2), 'match_garcom')->'items') >= 2, 'histórico do Garçom da Partida');
+perform pg_temp.expect_error(format('select public.get_trophy_history(%L,%L)', pg_temp.uid(2), 'match_garcom'), 'INVALID_TROPHY');
 
 -- ===== 4) Cor dos times =====
 perform pg_temp.as_user(2);

@@ -1,6 +1,9 @@
 -- Evolução do Card na temporada (migração 033). Cole no SQL Editor do Supabase DEV (ou rode no banco local:
 -- supabase/local_db). Termina SEMPRE com o erro proposital "PASS: 027_player_evolution" = tudo certo, nada gravado.
 -- As partidas são gravadas já finalizadas (como no teste 023) e passam pela cadeia oficial (014/015).
+-- V7.7 (054): anulação com prévia (token) e id do pedido.
+create function pg_temp.annul(p_match uuid, p_cat text, p_desc text) returns jsonb language sql as
+ $$ select public.annul_match(p_match,p_cat,p_desc,true,public.preview_match_annulment(p_match)->>'preview_token',gen_random_uuid()) $$;
 create function pg_temp.uid(n int) returns uuid language sql as
  $$ select ('c2870000-0000-4000-8000-' || lpad(n::text,12,'0'))::uuid $$;
 create function pg_temp.as_user(n int) returns void language plpgsql as
@@ -105,7 +108,7 @@ perform set_config('role','authenticated',true);
 
 -- ===== Anulação: a partida sai da evolução; o Card atual é o recalculado =====
 perform pg_temp.as_user(1);
-perform public.annul_match(v_m2,'match_not_played','Lançada por engano no teste 027',true);
+perform pg_temp.annul(v_m2,'match_not_played','Lançada por engano no teste 027');
 e := pg_temp.evo(1, v_a, v_s);
 perform pg_temp.assert(jsonb_array_length(e->'points')=2 and not exists(select 1 from jsonb_array_elements(e->'points') p
  where (p->>'match_id')::uuid=v_m2), 'partida anulada fora do histórico');

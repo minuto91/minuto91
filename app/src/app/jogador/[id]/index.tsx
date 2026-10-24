@@ -26,6 +26,7 @@ import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, footLabel, memberPosition, needsPositionUpdate, Position, positionLabel, positionSector } from '../../../lib/theme';
+import { MySecondaryPosition } from '../../../lib/secondary';
 import { Body, Button, Card, Chips, ErrorText, PositionPicker, Screen, Sub, Title } from '../../../lib/ui';
 
 type Membership = {
@@ -311,6 +312,9 @@ export default function Carta() {
           )}
           {posOk && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{posOk}</Text>}
         </Card>
+      )}
+      {isMe && member.status === 'active' && (
+        <MySecondaryPosition peladaId={member.pelada_id} membershipId={member.id} primary={member.preferred_position} />
       )}
 
       {member.user_id && member.status !== 'retired' && (isMe || globalVisible) && (

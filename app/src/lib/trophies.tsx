@@ -1,9 +1,9 @@
-// Sala de Troféus (V4.4; V4.6 com os dois Garçons): as cinco premiações oficiais — Craque da Partida, Rei do Mês,
-// Bola Murcha, Garçom da Partida e Garçom do Mês. As contagens
+// Sala de Troféus (V4.4; V7.7 sem o Garçom da Partida, excluído): as quatro premiações oficiais — Craque da Partida,
+// Rei do Mês, Bola Murcha e Garçom do Mês. As contagens
 // vêm da tabela oficial de prêmios (a mesma das estatísticas, do álbum e dos avisos); o histórico de cada troféu é
 // carregado só quando a pessoa abre (get_trophy_history, paginado). Nada é contado de novo no app.
-// Desenho: todos dividem o mesmo pedestal azul com friso dourado, o mesmo tamanho e o mesmo acabamento dourado. Os dois
-// Garçons são a mesma escultura (mão dourada, bandeja e bola) com placas diferentes no pedestal.
+// Desenho: todos dividem o mesmo pedestal azul com friso dourado, o mesmo tamanho e o mesmo acabamento dourado; cada
+// troféu tem escultura própria (o Garçom do Mês: mão dourada, bandeja e bola).
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from './text';
@@ -16,15 +16,14 @@ import { supabase } from './supabase';
 import { colors } from './theme';
 import { Button, Sub } from './ui';
 
-export type TrophyType = 'match_craque' | 'monthly_king' | 'bola_murcha' | 'match_garcom' | 'monthly_garcom';
-// Servidor antigo (antes da 049) não manda os Garçons: contam como zero.
-export type TrophyCounts = Record<'match_craque' | 'monthly_king' | 'bola_murcha', number> & Partial<Record<'match_garcom' | 'monthly_garcom', number>>;
+export type TrophyType = 'match_craque' | 'monthly_king' | 'bola_murcha' | 'monthly_garcom';
+// Servidor antigo (antes da 049) não manda o Garçom do Mês: conta como zero. O Garçom da Partida não existe mais (V7.7).
+export type TrophyCounts = Record<'match_craque' | 'monthly_king' | 'bola_murcha', number> & Partial<Record<'monthly_garcom', number>>;
 
 export const TROPHIES: { type: TrophyType; label: string; hint: string }[] = [
   { type: 'match_craque', label: 'Craque da Partida', hint: 'Mais votado como Craque numa partida.' },
   { type: 'monthly_king', label: 'Rei do Mês', hint: 'Melhor do mês na pelada.' },
   { type: 'bola_murcha', label: 'Bola Murcha', hint: 'Escolhido como Bola Murcha numa partida.' },
-  { type: 'match_garcom', label: 'Garçom da Partida', hint: 'Mais assistências na partida (mínimo 1; empate premia todos).' },
   { type: 'monthly_garcom', label: 'Garçom do Mês', hint: 'Mais assistências no mês (mínimo 2; desempate pela média e pelas partidas com assistência).' },
 ];
 
@@ -135,11 +134,11 @@ export function TrophyArt({ type, size = 96, dim = false }: { type: TrophyType; 
           <Ellipse cx={50} cy={86} rx={27} ry={1.6} fill={GOLD_DARK} opacity={0.5} />
         </G>
       )}
-      {(type === 'match_garcom' || type === 'monthly_garcom') && <Garcom gid={gid} />}
+      {type === 'monthly_garcom' && <Garcom gid={gid} />}
       <Pedestal />
-      {(type === 'match_garcom' || type === 'monthly_garcom') && (
+      {type === 'monthly_garcom' && (
         <SvgText x={50} y={106.6} textAnchor="middle" fontSize={4.2} fontWeight="700" fill={colors.gold} letterSpacing={0.4}>
-          {type === 'match_garcom' ? 'PARTIDA' : 'MÊS'}
+          MÊS
         </SvgText>
       )}
     </Svg>

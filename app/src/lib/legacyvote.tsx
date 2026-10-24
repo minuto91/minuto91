@@ -16,6 +16,7 @@ import {
   Match,
   Member,
   newKey,
+  scoreLine,
   SheetPlayer,
 } from './match';
 import { supabase } from './supabase';
@@ -174,7 +175,7 @@ export function LegacyVotar() {
       <Screen>
         <Title>Confira a súmula</Title>
         <Sub>
-          Versão {state.sheet_version}. {match.team_a_name} {match.team_a_score} x {match.team_b_score} {match.team_b_name}
+          Versão {state.sheet_version}. {scoreLine(match)}
         </Sub>
         {(['A', 'B'] as const).map((t) => (
           <Card key={t}>

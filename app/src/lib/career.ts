@@ -88,7 +88,6 @@ export const AWARD_LABEL: Record<string, string> = {
   top_scorer: 'Artilheiro do mês',
   top_assist: 'Garçom do mês',
   monthly_garcom: 'Garçom do Mês',
-  match_garcom: 'Garçom da Partida',
   most_improved: 'Maior evolução',
   match_craque: 'Craque da Partida',
   bola_murcha: 'Bola Murcha',

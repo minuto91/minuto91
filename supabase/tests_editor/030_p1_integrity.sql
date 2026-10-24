@@ -28,6 +28,9 @@ begin
  update public.matches set status='voting_open' where id=p_match;
  return v_id;
 end $$;
+-- V7.7 (054): anulação com prévia (token) e id do pedido.
+create function pg_temp.annul(p_match uuid, p_cat text, p_desc text) returns jsonb language sql as
+ $$ select public.annul_match(p_match,p_cat,p_desc,true,public.preview_match_annulment(p_match)->>'preview_token',gen_random_uuid()) $$;
 create function pg_temp.uid(n int) returns uuid language sql as
  $$ select ('93000000-0000-4000-8000-' || lpad(n::text,12,'0'))::uuid $$;
 create function pg_temp.as_user(n int) returns void language plpgsql as
@@ -253,7 +256,7 @@ perform pg_temp.assert(not exists(select 1 from public.player_cards where member
 -- Anulação de partida histórica (dentro dos 7 dias) recalcula a temporada.
 perform set_config('role','authenticated',true);
 perform pg_temp.as_user(1);
-perform public.annul_match(v_h2,'duplicate_match','partida lançada duas vezes',true);
+perform pg_temp.annul(v_h2,'duplicate_match','partida lançada duas vezes');
 execute 'reset role';
 perform pg_temp.assert(not exists(select 1 from public.player_cards where membership_id=v_ret)
  and not exists(select 1 from public.player_season_stats where membership_id=v_ret),'anulação não traz o aposentado de volta');

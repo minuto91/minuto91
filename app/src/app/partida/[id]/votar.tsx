@@ -10,7 +10,7 @@ import { Pressable, View } from 'react-native';
 import { Avatar } from '../../../lib/avatar';
 import { friendly } from '../../../lib/errors';
 import { LegacyVotar } from '../../../lib/legacyvote';
-import { loadMatch, Match } from '../../../lib/match';
+import { loadMatch, Match, scoreLine } from '../../../lib/match';
 import { fmtScore, RatingSlider, RatingTarget, RatingVote, useServerCountdown } from '../../../lib/ratingvote';
 import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
@@ -105,7 +105,11 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
           {v.state === 'published'
             ? 'As notas desta partida já foram publicadas.'
             : v.state === 'awaiting_publication'
-              ? 'O prazo terminou. As notas aparecem depois que o administrador publicar.'
+              ? 'O prazo terminou. O resultado é publicado automaticamente em instantes.'
+              : v.state === 'suspended'
+                ? 'A votação está suspensa porque a partida foi anulada. Seus votos ficam guardados.'
+                : v.state === 'interrupted'
+                  ? 'A votação foi interrompida e aguarda a decisão da administração.'
               : v.state === 'ready'
                 ? 'A votação desta partida ainda não foi aberta.'
                 : 'A votação não está disponível.'}
@@ -127,7 +131,7 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
     <View style={{ gap: 2 }}>
       {match && (
         <Sub>
-          {match.team_a_name} {match.team_a_score} x {match.team_b_score} {match.team_b_name}
+          {scoreLine(match)}
         </Sub>
       )}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>

@@ -3,7 +3,7 @@ import { useCallback, useState } from 'react';
 import { useWindowDimensions, View } from 'react-native';
 import { Text } from '../../../lib/text';
 
-import { ANNUL_REASONS, AnnulMatch } from '../../../lib/annul';
+import { AnnulledBadge, AnnulMatch, MatchStatusTimeline, RestoreMatch } from '../../../lib/annul';
 import {
   FORMATION,
   PostGameArt,
@@ -28,6 +28,7 @@ import {
   Match,
   Member,
   SheetPlayer,
+  scoreLine,
   STATUS_LABEL,
   Team,
   TeamExtras,
@@ -52,7 +53,6 @@ type Session = {
 type Result = { membership_id: string; final_rating: number | null; has_valid_rating: boolean };
 type Award = { membership_id: string; award_type: string; is_shared: boolean };
 type SelectionPlayer = { membership_id: string; slot_position: string; rank_order: number };
-type Annulment = { reason_category: string; description: string; created_at: string };
 
 export default function Partida() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -70,7 +70,7 @@ export default function Partida() {
   const [voted, setVoted] = useState<string[]>([]);
   const [results, setResults] = useState<Result[]>([]);
   const [awards, setAwards] = useState<Award[]>([]);
-  const [annulment, setAnnulment] = useState<Annulment | null>(null);
+  const [statusKey, setStatusKey] = useState(0);
   const [peladaName, setPeladaName] = useState('');
   const [crestPath, setCrestPath] = useState<string | null>(null);
   const [myPhoto, setMyPhoto] = useState<string | null>(null);
@@ -165,14 +165,7 @@ export default function Partida() {
         setResults((rs ?? []) as Result[]);
         setAwards((aw ?? []) as Award[]);
       }
-      if (m.status === 'annulled') {
-        const { data: an } = await supabase
-          .from('match_annulments')
-          .select('reason_category, description, created_at')
-          .eq('match_id', id)
-          .maybeSingle();
-        setAnnulment(an as Annulment | null);
-      }
+      setStatusKey((k) => k + 1); // linha do tempo da anulação/restauração (get_match_status_history)
       setMsg(null);
     } catch (e) {
       setMsg(friendly((e as Error).message));
@@ -226,10 +219,6 @@ export default function Partida() {
     const r = results.find((x) => x.membership_id === membershipId);
     return r?.has_valid_rating && r.final_rating !== null ? Number(r.final_rating) : null;
   };
-  // Garçom da Partida (V4.6): o prêmio oficial do servidor (049); antes dele chegar, a mesma regra: só membros,
-  // mais assistências (mínimo 1), empate premia todos.
-  const memberPlayers = players.filter((p) => p.membership_id);
-  const maxAssists = Math.max(0, ...memberPlayers.map((p) => p.assists));
   const date = new Date(match.played_at).toLocaleDateString('pt-BR');
   // Arte da partida: só finalizada (nada provisório). Qualquer membro pode gerar; as notas só aparecem
   // para quem as vê (o servidor não as entrega a quem não votou), então ranked fica vazio para os outros.
@@ -241,8 +230,8 @@ export default function Partida() {
           date,
           teamA: match.team_a_name,
           teamB: match.team_b_name,
-          scoreA: match.team_a_score,
-          scoreB: match.team_b_score,
+          scoreA: match.team_a_score ?? 0,
+          scoreB: match.team_b_score ?? 0,
           players: players.length,
           craque: awards
             .filter((a) => a.award_type === 'match_craque')
@@ -251,13 +240,6 @@ export default function Partida() {
             .filter((p) => p.goals > 0)
             .sort((a, b) => b.goals - a.goals)
             .map((p) => ({ name: playerName(p), goals: p.goals })),
-          garcom: awards.some((a) => a.award_type === 'match_garcom')
-            ? awards
-                .filter((a) => a.award_type === 'match_garcom')
-                .map((a) => ({ name: nameOf(a.membership_id), assists: maxAssists }))
-            : maxAssists > 0
-              ? memberPlayers.filter((p) => p.assists === maxAssists).map((p) => ({ name: playerName(p), assists: maxAssists }))
-              : [],
           top: ranked.slice(0, 5).map((r) => ({ pos: posOf(r), name: nameOf(r.membership_id), rating: Number(r.final_rating) })),
         }
       : null;
@@ -273,8 +255,8 @@ export default function Partida() {
           photoPath: myPhoto,
           teamA: match.team_a_name,
           teamB: match.team_b_name,
-          scoreA: match.team_a_score,
-          scoreB: match.team_b_score,
+          scoreA: match.team_a_score ?? 0,
+          scoreB: match.team_b_score ?? 0,
           myTeam: mySheet.team,
           goals: mySheet.goals,
           assists: mySheet.assists,
@@ -309,6 +291,9 @@ export default function Partida() {
     { name: match.team_b_name, color: teamColors.B },
   ];
   const matchGuests = guests.filter((g) => players.some((p) => p.guest_id === g.id));
+  // V7.7: partida anulada mostra só data, equipes, rodada, status e linha do tempo (o banco já não entrega o resto).
+  const annulled = match.status === 'annulled';
+  const finalScore = match.team_a_score !== null && match.team_b_score !== null ? { a: match.team_a_score, b: match.team_b_score } : null;
 
   return (
     <Screen>
@@ -322,7 +307,7 @@ export default function Partida() {
         top={
           <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.4, color: '#9DB8E8' }} numberOfLines={2}>
             {fmtDate(match.played_at).toUpperCase()} · {(STATUS_LABEL[match.status] ?? match.status).toUpperCase()}
-            {match.sheet_version > 1 ? ` · SÚMULA V${match.sheet_version}` : ''}
+            {match.sheet_version > 1 && !annulled ? ` · SÚMULA V${match.sheet_version}` : ''}
           </Text>
         }
       />
@@ -377,15 +362,11 @@ export default function Partida() {
           {/* V6.1: desde a V5 a súmula publicada finaliza sem a cédula antiga; a avaliação fica no painel acima. */}
           {!voting && <Sub>Resultado oficial. Contam gols, assistências e presença.</Sub>}
           {voting && voting.is_valid === false && (
-            // A27: mesma regra do servidor (013/036): válida com pelo menos metade dos eleitores E pelo menos 3 votos.
-            <Sub>
-              Votação inválida: {voted.length} de {voting.eligible_voter_count} votaram. Para valer, precisa de pelo menos metade dos
-              eleitores e de no mínimo 3 votos. Sem notas oficiais nem prêmios da votação nesta partida.
-            </Sub>
+            // Votação no formato antigo (antes da V5) encerrada sem votos suficientes. Não é regra das votações atuais.
+            <Sub>Votação antiga sem votos suficientes: sem notas oficiais nem prêmios da votação nesta partida.</Sub>
           )}
           {awardNames('match_craque') !== '' && <Body>Craque da Partida: {awardNames('match_craque')}</Body>}
           {awardNames('bola_murcha') !== '' && <Body>Bola Murcha: {awardNames('bola_murcha')}</Body>}
-          {awardNames('match_garcom') !== '' && <Body>Garçom da Partida: {awardNames('match_garcom')}</Body>}
           {voting?.is_valid && results.length === 0 && iAmVoter && !iVoted && (
             <Sub>Você não votou, então o resultado detalhado desta partida fica bloqueado para você.</Sub>
           )}
@@ -435,7 +416,7 @@ export default function Partida() {
       )}
       {selection && ranked.length > 0 && (
         <SharePanel label="Compartilhar Seleção da Rodada" fileName="minuto91-selecao" title="Seleção da Rodada">
-          <SelectionArt peladaName={peladaName} crestPath={crestPath} date={date} matchLabel={`${match.team_a_name} ${match.team_a_score} x ${match.team_b_score} ${match.team_b_name}`} players={fieldPlayers} teams={teamsLegend} />
+          <SelectionArt peladaName={peladaName} crestPath={crestPath} date={date} matchLabel={scoreLine(match)} players={fieldPlayers} teams={teamsLegend} />
         </SharePanel>
       )}
 
@@ -443,27 +424,27 @@ export default function Partida() {
         <>
           <Text style={{ fontSize: 13, fontWeight: '800', color: colors.deepBlue, letterSpacing: 0.5, marginTop: 10 }}>Escalação</Text>
           <Card>
-            <LineupBoard teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} formations={lineup.formations} score={match.status === 'finalized' ? { a: match.team_a_score, b: match.team_b_score } : null} />
+            <LineupBoard teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} formations={lineup.formations} score={match.status === 'finalized' ? finalScore : null} />
           </Card>
           <SharePanel label="Compartilhar escalação" fileName="minuto91-escalacao" title="Escalação da partida">
-            <LineupArt peladaName={peladaName} crestPath={crestPath} subtitle={date} teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} formations={lineup.formations} score={match.status === 'finalized' ? { a: match.team_a_score, b: match.team_b_score } : null} />
+            <LineupArt peladaName={peladaName} crestPath={crestPath} subtitle={date} teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} formations={lineup.formations} score={match.status === 'finalized' ? finalScore : null} />
           </SharePanel>
         </>
       )}
 
-      {match.status === 'finalized' && isAdmin && <AnnulMatch matchId={id} nameOf={nameOf} onDone={load} />}
+      {match.status === 'finalized' && isAdmin && <AnnulMatch matchId={id} onDone={load} />}
 
-      {match.status === 'annulled' && (
+      {annulled && (
         <Card>
-          <Sub>Esta partida foi anulada e não conta para resultados.</Sub>
-          {annulment && (
-            <Sub>
-              Motivo: {ANNUL_REASONS.find((r) => r.value === annulment.reason_category)?.label ?? 'Outro'} —{' '}
-              {annulment.description} ({fmtDate(annulment.created_at)})
-            </Sub>
-          )}
+          <AnnulledBadge />
+          <Sub>Esta partida foi anulada e não conta para resultados. Placar, gols, cartões, notas e prêmios dela ficam fora do ar.</Sub>
+          <MatchStatusTimeline matchId={id} admin={isAdmin} refreshKey={statusKey} />
         </Card>
       )}
+      {!annulled && match.status === 'finalized' && (
+        <MatchStatusTimeline matchId={id} admin={isAdmin} refreshKey={statusKey} />
+      )}
+      {annulled && isAdmin && <RestoreMatch matchId={id} onDone={load} />}
 
       {(['A', 'B'] as Team[]).map((t) => (
         <View key={t} style={{ gap: 6 }}>
@@ -475,15 +456,15 @@ export default function Partida() {
             .map((p) => (
               <Text key={p.key} style={{ color: colors.ink }}>
                 {playerName(p)} · {positionLabel(p.position)}
-                {p.goals ? ` · ${p.goals} gol${p.goals > 1 ? 's' : ''}` : ''}
-                {p.assists ? ` · ${p.assists} assist.` : ''}
-                {p.yellows ? ' · amarelo' : ''}
-                {p.secondYellow ? ' · expulso (2º amarelo)' : ''}
-                {p.reds ? ` · ${p.reds} vermelho` : ''}
+                {annulled ? '' : p.goals ? ` · ${p.goals} gol${p.goals > 1 ? 's' : ''}` : ''}
+                {!annulled && p.assists ? ` · ${p.assists} assist.` : ''}
+                {!annulled && p.yellows ? ' · amarelo' : ''}
+                {!annulled && p.secondYellow ? ' · expulso (2º amarelo)' : ''}
+                {!annulled && p.reds ? ` · ${p.reds} vermelho` : ''}
               </Text>
             ))}
-          {extras.unattributed[t] > 0 && <Sub>Gols sem autor: {extras.unattributed[t]}</Sub>}
-          {extras.ownGoals[t] > 0 && <Sub>Gols contra a favor: {extras.ownGoals[t]}</Sub>}
+          {!annulled && extras.unattributed[t] > 0 && <Sub>Gols sem autor: {extras.unattributed[t]}</Sub>}
+          {!annulled && extras.ownGoals[t] > 0 && <Sub>Gols contra a favor: {extras.ownGoals[t]}</Sub>}
         </View>
       ))}
       {me &&

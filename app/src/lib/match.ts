@@ -22,8 +22,9 @@ export type Match = {
   status: string;
   team_a_name: string;
   team_b_name: string;
-  team_a_score: number;
-  team_b_score: number;
+  /** V7.7 (054): nulo quando a partida está anulada (o banco não entrega o placar original). */
+  team_a_score: number | null;
+  team_b_score: number | null;
   sheet_version: number;
 };
 
@@ -57,8 +58,11 @@ export const STATUS_LABEL: Record<string, string> = {
   annulled: 'Anulada',
 };
 
+// V7.7: o placar vem das colunas públicas (nulas em partida anulada); o placar original não é legível pelo app.
 export const MATCH_COLUMNS =
-  'id, pelada_id, played_at, status, team_a_name, team_b_name, team_a_score, team_b_score, sheet_version';
+  'id, pelada_id, played_at, status, team_a_name, team_b_name, team_a_score:public_team_a_score, team_b_score:public_team_b_score, sheet_version';
+
+export { scoreLine } from './matchview';
 
 export const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' });
