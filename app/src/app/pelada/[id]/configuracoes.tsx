@@ -5,6 +5,7 @@ import { Crest, CrestDraft, CrestView, pickCrest, removeCrest, uploadCrest } fro
 import { confirm, notify } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import { CrestSwatch } from '../../../lib/playercard';
+import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { View } from 'react-native';
 import { Text } from '../../../lib/text';
@@ -45,11 +46,14 @@ export default function Configuracoes() {
   const [crest, setCrest] = useState<string | null>(null);
   const [crestBusy, setCrestBusy] = useState(false);
   const [draft, setDraft] = useState<CrestDraft | null>(null);
+  // V6.1: a tela só serve ao admin (o servidor já recusa os outros); quem chega por link vê o aviso, não o formulário.
+  const { session } = useAuth();
+  const [isAdmin, setIsAdmin] = useState<boolean | null>(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [{ data: st, error }, { data: ent }, { data: p }] = await Promise.all([
+      const [{ data: st, error }, { data: ent }, { data: p }, { data: mine }] = await Promise.all([
         supabase
           .from('pelada_settings')
           .select('voting_duration_minutes, bola_murcha_enabled, minimum_numeric_ratings')
@@ -57,6 +61,13 @@ export default function Configuracoes() {
           .maybeSingle(),
         supabase.rpc('get_pelada_entitlement', { p_pelada: id }),
         supabase.from('peladas').select('name, crest_path').eq('id', id).maybeSingle(),
+        supabase
+          .from('pelada_memberships')
+          .select('role')
+          .eq('pelada_id', id)
+          .eq('user_id', session?.user.id ?? '')
+          .eq('status', 'active')
+          .maybeSingle(),
       ]);
       if (!alive) return;
       if (error || !st) return setMsg(friendly(error?.message ?? 'PELADA_NOT_FOUND'));
@@ -64,6 +75,7 @@ export default function Configuracoes() {
       setBolaMurcha(st.bola_murcha_enabled ? 'on' : 'off');
       setMinMode(st.minimum_numeric_ratings === null ? 'all' : 'custom');
       if (st.minimum_numeric_ratings !== null) setMinimum(st.minimum_numeric_ratings);
+      setIsAdmin(mine?.role === 'admin');
       setPremium(!!ent?.is_premium);
       setNome(p?.name ?? '');
       setCrest(p?.crest_path ?? null);
@@ -72,7 +84,7 @@ export default function Configuracoes() {
     return () => {
       alive = false;
     };
-  }, [id]);
+  }, [id, session?.user.id]);
 
   async function trocarEscudo() {
     setCrestBusy(true);
@@ -136,6 +148,15 @@ export default function Configuracoes() {
       <Screen>
         <ErrorText>{msg}</ErrorText>
         {!msg && <Sub>Carregando...</Sub>}
+      </Screen>
+    );
+  }
+
+  if (!isAdmin) {
+    return (
+      <Screen>
+        <Title>Configurações da pelada</Title>
+        <Sub>Só o administrador da pelada muda o escudo e as regras da votação.</Sub>
       </Screen>
     );
   }
