@@ -220,6 +220,7 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
           </View>
         ))}
       </Card>
+      <Resenha v={v} onSaved={(r) => setV(r)} />
       <Awards v={v} onSaved={(r) => setV(r)} />
       <ErrorText>{err}</ErrorText>
       <Button title="Concluir" onPress={() => setDone(true)} />
@@ -240,6 +241,70 @@ function PlayerBox({ t, team }: { t: RatingTarget; team: string }) {
           {t.goals} {t.goals === 1 ? 'gol' : 'gols'} · {t.assists} {t.assists === 1 ? 'assistência' : 'assistências'}
         </Body>
       </View>
+    </Card>
+  );
+}
+
+// V7.7: "Quem ficou para a resenha depois do jogo?" (seleção múltipla, sem marcar a si mesmo; a lista só traz os
+// outros participantes). Salvar com ninguém marcado é uma resposta ("ninguém ficou"); não salvar = não respondeu.
+// A apuração (2 confirmações e maioria) é do servidor, na publicação.
+function Resenha({ v, onSaved }: { v: RatingVote; onSaved: (r: RatingVote) => void }) {
+  const saved = v.my_resenha ?? null;
+  const [picked, setPicked] = useState<string[]>(saved ?? []);
+  const [busy, setBusy] = useState(false);
+  const [msg, setMsg] = useState<string | null>(null);
+  if (!v.resenha_enabled) return null;
+  const dirty = saved === null || picked.length !== saved.length || picked.some((x) => !saved.includes(x));
+  const toggle = (id: string) => setPicked((cur) => (cur.includes(id) ? cur.filter((x) => x !== id) : [...cur, id]));
+  async function save() {
+    setBusy(true);
+    setMsg(null);
+    const { data, error } = await supabase.rpc('set_rating_vote_resenha', { p_session: v.session_id, p_present: picked });
+    setBusy(false);
+    if (error) return setMsg(friendly(error.message));
+    onSaved(data as RatingVote);
+  }
+  return (
+    <Card>
+      <Text style={{ fontWeight: '700', color: colors.deepBlue }}>Quem ficou para a resenha depois do jogo?</Text>
+      <Sub>Marque todos que ficaram. Ninguém vê a sua resposta.</Sub>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {(v.targets ?? []).map((t) => {
+          const on = picked.includes(t.membership_id);
+          return (
+            <Pressable
+              key={t.membership_id}
+              accessibilityRole="checkbox"
+              accessibilityState={{ checked: on }}
+              accessibilityLabel={`${t.name} ficou para a resenha`}
+              onPress={() => toggle(t.membership_id)}
+              style={{
+                minHeight: 44,
+                justifyContent: 'center',
+                paddingVertical: 8,
+                paddingHorizontal: 14,
+                borderRadius: 22,
+                borderWidth: 1,
+                borderColor: on ? colors.blue : colors.line,
+                backgroundColor: on ? colors.blue : colors.white,
+              }}>
+              <Text style={{ color: on ? colors.white : colors.ink, fontWeight: '600' }}>
+                {on ? '✓ ' : ''}
+                {t.name}
+              </Text>
+            </Pressable>
+          );
+        })}
+      </View>
+      <Sub>{saved === null ? 'Você ainda não respondeu.' : saved.length === 0 ? 'Resposta salva: ninguém ficou.' : `Resposta salva: ${saved.length} marcados.`}</Sub>
+      <ErrorText>{msg}</ErrorText>
+      <Button
+        title={picked.length === 0 ? 'Salvar: ninguém ficou' : 'Salvar resposta'}
+        kind="secondary"
+        loading={busy}
+        disabled={busy || !dirty}
+        onPress={save}
+      />
     </Card>
   );
 }

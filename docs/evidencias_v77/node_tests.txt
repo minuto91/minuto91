@@ -1,0 +1,145 @@
+# (node:3379) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/user/minuto91/app/src/lib/money.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/user/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: formatBRL: centavos inteiros em reais
+ok 1 - formatBRL: centavos inteiros em reais
+# Subtest: parseBRL: o que a pessoa digita vira centavos exatos (sem float)
+ok 2 - parseBRL: o que a pessoa digita vira centavos exatos (sem float)
+# Subtest: datas: DD/MM/AAAA <-> AAAA-MM-DD, sem datas impossíveis
+ok 3 - datas: DD/MM/AAAA <-> AAAA-MM-DD, sem datas impossíveis
+# Subtest: meses: deslocamento e nome
+ok 4 - meses: deslocamento e nome
+# Subtest: CSV e chave de idempotência
+ok 5 - CSV e chave de idempotência
+# (node:3380) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/user/minuto91/app/src/lib/pager.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/user/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: carrega a primeira página e as seguintes, sem repetir nem pular
+ok 6 - carrega a primeira página e as seguintes, sem repetir nem pular
+# Subtest: dois loadMore seguidos (rolagem + botão) buscam a próxima página uma vez só
+ok 7 - dois loadMore seguidos (rolagem + botão) buscam a próxima página uma vez só
+# Subtest: recarregar durante um loadMore: a página atrasada da lista antiga é descartada
+ok 8 - recarregar durante um loadMore: a página atrasada da lista antiga é descartada
+# Subtest: loadMore enquanto a primeira página recarrega não usa o cursor antigo
+ok 9 - loadMore enquanto a primeira página recarrega não usa o cursor antigo
+# Subtest: troca de filtro: lista limpa na hora e resposta do filtro anterior nunca entra
+ok 10 - troca de filtro: lista limpa na hora e resposta do filtro anterior nunca entra
+# Subtest: duas trocas de filtro rápidas: vale a última, mesmo que a primeira responda depois
+ok 11 - duas trocas de filtro rápidas: vale a última, mesmo que a primeira responda depois
+# Subtest: recarregar com o mesmo filtro mantém a lista na tela até chegar a resposta
+ok 12 - recarregar com o mesmo filtro mantém a lista na tela até chegar a resposta
+# Subtest: tela sem foco (cancel) ou desmontada (dispose): nada atrasado entra nem avisa
+ok 13 - tela sem foco (cancel) ou desmontada (dispose): nada atrasado entra nem avisa
+# Subtest: item repetido entre páginas (mudou de posição no servidor) entra uma vez só
+ok 14 - item repetido entre páginas (mudou de posição no servidor) entra uma vez só
+# Subtest: erro na próxima página: mantém o que já carregou e permite tentar de novo
+ok 15 - erro na próxima página: mantém o que já carregou e permite tentar de novo
+# Subtest: replace e resumo: troca só o item e mantém o resumo coerente
+ok 16 - replace e resumo: troca só o item e mantém o resumo coerente
+# Subtest: readAllPages: lê tudo e nunca entra em laço se o servidor repetir o cursor
+ok 17 - readAllPages: lê tudo e nunca entra em laço se o servidor repetir o cursor
+# Subtest: conferência da exportação: íntegra, linha repetida, quantidade e somas
+ok 18 - conferência da exportação: íntegra, linha repetida, quantidade e somas
+# Subtest: todos os tipos produzidos pelo banco têm texto, menos Bola Murcha
+ok 19 - todos os tipos produzidos pelo banco têm texto, menos Bola Murcha
+# Subtest: texto sem dados sensíveis: só o nome da pelada
+ok 20 - texto sem dados sensíveis: só o nome da pelada
+# Subtest: caminho do toque
+ok 21 - caminho do toque
+# Subtest: uma mensagem por aparelho, com o id da notificação
+ok 22 - uma mensagem por aparelho, com o id da notificação
+# Subtest: aceite: basta um aparelho; token morto é apagado
+ok 23 - aceite: basta um aparelho; token morto é apagado
+# Subtest: todos os aparelhos mortos = falha; limite de envio = tentar de novo
+ok 24 - todos os aparelhos mortos = falha; limite de envio = tentar de novo
+# Subtest: recibos: espera até 24h; depois marca indisponível
+ok 25 - recibos: espera até 24h; depois marca indisponível
+# Subtest: lotes de 100
+ok 26 - lotes de 100
+# Subtest: pesos somam 100% e fórmula expandida do goleiro é equivalente
+ok 27 - pesos somam 100% e fórmula expandida do goleiro é equivalente
+# Subtest: interpolação da nota
+ok 28 - interpolação da nota
+# Subtest: nota da partida: 50/50 entre grupos, sem nota fictícia
+ok 29 - nota da partida: 50/50 entre grupos, sem nota fictícia
+# Subtest: ATU: neutro sem votos, partidas sem voto contam em J
+ok 30 - ATU: neutro sem votos, partidas sem voto contam em J
+# Subtest: OFF/DEF: neutro na referência, monotonicidade, sem NaN
+ok 31 - OFF/DEF: neutro na referência, monotonicidade, sem NaN
+# Subtest: REF: valores de referência, crescente, neutro sem registro, estabilização C4
+ok 32 - REF: valores de referência, crescente, neutro sem registro, estabilização C4
+# Subtest: PEQ e RES: monotonia com N fixo, neutros sem dados
+ok 33 - PEQ e RES: monotonia com N fixo, neutros sem dados
+# Subtest: DIS: amarelo, vermelho, recuperação, limites, desativado = 70, pendente não é limpo
+ok 34 - DIS: amarelo, vermelho, recuperação, limites, desativado = 70, pendente não é limpo
+# Subtest: históricos de 0, 1, 4, 5, 20 e 25 partidas; elegibilidade aos 5 jogos
+ok 35 - históricos de 0, 1, 4, 5, 20 e 25 partidas; elegibilidade aos 5 jogos
+# Subtest: goleiro: EST = 0,7 REF + 0,3 DEF, sem GAR
+ok 36 - goleiro: EST = 0,7 REF + 0,3 DEF, sem GAR
+# Subtest: transição de posição: EST interpola em 5 partidas, outros atributos intactos
+ok 37 - transição de posição: EST interpola em 5 partidas, outros atributos intactos
+# Subtest: referência local híbrida
+ok 38 - referência local híbrida
+# Subtest: arredondamento: empate 0,5 para cima e faixas
+ok 39 - arredondamento: empate 0,5 para cima e faixas
+# Subtest: SQL = JS nas funções puras do motor
+ok 40 - SQL = JS nas funções puras do motor
+# \# JS x Python: 26138 rodadas comparadas, maior diferença 2.84e-14
+# Subtest: pesos posicionais congelados (DEF, LET/REF, APR, RES, DIS) somam 100%
+ok 41 - pesos posicionais congelados (DEF, LET/REF, APR, RES, DIS) somam 100%
+# Subtest: referências V7.5 inalteradas (sem curva LET V7.9)
+ok 42 - referências V7.5 inalteradas (sem curva LET V7.9)
+# Subtest: vote: curva da nota 0-10 para 40-99
+ok 43 - vote: curva da nota 0-10 para 40-99
+# Subtest: fórmulas: limites 40-99, monotonia e ausência de NaN
+ok 44 - fórmulas: limites 40-99, monotonia e ausência de NaN
+# Subtest: regressão: atacante, 10 gols em 10 partidas, nota 9,0 => LET 91,60 (protótipo 91.60479306925015)
+ok 45 - regressão: atacante, 10 gols em 10 partidas, nota 9,0 => LET 91,60 (protótipo 91.60479306925015)
+# Subtest: OVR publicado só a partir da 5ª partida oficial, sem salto na elegibilidade
+ok 46 - OVR publicado só a partir da 5ª partida oficial, sem salto na elegibilidade
+# Subtest: ausência não muda DEF/LET/APR nem DIS; reduz a frequência do RES
+ok 47 - ausência não muda DEF/LET/APR nem DIS; reduz a frequência do RES
+# Subtest: estatística ausente preserva o atributo; zero é observação
+ok 48 - estatística ausente preserva o atributo; zero é observação
+# Subtest: checkpoint: janela real de 10, quedas amortecidas, melhoria sem limite, RES/DIS sem checkpoint
+ok 49 - checkpoint: janela real de 10, quedas amortecidas, melhoria sem limite, RES/DIS sem checkpoint
+# Subtest: DIS: 70, -8, -20, recuperação 6% até 99, piso 50, teto 99, igual para todas as posições
+ok 50 - DIS: 70, -8, -20, recuperação 6% até 99, piso 50, teto 99, igual para todas as posições
+# Subtest: cartões: segundo amarelo = uma expulsão, sem contar o amarelo de novo
+ok 51 - cartões: segundo amarelo = uma expulsão, sem contar o amarelo de novo
+# Subtest: DIS: continuidade entre temporadas
+ok 52 - DIS: continuidade entre temporadas
+# Subtest: resenha: autovoto, duas confirmações, maioria estrita, 1 eleitor indeterminado, falta de resposta neutra
+ok 53 - resenha: autovoto, duas confirmações, maioria estrita, 1 eleitor indeterminado, falta de resposta neutra
+# Subtest: herança: 50% das observações válidas, teto de 20; publicado não é dividido pela metade
+ok 54 - herança: 50% das observações válidas, teto de 20; publicado não é dividido pela metade
+# Subtest: transição de posição em 5 partidas (OVR), atributos da posição nova
+ok 55 - transição de posição em 5 partidas (OVR), atributos da posição nova
+# Subtest: replay determinístico; correção e anulação retroativas mudam o resultado
+ok 56 - replay determinístico; correção e anulação retroativas mudam o resultado
+# Subtest: limites: atributos e OVR sempre entre 40 e 99, DIS entre 50 e 99
+ok 57 - limites: atributos e OVR sempre entre 40 e 99, DIS entre 50 e 99
+# Subtest: JS = protótipo Python V7.7 (800 carreiras aleatórias, até 3 temporadas) e 21/21 checagens do protótipo
+ok 58 - JS = protótipo Python V7.7 (800 carreiras aleatórias, até 3 temporadas) e 21/21 checagens do protótipo
+# Subtest: V7.7 ponta a ponta: servidor = motor JS a partir do roteiro
+ok 59 - V7.7 ponta a ponta: servidor = motor JS a partir do roteiro
+# \# SQL x JS: 2.400 fórmulas, 3153 rodadas e 250 carreiras; maior diferença 1.42e-14
+# Subtest: SQL = JS no núcleo V7.7 (funções puras, rodada a rodada e carreira completa)
+ok 60 - SQL = JS no núcleo V7.7 (funções puras, rodada a rodada e carreira completa)
+# Subtest: lista todos os arquivos de uma pasta com mais de 1.000
+ok 61 - lista todos os arquivos de uma pasta com mais de 1.000
+# Subtest: candidatos: todos os antigos, nenhum recente, sem repetir
+ok 62 - candidatos: todos os antigos, nenhum recente, sem repetir
+# Subtest: página exata (múltiplo do limite) também termina
+ok 63 - página exata (múltiplo do limite) também termina
+# tests 63
+# suites 0
+# pass 63
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 20006.295967
+exit 0

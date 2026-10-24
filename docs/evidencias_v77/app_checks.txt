@@ -1,0 +1,37 @@
+== tsc
+tsc ok
+== lint
+> app@1.0.0 lint
+> expo lint
+
+== testes
+ok 1 - carta V7.7 de jogador de linha: DEF, LET, APR, RES, DIS (sem REF)
+ok 2 - carta V7.7 de goleiro: REF no lugar de LET, nunca os dois
+ok 3 - V7.7 em avaliação (menos de 5 partidas): sem OVR
+ok 4 - cartas antigas continuam como eram (V5 e v1)
+ok 5 - votação com mais de 1 hora fica entre as pendências normais
+ok 6 - votação com até 1 hora restante é urgente
+ok 7 - votação encerrada não aparece como aberta
+ok 8 - prorrogação além de 1 hora tira a votação do estado urgente
+ok 9 - a urgência segue o relógio do servidor, não o do aparelho
+ok 10 - tempo restante legível
+ok 11 - a Central se reavalia ao entrar na última hora e no fim do prazo
+ok 12 - variação positiva desde a última publicação
+ok 13 - variação negativa
+ok 14 - variação neutra
+ok 15 - sem publicação anterior comparável: sem variação
+ok 16 - vários eventos da mesma partida contam pelo último; recálculos sem partida ficam fora
+ok 17 - nota da partida só depois da publicação
+ok 18 - avaliação insuficiente
+ok 19 - quem não jogou não recebe nota; partida sem votação não mostra nota
+ok 20 - resultado pelo time do jogador
+ok 21 - seleção de pelada: guardada, senão principal, senão a primeira
+ok 22 - isolamento: só itens da pelada escolhida
+ok 23 - sessão grande é dividida em partes de até CHUNK e lida inteira
+ok 24 - regravar menor apaga as partes que sobraram
+ok 25 - sessão antiga do AsyncStorage migra sem deslogar e sai de lá
+ok 26 - parte faltando devolve null (sem sessão corrompida)
+ok 27 - sair apaga tudo, inclusive no AsyncStorage
+# tests 27
+# pass 27
+# fail 0

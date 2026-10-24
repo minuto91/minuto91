@@ -21,7 +21,7 @@ function Gate() {
     const open = first === 'termos' || first === 'privacidade' || first === 'redefinir-senha';
     if (!session) {
       // A vitrine de Cards (só em desenvolvimento) abre sem login, para conferir o desenho.
-      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && (first === 'dev-cards' || first === 'dev-v42' || first === 'dev-v43' || first === 'dev-v44' || first === 'dev-v45' || first === 'dev-v46' || first === 'dev-v5' || first === 'dev-central'))) router.replace('/login');
+      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && (first === 'dev-cards' || first === 'dev-v42' || first === 'dev-v43' || first === 'dev-v44' || first === 'dev-v45' || first === 'dev-v46' || first === 'dev-v5' || first === 'dev-v77' || first === 'dev-central'))) router.replace('/login');
       return;
     }
     if (onboarded === null) return;
