@@ -1,0 +1,310 @@
+[
+  {
+    "file": "anon_login-320.png",
+    "url": "/login",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "anon_termos-320.png",
+    "url": "/termos",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "anon_privacidade-320.png",
+    "url": "/privacidade",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "anon_redefinir-senha-320.png",
+    "url": "/redefinir-senha",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_inicio-320.png",
+    "url": "/",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_peladas-320.png",
+    "url": "/peladas",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_carreira-320.png",
+    "url": "/carreira",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_perfil-320.png",
+    "url": "/perfil",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_conta-320.png",
+    "url": "/conta",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_guia-cards-320.png",
+    "url": "/guia-cards",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_criar-pelada-320.png",
+    "url": "/criar-pelada",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-partidas-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/partidas",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-elenco-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/elenco",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-jogadores-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/jogadores",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-rankings-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/rankings",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-temporadas-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/temporadas",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-escalacoes-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/escalacoes",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-sorteio-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/sorteio",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-duelo-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/duelo",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-retrospectiva-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/retrospectiva",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-convidar-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/convidar",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-configuracoes-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/configuracoes",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-premium-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/premium",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_financeiro-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/financeiro",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_financeiro-cobrancas-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/financeiro/cobrancas",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_financeiro-lancamentos-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/financeiro/lancamentos",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_financeiro-mensalistas-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/financeiro/mensalistas",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_financeiro-relatorio-320.png",
+    "url": "/pelada/840a2b7b-4d26-485d-82cb-116d10cb50dc/financeiro/relatorio",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_partida-finalizada-320.png",
+    "url": "/partida/c141a333-9abd-4581-b900-33227187d18b",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_partida-votacao-aberta-320.png",
+    "url": "/partida/11c231b5-989d-436b-8067-847d8bb68cc0",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_partida-sumula-320.png",
+    "url": "/partida/c141a333-9abd-4581-b900-33227187d18b/sumula",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_jogador-carta-320.png",
+    "url": "/jogador/e7d1adc3-3854-4bfa-b840-5d356b2abae3",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_jogador-goleiro-REF-320.png",
+    "url": "/jogador/61f2721e-563b-4e8f-953f-50080820b595",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_jogador-em-avaliacao-320.png",
+    "url": "/jogador/dde8c34b-3214-47ae-8f32-961a5189a97c",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_jogador-album-320.png",
+    "url": "/jogador/e7d1adc3-3854-4bfa-b840-5d356b2abae3/album",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_atleta-320.png",
+    "url": "/atleta/c0a61000-0000-4000-8000-000000000002",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "admin_pelada-resenha-320.png",
+    "url": "/pelada/9132ff62-d01b-4d64-8889-2d6161757d97",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "jogador_inicio-central-320.png",
+    "url": "/",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "jogador_votar-320.png",
+    "url": "/partida/11c231b5-989d-436b-8067-847d8bb68cc0/votar",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "jogador_partida-urgente-320.png",
+    "url": "/partida/abef2438-1a91-4fcb-adeb-4fb09434f20a",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "jogador_carreira-320.png",
+    "url": "/carreira",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "vazio_inicio-sem-pelada-320.png",
+    "url": "/",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  },
+  {
+    "file": "vazio_peladas-vazio-320.png",
+    "url": "/peladas",
+    "pageErrors": [],
+    "httpErrors": [],
+    "horizontalScroll": false
+  }
+]
