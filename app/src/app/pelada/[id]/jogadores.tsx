@@ -142,12 +142,12 @@ export default function Jogadores() {
                   title={m.id === successor ? 'Remover sucessor' : 'Indicar como sucessor'}
                   onPress={() => rpc('set_successor', { p_pelada: id, p_membership: m.id === successor ? null : m.id })}
                 />
-                <Pressable onPress={() => setManaging(null)} accessibilityRole="button">
+                <Pressable onPress={() => setManaging(null)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
                   <Text style={{ color: colors.muted, textAlign: 'center', paddingVertical: 4 }}>Fechar</Text>
                 </Pressable>
               </View>
             ) : (
-              <Pressable onPress={() => setManaging(m.id)} accessibilityRole="button">
+              <Pressable onPress={() => setManaging(m.id)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
                 <Text style={{ color: colors.blue, fontWeight: '600', marginTop: 4 }}>Gerenciar</Text>
               </Pressable>
             ))}

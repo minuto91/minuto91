@@ -326,7 +326,7 @@ export default function Home() {
         </View>
       )}
       {purgeAfter && (
-        <Pressable onPress={() => router.push('/conta')} accessibilityRole="button">
+        <Pressable onPress={() => router.push('/conta')} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
           <Card>
             <Text style={{ color: colors.ink, fontWeight: '600' }}>
               Sua conta será apagada em {new Date(purgeAfter).toLocaleDateString('pt-BR')}.

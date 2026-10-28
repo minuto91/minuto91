@@ -127,7 +127,7 @@ export default function Conta() {
       <ErrorText>{msg}</ErrorText>
       {ok && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{ok}</Text>}
 
-      <Pressable onPress={() => router.push('/perfil')} accessibilityRole="button">
+      <Pressable onPress={() => router.push('/perfil')} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
         <Card>
           <Body>Meu perfil ›</Body>
           <Sub>Foto, nome e pé dominante. A posição e o Card ficam em cada pelada.</Sub>

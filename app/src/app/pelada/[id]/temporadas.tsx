@@ -113,7 +113,7 @@ export default function Temporadas() {
       ))}
 
       {seasons && isAdmin && !premium && (
-        <Sub>Sem Pelada Premium, a temporada é o ano civil (1º de janeiro a 31 de dezembro). Temporadas personalizadas são da Pelada Premium.</Sub>
+        <Sub>No Basic a temporada é o ano civil. Temporada personalizada é Premium.</Sub>
       )}
       {seasons && isAdmin && premium && (
         <Card>

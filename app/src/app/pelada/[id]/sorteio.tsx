@@ -162,7 +162,7 @@ export default function Sorteio() {
   return (
     <Screen>
       <Title>Sorteio de times</Title>
-      <Sub>Regras, nesta ordem: 1) em cada posição, no máximo 1 jogador de diferença entre os times (goleiros separados); 2) totais com no máximo 1 de diferença; 3) overall equilibrado sem quebrar 1 e 2.</Sub>
+      <Sub>Equilibra posições, quantidade e overall.</Sub>
 
       {!draft && (
         <>

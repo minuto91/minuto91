@@ -98,7 +98,7 @@ export default function Convite() {
     return (
       <Screen>
         <Title>Você foi convidado</Title>
-        <Sub>Entre ou crie sua conta para aceitar o convite. Ele fica guardado e abre de novo depois do cadastro.</Sub>
+        <Sub>Entre ou crie sua conta para aceitar.</Sub>
         <Button title="Entrar ou criar conta" onPress={() => router.replace('/login')} />
       </Screen>
     );
@@ -106,8 +106,8 @@ export default function Convite() {
   if (joined)
     return (
       <Screen>
-        <Title>Você entrou em {joined.name}!</Title>
-        <Sub>Complete seu perfil para os colegas te reconhecerem: foto e pé dominante. Leva menos de um minuto.</Sub>
+        <Title>Você entrou em {joined.name}</Title>
+        <Sub>Complete seu perfil: foto e pé dominante.</Sub>
         <Button title="Completar meu perfil" onPress={() => router.replace('/perfil')} />
         <Button title="Agora não, abrir a pelada" kind="secondary" onPress={() => router.replace({ pathname: '/pelada/[id]', params: { id: joined.peladaId } })} />
       </Screen>
@@ -153,7 +153,7 @@ export default function Convite() {
         </Card>
       ) : null}
       {rejoin ? (
-        <Sub>Seu histórico nesta pelada continua guardado. Você volta com a mesma posição (dá para mudar depois).</Sub>
+        <Sub>Seu histórico continua guardado.</Sub>
       ) : (
         <>
           <Sub>Escolha sua posição nessa pelada. Você pode mudar depois.</Sub>

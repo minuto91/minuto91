@@ -193,7 +193,7 @@ export function NotificationSettings() {
   return (
     <View style={{ gap: 10 }}>
       {status === 'unsupported' && (
-        <Sub>Os avisos no celular funcionam no app instalado pela loja (ou na versão de teste instalada). Aqui eles não chegam.</Sub>
+        <Sub>Avisos só no app instalado.</Sub>
       )}
       {status === 'denied' && <Sub>Os avisos estão bloqueados nos ajustes do celular. Libere em Ajustes &gt; Minuto 91 &gt; Notificações.</Sub>}
       {status === 'undetermined' && <Button title="Ativar avisos neste celular" onPress={ativar} loading={busy} />}

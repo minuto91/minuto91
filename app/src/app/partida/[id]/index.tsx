@@ -398,7 +398,7 @@ export default function Partida() {
           {!voting && <Sub>Resultado oficial. Contam gols, assistências e presença.</Sub>}
           {voting && voting.is_valid === false && (
             // Votação no formato antigo (antes da V5) encerrada sem votos suficientes. Não é regra das votações atuais.
-            <Sub>Votação antiga sem votos suficientes: sem notas oficiais nem prêmios da votação nesta partida.</Sub>
+            <Sub>Votação antiga sem votos suficientes.</Sub>
           )}
           {awardNames('match_craque') !== '' && <Body>Craque da Partida: {awardNames('match_craque')}</Body>}
           {awardNames('bola_murcha') !== '' && <Body>Bola Murcha: {awardNames('bola_murcha')}</Body>}
@@ -472,7 +472,7 @@ export default function Partida() {
       {annulled && (
         <Card>
           <AnnulledBadge />
-          <Sub>Esta partida foi anulada e não conta para resultados. Placar, gols, cartões, notas e prêmios dela ficam fora do ar.</Sub>
+          <Sub>Anulada: não conta para nada.</Sub>
           <MatchStatusTimeline matchId={id} admin={isAdmin} refreshKey={statusKey} />
         </Card>
       )}

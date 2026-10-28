@@ -165,7 +165,7 @@ export default function PeladaPremium() {
           </Body>
         )}
         {!ent.is_premium && <Body>Esta pelada está no plano Básico (grátis).</Body>}
-        <Sub>Uma assinatura por pelada: só o administrador contrata, e vale para todos os jogadores dela. Não passa para outras peladas.</Sub>
+        <Sub>R$ 29,90/mês por pelada. Só o administrador contrata; vale para todos dela.</Sub>
       </Card>
 
       <Card>

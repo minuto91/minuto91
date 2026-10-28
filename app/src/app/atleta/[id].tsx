@@ -65,7 +65,7 @@ export default function Atleta() {
       <Screen>
         <Title>{displayName}</Title>
         <Card>
-          <Sub>Este jogador deixou o perfil e a carreira privados. O Card dele continua na pelada de vocês.</Sub>
+          <Sub>Perfil privado.</Sub>
         </Card>
       </Screen>
     );

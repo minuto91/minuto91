@@ -269,7 +269,7 @@ export default function Escalacoes() {
   return (
     <Screen>
       <Title>Escalações</Title>
-      <Sub>Times definidos antes do jogo. Gols e assistências continuam sendo lançados na súmula depois da partida.</Sub>
+      <Sub>Times antes do jogo.</Sub>
       <ErrorText>{msg}</ErrorText>
       {msg && !lineups && <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />}
       {!lineups && !msg && <LoadingBlock />}
@@ -319,7 +319,7 @@ export default function Escalacoes() {
       {isStaff && !premium && (
         <Card>
           <Body>Escalação antes do jogo e sorteio automático</Body>
-          <Sub>Recursos da Pelada Premium. A escalação depois do jogo continua grátis, na tela de cada partida.</Sub>
+          <Sub>Recurso Premium (R$ 29,90/mês por pelada).</Sub>
           <Button title="Conhecer a Pelada Premium" kind="secondary" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
         </Card>
       )}

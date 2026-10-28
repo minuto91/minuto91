@@ -54,7 +54,7 @@ export function ReportLink({
   if (sent) return <Sub>Denúncia enviada. Nossa equipe vai analisar.</Sub>;
   if (!open) {
     return (
-      <Pressable onPress={() => setOpen(true)}>
+      <Pressable onPress={() => setOpen(true)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
         <Text style={{ color: colors.danger, fontWeight: '600' }}>{label}</Text>
       </Pressable>
     );

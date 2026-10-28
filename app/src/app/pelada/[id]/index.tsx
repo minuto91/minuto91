@@ -337,7 +337,7 @@ export default function CentralDaRodada() {
               {isAdmin && <Button title="Convidar jogadores" onPress={convidar} />}
             </>
           ) : (
-            <Sub>Quando o administrador lançar a súmula depois do jogo, o resultado, a votação e os destaques aparecem aqui.</Sub>
+            <Sub>O resultado aparece aqui depois da súmula.</Sub>
           )}
         </View>
       )}

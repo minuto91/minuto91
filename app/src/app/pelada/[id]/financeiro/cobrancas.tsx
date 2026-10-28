@@ -11,6 +11,7 @@ import { fmtDate } from '../../../../lib/match';
 import { CHARGE_KIND, centsToInput, fmtDay, formatBRL, methodLabel, METHODS, monthShift, newRequestId, parseBRL } from '../../../../lib/money';
 import { Page, usePaged } from '../../../../lib/paging';
 import { supabase } from '../../../../lib/supabase';
+import { useSticky } from '../../../../lib/sticky';
 import { colors } from '../../../../lib/theme';
 import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, ListScreen, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
 
@@ -40,7 +41,7 @@ export default function Cobrancas() {
   const { id, status: initialStatus } = useLocalSearchParams<{ id: string; status?: string }>();
   const today = todayIn();
   const [status, setStatus] = useState<string>(STATUS.some((s) => s.value === initialStatus) ? String(initialStatus) : 'open');
-  const [period, setPeriod] = useState<string>('all');
+  const [period, setPeriod] = useSticky<string>(`cobrancas:${id}:period`, 'all');
   const [person, setPerson] = useState<Person | null>(null);
   const [people, setPeople] = useState<People | null>(null);
   const [matches, setMatches] = useState<{ id: string; played_at: string; team_a_name: string; team_b_name: string }[]>([]);

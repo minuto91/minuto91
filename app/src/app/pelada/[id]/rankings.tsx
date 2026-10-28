@@ -8,6 +8,7 @@ import { AWARD_LABEL, currentSeason, fmtMonth, loadSeasons, Season, TIER } from 
 import { friendly } from '../../../lib/errors';
 import { fmtRating, loadMembers, Member } from '../../../lib/match';
 import { supabase } from '../../../lib/supabase';
+import { useSticky } from '../../../lib/sticky';
 import { colors } from '../../../lib/theme';
 import { Body, Button, Card, Chips, EmptyState, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 import { RankingRow } from '../../../lib/domain';
@@ -54,7 +55,7 @@ export default function Rankings() {
   const [photos, setPhotos] = useState<Record<string, string | null>>({});
   const [seasons, setSeasons] = useState<Season[]>([]);
   const [seasonId, setSeasonId] = useState<string | null>(null);
-  const [metric, setMetric] = useState<Metric>('goals');
+  const [metric, setMetric] = useSticky<Metric>(`rankings:${id}:metric`, 'goals');
   const [rows, setRows] = useState<Row[] | null>(null);
   const [tiers, setTiers] = useState<Record<string, keyof typeof TIER>>({});
   const [records, setRecords] = useState<Records | null>(null);

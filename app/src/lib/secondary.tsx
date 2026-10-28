@@ -51,7 +51,7 @@ export function MySecondaryPosition({ peladaId, membershipId, primary }: { pelad
           ? `${sectorName(cur.secondary_position)} · ${cur.secondary_status === 'confirmed' ? 'confirmada pela administração' : 'aguardando confirmação'}`
           : 'Nenhuma. Se você também joga em outro setor, indique aqui.'}
       </Sub>
-      <Sub>Confirmada, ela vale tanto quanto a principal na Seleção da Rodada. Seu Card continua pela posição principal.</Sub>
+      <Sub>Vale na Seleção da Rodada quando a administração confirma que você jogou nela. O Card segue a principal.</Sub>
       <Chips options={options} value={pick ?? cur.secondary_position} onChange={(v) => setPick(v)} />
       {pick && pick !== cur.secondary_position && <Button title={`Pedir ${sectorName(pick)}`} onPress={() => save(pick)} loading={busy} />}
       {cur.secondary_position && <Button title="Remover secundária" kind="ghost" onPress={() => save(null)} disabled={busy} />}

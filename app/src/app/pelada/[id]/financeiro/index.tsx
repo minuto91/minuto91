@@ -252,7 +252,7 @@ export default function Financeiro() {
       {access.is_admin && (
         <Card>
           <Body>Quem acessa o Financeiro</Body>
-          <Sub>Você (administrador) sempre. Assistentes só com a sua autorização. Jogadores não veem valores da pelada.</Sub>
+          <Sub>Assistentes só com sua autorização. Jogadores não veem valores.</Sub>
           {(access.assistants ?? []).length === 0 && <Sub>Nenhum assistente na pelada.</Sub>}
           {(access.assistants ?? []).map((a) => (
             <View key={a.membership_id} style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44, gap: 8 }}>

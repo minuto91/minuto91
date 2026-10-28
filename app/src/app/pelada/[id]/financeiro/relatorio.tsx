@@ -244,7 +244,7 @@ export default function Relatorio() {
       )}
       {tab === 'historico' && (
         <>
-          <Sub>Tudo o que muda no Financeiro fica registrado: quem, quando e os valores antes e depois. Nada é apagado.</Sub>
+          <Sub>Quem, quando e o que mudou. Nada é apagado.</Sub>
           {!events && !msg && <LoadingBlock />}
           {events?.length === 0 && <Sub>Nada registrado ainda.</Sub>}
           {events?.map((e) => {

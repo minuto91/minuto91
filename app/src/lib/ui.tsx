@@ -9,6 +9,9 @@ export function Screen({ children }: { children: ReactNode }) {
     <ScrollView
       style={{ backgroundColor: colors.white }}
       contentContainerStyle={{ padding: 20, gap: 12, flexGrow: 1 }}
+      // REV-043: o teclado não cobre o campo (iOS ajusta o recuo; Android já redimensiona) e some ao rolar.
+      automaticallyAdjustKeyboardInsets
+      keyboardDismissMode="interactive"
       keyboardShouldPersistTaps="handled">
       {children}
     </ScrollView>
@@ -43,6 +46,8 @@ export function ListScreen<T>({
       style={{ backgroundColor: colors.white }}
       contentContainerStyle={{ padding: 20, flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
+      automaticallyAdjustKeyboardInsets
+      keyboardDismissMode="interactive"
       data={data ?? []}
       keyExtractor={keyExtractor}
       renderItem={({ item }) => <>{renderItem(item)}</>}

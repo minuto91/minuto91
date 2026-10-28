@@ -318,7 +318,7 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
                   )
                 }
               />
-              <Sub>Ou reabrir excepcionalmente (uma vez por anulação/restauração; os votos já dados continuam valendo):</Sub>
+              <Sub>Ou reabrir (uma vez; votos já dados continuam):</Sub>
               <Chips
                 options={[
                   { value: '1', label: '1 h' },

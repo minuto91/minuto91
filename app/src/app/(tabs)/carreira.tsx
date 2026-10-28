@@ -12,6 +12,7 @@ import { EvolutionChart, useEvolution } from '../../lib/evolution';
 import { fmtRating } from '../../lib/match';
 import { TotalsGrid } from '../../lib/profile';
 import { useAuth } from '../../lib/session';
+import { useSticky } from '../../lib/sticky';
 import { supabase } from '../../lib/supabase';
 import { colors, footLabel, positionLabel } from '../../lib/theme';
 import { MatchHistory } from '../../lib/history';
@@ -34,8 +35,8 @@ export default function Carreira() {
   const [primary, setPrimary] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
-  const [scope, setScope] = useState<string>('all'); // 'all' ou pelada_id
-  const [season, setSeason] = useState<string | null>(null);
+  const [scope, setScope] = useSticky<string>('carreira:scope', 'all'); // 'all' ou pelada_id (REV-035: lembrado)
+  const [season, setSeason] = useSticky<string | null>('carreira:season', null);
 
   useFocusEffect(
     useCallback(() => {
@@ -166,7 +167,7 @@ export default function Carreira() {
           <Sub>Média de nota na temporada: {seasonRow.avg_final_rating !== null ? fmtRating(Number(seasonRow.avg_final_rating)) : '–'}</Sub>
         )}
         {career.partial && !selected && (
-          <Sub>Temporadas antigas de peladas no Básico ficam de fora; o histórico completo é da Pelada Premium de cada pelada.</Sub>
+          <Sub>Temporadas antigas do Basic ficam de fora.</Sub>
         )}
       </Card>
 

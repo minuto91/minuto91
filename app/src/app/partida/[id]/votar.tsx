@@ -194,7 +194,7 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
         <Body>
           Você avaliou {v.rated} de {targets.length} jogadores. Dá para mudar suas notas até o fim do prazo.
         </Body>
-        <Sub>As notas aparecem para todos só depois que o administrador publicar. Ninguém vê quem deu cada nota.</Sub>
+        <Sub>Ninguém vê quem deu cada nota.</Sub>
         <Button title="Revisar notas" kind="secondary" onPress={() => setDone(false)} />
         <Button title="Voltar para a partida" onPress={() => router.back()} />
       </Screen>

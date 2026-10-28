@@ -42,7 +42,7 @@ export default function GuiaCards() {
       </Card>
       <Card>
         <Body>Álbum de Figurinhas</Body>
-        <Sub>Colecionáveis e marcos que você acumula jogando (por exemplo, 5 e 10 vezes Craque da Partida). É separado dos troféus.</Sub>
+        <Sub>Marcos que você acumula jogando, em todas as peladas.</Sub>
       </Card>
       <Button title="Ver Minha Carreira" onPress={() => router.replace('/carreira')} />
     </Screen>

@@ -10,6 +10,7 @@ import { Card as CardData, cardOverall, currentSeason, loadSeasons, Season, TIER
 import { Crest } from '../../../lib/crest';
 import { friendly } from '../../../lib/errors';
 import { supabase } from '../../../lib/supabase';
+import { useSticky } from '../../../lib/sticky';
 import { colors, POSITIONS, positionLabel, positionSector, SECTORS } from '../../../lib/theme';
 import { Body, Button, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
@@ -39,10 +40,10 @@ export default function Elenco() {
   const [seasonId, setSeasonId] = useState<string | null>(null);
   const [rows, setRows] = useState<Row[] | null>(null);
   const [photos, setPhotos] = useState<Record<string, string | null>>({});
-  const [view, setView] = useState<'cartas' | 'lista'>('cartas');
-  const [sort, setSort] = useState<'overall' | 'nome'>('overall');
-  const [sector, setSector] = useState<string>(ALL);
-  const [pos, setPos] = useState<string>(ALL);
+  const [view, setView] = useSticky<'cartas' | 'lista'>(`elenco:${id}:view`, 'cartas');
+  const [sort, setSort] = useSticky<'overall' | 'nome'>(`elenco:${id}:sort`, 'overall');
+  const [sector, setSector] = useSticky<string>(`elenco:${id}:sector`, ALL);
+  const [pos, setPos] = useSticky<string>(`elenco:${id}:pos`, ALL);
   const [query, setQuery] = useState('');
   const [limit, setLimit] = useState(PAGE);
   const [msg, setMsg] = useState<string | null>(null);

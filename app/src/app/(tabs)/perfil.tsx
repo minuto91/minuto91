@@ -171,7 +171,7 @@ export default function Perfil() {
               <Card>
                 <View style={{ alignItems: 'center', gap: 10, paddingVertical: 6 }}>
                   <Avatar path={me.avatar_path} name={me.display_name} size={120} />
-                  <Sub>Aparece no seu perfil e nos seus Cards, para quem joga com você (e para todos, se o perfil for público).</Sub>
+                  <Sub>Aparece no perfil e nos Cards.</Sub>
                 </View>
                 <Button
                   title={me.avatar_path ? 'Trocar foto' : 'Escolher foto'}

@@ -232,7 +232,7 @@ export function TrophyRoom({ userId, counts, partial, shareName }: { userId: str
           );
         })}
       </View>
-      {partial && <Sub>Contagem das temporadas disponíveis. O histórico completo de cada pelada é da Pelada Premium.</Sub>}
+      {partial && <Sub>Temporadas disponíveis no seu plano.</Sub>}
       {open && (
         <View style={{ borderWidth: 1, borderColor: colors.line, borderRadius: 12, padding: 12, gap: 6 }}>
           <Text style={{ fontWeight: '800', color: colors.deepBlue }}>{TROPHIES.find((t) => t.type === open)!.label}</Text>
