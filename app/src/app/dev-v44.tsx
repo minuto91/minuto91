@@ -17,7 +17,7 @@ const ROWS: Row[] = Array.from({ length: 2000 }, (_, i) => {
   const status = i % 10 === 0 ? 'pending' : i % 10 === 1 ? 'partial' : 'paid';
   return { id: String(i), name: `Jogador ${(i % 40) + 1}`, due, paid: status === 'pending' ? 0 : status === 'partial' ? Math.floor(due / 2) : due, status };
 });
-const COUNTS: Record<TrophyType, number> = { match_craque: 7, monthly_king: 2, bola_murcha: 0, monthly_garcom: 1 };
+const COUNTS: Record<TrophyType, number> = { match_craque: 7, monthly_king: 2, bola_murcha: 0, monthly_garcom: 1, top_scorer: 2 };
 
 export default function DevV44() {
   const [page, setPage] = useState(1);

@@ -76,6 +76,7 @@ export default function Home() {
   const top = useTopInset();
   const uid = session?.user.id ?? '';
   const [data, setData] = useState<Central | null>(null);
+  const [admin, setAdmin] = useState<AdminPending[]>([]);
   const [err, setErr] = useState<string | null>(null);
   const [career, setCareer] = useState<CareerSummary | null>(null);
   const [careerErr, setCareerErr] = useState<string | null>(null);
@@ -113,12 +114,14 @@ export default function Home() {
         if (!uid) return;
         void reload;
         const asked = Date.now();
-        const [{ data: st }, central, ratingVotes] = await Promise.all([
+        const [{ data: st }, central, ratingVotes, adminPending] = await Promise.all([
           supabase.rpc('get_account_status'),
           supabase.rpc('get_player_central'),
           supabase.rpc('get_my_pending_rating_votes'),
+          supabase.rpc('get_my_admin_pending'),
         ]);
         if (!alive) return;
+        setAdmin((adminPending.data ?? []) as AdminPending[]);
         setPurgeAfter((st as { purge_after: string | null } | null)?.purge_after ?? null);
         // Falha de rede não vira "nenhuma pelada".
         if (central.error || !central.data) return setErr('Não foi possível carregar a sua Central. Verifique a internet e tente de novo.');
@@ -244,6 +247,19 @@ export default function Home() {
       tone: 'blue' as const,
       onPress: () => selectPelada(v.pelada_id),
     })),
+    // REV-028: resumo das pendências administrativas (só peladas que a pessoa administra, só o que existe).
+    // A ação detalhada fica dentro da pelada; rascunhos continuam no item próprio abaixo.
+    ...admin
+      .map((a) => ({ a, text: adminSummary(a) }))
+      .filter((x) => x.text)
+      .map(({ a, text }) => ({
+        key: `adm${a.pelada_id}`,
+        title: a.pelada_name,
+        detail: text,
+        action: 'Ver',
+        tone: 'gold' as const,
+        onPress: () => router.push({ pathname: '/pelada/[id]', params: { id: a.pelada_id } }),
+      })),
     ...(pelada && pelada.drafts > 0
       ? [
           {
@@ -477,4 +493,30 @@ function guideSteps(c: Central, push: (h: Href) => void) {
     { key: 'p4', label: 'Conhecer Minha Carreira', done: !!c.guide.seen.career, go: go('/carreira') },
     { key: 'p5', label: 'Entender Cards e premiações', done: !!c.guide.seen.cards, go: go('/guia-cards') },
   ];
+}
+
+type AdminPending = {
+  pelada_id: string;
+  pelada_name: string;
+  keeper_claims?: number;
+  secondary_requests?: number;
+  position_requests?: number;
+  billing_pending?: number;
+  votes_suspended?: number;
+};
+
+const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
+
+/** Uma linha curta por pelada; vazio quando não há nada além de rascunhos (que têm item próprio). */
+function adminSummary(a: AdminPending) {
+  return [
+    a.billing_pending ? plural(a.billing_pending, 'classificação de mensalista', 'classificações de mensalista') : null,
+    a.keeper_claims ? plural(a.keeper_claims, 'defesa para revisar', 'defesas para revisar') : null,
+    a.position_requests || a.secondary_requests
+      ? plural((a.position_requests ?? 0) + (a.secondary_requests ?? 0), 'pedido de posição', 'pedidos de posição')
+      : null,
+    a.votes_suspended ? plural(a.votes_suspended, 'votação interrompida', 'votações interrompidas') : null,
+  ]
+    .filter(Boolean)
+    .join(' · ');
 }

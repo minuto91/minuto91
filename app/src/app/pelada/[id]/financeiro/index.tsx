@@ -81,7 +81,7 @@ export default function Financeiro() {
     }, [id, reload]),
   );
 
-  const go = (path: 'cobrancas' | 'mensalistas' | 'lancamentos' | 'relatorio', status?: string) =>
+  const go = (path: 'cobrancas' | 'lote' | 'mensalistas' | 'lancamentos' | 'relatorio', status?: string) =>
     router.push({ pathname: `/pelada/[id]/financeiro/${path}`, params: status ? { id, status } : { id } });
 
   async function gerar() {
@@ -196,6 +196,7 @@ export default function Financeiro() {
             {(
               [
                 ['cobrancas', 'Cobranças e pendências'],
+                ['lote', 'Pagamentos em lote'],
                 ['mensalistas', 'Mensalistas'],
                 ['lancamentos', 'Receitas e despesas'],
                 ['relatorio', 'Relatórios'],

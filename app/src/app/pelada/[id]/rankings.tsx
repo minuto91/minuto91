@@ -9,7 +9,7 @@ import { friendly } from '../../../lib/errors';
 import { fmtRating, loadMembers, Member } from '../../../lib/match';
 import { supabase } from '../../../lib/supabase';
 import { colors } from '../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, Chips, EmptyState, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
 import { RankingRow } from '../../../lib/domain';
 
 // Em destaque: Artilharia, Assistências e Overall. As demais classificações oficiais continuam em "Mais".
@@ -25,14 +25,6 @@ const MORE = [
 ] as const;
 type Metric = (typeof MAIN)[number]['value'] | (typeof MORE)[number]['value'];
 
-const NOTE: Record<Metric, string> = {
-  goals: 'Gols em partidas finalizadas da temporada.',
-  assists: 'Assistências em partidas finalizadas da temporada.',
-  overall: 'Overall do Card na temporada. Com menos de 5 jogos o Card é provisório.',
-  avg_rating: 'Média das notas finais válidas. Só entra quem teve ao menos uma nota válida.',
-  matches: 'Partidas finalizadas disputadas na temporada.',
-  wins: 'Vitórias em partidas finalizadas da temporada.',
-};
 const UNIT: Record<Metric, [string, string]> = {
   goals: ['gol', 'gols'],
   assists: ['assist.', 'assist.'],
@@ -69,6 +61,7 @@ export default function Rankings() {
   const [month, setMonth] = useState<MonthAward[]>([]);
   const [limit, setLimit] = useState(PAGE);
   const [msg, setMsg] = useState<string | null>(null);
+  const [locked, setLocked] = useState(false);
 
   useEffect(() => {
     let alive = true;
@@ -130,9 +123,12 @@ export default function Rankings() {
       if (error) {
         setRows([]);
         // Grátis: temporada atual e a anterior (RN-083).
-        return setMsg(error.message.includes('PREMIUM_REQUIRED') ? 'Temporadas mais antigas ficam na Pelada Premium.' : friendly(error.message));
+        // REV-018: Média, Jogos e Vitórias são Premium (verificado no servidor); no Basic, temporadas antigas também.
+        if (error.message.includes('PREMIUM_REQUIRED')) return setLocked(true);
+        return setMsg(friendly(error.message));
       }
       setMsg(null);
+      setLocked(false);
       setRows((r ?? []) as Row[]);
       setLimit(PAGE);
     })();
@@ -196,11 +192,15 @@ export default function Rankings() {
         })}
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
-        <Text style={{ color: colors.muted, fontSize: 13 }}>Mais:</Text>
+        <Text style={{ color: colors.darkGold, fontSize: 13, fontWeight: '700' }}>Premium</Text>
         <Chips options={MORE} value={isMore ? metric : null} onChange={pick} />
       </View>
-      <Sub>{NOTE[metric]}</Sub>
       <ErrorText>{msg}</ErrorText>
+      {locked && (
+        <EmptyState title={isMore ? 'Ranking da Pelada Premium' : 'Temporada da Pelada Premium'} hint="R$ 29,90/mês por pelada.">
+          <Button title="Conhecer o Premium" kind="secondary" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
+        </EmptyState>
+      )}
 
       {rows === null ? (
         <Sub>Carregando...</Sub>

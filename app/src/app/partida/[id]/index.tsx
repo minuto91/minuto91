@@ -4,6 +4,7 @@ import { useWindowDimensions, View } from 'react-native';
 import { Text } from '../../../lib/text';
 
 import { AnnulledBadge, AnnulMatch, MatchStatusTimeline, RestoreMatch } from '../../../lib/annul';
+import { CancelledInfo, ScheduleActions } from '../../../lib/cancelmatch';
 import {
   FORMATION,
   PostGameArt,
@@ -315,6 +316,10 @@ export default function Partida() {
 
       {match.status === 'draft' && isStaff && (
         <Button title="Editar súmula" onPress={() => router.push({ pathname: '/partida/[id]/sumula', params: { id } })} />
+      )}
+      {match.status === 'cancelled' && <CancelledInfo matchId={match.id} />}
+      {(match.status === 'draft' || match.status === 'cancelled') && isStaff && (
+        <ScheduleActions matchId={match.id} status={match.status} onDone={() => router.replace({ pathname: '/partida/[id]', params: { id } })} />
       )}
 
       {/* V5: avaliação dos jogadores (abrir, votar, acompanhar e publicar). */}

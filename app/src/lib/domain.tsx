@@ -74,7 +74,6 @@ export function MatchScore({
         numberOfLines={2}>
         {name}
       </Text>
-      {me && <Text style={{ fontSize: 11, fontWeight: '700', letterSpacing: 0.6, color: light ? colors.blue : '#9DB8E8' }}>VOCÊ</Text>}
     </View>
   );
   const scored = scoreA !== null && scoreB !== null;

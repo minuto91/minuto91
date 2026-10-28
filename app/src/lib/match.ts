@@ -56,6 +56,7 @@ export const STATUS_LABEL: Record<string, string> = {
   finalizing: 'Encerrando',
   finalized: 'Finalizada',
   annulled: 'Anulada',
+  cancelled: 'Cancelada',
 };
 
 // V7.7: o placar vem das colunas públicas (nulas em partida anulada); o placar original não é legível pelo app.

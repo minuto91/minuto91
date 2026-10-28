@@ -1,63 +1,55 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Text } from '../../../lib/text';
 
-import { RetroPeladaArt, RetroPlayerArt, RetroRankingsArt, SharePanel } from '../../../lib/arts';
-import { fmtMonth, loadReadableSeasons, plural, Season } from '../../../lib/career';
+import { SharePanel } from '../../../lib/arts';
+import { loadReadableSeasons, Season } from '../../../lib/career';
+import { Skeleton } from '../../../lib/central';
 import { todayIn } from '../../../lib/dates';
 import { friendly } from '../../../lib/errors';
-import { fmtDate } from '../../../lib/match';
-import { PlayerCard } from '../../../lib/playercard';
-import { loadRetro, Retro, Top } from '../../../lib/retro';
+import { useEvolution } from '../../../lib/evolution';
+import { ArtId, COLLECTIVE, INDIVIDUAL, OfficialRetro, RetroArt, RetroTop } from '../../../lib/retroarts';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { colors } from '../../../lib/theme';
-import { Body, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Text } from '../../../lib/text';
+import { colors, type } from '../../../lib/theme';
+import { Button, Chips, EmptyState, ErrorText, Screen, Section, Sub, Title } from '../../../lib/ui';
 
-// Datas da temporada vêm sem hora (AAAA-MM-DD): meio-dia evita cair no dia anterior pelo fuso.
-const fmtDay = (d: string) => new Date(`${d}T12:00:00`).toLocaleDateString('pt-BR');
-const MIN_MATCHES = 3; // com menos que isso a retrospectiva avisa que tem poucos dados
+// REV-019 / REV-026: retrospectiva oficial da temporada, Premium, só depois do fim do calendário E da consolidação
+// (súmulas e votações resolvidas). A versão vem do servidor (nova versão se uma correção mudar os dados).
+// Oito telas navegáveis; as artes (REV-020) ficam no fim, coletivas e individuais.
+type Consolidation = { calendar_closed: boolean; pending_matches: number; pending_votes: number; ready: boolean; premium: boolean };
+const SCREENS = ['Capa', 'Números', 'Artilheiro e garçom', 'Craque', 'Seleção da Rodada', 'Partidas memoráveis', 'Recordes', 'Encerramento'];
 
-// Retrospectiva da temporada: a história da pelada e a sua temporada nela, com artes para compartilhar.
-// Acesso igual ao dos rankings (RN-083): grátis vê a temporada atual e a anterior; o Premium da pelada vê
-// todas e libera a arte especial (rankings da temporada). As estatísticas básicas nunca são bloqueadas.
 export default function Retrospectiva() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id, season: seasonParam } = useLocalSearchParams<{ id: string; season?: string }>();
+  const router = useRouter();
   const { session } = useAuth();
   const uid = session?.user.id;
   const [seasons, setSeasons] = useState<Season[]>([]);
-  const [seasonId, setSeasonId] = useState<string | null>(null);
-  const [premium, setPremium] = useState(false);
+  const [seasonId, setSeasonId] = useState<string | null>(seasonParam ?? null);
   const [pelada, setPelada] = useState<{ name: string; crest_path: string | null } | null>(null);
   const [me, setMe] = useState<{ id: string; player_name: string } | null>(null);
-  const [photo, setPhoto] = useState<string | null>(null);
-  // A14: o resultado guarda a temporada a que pertence; ao trocar de temporada, nada da anterior aparece
-  // (nem na tela nem na arte) até a nova chegar.
-  const [loadedRetro, setLoadedRetro] = useState<{ seasonId: string; data: Retro } | null>(null);
+  const [cons, setCons] = useState<Consolidation | null>(null);
+  const [retro, setRetro] = useState<{ seasonId: string; data: OfficialRetro } | null>(null);
+  const [page, setPage] = useState(0);
   const [msg, setMsg] = useState<string | null>(null);
 
   useEffect(() => {
     let alive = true;
     (async () => {
       const today = todayIn();
-      const [ss, { data: ent }, { data: p }, { data: m }, { data: pr }] = await Promise.all([
+      const [ss, { data: p }, { data: m }] = await Promise.all([
         loadReadableSeasons(id),
-        supabase.rpc('get_pelada_entitlement', { p_pelada: id }),
         supabase.from('peladas').select('name, crest_path').eq('id', id).maybeSingle(),
         supabase.from('pelada_memberships').select('id, player_name').eq('pelada_id', id).eq('user_id', uid ?? '').maybeSingle(),
-        supabase.from('profiles').select('avatar_path').eq('id', uid ?? '').maybeSingle(),
       ]);
       if (!alive) return;
       const started = ss.filter((s) => s.starts_on <= today);
-      setPremium(!!ent?.is_premium);
-      // O servidor já devolve só as liberadas (grátis: atual e anterior); o corte fica como segurança.
-      const visible = ent?.is_premium ? started : started.slice(0, 2);
-      setSeasons(visible);
-      setSeasonId(visible[0]?.id ?? null);
+      setSeasons(started);
+      setSeasonId((cur) => cur ?? started.find((s) => s.ends_on < today)?.id ?? started[0]?.id ?? null);
       setPelada(p);
       setMe(m);
-      setPhoto(pr?.avatar_path ?? null);
     })().catch((e) => alive && setMsg(friendly((e as Error).message)));
     return () => {
       alive = false;
@@ -67,143 +59,94 @@ export default function Retrospectiva() {
   useEffect(() => {
     if (!seasonId) return;
     let alive = true;
+    setCons(null);
+    setPage(0);
     (async () => {
-      const r = await loadRetro(id, seasonId, me?.id ?? null);
-      if (alive) setLoadedRetro({ seasonId, data: r });
-    })().catch((e) => alive && setMsg(friendly((e as Error).message)));
+      const { data: c, error } = await supabase.rpc('get_season_consolidation', { p_season: seasonId });
+      if (!alive) return;
+      if (error) return setMsg(friendly(error.message));
+      setCons(c as Consolidation);
+      if (!(c as Consolidation).ready || !(c as Consolidation).premium) return;
+      const { data, error: e2 } = await supabase.rpc('get_season_retrospective_official', { p_season: seasonId });
+      if (!alive) return;
+      if (e2) return setMsg(friendly(e2.message));
+      setRetro({ seasonId, data: data as OfficialRetro });
+    })();
     return () => {
       alive = false;
     };
-  }, [id, seasonId, me?.id]);
+  }, [seasonId]);
 
-  const season = seasons.find((s) => s.id === seasonId);
-  const retro = loadedRetro && loadedRetro.seasonId === seasonId ? loadedRetro.data : null;
-  const today = todayIn();
-  const partial = !!season && season.ends_on >= today;
+  const evo = useEvolution(me?.id ?? '', me ? seasonId : null);
+  const data = retro && retro.seasonId === seasonId ? retro.data : null;
   const name = pelada?.name ?? '';
-  const p = retro?.pelada;
 
   return (
     <Screen>
       <Title>Retrospectiva</Title>
-      <ErrorText>{msg}</ErrorText>
       {seasons.length > 1 && (
-        <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId ?? ''} onChange={(v) => { setMsg(null); setSeasonId(v); }} />
+        <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={(v) => { setMsg(null); setSeasonId(v); }} />
       )}
-      {!premium && <Sub>Temporadas mais antigas aparecem na Pelada Premium.</Sub>}
-      {season && (
-        <Sub>
-          {fmtDay(season.starts_on)} a {fmtDay(season.ends_on)}
-          {partial ? ' · temporada em andamento: números parciais' : ' · temporada encerrada'}
-        </Sub>
-      )}
-      {!retro && !msg && <Sub>Carregando...</Sub>}
+      <ErrorText>{msg}</ErrorText>
 
-      {p && p.matches === 0 && (
-        <Card>
-          <Body>Ainda não há partidas finalizadas nesta temporada.</Body>
-          <Sub>A retrospectiva aparece depois da primeira partida finalizada.</Sub>
-        </Card>
+      {!cons && !msg && <Skeleton height={220} />}
+      {cons && !cons.premium && (
+        <EmptyState title="Retrospectiva da Pelada Premium" hint="R$ 29,90/mês por pelada.">
+          <Button title="Conhecer o Premium" kind="secondary" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
+        </EmptyState>
+      )}
+      {cons && cons.premium && !cons.ready && (
+        <EmptyState
+          title={cons.calendar_closed ? 'Temporada em consolidação' : 'Temporada em andamento'}
+          hint={
+            cons.calendar_closed
+              ? `Falta resolver ${[cons.pending_matches ? `${cons.pending_matches} partida(s)` : null, cons.pending_votes ? `${cons.pending_votes} votação(ões)` : null].filter(Boolean).join(' e ')}.`
+              : 'A retrospectiva sai depois do encerramento.'
+          }
+        />
       )}
 
-      {p && p.matches > 0 && (
+      {cons?.ready && cons.premium && !data && !msg && <Skeleton height={220} />}
+      {data && (
         <>
-          {p.matches < MIN_MATCHES && <Sub>Poucas partidas até agora: a retrospectiva fica mais completa com o tempo.</Sub>}
-          <Text style={section}>A temporada da pelada</Text>
-          <Card>
-            <Body>
-              {plural(p.matches, 'partida', 'partidas')} · {plural(p.goals, 'gol', 'gols')}
-            </Body>
-            {p.biggestWin && (
-              <Sub>
-                Maior placar: {p.biggestWin.team_a_name} {p.biggestWin.team_a_score} x {p.biggestWin.team_b_score}{' '}
-                {p.biggestWin.team_b_name} ({fmtDate(p.biggestWin.played_at)})
-              </Sub>
-            )}
-            {p.mostGoals && p.mostGoals.id !== p.biggestWin?.id && (
-              <Sub>
-                Jogo com mais gols: {p.mostGoals.team_a_score} x {p.mostGoals.team_b_score} ({fmtDate(p.mostGoals.played_at)})
-              </Sub>
-            )}
-          </Card>
-          <TopCard title="Artilharia" rows={p.scorers} unit={['gol', 'gols']} />
-          <TopCard title="Garçons" rows={p.assisters} unit={['assistência', 'assistências']} />
-          <TopCard title="Craque da Partida" rows={p.craques} unit={['vez', 'vezes']} />
-          <TopCard title="Mais presentes" rows={p.presence} unit={['jogo', 'jogos']} />
-          {p.kings.length > 0 && (
-            <Card>
-              <Body>Reis do Mês</Body>
-              {p.kings.map((k) => (
-                <Sub key={k.month}>
-                  {fmtMonth(k.month)}: {k.names.join(', ')}
-                </Sub>
-              ))}
-            </Card>
-          )}
-          {p.bolaMurcha.length > 0 && (
-            <Card>
-              <Body>Bola Murcha</Body>
-              <Sub>Quem mais recebeu na temporada (fica só aqui, não vai para as artes).</Sub>
-              {p.bolaMurcha.map((r) => (
-                <Sub key={r.membershipId}>
-                  {r.name}: {plural(r.value, 'vez', 'vezes')}
-                </Sub>
-              ))}
-            </Card>
-          )}
+          <View style={{ flexDirection: 'row', gap: 4 }}>
+            {SCREENS.map((s, i) => (
+              <View key={s} style={{ flex: 1, height: 3, borderRadius: 2, backgroundColor: i <= page ? colors.blue : colors.line }} />
+            ))}
+          </View>
+          <View style={{ minHeight: 280, borderWidth: 1, borderColor: colors.line, borderRadius: 16, padding: 20, gap: 12, justifyContent: 'center' }}>
+            <Text style={[type.meta, { textAlign: 'center' }]}>{SCREENS[page].toUpperCase()}</Text>
+            <ScreenBody page={page} r={data} peladaName={name} />
+          </View>
+          <View style={{ flexDirection: 'row', gap: 8 }}>
+            <View style={{ flex: 1 }}>
+              <Button title="Anterior" kind="secondary" disabled={page === 0} onPress={() => setPage(page - 1)} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Button title="Próxima" disabled={page === SCREENS.length - 1} onPress={() => setPage(page + 1)} />
+            </View>
+          </View>
+          <Sub>{`Versão oficial ${data.version}`}</Sub>
 
-          <SharePanel label="Compartilhar retrospectiva da pelada" fileName="minuto91-retrospectiva" title="Retrospectiva da pelada">
-            <RetroPeladaArt peladaName={name} crestPath={pelada?.crest_path} seasonName={season?.name ?? ''} partial={partial} retro={p} />
-          </SharePanel>
-          {premium ? (
-            <SharePanel label="Compartilhar rankings da temporada" fileName="minuto91-rankings-temporada" title="Rankings da temporada">
-              <RetroRankingsArt peladaName={name} crestPath={pelada?.crest_path} seasonName={season?.name ?? ''} partial={partial} retro={p} />
-            </SharePanel>
-          ) : (
-            <Sub>A arte especial com os rankings da temporada é da Pelada Premium.</Sub>
-          )}
-
-          <Text style={section}>Sua temporada</Text>
-          {!retro?.me && <Sub>Você não jogou nenhuma partida finalizada nesta temporada.</Sub>}
-          {retro?.me && me && (
+          <Section>Artes da pelada</Section>
+          {COLLECTIVE.map((a) => (
+            <ArtShare key={a.id} id={a.id} label={a.label} r={data} name={name} crest={pelada?.crest_path ?? null} />
+          ))}
+          {data.me && me && (
             <>
-              <Card>
-                <Body>
-                  {plural(retro.me.matches, 'jogo', 'jogos')} · {plural(retro.me.goals, 'gol', 'gols')} ·{' '}
-                  {plural(retro.me.assists, 'assistência', 'assistências')}
-                </Body>
-                <Sub>
-                  {plural(retro.me.wins, 'vitória', 'vitórias')} · {plural(retro.me.draws, 'empate', 'empates')} ·{' '}
-                  {plural(retro.me.losses, 'derrota', 'derrotas')}
-                </Sub>
-                {retro.me.craque > 0 && <Sub>Craque da Partida: {plural(retro.me.craque, 'vez', 'vezes')}</Sub>}
-                {retro.me.kings > 0 && <Sub>Rei do Mês: {plural(retro.me.kings, 'vez', 'vezes')}</Sub>}
-              </Card>
-              {retro.me.card && (
-                <View style={{ alignItems: 'center' }}>
-                  <PlayerCard
-                    card={retro.me.card}
-                    playerName={me.player_name}
-                    photoPath={photo}
-                    peladaName={name}
-                    crestPath={pelada?.crest_path}
-                    seasonName={season?.name ?? ''}
-                    seasonStart={season?.starts_on}
-                    width={220}
-                  />
-                </View>
-              )}
-              <SharePanel label="Compartilhar minha temporada" fileName="minuto91-minha-temporada" title="Minha temporada">
-                <RetroPlayerArt
-                  peladaName={name}
-                  crestPath={pelada?.crest_path}
-                  seasonName={season?.name ?? ''}
-                  partial={partial}
+              <Section>Minhas artes</Section>
+              {INDIVIDUAL.map((a) => (
+                <ArtShare
+                  key={a.id}
+                  id={a.id}
+                  label={a.label}
+                  r={data}
+                  name={name}
+                  crest={pelada?.crest_path ?? null}
                   playerName={me.player_name}
-                  photoPath={photo}
-                  me={retro.me}
+                  evolution={(evo.data?.points ?? []).map((p) => p.overall).filter((v): v is number => v !== null)}
                 />
-              </SharePanel>
+              ))}
             </>
           )}
         </>
@@ -212,18 +155,81 @@ export default function Retrospectiva() {
   );
 }
 
-function TopCard({ title, rows, unit }: { title: string; rows: Top[]; unit: [string, string] }) {
-  if (!rows.length) return null;
+function ArtShare(props: { id: ArtId; label: string; r: OfficialRetro; name: string; crest: string | null; playerName?: string; evolution?: number[] }) {
   return (
-    <Card>
-      <Body>{title}</Body>
-      {rows.map((r) => (
-        <Sub key={r.membershipId}>
-          {r.rank}. {r.name}: {plural(r.value, unit[0], unit[1])}
-        </Sub>
-      ))}
-    </Card>
+    <SharePanel label={`${props.id} · ${props.label}`} fileName={`minuto91-${props.id.toLowerCase()}`} title={props.label}>
+      <RetroArt id={props.id} retro={props.r} peladaName={props.name} crestPath={props.crest} playerName={props.playerName} evolution={props.evolution} />
+    </SharePanel>
   );
 }
 
-const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 10 };
+const top = (list: RetroTop[], unit: string) =>
+  list.length === 0 ? '—' : list.filter((t) => (t.rank ?? 1) === (list[0].rank ?? 1) && t.value === list[0].value).map((t) => t.name).join(', ') + ` · ${list[0].value} ${unit}`;
+
+function Line({ k, v }: { k: string; v: string }) {
+  return (
+    <View style={{ alignItems: 'center', gap: 2 }}>
+      <Text style={[type.meta, { color: colors.darkGold }]}>{k}</Text>
+      <Text style={[type.body, { textAlign: 'center', fontWeight: '700' }]}>{v}</Text>
+    </View>
+  );
+}
+
+function ScreenBody({ page, r, peladaName }: { page: number; r: OfficialRetro; peladaName: string }) {
+  const big = { fontSize: 40, fontWeight: '900' as const, color: colors.blue, textAlign: 'center' as const };
+  switch (page) {
+    case 0:
+      return (
+        <>
+          <Text style={big}>{r.season.name}</Text>
+          <Text style={[type.body, { textAlign: 'center' }]}>{peladaName}</Text>
+        </>
+      );
+    case 1:
+      return (
+        <>
+          <Line k="PARTIDAS" v={String(r.matches)} />
+          <Line k="GOLS" v={String(r.goals)} />
+          <Line k="MESES COM REI" v={String(r.kings.length)} />
+        </>
+      );
+    case 2:
+      return (
+        <>
+          <Line k="ARTILHEIRO" v={top(r.scorers, 'gols')} />
+          <Line k="GARÇOM" v={top(r.assisters, 'assistências')} />
+        </>
+      );
+    case 3:
+      return r.craques.length > 0 ? <Line k="MAIS VEZES CRAQUE DA PARTIDA" v={top(r.craques, '×')} /> : <Sub>Sem Craque oficial nesta temporada.</Sub>;
+    case 4:
+      return r.selection_leaders.length > 0 ? (
+        <>
+          {r.selection_leaders.slice(0, 5).map((t) => (
+            <Line key={t.membership_id} k={`${t.value}× NA SELEÇÃO`} v={t.name} />
+          ))}
+        </>
+      ) : (
+        <Sub>Sem Seleção da Rodada publicada.</Sub>
+      );
+    case 5:
+      return (
+        <>
+          {r.biggest_win && <Line k="MAIOR GOLEADA" v={`${r.biggest_win.team_a_name} ${r.biggest_win.team_a_score}–${r.biggest_win.team_b_score} ${r.biggest_win.team_b_name}`} />}
+          {r.most_goals && <Line k="MAIS GOLS" v={`${r.most_goals.team_a_name} ${r.most_goals.team_a_score}–${r.most_goals.team_b_score} ${r.most_goals.team_b_name}`} />}
+          {!r.biggest_win && !r.most_goals && <Sub>Sem partidas memoráveis.</Sub>}
+        </>
+      );
+    case 6: {
+      const rec = (r.records ?? {}) as Record<string, { value: number | null } | null>;
+      const rows = [
+        ['MAIS GOLS NUMA PARTIDA', rec.most_goals_in_match?.value],
+        ['MAIOR SEQUÊNCIA DE VITÓRIAS', rec.best_win_streak?.value],
+        ['MAIOR INVENCIBILIDADE', rec.best_unbeaten_streak?.value],
+      ].filter(([, v]) => v !== null && v !== undefined) as [string, number][];
+      return rows.length ? <>{rows.map(([k, v]) => <Line key={k} k={k} v={String(v)} />)}</> : <Sub>Sem recordes registrados.</Sub>;
+    }
+    default:
+      return <Text style={[big, { fontSize: 26 }]}>Até a próxima temporada</Text>;
+  }
+}

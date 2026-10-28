@@ -225,7 +225,10 @@ perform pg_temp.assert(jsonb_array_length(public.get_finance_charges(v_p,v_prev,
 perform pg_temp.assert((select not (x->>'person_active')::boolean from jsonb_array_elements(public.get_finance_people(v_p)->'monthly') x where x->>'id'=v_x::text),
  'mensalista marcado como fora da pelada');
 perform pg_temp.expect_error(format('select public.create_charge(%L,%L,%L,null,null,null,100,%L,%L)',v_p,'single',v_mem7,v_today,gen_random_uuid()),'FINANCE_INVALID_PERSON');
-perform public.set_monthly_member_status(v_x, 'ended', 'saiu da pelada');
+-- REV 8.0 (REV-049): a saída já encerra a mensalidade; reativar continua proibido.
+execute 'reset role';
+perform pg_temp.assert((select status from public.finance_members where id=v_x)='ended', 'saída encerra a mensalidade');
+perform set_config('role','authenticated',true);
 perform pg_temp.expect_error(format('select public.set_monthly_member_status(%L,%L)',v_x,'active'),'FINANCE_INVALID_STATUS');
 
 -- ===== 19) exclusão de conta =====

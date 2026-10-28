@@ -340,6 +340,9 @@ perform pg_temp.assert((select secondary_status='confirmed' from public.pelada_m
 -- S1: meias sobrando, atacante faltando: o 12 (meia, secundária atacante) entra no ataque.
 insert into public.matches(pelada_id,season_id,played_at,status,team_a_score,team_b_score,finalized_at)
 values(v_a,private.season_for_date(v_a,private.pelada_today(v_a)),now()-interval '1 hour','finalized',1,0,now()) returning id into v_x;
+-- REV 8.0 (REV-011): a secundária só vale com a confirmação da administração para esta partida.
+insert into private.match_secondary_confirmations(match_id,membership_id,position)
+values(v_x,pg_temp.mem(v_a,12),'attacker'),(v_x,pg_temp.mem(v_a,10),'goalkeeper');
 insert into public.match_participants(pelada_id,match_id,membership_id,team,primary_position)
 select v_a, v_x, pg_temp.mem(v_a,n), case when n % 2 = 0 then 'A' else 'B' end, p
 from (values (1,'goalkeeper'),(2,'defender'),(4,'defender'),(8,'defender'),(11,'defender'),(5,'midfielder'),(6,'midfielder'),

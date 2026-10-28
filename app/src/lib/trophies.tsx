@@ -16,13 +16,14 @@ import { supabase } from './supabase';
 import { colors } from './theme';
 import { Button, Sub } from './ui';
 
-export type TrophyType = 'match_craque' | 'monthly_king' | 'bola_murcha' | 'monthly_garcom';
+export type TrophyType = 'match_craque' | 'monthly_king' | 'bola_murcha' | 'monthly_garcom' | 'top_scorer';
 // Servidor antigo (antes da 049) não manda o Garçom do Mês: conta como zero. O Garçom da Partida não existe mais (V7.7).
-export type TrophyCounts = Record<'match_craque' | 'monthly_king' | 'bola_murcha', number> & Partial<Record<'monthly_garcom', number>>;
+export type TrophyCounts = Record<'match_craque' | 'monthly_king' | 'bola_murcha', number> & Partial<Record<'monthly_garcom' | 'top_scorer', number>>;
 
 export const TROPHIES: { type: TrophyType; label: string; hint: string }[] = [
   { type: 'match_craque', label: 'Craque da Partida', hint: 'Mais votado como Craque numa partida.' },
   { type: 'monthly_king', label: 'Rei do Mês', hint: 'Melhor do mês na pelada.' },
+  { type: 'top_scorer', label: 'Artilheiro do Mês', hint: 'Mais gols oficiais no mês (empate divide o troféu).' },
   { type: 'bola_murcha', label: 'Bola Murcha', hint: 'Escolhido como Bola Murcha numa partida.' },
   { type: 'monthly_garcom', label: 'Garçom do Mês', hint: 'Mais assistências no mês (mínimo 2; desempate pela média e pelas partidas com assistência).' },
 ];
@@ -135,13 +136,36 @@ export function TrophyArt({ type, size = 96, dim = false }: { type: TrophyType; 
         </G>
       )}
       {type === 'monthly_garcom' && <Garcom gid={gid} />}
-      <Pedestal />
+      {type === 'top_scorer' && <GoldenBoot gid={gid} />}
+      {type !== 'top_scorer' && <Pedestal />}
       {type === 'monthly_garcom' && (
         <SvgText x={50} y={106.6} textAnchor="middle" fontSize={4.2} fontWeight="700" fill={colors.gold} letterSpacing={0.4}>
           MÊS
         </SvgText>
       )}
     </Svg>
+  );
+}
+
+// REV-001: chuteira dourada, travas e cadarço azuis, sem pedestal; mesma luz e escala dos outros troféus.
+function GoldenBoot({ gid }: { gid: string }) {
+  return (
+    <G>
+      <Path
+        d="M30 40 C30 36 33 34 37 34 H52 C55 34 57 36 57 39 V58 C57 61 59 63 62 64 L78 69 C84 71 87 75 87 80 V84 C87 87 85 89 82 89 H26 C22 89 20 86 20 83 V74 C20 70 22 67 25 65 C28 63 30 60 30 56 Z"
+        fill={`url(#${gid})`}
+        stroke={GOLD_DARK}
+        strokeWidth={1.3}
+        strokeLinejoin="round"
+      />
+      <Rect x={20} y={86} width={67} height={4} rx={2} fill={colors.deepBlue} />
+      {[28, 42, 56, 70, 81].map((x) => (
+        <Rect key={x} x={x - 2.5} y={90} width={5} height={6} rx={1.5} fill={colors.blue} />
+      ))}
+      <Path d="M38 44 L50 41 M38 50 L51 47 M38 56 L52 53" stroke={colors.blue} strokeWidth={2.2} strokeLinecap="round" />
+      <Path d="M58 66 C63 70 70 72 78 74" stroke={GOLD_DARK} strokeWidth={1} fill="none" opacity={0.8} />
+      <Path d="M33 40 C33 38 35 37 37 37" stroke="#FFFFFF" strokeWidth={2} strokeLinecap="round" opacity={0.6} fill="none" />
+    </G>
   );
 }
 

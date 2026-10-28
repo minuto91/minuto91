@@ -308,7 +308,8 @@ export function usePeladaRating(membershipId: string | null, reload: number) {
 }
 
 export function OvrDelta({ delta }: { delta: number | null }) {
-  if (delta === null) return null;
+  // REV-023: sem variação (0) ou sem base anterior válida, nada aparece.
+  if (delta === null || delta === 0) return null;
   const up = delta > 0;
   const down = delta < 0;
   const fg = up ? '#0B6B3A' : down ? '#9A3412' : colors.muted;

@@ -174,39 +174,36 @@ export function PositionPicker({
   onChange: (p: Position) => void;
   sector?: Sector | null;
 }) {
+  // REV-005: grade compacta de siglas (4 colunas), sem grupos por setor; o nome completo aparece abaixo.
+  const current = POSITIONS.find((p) => p.value === value);
   return (
-    <View style={{ gap: 10 }}>
-      {SECTORS.filter((s) => !sector || s.value === sector).map((s) => (
-        <View key={s.value} style={{ gap: 6 }}>
-          {!sector && <Text style={type.meta}>{s.label}</Text>}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {POSITIONS.filter((p) => p.sector === s.value).map((p) => {
-              const on = value === p.value;
-              return (
-                <Pressable
-                  key={p.value}
-                  onPress={() => onChange(p.value)}
-                  accessibilityRole="button"
-                  accessibilityState={{ selected: on }}
-                  accessibilityLabel={p.label}
-                  style={{
-                    minHeight: 44,
-                    justifyContent: 'center',
-                    paddingHorizontal: 14,
-                    borderRadius: 22,
-                    borderWidth: 1,
-                    borderColor: on ? colors.blue : colors.line,
-                    backgroundColor: on ? colors.blue : colors.white,
-                  }}>
-                  <Text style={{ color: on ? colors.white : colors.ink, fontWeight: '600' }}>
-                    <Text style={{ fontWeight: '800', color: on ? colors.white : colors.blue }}>{p.value}</Text> {p.label}
-                  </Text>
-                </Pressable>
-              );
-            })}
-          </View>
-        </View>
-      ))}
+    <View style={{ gap: 6 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 }}>
+        {POSITIONS.filter((p) => !sector || p.sector === sector).map((p) => {
+          const on = value === p.value;
+          return (
+            <View key={p.value} style={{ width: '25%', padding: 4 }}>
+              <Pressable
+                onPress={() => onChange(p.value)}
+                accessibilityRole="radio"
+                accessibilityState={{ selected: on }}
+                accessibilityLabel={p.label}
+                style={{
+                  minHeight: 44,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: 12,
+                  borderWidth: 1,
+                  borderColor: on ? colors.blue : colors.line,
+                  backgroundColor: on ? colors.blue : colors.white,
+                }}>
+                <Text style={{ fontWeight: '800', color: on ? colors.white : colors.ink }}>{p.value}</Text>
+              </Pressable>
+            </View>
+          );
+        })}
+      </View>
+      {current && <Text style={type.meta}>{current.label}</Text>}
     </View>
   );
 }
