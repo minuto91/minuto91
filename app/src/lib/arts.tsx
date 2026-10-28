@@ -4,7 +4,7 @@
 // mostra a arte e só compartilha quando a pessoa toca.
 // Quem monta cada arte decide se pode: notas só para quem vê as notas (RN-098); o pós-jogo, o Card
 // e a figurinha só da própria pessoa. Sem números inventados: tudo vem do resultado oficial.
-import { createContext, ReactNode, useContext, useRef, useState } from 'react';
+import { ComponentRef, createContext, ReactNode, useContext, useRef, useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 import { Text } from './text';
 
@@ -50,7 +50,7 @@ export function SharePanel({
   title: string;
   children: ReactNode;
 }) {
-  const ref = useRef<View>(null);
+  const ref = useRef<ComponentRef<typeof View>>(null);
   const [open, setOpen] = useState(false);
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);

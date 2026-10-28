@@ -9,7 +9,7 @@ import {
   Inter_800ExtraBold,
   Inter_900Black,
 } from '@expo-google-fonts/inter';
-import { forwardRef } from 'react';
+import { type ComponentRef, forwardRef } from 'react';
 import { Text as RNText, TextInput as RNTextInput, StyleSheet, type TextInputProps, type TextProps, type TextStyle } from 'react-native';
 
 export const INTER_FONTS = { Inter_400Regular, Inter_500Medium, Inter_600SemiBold, Inter_700Bold, Inter_800ExtraBold, Inter_900Black };
@@ -35,10 +35,10 @@ export function interStyle(style: TextProps['style']): TextStyle | null {
   return { fontFamily: FAMILY[String(flat?.fontWeight ?? '400')] ?? 'Inter_400Regular', fontWeight: 'normal' };
 }
 
-export const Text = forwardRef<RNText, TextProps>(function Text({ style, ...props }, ref) {
+export const Text = forwardRef<ComponentRef<typeof RNText>, TextProps>(function Text({ style, ...props }, ref) {
   return <RNText ref={ref} {...props} style={[style, interStyle(style)]} />;
 });
 
-export const TextInput = forwardRef<RNTextInput, TextInputProps>(function TextInput({ style, ...props }, ref) {
+export const TextInput = forwardRef<ComponentRef<typeof RNTextInput>, TextInputProps>(function TextInput({ style, ...props }, ref) {
   return <RNTextInput ref={ref} {...props} style={[style, interStyle(style)]} />;
 });

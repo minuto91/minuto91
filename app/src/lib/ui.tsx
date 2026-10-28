@@ -53,7 +53,7 @@ export function ListScreen<T>({
       renderItem={({ item }) => <>{renderItem(item)}</>}
       ItemSeparatorComponent={ListGap}
       ListHeaderComponent={<View style={{ gap: 12, marginBottom: 12 }}>{header}</View>}
-      ListEmptyComponent={data ? <>{empty}</> : null}
+      ListEmptyComponent={data ? <>{empty}</> : undefined}
       ListFooterComponent={
         <View style={{ gap: 12, marginTop: 12 }}>
           {loadingMore && <ActivityIndicator color={colors.blue} />}
