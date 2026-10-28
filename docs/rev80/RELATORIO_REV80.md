@@ -93,9 +93,9 @@ Não executado: testes no Supabase dev real (SQL Editor), Edge Functions, iPhone
 
 ## 5. Bloqueios e lacunas (decisão sua)
 
-1. **REV-024/025 — Resenha.** O repositório não tem um voto "Resenha" de escolha de jogadores; "Resenha" hoje é o
-   atributo RES (nota dos colegas) do motor congelado. Falta a especificação: o que a escolha representa e onde entra
-   (motor? prêmio? só exibição?). Implementar sem isso seria inventar regra ou mexer no motor.
+1. **REV-024/025 — Resenha.** Decisão do fundador (28/10/2026): a escolha vai alimentar o RES do OVR, com a fórmula de
+   um **novo motor matemático futuro**. Como o motor V7.7 está congelado, a Resenha fica para ser implementada junto
+   com esse motor (coleta da escolha + RES novo + regressão), e não nesta entrega.
 2. **REV-049 tela** do extrato separado (backend pronto).
 3. **REV-004/027/035/036/043**: varredura completa das telas antigas e auditoria visual em aparelho (Fase 5).
 4. Ex-integrante não abre a retrospectiva da pelada antiga (o acesso por temporada exige vínculo ativo, regra existente).
