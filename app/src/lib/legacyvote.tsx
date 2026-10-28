@@ -21,7 +21,7 @@ import {
 } from './match';
 import { supabase } from './supabase';
 import { colors, memberPosition, positionLabel } from './theme';
-import { Body, Button, Card, Chips, ErrorText, Screen, Stepper, Sub, Title } from './ui';
+import { Body, Button, Card, Chips, ErrorText, LoadingBlock, Screen, Stepper, Sub, Title } from './ui';
 
 type VotingState = {
   session_id: string | null;
@@ -160,7 +160,7 @@ export function LegacyVotar() {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {!msg && <LoadingBlock />}
       </Screen>
     );
   }

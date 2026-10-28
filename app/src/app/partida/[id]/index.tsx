@@ -43,7 +43,7 @@ import { FieldPlayer, SelectionField, TeamColorPicker, TeamLegend, teamHex } fro
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, positionLabel } from '../../../lib/theme';
-import { Body, Button, Card, ErrorText, Screen, Sub } from '../../../lib/ui';
+import { Body, Button, Card, ErrorText, LoadingBlock, Screen, Sub } from '../../../lib/ui';
 import { MatchScore } from '../../../lib/domain';
 
 type Session = {
@@ -193,7 +193,7 @@ export default function Partida() {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {!msg && <LoadingBlock />}
       </Screen>
     );
   }

@@ -13,7 +13,7 @@ import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors, type } from '../../../lib/theme';
 import { Toggle } from '../../../lib/toggle';
-import { Body, Button, Card, Chips, ErrorText, Input, Screen, Stepper, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
 const DURATIONS = [
   { value: '120', label: '2 horas' },
@@ -174,7 +174,7 @@ export default function Configuracoes() {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {!msg && <LoadingBlock />}
       </Screen>
     );
   }

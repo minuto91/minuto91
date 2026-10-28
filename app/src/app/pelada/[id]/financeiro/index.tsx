@@ -8,7 +8,7 @@ import { Stat } from '../../../../lib/financeui';
 import { fmtDay, formatBRL, monthLabel } from '../../../../lib/money';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../../lib/ui';
+import { Body, Button, Card, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
 
 type Access = {
   can_access: boolean;
@@ -106,7 +106,7 @@ export default function Financeiro() {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {!msg && <LoadingBlock />}
       </Screen>
     );
   }
@@ -140,7 +140,7 @@ export default function Financeiro() {
       <Title>Financeiro</Title>
       <Sub>{ov ? `Caixa da pelada · ${monthLabel(ov.month)}` : 'Caixa da pelada'}</Sub>
       <ErrorText>{msg}</ErrorText>
-      {!ov && !msg && <Sub>Carregando...</Sub>}
+      {!ov && !msg && <LoadingBlock />}
       {ov && (
         <>
           <View style={{ borderRadius: 14, backgroundColor: colors.deepBlue, padding: 16, gap: 4 }}>

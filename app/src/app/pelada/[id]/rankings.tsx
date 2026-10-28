@@ -9,7 +9,7 @@ import { friendly } from '../../../lib/errors';
 import { fmtRating, loadMembers, Member } from '../../../lib/match';
 import { supabase } from '../../../lib/supabase';
 import { colors } from '../../../lib/theme';
-import { Body, Button, Card, Chips, EmptyState, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, Chips, EmptyState, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 import { RankingRow } from '../../../lib/domain';
 
 // Em destaque: Artilharia, Assistências e Overall. As demais classificações oficiais continuam em "Mais".
@@ -203,7 +203,7 @@ export default function Rankings() {
       )}
 
       {rows === null ? (
-        <Sub>Carregando...</Sub>
+        <LoadingBlock />
       ) : sorted.length === 0 ? (
         !msg && <Sub>Ainda sem dados nesta temporada.</Sub>
       ) : (

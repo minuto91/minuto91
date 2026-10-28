@@ -11,7 +11,7 @@ import { Crest } from './crest';
 import { fmtRating } from './match';
 import { supabase } from './supabase';
 import { colors, positionLabel } from './theme';
-import { Body, Card, Sub } from './ui';
+import { Body, Card, EmptyState, Sub } from './ui';
 
 export type Visibility = 'private' | 'peladas' | 'public';
 
@@ -175,7 +175,7 @@ export function CareerSummary({ career }: { career: Extract<Career, { visible: t
 
 /** Carreira por pelada e por temporada. */
 export function CareerByPelada({ career }: { career: Extract<Career, { visible: true }> }) {
-  if (career.peladas.length === 0) return <Sub>Nenhuma pelada ainda.</Sub>;
+  if (career.peladas.length === 0) return <EmptyState title="Nenhuma pelada" />;
   return (
     <>
       {career.peladas.map((p) => (
@@ -223,7 +223,7 @@ export function CareerByPelada({ career }: { career: Extract<Career, { visible: 
 
 export function AchievementsList({ items }: { items: Achievement[] }) {
   if (items.length === 0) {
-    return <Sub>Nenhuma conquista ainda. Craque da Partida, prêmios do mês e Seleção da Rodada aparecem aqui.</Sub>;
+    return <EmptyState title="Nenhuma conquista ainda" />;
   }
   return (
     <Card>
@@ -278,7 +278,7 @@ export function CardsList({
 
 export function PeladasList({ peladas, isMe }: { peladas: ProfilePelada[]; isMe: boolean }) {
   const router = useRouter();
-  if (peladas.length === 0) return <Sub>Nenhuma pelada.</Sub>;
+  if (peladas.length === 0) return <EmptyState title="Nenhuma pelada" />;
   const roleName = (r: string) => (r === 'admin' ? 'Administrador' : r === 'assistant' ? 'Assistente' : 'Jogador');
   return (
     <>

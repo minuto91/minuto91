@@ -11,7 +11,7 @@ import { Crest } from '../../../lib/crest';
 import { friendly } from '../../../lib/errors';
 import { supabase } from '../../../lib/supabase';
 import { colors, POSITIONS, positionLabel, positionSector, SECTORS } from '../../../lib/theme';
-import { Body, Button, Chips, ErrorText, Input, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
 type Row = { card: CardData; membershipId: string; name: string; userId: string | null };
 
@@ -133,10 +133,10 @@ export default function Elenco() {
       <ErrorText>{msg}</ErrorText>
 
       {rows === null ? (
-        !msg && <Sub>Carregando...</Sub>
+        !msg && <LoadingBlock />
       ) : rows.length === 0 ? (
         <View style={{ paddingVertical: 24, gap: 8, alignItems: 'center' }}>
-          <Body>Ainda não há Cards nesta temporada.</Body>
+          <EmptyState title="Sem Cards nesta temporada" />
           <Sub>Os Cards dos jogadores aparecerão aqui após as primeiras avaliações.</Sub>
         </View>
       ) : (
@@ -158,7 +158,7 @@ export default function Elenco() {
             {shown.length} de {rows.length} com Card. Quem ainda não tem Card continua na pelada normalmente.
           </Sub>
 
-          {shown.length === 0 && <Sub>Nenhum jogador com esse filtro.</Sub>}
+          {shown.length === 0 && <EmptyState title="Ninguém com esse filtro" />}
 
           {view === 'cartas' ? (
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, justifyContent: 'center' }}>

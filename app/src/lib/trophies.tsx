@@ -15,7 +15,7 @@ import { fmtDate } from './match';
 import { TrophyTile } from './domain';
 import { supabase } from './supabase';
 import { colors } from './theme';
-import { Button, Sub } from './ui';
+import { Button, LoadingBlock, Sub } from './ui';
 
 export type TrophyType = 'match_craque' | 'monthly_king' | 'bola_murcha' | 'monthly_garcom' | 'top_scorer';
 // Servidor antigo (antes da 049) não manda o Garçom do Mês: conta como zero. O Garçom da Partida não existe mais (V7.7).
@@ -261,7 +261,7 @@ export function TrophyRoom({ userId, counts, partial, shareName }: { userId: str
               </View>
             </SharePanel>
           )}
-          {busy && <Sub>Carregando...</Sub>}
+          {busy && <LoadingBlock />}
           {next && !busy && <Button title="Ver mais" kind="secondary" onPress={() => load(open, next)} />}
         </View>
       )}

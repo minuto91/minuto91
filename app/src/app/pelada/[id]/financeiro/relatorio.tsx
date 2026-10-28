@@ -10,7 +10,7 @@ import { csvRow, fmtDay, formatBRL, methodLabel, monthLabel, monthShift } from '
 import { ExportTotal, exportProblems } from '../../../../lib/exportCheck';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
 
 type Report = {
   month: string;
@@ -185,7 +185,7 @@ export default function Relatorio() {
               <Text style={{ color: colors.blue, fontSize: 22, fontWeight: '800' }}>›</Text>
             </Pressable>
           </View>
-          {!report && !msg && <Sub>Carregando...</Sub>}
+          {!report && !msg && <LoadingBlock />}
           {report && (
             <>
               <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -245,7 +245,7 @@ export default function Relatorio() {
       {tab === 'historico' && (
         <>
           <Sub>Tudo o que muda no Financeiro fica registrado: quem, quando e os valores antes e depois. Nada é apagado.</Sub>
-          {!events && !msg && <Sub>Carregando...</Sub>}
+          {!events && !msg && <LoadingBlock />}
           {events?.length === 0 && <Sub>Nada registrado ainda.</Sub>}
           {events?.map((e) => {
             const before = e.before ?? {};

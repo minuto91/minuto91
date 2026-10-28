@@ -28,7 +28,7 @@ import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, Position, positionLabel } from '../../../lib/theme';
 import { TeamColorPicker } from '../../../lib/selection';
-import { Body, Button, Card, Chips, ErrorText, Input, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
 const TEAMS = [
   { value: 'A', label: 'Time A' },
@@ -252,7 +252,7 @@ export default function Sumula() {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {!msg && <LoadingBlock />}
       </Screen>
     );
   }

@@ -11,7 +11,7 @@ import { disambiguators, matchesName, showSearch } from '../../../lib/search';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, positionLabel } from '../../../lib/theme';
-import { Body, Button, Card, ErrorText, Input, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
 type Member = {
   id: string;
@@ -102,7 +102,7 @@ export default function Jogadores() {
       {isAdmin && (
         <Button title="Convidar jogadores" kind="secondary" onPress={() => router.push({ pathname: '/pelada/[id]/convidar', params: { id } })} />
       )}
-      {members === null && !msg && <Sub>Carregando...</Sub>}
+      {members === null && !msg && <LoadingBlock />}
       {showSearch(members?.length ?? 0) && <Input placeholder="Buscar jogador" value={q} onChangeText={setQ} />}
       {(members ?? []).filter((m) => matchesName(m.player_name, q)).map((m) => (
         <Card key={m.id}>

@@ -1,4 +1,4 @@
-import { useFocusEffect, useLocalSearchParams } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { View } from 'react-native';
 import { Text } from '../../../../lib/text';
@@ -10,7 +10,7 @@ import { DateField, Field, People, Person, PersonPicker } from '../../../../lib/
 import { centsToInput, fmtDay, formatBRL, monthShift, parseBRL } from '../../../../lib/money';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, Screen, Stepper, Sub, Title } from '../../../../lib/ui';
+import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../../lib/ui';
 
 type Monthly = People['monthly'][number];
 const STATUS_LABEL = { active: 'Ativo', suspended: 'Suspenso', ended: 'Encerrado' } as const;
@@ -33,6 +33,7 @@ const matches = (m: Monthly, f: Filter) =>
 // mensalidades geradas depois (as cobranças antigas não mudam). Suspender pausa novas cobranças; encerrar é final.
 export default function Mensalistas() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const today = todayIn();
   const [people, setPeople] = useState<People | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -149,9 +150,9 @@ export default function Mensalistas() {
           onChange={(v) => setFilter(v as Filter)}
         />
       )}
-      {!people && !msg && <Sub>Carregando...</Sub>}
-      {people && all.length === 0 && <Sub>Nenhum mensalista ainda.</Sub>}
-      {all.length > 0 && list.length === 0 && <Sub>Nenhum mensalista nesse filtro.</Sub>}
+      {!people && !msg && <LoadingBlock />}
+      {people && all.length === 0 && <EmptyState title="Nenhum mensalista" />}
+      {all.length > 0 && list.length === 0 && <EmptyState title="Ninguém com esse filtro" />}
       {list.map((m) => (
         <Card key={m.id}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -170,8 +171,17 @@ export default function Mensalistas() {
           ) : m.status === 'active' ? (
             <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>Em dia{m.open_cents > 0 ? ` · ${formatBRL(m.open_cents)} a vencer` : ''}</Text>
           ) : null}
-          {!m.person_active && <Sub>Não está mais na pelada: não recebe novas mensalidades.</Sub>}
+          {!m.person_active && <Sub>Fora da pelada: sem novas mensalidades.</Sub>}
           {m.notes && <Sub>{m.notes}</Sub>}
+          {m.membership_id && (
+            <Button
+              title="Extrato"
+              kind="ghost"
+              onPress={() =>
+                router.push({ pathname: '/pelada/[id]/financeiro/extrato', params: { id, membership: m.membership_id!, name: m.person_name } })
+              }
+            />
+          )}
           {m.status !== 'ended' && (
             <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
               <View style={{ flex: 1, minWidth: 120 }}>

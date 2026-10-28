@@ -15,7 +15,7 @@ import {
   PlayerProfile,
 } from '../../lib/profile';
 import { footLabel } from '../../lib/theme';
-import { Card, Chips, ErrorText, Screen, Sub, Title } from '../../lib/ui';
+import { Card, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
 
 const TABS = [
   { value: 'carreira', label: 'Carreira' },
@@ -52,7 +52,7 @@ export default function Atleta() {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {!msg && <LoadingBlock />}
       </Screen>
     );
   }

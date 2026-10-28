@@ -12,7 +12,7 @@ import { CHARGE_KIND, centsToInput, fmtDay, formatBRL, methodLabel, METHODS, mon
 import { Page, usePaged } from '../../../../lib/paging';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, ListScreen, Screen, Sub, Title } from '../../../../lib/ui';
+import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, ListScreen, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
 
 const STATUS = [
   { value: 'open', label: 'Em aberto' },
@@ -300,7 +300,7 @@ export default function Cobrancas() {
           setCreating(true);
         }}
       />
-      {!list.items && !list.error && <Sub>Carregando...</Sub>}
+      {!list.items && !list.error && <LoadingBlock />}
       {s && s.count > 0 && (
         <Sub>
           {s.count} {s.count === 1 ? 'cobrança' : 'cobranças'} · em aberto {formatBRL(s.outstanding_cents)}
@@ -315,7 +315,7 @@ export default function Cobrancas() {
       header={header}
       data={list.items}
       keyExtractor={(c) => c.id}
-      empty={<Sub>Nenhuma cobrança com esses filtros.</Sub>}
+      empty={<EmptyState title="Nenhuma cobrança" />}
       loadingMore={list.loadingMore}
       onEndReached={list.loadMore}
       footer={list.hasMore && !list.loadingMore ? <Button title="Carregar mais" kind="secondary" onPress={list.loadMore} /> : null}

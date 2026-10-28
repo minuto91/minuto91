@@ -27,7 +27,7 @@ import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, footLabel, memberPosition, needsPositionUpdate, Position, positionLabel, positionSector } from '../../../lib/theme';
 import { MySecondaryPosition } from '../../../lib/secondary';
-import { Body, Button, Card, Chips, ErrorText, PositionPicker, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, LoadingBlock, PositionPicker, Screen, Sub, Title } from '../../../lib/ui';
 
 type Membership = {
   id: string;
@@ -122,7 +122,7 @@ export default function Carta() {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {!msg && <LoadingBlock />}
       </Screen>
     );
   }
@@ -183,7 +183,7 @@ export default function Carta() {
       {member.status === 'retired' ? (
         <Sub>Aposentado: este registro não tem Card.</Sub>
       ) : !loaded ? (
-        <Sub>Carregando...</Sub>
+        <LoadingBlock />
       ) : !card || !tier ? (
         <Card>
           <Body>Ainda sem Card nesta temporada.</Body>
@@ -272,7 +272,7 @@ export default function Carta() {
       {card && member.status !== 'retired' && (
         <Card>
           <Body>Evolução na temporada</Body>
-          {evo.error ? <Sub>{evo.error}</Sub> : evo.data ? <EvolutionChart evolution={evo.data} /> : <Sub>Carregando...</Sub>}
+          {evo.error ? <Sub>{evo.error}</Sub> : evo.data ? <EvolutionChart evolution={evo.data} /> : <LoadingBlock />}
         </Card>
       )}
 

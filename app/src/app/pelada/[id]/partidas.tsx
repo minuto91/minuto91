@@ -9,7 +9,7 @@ import { fmtDate, Match, MATCH_COLUMNS, scoreLine, STATUS_LABEL } from '../../..
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors } from '../../../lib/theme';
-import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
 const PAGE = 30;
 
@@ -72,7 +72,7 @@ export default function Partidas() {
       <ErrorText>{msg}</ErrorText>
       {isStaff && <Button title="Lançar partida" onPress={lancarPartida} loading={busy} />}
       {matches === null ? (
-        !msg && <Sub>Carregando...</Sub>
+        !msg && <LoadingBlock />
       ) : matches.length === 0 ? (
         <Sub>{isStaff ? 'Nenhuma partida ainda. Lance a primeira depois do jogo.' : 'Nenhuma partida ainda.'}</Sub>
       ) : (

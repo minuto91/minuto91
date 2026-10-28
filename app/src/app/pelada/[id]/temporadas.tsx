@@ -6,7 +6,7 @@ import { todayIn } from '../../../lib/dates';
 import { confirm, notify } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import { supabase } from '../../../lib/supabase';
-import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
 // A19: temporadas da pelada. Todos veem a lista (nome e período não são histórico); personalizar é do
 // administrador com Pelada Premium (customize_season, migração 006). A regra de produto: com temporada em
@@ -99,7 +99,7 @@ export default function Temporadas() {
       <Title>Temporadas</Title>
       <ErrorText>{msg}</ErrorText>
       {msg && !seasons && <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />}
-      {!seasons && !msg && <Sub>Carregando...</Sub>}
+      {!seasons && !msg && <LoadingBlock />}
       {seasons?.map((s) => (
         <Card key={s.id}>
           <Body>

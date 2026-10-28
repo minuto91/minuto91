@@ -23,7 +23,7 @@ import {
 import { useAuth } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
 import { colors, FEET, Foot, positionLabel } from '../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
 
 const TABS = [
   { value: 'geral', label: 'Visão geral' },
@@ -138,7 +138,7 @@ export default function Perfil() {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {!msg && <LoadingBlock />}
       </Screen>
     );
   }

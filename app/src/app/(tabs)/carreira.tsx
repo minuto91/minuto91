@@ -16,7 +16,7 @@ import { supabase } from '../../lib/supabase';
 import { colors, footLabel, positionLabel } from '../../lib/theme';
 import { MatchHistory } from '../../lib/history';
 import { TrophyRoom } from '../../lib/trophies';
-import { Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../lib/ui';
+import { Button, Card, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
 
 type Me = { display_name: string; avatar_path: string | null; dominant_foot: string | null };
 
@@ -73,7 +73,7 @@ export default function Carreira() {
     return (
       <Screen>
         <ErrorText>{err}</ErrorText>
-        {err ? <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} /> : <Sub>Carregando...</Sub>}
+        {err ? <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} /> : <LoadingBlock />}
       </Screen>
     );
   }
@@ -216,7 +216,7 @@ export default function Carreira() {
 function Evolution({ membershipId, seasonId }: { membershipId: string; seasonId: string }) {
   const { data, error } = useEvolution(membershipId, seasonId);
   if (error) return <Sub>{error}</Sub>;
-  if (!data) return <Sub>Carregando...</Sub>;
+  if (!data) return <LoadingBlock />;
   return <EvolutionChart evolution={data} />;
 }
 

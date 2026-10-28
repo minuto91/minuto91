@@ -11,7 +11,7 @@ import { friendly } from '../../../lib/errors';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, positionLabel } from '../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
 type Member = { id: string; user_id: string | null; player_name: string; preferred_position: string; position_code?: string | null; avatar_path: string | null };
 
@@ -86,7 +86,7 @@ export default function Duelo() {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {!msg && <LoadingBlock />}
       </Screen>
     );
   }

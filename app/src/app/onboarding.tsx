@@ -8,7 +8,7 @@ import { LEGAL_VERSIONS } from '../lib/legalText';
 import { signOut, useAuth } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors } from '../lib/theme';
-import { Button, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
+import { Button, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../lib/ui';
 
 // Cadastro inicial (18+, apelido, Termos e Privacidade) ou, para quem já tem conta, só o aceite de uma
 // versão nova dos documentos (A18). A09: o campo vem com o nome atual (Google/Apple ou o já salvo); vazio
@@ -65,7 +65,7 @@ export default function Onboarding() {
   if (!loaded) {
     return (
       <Screen>
-        <Sub>Carregando...</Sub>
+        <LoadingBlock />
       </Screen>
     );
   }

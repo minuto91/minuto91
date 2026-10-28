@@ -11,7 +11,7 @@ import { FormationField, LineupArt, LineupBoard, LineupPlayer, positionCounts } 
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, positionLabel, positionShort } from '../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
 type Lineup = {
   id: string;
@@ -272,9 +272,9 @@ export default function Escalacoes() {
       <Sub>Times definidos antes do jogo. Gols e assistências continuam sendo lançados na súmula depois da partida.</Sub>
       <ErrorText>{msg}</ErrorText>
       {msg && !lineups && <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />}
-      {!lineups && !msg && <Sub>Carregando...</Sub>}
+      {!lineups && !msg && <LoadingBlock />}
 
-      {lineups?.length === 0 && !editing && <Sub>Nenhuma escalação ativa.</Sub>}
+      {lineups?.length === 0 && !editing && <EmptyState title="Nenhuma escalação" />}
       {lineups?.map((l) => (
         <Card key={l.id}>
           <Body>{l.label}</Body>

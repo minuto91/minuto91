@@ -83,10 +83,13 @@ export const Sub = ({ children }: { children: ReactNode }) => <Text style={type.
 
 export const Body = ({ children }: { children: ReactNode }) => <Text style={type.body}>{children}</Text>;
 
-/** Estado vazio: o que falta e, quando houver, o próximo passo. */
+/**
+ * Estado vazio (REV-027): ícone simples, mensagem breve e, só quando útil e permitido, a ação (children).
+ */
 export function EmptyState({ title, hint, children }: { title: string; hint?: string; children?: ReactNode }) {
   return (
     <View style={{ alignItems: 'center', gap: 6, paddingVertical: 24, paddingHorizontal: 12 }}>
+      <View style={{ width: 36, height: 36, borderRadius: 18, borderWidth: 2, borderColor: colors.line, marginBottom: 4 }} />
       <Text style={[type.cardTitle, { textAlign: 'center' }]}>{title}</Text>
       {hint ? <Text style={[type.caption, { textAlign: 'center' }]}>{hint}</Text> : null}
       {children ? <View style={{ alignSelf: 'stretch', gap: 8, marginTop: 8 }}>{children}</View> : null}
@@ -341,3 +344,17 @@ const styles = StyleSheet.create({
     gap: 6,
   },
 });
+
+/**
+ * REV-036: carregamento padrão — blocos neutros no formato de uma lista, sem animação; distinto de vazio
+ * (EmptyState), erro (ErrorText + tentar de novo) e bloqueio (EmptyState com o plano).
+ */
+export function LoadingBlock({ rows = 3 }: { rows?: number }) {
+  return (
+    <View style={{ gap: 10 }} accessibilityLabel="Carregando" accessibilityLiveRegion="polite">
+      {Array.from({ length: rows }, (_, i) => (
+        <View key={i} style={{ height: i === 0 ? 28 : 56, width: i === 0 ? '55%' : '100%', borderRadius: radius.card, backgroundColor: colors.bg }} />
+      ))}
+    </View>
+  );
+}

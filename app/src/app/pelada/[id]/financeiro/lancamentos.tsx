@@ -22,7 +22,7 @@ import {
 import { Page, usePaged } from '../../../../lib/paging';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Button, Card, Chips, ErrorText, Input, ListScreen, Screen, Sub, Title } from '../../../../lib/ui';
+import { Button, Card, Chips, EmptyState, ErrorText, Input, ListScreen, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
 
 type Movement = {
   source: 'payment' | 'entry';
@@ -221,7 +221,7 @@ export default function Lancamentos() {
       </View>
       <ErrorText>{msg ?? list.error}</ErrorText>
       {list.error && <Button title="Tentar de novo" kind="secondary" onPress={list.refresh} />}
-      {!list.items && !list.error && <Sub>Carregando...</Sub>}
+      {!list.items && !list.error && <LoadingBlock />}
     </>
   );
 
@@ -230,7 +230,7 @@ export default function Lancamentos() {
       header={header}
       data={list.items}
       keyExtractor={(r) => `${r.source}-${r.id}`}
-      empty={<Sub>Nenhum lançamento neste mês.</Sub>}
+      empty={<EmptyState title="Nenhum lançamento no mês" />}
       loadingMore={list.loadingMore}
       onEndReached={list.loadMore}
       footer={list.hasMore && !list.loadingMore ? <Button title="Carregar mais" kind="secondary" onPress={list.loadMore} /> : null}

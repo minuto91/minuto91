@@ -7,7 +7,7 @@ import { friendly } from '../../../lib/errors';
 import { loadPremiumPackage, openManageSubscription, priceLabel, restorePurchases, storeAvailable, subscribePelada } from '../../../lib/purchases';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { Body, Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
 type Entitlement = {
   is_premium: boolean;
@@ -147,7 +147,7 @@ export default function PeladaPremium() {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {!msg && <LoadingBlock />}
       </Screen>
     );
   }

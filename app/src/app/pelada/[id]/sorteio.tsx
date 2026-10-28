@@ -9,7 +9,7 @@ import { LineupBoard, LineupPlayer } from '../../../lib/lineup';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, positionLabel, positionRank } from '../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, Screen, Stepper, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
 type DrawPlayer = { membership_id: string; name: string; position: string | null; overall: number; active: boolean };
 type DrawRound = {
@@ -135,7 +135,7 @@ export default function Sorteio() {
     return (
       <Screen>
         <ErrorText>{msg}</ErrorText>
-        {!msg && <Sub>Carregando...</Sub>}
+        {!msg && <LoadingBlock />}
       </Screen>
     );
   }
