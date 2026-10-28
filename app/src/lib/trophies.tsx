@@ -9,6 +9,7 @@ import { View } from 'react-native';
 import { Text } from './text';
 import Svg, { Circle, Defs, Ellipse, G, LinearGradient, Path, Polygon, Rect, Stop, Text as SvgText } from 'react-native-svg';
 
+import { Header, SharePanel } from './arts';
 import { friendly } from './errors';
 import { fmtDate } from './match';
 import { TrophyTile } from './domain';
@@ -187,7 +188,7 @@ type Cursor = { at: string; id: string };
 const monthName = (iso: string) => new Date(`${iso}T12:00:00`).toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' });
 
 /** Sala de Troféus: os cinco troféus com a quantidade; tocar abre o histórico daquele troféu (sob demanda). */
-export function TrophyRoom({ userId, counts, partial }: { userId: string; counts: TrophyCounts; partial?: boolean }) {
+export function TrophyRoom({ userId, counts, partial, shareName }: { userId: string; counts: TrophyCounts; partial?: boolean; shareName?: string }) {
   const [open, setOpen] = useState<TrophyType | null>(null);
   const [items, setItems] = useState<Item[]>([]);
   const [next, setNext] = useState<Cursor | null>(null);
@@ -250,6 +251,16 @@ export function TrophyRoom({ userId, counts, partial }: { userId: string; counts
               </Sub>
             </View>
           ))}
+          {/* REV-033: compartilhar só troféus oficiais da própria pessoa. */}
+          {shareName && (counts[open] ?? 0) > 0 && (
+            <SharePanel label="Compartilhar" fileName={`minuto91-${open}`} title={TROPHIES.find((t) => t.type === open)!.label}>
+              <Header title={shareName} subtitle={TROPHIES.find((t) => t.type === open)!.label} />
+              <View style={{ alignItems: 'center' }}>
+                <TrophyArt type={open} size={150} />
+                <Text style={{ fontSize: 34, fontWeight: '900', color: colors.darkGold }}>{`${counts[open]}×`}</Text>
+              </View>
+            </SharePanel>
+          )}
           {busy && <Sub>Carregando...</Sub>}
           {next && !busy && <Button title="Ver mais" kind="secondary" onPress={() => load(open, next)} />}
         </View>

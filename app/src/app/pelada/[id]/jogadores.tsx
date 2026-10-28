@@ -6,8 +6,8 @@ import { Text } from '../../../lib/text';
 import { Avatar, prefetchAvatars } from '../../../lib/avatar';
 import { BillingPrompt } from '../../../lib/billing';
 import { friendly } from '../../../lib/errors';
-import { disambiguators } from '../../../lib/homonyms';
-import { matchesName, showSearch } from '../../../lib/search';
+
+import { disambiguators, matchesName, showSearch } from '../../../lib/search';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, positionLabel } from '../../../lib/theme';

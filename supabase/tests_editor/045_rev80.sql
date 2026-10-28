@@ -278,5 +278,21 @@ perform pg_temp.assert((select (x->>'value')::int from jsonb_array_elements(r->'
 perform pg_temp.as_user(5);
 perform pg_temp.assert(not exists(select 1 from public.player_global_sticker_unlocks where user_id=pg_temp.uid(4)), 'RLS: outra conta não lê o álbum');
 
+-- ===== REV-001: Artilheiro do Mês na Sala de Troféus (empate = troféu para todos; revogado não conta) =====
+execute 'reset role';
+insert into public.awards(pelada_id,season_id,membership_id,award_type,period_month,is_shared)
+values(v_a,v_season,pg_temp.mem(v_a,2),'top_scorer',date_trunc('month',now())::date - interval '1 month',true),
+      (v_a,v_season,pg_temp.mem(v_a,6),'top_scorer',date_trunc('month',now())::date - interval '1 month',true);
+insert into public.awards(pelada_id,season_id,membership_id,award_type,period_month,status,revoked_at)
+values(v_a,v_season,pg_temp.mem(v_a,2),'top_scorer',date_trunc('month',now())::date - interval '2 month','revoked',now());
+perform set_config('role','authenticated',true);
+perform pg_temp.as_user(2);
+perform pg_temp.assert((public.get_player_career_summary(pg_temp.uid(2))->'trophies'->>'top_scorer')::int=1, 'um troféu ativo, revogado fora');
+perform pg_temp.assert(jsonb_array_length(public.get_trophy_history(pg_temp.uid(2),'top_scorer')->'items')=1
+ and (public.get_trophy_history(pg_temp.uid(2),'top_scorer')->'items'->0->>'is_shared')::boolean, 'histórico do Artilheiro do Mês, dividido');
+perform pg_temp.as_user(6);
+perform pg_temp.assert((public.get_player_career_summary(pg_temp.uid(6))->'trophies'->>'top_scorer')::int=1, 'empatado também recebe');
+perform pg_temp.expect_error(format('select public.get_trophy_history(%L,%L)',pg_temp.uid(6),'match_garcom'),'INVALID_TROPHY');
+
 raise exception 'PASS: 045_rev80';
 end $test$;

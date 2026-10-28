@@ -848,3 +848,27 @@ revoke all on function private.get_player_career_summary_v77(uuid), private.get_
  from public, anon, authenticated;
 revoke all on function public.get_player_career_summary(uuid), public.get_trophy_history(uuid,text,jsonb,integer) from public, anon;
 grant execute on function public.get_player_career_summary(uuid), public.get_trophy_history(uuid,text,jsonb,integer) to authenticated;
+
+---------------------------------------------------------------------------------------------------
+-- REV-003 / REV-047: histórico da carreira com cartões e indicação de participação encerrada
+---------------------------------------------------------------------------------------------------
+alter function public.get_my_match_history(uuid,jsonb,integer) rename to get_my_match_history_v45;
+alter function public.get_my_match_history_v45(uuid,jsonb,integer) set schema private;
+create function public.get_my_match_history(p_pelada uuid default null, p_after jsonb default null, p_limit integer default 20)
+returns jsonb
+language plpgsql stable security definer set search_path = '' as $$
+declare v jsonb := private.get_my_match_history_v45(p_pelada, p_after, p_limit);
+begin
+ return v || jsonb_build_object('items', coalesce((select jsonb_agg(i || (
+   select jsonb_build_object(
+    'yellow_cards', coalesce(sum(e.quantity) filter (where e.event_type='yellow_card'),0),
+    'red_cards', coalesce(sum(e.quantity) filter (where e.event_type in ('red_card','second_yellow')),0),
+    'pelada_active', bool_or(pm.status='active'))
+   from public.match_participants x join public.pelada_memberships pm on pm.id=x.membership_id and pm.user_id=auth.uid()
+   left join public.match_events e on e.participant_id=x.id
+   where x.match_id=(i->>'match_id')::uuid) order by o)
+  from jsonb_array_elements(v->'items') with ordinality q(i, o)), '[]'::jsonb));
+end $$;
+revoke all on function private.get_my_match_history_v45(uuid,jsonb,integer) from public, anon, authenticated;
+revoke all on function public.get_my_match_history(uuid,jsonb,integer) from public, anon;
+grant execute on function public.get_my_match_history(uuid,jsonb,integer) to authenticated;

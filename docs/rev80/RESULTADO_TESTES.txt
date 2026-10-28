@@ -1,0 +1,113 @@
+# REV 8.0 — 2026-10-28T20:00Z
+
+## supabase/local_db: node run.mjs
+60 migrações aplicadas (10.4s)
+PASS 001_smoke.sql (0.5s)
+PASS 002_negative.sql (0.3s)
+PASS 003_seasons.sql (0.2s)
+PASS 004_matches.sql (0.4s)
+PASS 005_participants_events.sql (0.7s)
+PASS 006_sheet_versions.sql (0.7s)
+PASS 007_voting_sessions.sql (1.6s)
+PASS 008_ballots_submit.sql (0.6s)
+PASS 009_finalization.sql (2.8s)
+PASS 010_stats_rankings_selection.sql (3.5s)
+PASS 011_stickers.sql (1.1s)
+PASS 012_premium.sql (0.8s)
+PASS 013_annulment.sql (3.4s)
+PASS 014_account_deletion.sql (1.2s)
+PASS 015_notifications_jobs.sql (1.5s)
+PASS 016_reports_blocks.sql (0.3s)
+PASS 017_account_transfer.sql (0.2s)
+PASS 018_pelada_settings.sql (0.1s)
+PASS 019_premium_store_events.sql (0.4s)
+PASS 020_security_invariants.sql (0.2s)
+PASS 021_profile_photo_foot.sql (0.3s)
+PASS 022_pelada_crest.sql (0.3s)
+PASS 023_privacy_career.sql (1.5s)
+PASS 024_trial_protection.sql (0.5s)
+PASS 025_blocks_both_ways.sql (0.3s)
+PASS 026_multi_pelada_premium.sql (0.8s)
+PASS 027_player_evolution.sql (2.8s)
+PASS 028_invite_preview.sql (0.6s)
+PASS 029_push_delivery.sql (0.4s)
+PASS 030_p1_integrity.sql (3.8s)
+PASS 031_consistency_p2.sql (2.1s)
+PASS 032_draws_duel_lineups.sql (21.8s)
+PASS 033_v43_audit_fixes.sql (6.3s)
+PASS 034_v43_positions_formations.sql (1.4s)
+PASS 035_v43_draw_property.sql (105.2s)
+PASS 036_v43_finance.sql (0.5s)
+PASS 037_v44_finance_reports.sql (46.3s)
+PASS 038_v44_central_career.sql (1.1s)
+PASS 039_v45_finance_export.sql (4.5s)
+PASS 040_v46_payment_order.sql (0.0s)
+PASS 041_v46_garcom_awards.sql (1.7s)
+PASS 042_v5_rating_votes.sql (14.6s)
+PASS 043_v61_isolation.sql (1.8s)
+PASS 044_v77_integrity.sql (7.4s)
+PASS 045_rev80.sql (1.5s)
+todos os 45 passaram
+
+## supabase/local_db: node --test
+✔ formatBRL: centavos inteiros em reais (2.9888ms)
+✔ parseBRL: o que a pessoa digita vira centavos exatos (sem float) (1.5499ms)
+✔ datas: DD/MM/AAAA <-> AAAA-MM-DD, sem datas impossíveis (1.0593ms)
+✔ meses: deslocamento e nome (0.6562ms)
+✔ CSV e chave de idempotência (10.4576ms)
+✔ carrega a primeira página e as seguintes, sem repetir nem pular (7.12ms)
+✔ dois loadMore seguidos (rolagem + botão) buscam a próxima página uma vez só (3.1471ms)
+✔ recarregar durante um loadMore: a página atrasada da lista antiga é descartada (1.0714ms)
+✔ loadMore enquanto a primeira página recarrega não usa o cursor antigo (0.8699ms)
+✔ troca de filtro: lista limpa na hora e resposta do filtro anterior nunca entra (0.8651ms)
+✔ duas trocas de filtro rápidas: vale a última, mesmo que a primeira responda depois (0.7069ms)
+✔ recarregar com o mesmo filtro mantém a lista na tela até chegar a resposta (0.8016ms)
+✔ tela sem foco (cancel) ou desmontada (dispose): nada atrasado entra nem avisa (1.0754ms)
+✔ item repetido entre páginas (mudou de posição no servidor) entra uma vez só (0.9222ms)
+✔ erro na próxima página: mantém o que já carregou e permite tentar de novo (1.0587ms)
+✔ replace e resumo: troca só o item e mantém o resumo coerente (0.8385ms)
+✔ readAllPages: lê tudo e nunca entra em laço se o servidor repetir o cursor (37.4988ms)
+✔ conferência da exportação: íntegra, linha repetida, quantidade e somas (1.1901ms)
+✔ todos os tipos produzidos pelo banco têm texto, menos Bola Murcha (3.5347ms)
+✔ texto sem dados sensíveis: só o nome da pelada (1.01ms)
+✔ caminho do toque (0.8895ms)
+✔ uma mensagem por aparelho, com o id da notificação (2.4547ms)
+✔ aceite: basta um aparelho; token morto é apagado (0.8278ms)
+✔ todos os aparelhos mortos = falha; limite de envio = tentar de novo (0.5263ms)
+✔ recibos: espera até 24h; depois marca indisponível (2.7099ms)
+✔ lotes de 100 (0.4218ms)
+✔ pesos somam 100% e fórmula expandida do goleiro é equivalente (5.2472ms)
+✔ interpolação da nota (0.7558ms)
+✔ nota da partida: 50/50 entre grupos, sem nota fictícia (0.5394ms)
+✔ ATU: neutro sem votos, partidas sem voto contam em J (2.1273ms)
+✔ OFF/DEF: neutro na referência, monotonicidade, sem NaN (1.8558ms)
+✔ REF: valores de referência, crescente, neutro sem registro, estabilização C4 (0.6781ms)
+✔ PEQ e RES: monotonia com N fixo, neutros sem dados (1.0614ms)
+✔ DIS: amarelo, vermelho, recuperação, limites, desativado = 70, pendente não é limpo (4.2143ms)
+✔ históricos de 0, 1, 4, 5, 20 e 25 partidas; elegibilidade aos 5 jogos (2.7073ms)
+✔ goleiro: EST = 0,7 REF + 0,3 DEF, sem GAR (1.6082ms)
+✔ transição de posição: EST interpola em 5 partidas, outros atributos intactos (1.8724ms)
+✔ referência local híbrida (12.6286ms)
+✔ arredondamento: empate 0,5 para cima e faixas (0.45ms)
+✔ SQL = JS nas funções puras do motor (9929.1595ms)
+✔ lista todos os arquivos de uma pasta com mais de 1.000 (2.078ms)
+✔ candidatos: todos os antigos, nenhum recente, sem repetir (5.3392ms)
+✔ página exata (múltiplo do limite) também termina (1.6046ms)
+ℹ tests 43
+ℹ suites 0
+ℹ pass 43
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 11039.1754
+
+## app: lint / typecheck / test
+lint exit 0
+tsc ok
+ℹ tests 29
+ℹ pass 29
+ℹ fail 0
+
+## motor congelado (diff contra a V7.7)
+(vazio = sem alteração)

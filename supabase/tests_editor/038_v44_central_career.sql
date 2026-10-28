@@ -131,7 +131,8 @@ perform pg_temp.assert((s->'totals'->>'matches_played')::int = 4 and (s->'totals
  'totais = partidas das temporadas visíveis (A: 2025 + 2 atuais; B: 1)');
 perform pg_temp.assert((s->'trophies'->>'match_craque')::int = 1 and (s->'trophies'->>'monthly_king')::int = 1 and (s->'trophies'->>'bola_murcha')::int = 1,
  'troféus: Craque (sem o revogado e sem o de 2024), Rei do Mês, Bola Murcha');
-perform pg_temp.assert(not (s->'trophies' ? 'top_scorer'), 'só as três premiações oficiais');
+-- REV 8.0 (REV-001): o Artilheiro do Mês passa a ser troféu da Sala de Troféus (contagem própria).
+perform pg_temp.assert((s->'trophies') ? 'top_scorer', 'Artilheiro do Mês contado na Sala de Troféus');
 perform pg_temp.assert((select count(*) from jsonb_array_elements(s->'peladas') x, jsonb_array_elements(x->'seasons') y where y->'card' <> 'null'::jsonb) >= 2,
  'cada Card fica na sua pelada e temporada (nenhum overall somado)');
 perform pg_temp.assert(not (s->'totals' ? 'overall'), 'total geral não tem overall');
@@ -155,7 +156,8 @@ h := public.get_trophy_history(pg_temp.uid(1), 'monthly_king');
 perform pg_temp.assert(h->'items'->0->>'period_month' = to_char(date_trunc('month',now()),'YYYY-MM-DD') and h->'items'->0->>'pelada_name' = 'Pelada A', 'Rei do Mês com mês e pelada');
 h := public.get_trophy_history(pg_temp.uid(1), 'bola_murcha');
 perform pg_temp.assert((h->'items'->0->>'id')::uuid = v_bm, 'Bola Murcha com a partida');
-perform pg_temp.expect_error(format('select public.get_trophy_history(%L,%L)', pg_temp.uid(1), 'top_scorer'), 'INVALID_TROPHY');
+perform pg_temp.assert((public.get_trophy_history(pg_temp.uid(1), 'top_scorer')->>'visible')::boolean, 'REV-001: histórico do Artilheiro do Mês disponível');
+perform pg_temp.expect_error(format('select public.get_trophy_history(%L,%L)', pg_temp.uid(1), 'top_assist'), 'INVALID_TROPHY');
 perform pg_temp.expect_error(format('select public.get_trophy_history(%L,%L,%L::jsonb)', pg_temp.uid(1), 'match_craque', '{"at":"x"}'), 'INVALID_CURSOR');
 
 -- Histórico de partidas paginado (todas as peladas e só uma)

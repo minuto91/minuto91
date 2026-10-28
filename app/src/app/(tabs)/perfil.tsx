@@ -22,7 +22,7 @@ import {
 } from '../../lib/profile';
 import { useAuth } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
-import { colors, FEET, Foot, footLabel } from '../../lib/theme';
+import { colors, FEET, Foot, positionLabel } from '../../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../../lib/ui';
 
 const TABS = [
@@ -53,6 +53,7 @@ export default function Perfil() {
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
   const [ok, setOk] = useState<string | null>(null);
+  const mainPosition = career?.visible ? (career.peladas.find((p) => p.status === 'active')?.position ?? null) : null;
 
   useEffect(() => {
     if (!session) return;
@@ -152,7 +153,8 @@ export default function Perfil() {
         <Avatar path={me.avatar_path} name={me.display_name} size={72} />
         <View style={{ flex: 1, gap: 2 }}>
           <Title>{me.display_name}</Title>
-          <Sub>{me.dominant_foot ? footLabel(me.dominant_foot) : 'Meu perfil'}</Sub>
+          {/* REV-022: só a posição (da pelada atual), sem complemento com o nome da pelada. */}
+          {mainPosition ? <Sub>{positionLabel(mainPosition)}</Sub> : null}
         </View>
       </View>
       <Chips options={TABS} value={tab} onChange={(v) => { setOk(null); setTab(v); }} />

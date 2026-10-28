@@ -109,12 +109,20 @@ type Prefs = { essential: boolean; engagement: boolean; categories: Record<Categ
 // V4.4: uma chave por categoria (045). As duas chaves gerais da V4.1 continuam no servidor para apps antigos: aqui a
 // categoria aparece ligada só se a geral dela também estiver; ligar uma categoria religa a geral correspondente.
 // Nenhum aviso traz valores financeiros; cobrança automática não existe.
-const CATEGORIES: { key: Category; group: 'essential' | 'engagement'; label: string; hint: string }[] = [
-  { key: 'match_voting', group: 'essential', label: 'Nova partida e votação aberta', hint: 'Quando a súmula é publicada, corrigida ou a votação recomeça.' },
-  { key: 'voting_reminder', group: 'essential', label: 'Lembrete de votação', hint: 'Quando a votação está perto de fechar e você ainda não votou.' },
-  { key: 'results', group: 'essential', label: 'Resultado publicado', hint: 'Resultado da partida e partida anulada.' },
-  { key: 'awards', group: 'engagement', label: 'Premiações e conquistas', hint: 'Craque da Partida, Rei do Mês, figurinhas e retrospectiva. No máximo 3 por semana.' },
-  { key: 'pelada', group: 'essential', label: 'Avisos importantes da pelada', hint: 'Mudança de administrador, de função ou da assinatura da pelada.' },
+// REV-040: três níveis — urgentes, administrativas e informativas. Avisos repetidos já são agrupados no servidor
+// (um por operação); cada aviso abre a tela da partida/pelada correspondente.
+type Tier = 'urgent' | 'admin' | 'info';
+const TIERS: { key: Tier; label: string }[] = [
+  { key: 'urgent', label: 'Urgentes' },
+  { key: 'admin', label: 'Administrativas' },
+  { key: 'info', label: 'Informativas' },
+];
+const CATEGORIES: { key: Category; tier: Tier; group: 'essential' | 'engagement'; label: string; hint: string }[] = [
+  { key: 'match_voting', tier: 'urgent', group: 'essential', label: 'Votação aberta', hint: 'Súmula publicada, corrigida ou votação reiniciada.' },
+  { key: 'voting_reminder', tier: 'urgent', group: 'essential', label: 'Lembrete de votação', hint: 'Perto do prazo, se você ainda não votou.' },
+  { key: 'pelada', tier: 'admin', group: 'essential', label: 'Avisos da pelada', hint: 'Administração, funções e assinatura.' },
+  { key: 'results', tier: 'info', group: 'essential', label: 'Resultados', hint: 'Resultado publicado ou partida anulada.' },
+  { key: 'awards', tier: 'info', group: 'engagement', label: 'Conquistas', hint: 'Prêmios, figurinhas e retrospectiva.' },
 ];
 const ALL_ON: Record<Category, boolean> = { match_voting: true, voting_reminder: true, results: true, awards: true, pelada: true };
 
@@ -191,16 +199,21 @@ export function NotificationSettings() {
       {status === 'undetermined' && <Button title="Ativar avisos neste celular" onPress={ativar} loading={busy} />}
       {status === 'granted' && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>Avisos ativados neste celular.</Text>}
       {prefs &&
-        CATEGORIES.map((c) => (
-          <Row
-            key={c.key}
-            label={c.label}
-            hint={c.hint}
-            value={prefs[c.group] && prefs.categories[c.key] !== false}
-            onChange={(v) => toggle(c, v)}
-          />
+        TIERS.map((t) => (
+          <View key={t.key} style={{ gap: 8 }}>
+            <Text style={{ color: colors.muted, fontSize: 12, fontWeight: '700', letterSpacing: 0.5 }}>{t.label.toUpperCase()}</Text>
+            {CATEGORIES.filter((c) => c.tier === t.key).map((c) => (
+              <Row
+                key={c.key}
+                label={c.label}
+                hint={c.hint}
+                value={prefs[c.group] && prefs.categories[c.key] !== false}
+                onChange={(v) => toggle(c, v)}
+              />
+            ))}
+          </View>
         ))}
-      {prefs && <Sub>Avisos de segurança da conta (como transferência) sempre chegam. Nenhum aviso mostra valores do Financeiro.</Sub>}
+      {prefs && <Sub>Avisos de segurança da conta sempre chegam.</Sub>}
       {msg && <Text style={{ color: colors.danger }}>{msg}</Text>}
     </View>
   );

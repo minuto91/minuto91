@@ -185,7 +185,7 @@ export default function Carreira() {
       )}
 
       <Text style={section}>Sala de Troféus</Text>
-      <TrophyRoom userId={uid} counts={career.trophies} partial={career.partial} />
+      <TrophyRoom userId={uid} counts={career.trophies} partial={career.partial} shareName={me.display_name} />
 
       <Text style={section}>Álbum</Text>
       <Button title="Abrir meu álbum" kind="secondary" onPress={() => router.push('/album')} />
