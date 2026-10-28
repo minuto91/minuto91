@@ -11,6 +11,7 @@ const MAP: Record<string, string> = {
   PELADA_FULL: 'Essa pelada já tem 100 membros.',
   PELADA_NOT_ACTIVE: 'Essa pelada não está ativa.',
   MEMBERSHIP_NOT_REJOINABLE: 'Você não pode voltar a essa pelada.',
+  INVALID_SEASON_STATE: 'Essa temporada não está num estado que permita isso. Atualize a tela.',
   ADMIN_REQUIRED: 'Só o administrador pode fazer isso.',
   ASSISTANT_LIMIT_REACHED: 'Limite de assistentes atingido.',
   INVALID_SUCCESSOR: 'Esse jogador não pode ser sucessor.',

@@ -5,6 +5,7 @@ import { loadSeasons, Season } from '../../../lib/career';
 import { todayIn } from '../../../lib/dates';
 import { confirm, notify } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
+import { SeasonLifecycle } from '../../../lib/seasonlifecycle';
 import { supabase } from '../../../lib/supabase';
 import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
@@ -109,6 +110,7 @@ export default function Temporadas() {
           <Sub>
             {fmt(s.starts_on)} a {fmt(s.ends_on)} · {s.kind === 'custom' ? 'personalizada' : 'ano civil'}
           </Sub>
+          <SeasonLifecycle seasonId={s.id} isAdmin={isAdmin} onChanged={() => setReload((n) => n + 1)} />
         </Card>
       ))}
 

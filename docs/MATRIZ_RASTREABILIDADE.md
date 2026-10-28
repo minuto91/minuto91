@@ -90,7 +90,7 @@ Testes: SQL = `supabase/tests_editor/NNN_*.sql` (PGlite, `cd supabase/local_db; 
 | Artilheiro da Temporada (tipo de prêmio + tela) | falta a regra de concessão (quando, empate, quem fecha); só existe o desenho descrito |
 | Seleção da Rodada na Sala | é coleção de outra tabela; falta decidir contagem (por rodada? por jogador na seleção?) |
 | 042 movimentação | não existe "ranking oficial" persistido para comparar; precisa decidir o que é um ranking oficial |
-| 043–045 (resolvido na 059) — riscos abertos | partidas novas em temporada cancelada/suspensa não são bloqueadas; sem telas no app (só RPCs); sem notificação |
+| 043–045 (resolvido na 059) — riscos abertos | partidas novas em temporada cancelada/suspensa não são bloqueadas; tela em `lib/seasonlifecycle.tsx` + `temporadas.tsx` (typecheck/testes ok, **não vista rodando**); sem notificação |
 | Pedestal do Artilheiro do Mês | conflito V8.0 × arte nova — aguarda o fundador |
 
 ## H. Regressão obrigatória (preservado)

@@ -2,6 +2,12 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
+## V8.1 — etapa 3: telas do ciclo de vida (28/10/2026)
+
+- `app/src/lib/seasonlifecycle.tsx` (novo) integrado em `app/src/app/pelada/[id]/temporadas.tsx`: estado (suspensa/cancelada), linha do tempo, e para o admin botões Suspender/Retomar/Cancelar/Reativar com motivo obrigatório e confirmação. Mensagem nova em `errors.ts` (`INVALID_SEASON_STATE`).
+- `npm run typecheck` 0 erros; `npm test` 29/29; `npm run lint`: 1 erro **que já existia** em `lib/push.tsx:47` (`AndroidImportance`), arquivo não tocado; nenhum erro nos arquivos novos.
+- **Não verificado:** tela rodando (web/aparelho) e o fluxo contra o Supabase dev (a 059 ainda não foi aplicada lá). Sem notificação aos jogadores.
+
 ## V8.1 — etapa 2: ciclo de vida da temporada (28/10/2026)
 
 ### Feito
