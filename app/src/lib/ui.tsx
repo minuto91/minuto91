@@ -2,7 +2,7 @@ import { ReactNode } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, TextInputProps, View } from 'react-native';
 import { Text, TextInput } from './text';
 
-import { colors, POSITIONS, Position, radius, Sector, SECTORS, type } from './theme';
+import { colors, POSITIONS, Position, radius, Sector, type } from './theme';
 
 export function Screen({ children }: { children: ReactNode }) {
   return (

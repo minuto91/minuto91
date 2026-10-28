@@ -88,8 +88,8 @@ export function CardsTracking({ peladaId, isAdmin }: { peladaId: string; isAdmin
       <Text style={{ fontWeight: '800', color: colors.deepBlue }}>Registro de cartões</Text>
       <Sub>
         {on
-          ? 'Ligado: a súmula publicada vale como registro disciplinar (sem cartão = jogo limpo).'
-          : 'Desligado: a Disciplina fica em 70 para todos, sem estimar cartões.'}
+          ? 'Ligado: a súmula publicada conta para a Disciplina.'
+          : 'Desligado: Disciplina 70 para todos.'}
       </Sub>
       {isAdmin && (
         <Button

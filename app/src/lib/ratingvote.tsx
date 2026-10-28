@@ -167,7 +167,7 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
   const [admin, setAdmin] = useState<AdminSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
-  const [extra, setExtra] = useState<'15' | '60' | '180' | '720'>('60');
+  const [details, setDetails] = useState(false);
   const [hours, setHours] = useState<'1' | '3' | '6' | '12' | '24'>('3');
   const [reason, setReason] = useState('');
   const [reload, setReload] = useState(0);
@@ -208,7 +208,13 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
   const total = v.targets?.length ?? 0;
   return (
     <Card>
-      <Text style={{ fontWeight: '800', color: colors.deepBlue, fontSize: 16 }}>Avaliação dos jogadores</Text>
+      {/* REV-012: só o essencial — status, prazo, progresso discreto e Avaliar. Detalhes ficam recolhidos. */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+        <Text style={{ flex: 1, fontWeight: '800', color: colors.deepBlue, fontSize: 16 }}>Votação</Text>
+        {v.state === 'open' && v.is_voter && total > 0 && (
+          <Text style={{ color: colors.muted, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{`${v.rated ?? 0}/${total}`}</Text>
+        )}
+      </View>
       <Sub>{STATE_LABEL[v.state]}</Sub>
       {v.state === 'open' && (
         <Sub>
@@ -216,19 +222,17 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
           {v.reopened ? ' · reabertura excepcional' : ''}
         </Sub>
       )}
-      {v.is_former_member && v.is_voter && <Sub>Você saiu da pelada, mas jogou esta partida: seu voto continua valendo.</Sub>}
       {v.is_voter && v.session_id && (v.state === 'published' || (v.rated ?? 0) > 0) && (
         <Button title="Ver meu histórico de votos" kind="ghost" onPress={() => router.push({ pathname: '/partida/[id]/meus-votos', params: { id: matchId } })} />
       )}
       {v.state === 'open' && v.is_voter && (
         <Button
-          title={v.phase === 'review' ? `Revisar minhas notas (${v.rated} de ${total})` : (v.rated ?? 0) > 0 ? `Continuar (${v.rated} de ${total})` : 'Avaliar jogadores'}
+          title={v.phase === 'review' ? 'Revisar' : (v.rated ?? 0) > 0 ? 'Continuar' : 'Avaliar'}
           onPress={() => router.push({ pathname: '/partida/[id]/votar', params: { id: matchId } })}
         />
       )}
       {v.can_manage && v.state === 'ready' && (
         <>
-          <Body>Abra a votação para os participantes avaliarem companheiros e adversários por 6 horas.</Body>
           <Button
             title="Abrir votação"
             disabled={busy}
@@ -240,8 +244,39 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
           />
         </>
       )}
+      {v.can_manage && v.state === 'open' && !v.extension_used && (
+        <View style={{ flexDirection: 'row', gap: 8 }}>
+          {([
+            ['30', '+30 min'],
+            ['60', '+1 h'],
+            ['120', '+2 h'],
+          ] as const).map(([m, label]) => (
+            <View key={m} style={{ flex: 1 }}>
+              <Button
+                title={label}
+                kind="secondary"
+                disabled={busy}
+                onPress={() =>
+                  confirm('Prorrogar a votação?', 'Só uma prorrogação por votação.', 'Prorrogar', () =>
+                    run('extend_rating_vote', { p_session: v.session_id, p_minutes: Number(m) }),
+                  )
+                }
+              />
+            </View>
+          ))}
+        </View>
+      )}
       {admin && (
-        <View style={{ gap: 4, marginTop: 6 }}>
+        <Pressable
+          onPress={() => setDetails((d) => !d)}
+          accessibilityRole="button"
+          accessibilityState={{ expanded: details }}
+          style={{ minHeight: 44, justifyContent: 'center' }}>
+          <Text style={{ color: colors.blue, fontWeight: '600' }}>{details ? 'Ocultar detalhes da votação' : 'Detalhes da votação'}</Text>
+        </Pressable>
+      )}
+      {admin && details && (
+        <View style={{ gap: 4 }}>
           <Sub>
             {admin.voters_complete} concluíram · {admin.voters_in_progress} em andamento · {admin.voters_not_started} não começaram (de{' '}
             {admin.participants})
@@ -249,35 +284,10 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
           {admin.voters.some((x) => x.progress !== 'complete') && (
             <Sub>Pendentes: {admin.voters.filter((x) => x.progress !== 'complete').map((x) => x.name).join(', ')}</Sub>
           )}
-          <Sub>Por sigilo, ninguém (nem a administração) vê notas, escolhas ou resultado antes da publicação.</Sub>
+          {v.extension_used && <Sub>Prorrogação já usada.</Sub>}
+          <Sub>Notas e escolhas ficam em sigilo até a publicação.</Sub>
         </View>
       )}
-      {v.can_manage && v.state === 'open' && !v.extension_used && (
-        <>
-          <Sub>Prorrogação (uma vez por votação; só quem ainda não concluiu é avisado)</Sub>
-          <Chips
-            options={[
-              { value: '15', label: '+15 min' },
-              { value: '60', label: '+1 h' },
-              { value: '180', label: '+3 h' },
-              { value: '720', label: '+12 h' },
-            ]}
-            value={extra}
-            onChange={(x) => setExtra(x)}
-          />
-          <Button
-            title="Prorrogar"
-            kind="secondary"
-            disabled={busy}
-            onPress={() =>
-              confirm('Prorrogar a votação?', 'A prorrogação só pode ser usada uma vez nesta votação.', 'Prorrogar', () =>
-                run('extend_rating_vote', { p_session: v.session_id, p_minutes: Number(extra) }),
-              )
-            }
-          />
-        </>
-      )}
-      {v.can_manage && v.state === 'open' && v.extension_used && <Sub>A prorrogação desta votação já foi usada.</Sub>}
       {v.can_manage && v.state === 'awaiting_publication' && (
         // O servidor publica sozinho; o botão só adianta (mesma operação, idempotente).
         <Button title="Publicar agora" kind="secondary" disabled={busy} onPress={() => run('publish_rating_vote', { p_session: v.session_id })} />

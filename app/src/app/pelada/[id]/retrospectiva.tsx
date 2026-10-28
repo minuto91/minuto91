@@ -59,8 +59,6 @@ export default function Retrospectiva() {
   useEffect(() => {
     if (!seasonId) return;
     let alive = true;
-    setCons(null);
-    setPage(0);
     (async () => {
       const { data: c, error } = await supabase.rpc('get_season_consolidation', { p_season: seasonId });
       if (!alive) return;
@@ -85,7 +83,7 @@ export default function Retrospectiva() {
     <Screen>
       <Title>Retrospectiva</Title>
       {seasons.length > 1 && (
-        <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={(v) => { setMsg(null); setSeasonId(v); }} />
+        <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={(v) => { setMsg(null); setCons(null); setPage(0); setSeasonId(v); }} />
       )}
       <ErrorText>{msg}</ErrorText>
 

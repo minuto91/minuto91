@@ -1,7 +1,8 @@
 import * as Clipboard from 'expo-clipboard';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Linking, Share, View } from 'react-native';
+import { Linking, Pressable, Share, View } from 'react-native';
+import Svg, { Rect } from 'react-native-svg';
 import { Text } from '../../../lib/text';
 
 import { confirm } from '../../../lib/dialog';
@@ -9,7 +10,7 @@ import { friendly } from '../../../lib/errors';
 import { inviteLink, inviteMessage, whatsappUrl } from '../../../lib/invite';
 import { supabase } from '../../../lib/supabase';
 import { colors } from '../../../lib/theme';
-import { Button, Card, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
+import { Button, ErrorText, Screen, Sub, Title } from '../../../lib/ui';
 
 // Convidar jogadores (só o admin; o banco recusa os demais). Abre já com um convite novo.
 // novo=1: veio da criação da pelada (mostra "Pelada criada" e o atalho para a pelada).
@@ -72,8 +73,8 @@ export default function Convidar() {
     <Screen>
       {novo === '1' ? (
         <>
-          <Title>Pelada criada!</Title>
-          <Sub>Agora chame a turma. Quem entra pelo convite escolhe a posição e já aparece no elenco.</Sub>
+          <Title>Pelada criada</Title>
+          <Sub>Agora chame a turma.</Sub>
         </>
       ) : (
         <>
@@ -91,21 +92,21 @@ export default function Convidar() {
               <Button title="Copiar link" kind="secondary" onPress={() => copy('link')} />
             </View>
             <View style={{ flex: 1 }}>
-              <Button title="Copiar código" kind="secondary" onPress={() => copy('codigo')} />
+              <Button title="Outros apps" kind="secondary" onPress={() => Share.share({ message })} />
             </View>
           </View>
-          <Button title="Outros apps" kind="secondary" onPress={() => Share.share({ message })} />
-          {copied && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{copied}</Text>}
-          <Card>
-            <Sub>Código do convite</Sub>
-            <Text selectable style={{ fontFamily: 'monospace', fontSize: 12, color: colors.ink }}>
-              {token}
+          {/* REV-016: código visualmente curto; copiar leva sempre o token inteiro. Validade e limite: servidor. */}
+          <Pressable
+            onPress={() => copy('codigo')}
+            accessibilityRole="button"
+            accessibilityLabel="Copiar código do convite"
+            style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 10, paddingHorizontal: 14, borderWidth: 1, borderColor: colors.line, borderRadius: 12 }}>
+            <Text style={{ flex: 1, fontFamily: 'monospace', fontSize: 15, color: colors.ink }} numberOfLines={1}>
+              {`${token.slice(0, 6)}…${token.slice(-4)}`}
             </Text>
-            <Sub>
-              Vale por 7 dias e até 100 entradas. Se o link não abrir no celular da pessoa, ela toca em
-              &quot;Entrar com convite&quot; no app e cola o código.
-            </Sub>
-          </Card>
+            <CopyIcon />
+          </Pressable>
+          {copied && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{copied}</Text>}
           <Button title="Gerar novo link (cancela os anteriores)" kind="secondary" onPress={regenerate} loading={busy} />
         </>
       ) : (
@@ -116,3 +117,10 @@ export default function Convidar() {
     </Screen>
   );
 }
+
+const CopyIcon = () => (
+  <Svg width={20} height={20} viewBox="0 0 24 24" accessibilityElementsHidden>
+    <Rect x={8} y={8} width={12} height={12} rx={2.5} fill="none" stroke={colors.blue} strokeWidth={2} />
+    <Rect x={4} y={4} width={12} height={12} rx={2.5} fill="none" stroke={colors.blue} strokeWidth={2} />
+  </Svg>
+);

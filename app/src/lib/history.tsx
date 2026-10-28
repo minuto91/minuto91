@@ -114,7 +114,6 @@ export function MatchHistory({ peladaId, showPelada, limit }: { peladaId: string
 
   useEffect(() => {
     let alive = true;
-    setItems(null);
     (async () => {
       const { data, error } = await supabase.rpc('get_my_match_history', { p_pelada: peladaId, p_after: null, p_limit: limit ?? 20 });
       if (!alive) return;

@@ -11,7 +11,7 @@ import { friendly } from '../../../lib/errors';
 import { Icon, IconName } from '../../../lib/icons';
 import { fmtDate, fmtTime, Match, MATCH_COLUMNS, scoreLine, STATUS_LABEL } from '../../../lib/match';
 import { AdminPending } from '../../../lib/pending';
-import { CardsTracking, PositionRequests } from '../../../lib/ratingadmin';
+import { PositionRequests } from '../../../lib/ratingadmin';
 import { SecondaryRequests } from '../../../lib/secondary';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
@@ -257,12 +257,11 @@ export default function CentralDaRodada() {
       {isStaff && loaded && (
         <AdminPending peladaId={id} matches={matches} members={members} successor={pelada?.successor_membership_id ?? null} isAdmin={isAdmin} onInvite={convidar} />
       )}
-      {/* V5: pedidos de troca de posição e registro de cartões (só o admin decide). */}
+      {/* V5: pedidos de troca de posição (só o admin decide). Registro de cartões: Configurações (REV-014). */}
       {isAdmin && loaded && (
         <>
           <PositionRequests peladaId={id} isAdmin={isAdmin} />
           <SecondaryRequests peladaId={id} isAdmin={isAdmin} />
-          <CardsTracking peladaId={id} isAdmin={isAdmin} />
         </>
       )}
 

@@ -34,6 +34,7 @@ import {
   Team,
   TeamExtras,
 } from '../../../lib/match';
+import { MatchRoles } from '../../../lib/matchroles';
 import { HardSaves } from '../../../lib/ratingadmin';
 import { RatingVotePanel } from '../../../lib/ratingvote';
 import { ReportLink } from '../../../lib/report';
@@ -320,6 +321,24 @@ export default function Partida() {
       {match.status === 'cancelled' && <CancelledInfo matchId={match.id} />}
       {(match.status === 'draft' || match.status === 'cancelled') && isStaff && (
         <ScheduleActions matchId={match.id} status={match.status} onDone={() => router.replace({ pathname: '/partida/[id]', params: { id } })} />
+      )}
+
+      {(match.status === 'voting_open' || match.status === 'finalized') && (
+        <MatchRoles
+          matchId={match.id}
+          staff={isStaff}
+          myMembershipId={me?.id ?? null}
+          teamNames={{ A: match.team_a_name, B: match.team_b_name }}
+          players={players
+            .filter((p) => p.participant_id)
+            .map((p) => ({
+              participant_id: p.participant_id!,
+              membership_id: p.membership_id ?? null,
+              team: p.team,
+              position: p.position,
+              name: p.membership_id ? nameOf(p.membership_id) : (guests.find((g) => g.id === p.guest_id)?.display_name ?? 'Convidado'),
+            }))}
+        />
       )}
 
       {/* V5: avaliação dos jogadores (abrir, votar, acompanhar e publicar). */}

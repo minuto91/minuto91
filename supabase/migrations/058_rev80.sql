@@ -761,7 +761,9 @@ begin
   default_team_a_name=case when p ? 'team_a_name' then nullif(btrim(p->>'team_a_name'),'') else default_team_a_name end,
   default_team_b_name=case when p ? 'team_b_name' then nullif(btrim(p->>'team_b_name'),'') else default_team_b_name end,
   default_team_a_color=case when p ? 'team_a_color' then nullif(p->>'team_a_color','') else default_team_a_color end,
-  default_team_b_color=case when p ? 'team_b_color' then nullif(p->>'team_b_color','') else default_team_b_color end
+  default_team_b_color=case when p ? 'team_b_color' then nullif(p->>'team_b_color','') else default_team_b_color end,
+  recurring_weekday=case when p ? 'weekday' then nullif(p->>'weekday','')::smallint else recurring_weekday end,
+  recurring_time=case when p ? 'time' then nullif(p->>'time','')::time else recurring_time end
  where id=p_pelada;
  insert into private.audit_events(pelada_id,actor_user_id,event_type) values(p_pelada,auth.uid(),'pelada_identity_updated');
 end $$;
