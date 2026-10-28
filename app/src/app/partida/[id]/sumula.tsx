@@ -4,6 +4,9 @@ import { Pressable, Switch, View } from 'react-native';
 import { Text } from '../../../lib/text';
 
 import { confirm, notify } from '../../../lib/dialog';
+import { DraftBanner } from '../../../lib/draftbanner';
+import { clearDraft, draftKey, loadDraft, saveDraft } from '../../../lib/drafts';
+import { SheetReview } from '../../../lib/sheetreview';
 import { friendly } from '../../../lib/errors';
 import {
   emptyExtras,
@@ -67,6 +70,11 @@ export default function Sumula() {
   const [teamB, setTeamB] = useState('');
   const [closeMode, setCloseMode] = useState<'duration' | 'fixed'>('duration');
   const [fixedHours, setFixedHours] = useState(3);
+  // REV-041: revisão antes de publicar/corrigir; REV-044: rascunho local das mudanças ainda não salvas.
+  const [review, setReview] = useState<'publish' | 'correct' | null>(null);
+  const [original, setOriginal] = useState<SheetPlayer[] | null>(null);
+  const [localDraft, setLocalDraft] = useState<{ players: SheetPlayer[]; extras: TeamExtras } | null>(null);
+  const dKey = session ? draftKey(session.user.id, `sumula:${id}`) : null;
 
   useEffect(() => {
     let alive = true;
@@ -93,6 +101,11 @@ export default function Sumula() {
         setGuests(gs);
         setPlayers(sheet.players);
         setExtras(sheet.extras);
+        setOriginal(sheet.players);
+        if (dKey) {
+          const d = await loadDraft<{ players: SheetPlayer[]; extras: TeamExtras }>(dKey);
+          if (alive && d && JSON.stringify(d.players) !== JSON.stringify(sheet.players)) setLocalDraft(d);
+        }
       } catch (e) {
         if (alive) setMsg(friendly((e as Error).message));
       }
@@ -100,7 +113,15 @@ export default function Sumula() {
     return () => {
       alive = false;
     };
-  }, [id, reload]);
+  }, [id, reload, dKey]);
+
+  // Grava o rascunho local a cada mudança (só no aparelho; nunca publica nada).
+  useEffect(() => {
+    if (!dKey || !original || localDraft) return;
+    if (JSON.stringify(players) === JSON.stringify(original)) return;
+    const t = setTimeout(() => saveDraft(dKey, { players, extras }), 500);
+    return () => clearTimeout(t);
+  }, [dKey, players, extras, original, localDraft]);
 
   const isDraft = match?.status === 'draft';
   const isCorrection = match?.status === 'voting_open';
@@ -178,7 +199,11 @@ export default function Sumula() {
   };
 
   async function salvar() {
-    if ((await salvarRascunho()).ok) notify('Súmula salva');
+    if ((await salvarRascunho()).ok) {
+      if (dKey) await clearDraft(dKey);
+      setOriginal(players);
+      notify('Súmula salva');
+    }
   }
 
   async function publicar() {
@@ -190,6 +215,7 @@ export default function Sumula() {
         : { p_match: id, p_duration_minutes: Number(duration) },
     );
     if (!ok) return;
+    if (dKey) await clearDraft(dKey);
     if (r.status === 'finalized')
       notify(
         'Partida finalizada sem votação',
@@ -205,6 +231,7 @@ export default function Sumula() {
       p_reason: reason,
     });
     if (!ok) return;
+    if (dKey) await clearDraft(dKey);
     notify(
       'Súmula corrigida',
       r.eligible_voters_changed
@@ -242,6 +269,19 @@ export default function Sumula() {
   return (
     <Screen>
       <Title>{isCorrection ? 'Corrigir súmula' : 'Súmula'}</Title>
+      {localDraft && (
+        <DraftBanner
+          onResume={() => {
+            setPlayers(localDraft.players);
+            setExtras(localDraft.extras);
+            setLocalDraft(null);
+          }}
+          onDiscard={async () => {
+            setLocalDraft(null);
+            if (dKey) await clearDraft(dKey);
+          }}
+        />
+      )}
       <Sub>{fmtDate(match.played_at)}</Sub>
       {isDraft && <Chips options={DAYS} value={null} onChange={mudarData} />}
       {isDraft && premium && (
@@ -347,13 +387,23 @@ export default function Sumula() {
               <Sub>A votação fecha {fixedHours === 1 ? '1 hora' : `${fixedHours} horas`} depois de publicar, no horário exato.</Sub>
             </>
           )}
-          <Button title="Publicar e abrir votação" onPress={publicar} loading={busy} />
+          {review === 'publish' ? (
+            <SheetReview teamA={match.team_a_name} teamB={match.team_b_name} score={score} players={players} before={null} nameOf={nameOf}
+              correction={false} busy={busy} onConfirm={publicar} onBack={() => setReview(null)} />
+          ) : (
+            <Button title="Revisar e publicar" onPress={() => setReview('publish')} loading={busy} />
+          )}
           <Button title="Excluir rascunho" kind="danger" onPress={descartar} />
         </>
       ) : (
         <>
           <Input autoCapitalize="sentences" placeholder="motivo da correção (obrigatório)" value={reason} onChangeText={setReason} />
-          <Button title="Salvar correção" onPress={corrigir} loading={busy} disabled={reason.trim().length < 3} />
+          {review === 'correct' ? (
+            <SheetReview teamA={match.team_a_name} teamB={match.team_b_name} score={score} players={players} before={original} nameOf={nameOf}
+              correction busy={busy} onConfirm={corrigir} onBack={() => setReview(null)} />
+          ) : (
+            <Button title="Revisar correção" onPress={() => setReview('correct')} loading={busy} disabled={reason.trim().length < 3} />
+          )}
         </>
       )}
     </Screen>

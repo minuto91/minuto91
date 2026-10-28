@@ -34,6 +34,7 @@ import {
   Team,
   TeamExtras,
 } from '../../../lib/match';
+import { Collapsible } from '../../../lib/collapsible';
 import { MatchRoles } from '../../../lib/matchroles';
 import { HardSaves } from '../../../lib/ratingadmin';
 import { RatingVotePanel } from '../../../lib/ratingvote';
@@ -305,7 +306,7 @@ export default function Partida() {
         b={match.team_b_name}
         scoreA={match.team_a_score}
         scoreB={match.team_b_score}
-        mine={null}
+        mine={(players.find((p) => p.membership_id && p.membership_id === me?.id)?.team as 'A' | 'B' | undefined) ?? null}
         top={
           <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.4, color: '#9DB8E8' }} numberOfLines={2}>
             {fmtDate(match.played_at).toUpperCase()} · {(STATUS_LABEL[match.status] ?? match.status).toUpperCase()}
@@ -313,6 +314,15 @@ export default function Partida() {
           </Text>
         }
       />
+      {/* REV-042: resumo dos eventos logo abaixo do placar. */}
+      {!annulled && players.some((p) => p.goals > 0) && (
+        <Text style={{ color: colors.muted, textAlign: 'center' }}>
+          {players
+            .filter((p) => p.goals > 0)
+            .map((p) => `${playerName(p)}${p.goals > 1 ? ` (${p.goals})` : ''}`)
+            .join(' · ')}
+        </Text>
+      )}
       <ErrorText>{msg}</ErrorText>
 
       {match.status === 'draft' && isStaff && (
@@ -382,6 +392,7 @@ export default function Partida() {
       )}
 
       {match.status === 'finalized' && (
+        <Collapsible title="Avaliações" initiallyOpen>
         <Card>
           {/* V6.1: desde a V5 a súmula publicada finaliza sem a cédula antiga; a avaliação fica no painel acima. */}
           {!voting && <Sub>Resultado oficial. Contam gols, assistências e presença.</Sub>}
@@ -411,6 +422,7 @@ export default function Partida() {
                 </Text>
               ))}
         </Card>
+        </Collapsible>
       )}
 
       {postGame && (
@@ -445,15 +457,14 @@ export default function Partida() {
       )}
 
       {lineup && lineup.players.length > 0 && (
-        <>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.deepBlue, letterSpacing: 0.5, marginTop: 10 }}>Escalação</Text>
+        <Collapsible title="Escalação">
           <Card>
             <LineupBoard teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} formations={lineup.formations} score={match.status === 'finalized' ? finalScore : null} />
           </Card>
           <SharePanel label="Compartilhar escalação" fileName="minuto91-escalacao" title="Escalação da partida">
             <LineupArt peladaName={peladaName} crestPath={crestPath} subtitle={date} teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} formations={lineup.formations} score={match.status === 'finalized' ? finalScore : null} />
           </SharePanel>
-        </>
+        </Collapsible>
       )}
 
       {match.status === 'finalized' && isAdmin && <AnnulMatch matchId={id} onDone={load} />}
@@ -470,6 +481,7 @@ export default function Partida() {
       )}
       {annulled && isAdmin && <RestoreMatch matchId={id} onDone={load} />}
 
+      <Collapsible title="Estatísticas" initiallyOpen={match.status !== 'finalized'}>
       {(['A', 'B'] as Team[]).map((t) => (
         <View key={t} style={{ gap: 6 }}>
           <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 8 }}>
@@ -491,6 +503,7 @@ export default function Partida() {
           {!annulled && extras.ownGoals[t] > 0 && <Sub>Gols contra a favor: {extras.ownGoals[t]}</Sub>}
         </View>
       ))}
+      </Collapsible>
       {me &&
         matchGuests.map((g) => (
           <ReportLink
