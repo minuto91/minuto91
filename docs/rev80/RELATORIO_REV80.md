@@ -89,7 +89,8 @@ Ver `docs/rev80/RESULTADO_TESTES.txt` (gerado nesta entrega):
 - Motor/lógica (`node --test` em `supabase/local_db`): resultado no arquivo.
 - App: `npm run lint` (0 problemas), `npm run typecheck` (0 erros), `npm test` (29/29), bundle web (`expo export`) sem erro.
 
-Não executado: testes no Supabase dev real (SQL Editor), Edge Functions, iPhone/Android, verificação visual das artes.
+Supabase dev: migração 058 aplicada e teste 045 passou lá (ver o fim do RESULTADO_TESTES.txt).
+Não executado: demais testes antigos no dev, Edge Functions, iPhone/Android, verificação visual das artes.
 
 ## 5. Bloqueios e lacunas (decisão sua)
 

@@ -112,3 +112,10 @@ expo export --platform web: Web Bundled (1197 modules), sem erro
 
 ## motor congelado (diff contra a V7.7)
 (vazio = sem alteração)
+
+## Supabase dev (minuto91-dev, ref lqirpgqrnbsycuowwoie) — 2026-10-28T20:36Z
+- Antes: V7.7 (053–057) presente; 058 ausente.
+- apply_migration 058_rev80: sucesso.
+- tests_editor/045_rev80.sql: "ERROR: P0001: PASS: 045_rev80" (passou; o erro proposital desfaz tudo).
+- Depois: 0 usuários e 0 peladas de teste gravados; premium_beta_open = true (inalterado);
+  backfill de períodos: 51 períodos para 51 vínculos.
