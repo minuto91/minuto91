@@ -11,8 +11,10 @@ Detalhes: `docs/V8.6_IMPLEMENTACAO.md`, matriz `docs/V8.6_MATRIZ_RASTREABILIDADE
 - App: tela `craque-temporada`, troféus novos na Sala de Troféus, mensagens de erro, `v86logic.ts` + `tests/v86.test.ts`.
 - Regressão: 49/49 testes SQL; 60/60 testes do app; `tsc` e `eslint` sem erros.
 
-### Pendente (decisão do produto)
-- Empate de OVR na formação de candidatos (G03), ordem dos atributos no desempate final e passo do admin (F04), política de retificação pós-publicação (G10), arte dedicada dos dois troféus, avisos de abertura/encerramento da votação.
+- Migração `064` + teste `050`: decisão A (G03: mais partidas, depois entrada mais antiga) e C (retificação pelo admin).
+
+### Pendente
+- Ordem dos atributos no desempate final e passo do admin (F04, próxima Rev), arte dedicada dos dois troféus, avisos de abertura/encerramento da votação.
 
 ## V8.4 — Central do Jogador + padronização global (28/10/2026) — Entrega A implementada com pendências; Entrega B parcial
 
