@@ -12,6 +12,7 @@ import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, positionLabel, positionShort } from '../../../lib/theme';
 import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import type { Composition } from '../../../lib/v85';
 
 type Lineup = {
   id: string;
@@ -57,6 +58,8 @@ export default function Escalacoes() {
   const { session } = useAuth();
   const router = useRouter();
   const [lineups, setLineups] = useState<Lineup[] | null>(null);
+  // V8.5: escalações oficiais (composições versionadas). As de antes da V8.5 continuam abaixo, só como histórico.
+  const [comps, setComps] = useState<Composition[]>([]);
   const [members, setMembers] = useState<Member[]>([]);
   const [premium, setPremium] = useState(false);
   const [pelada, setPelada] = useState<{ name: string; crest_path: string | null } | null>(null);
@@ -78,16 +81,18 @@ export default function Escalacoes() {
       let alive = true;
       (async () => {
         void reload;
-        const [{ data: ls, error }, { data: ent }, { data: ms }, { data: p }] = await Promise.all([
+        const [{ data: ls, error }, { data: ent }, { data: ms }, { data: p }, { data: cs }] = await Promise.all([
           supabase.rpc('get_lineups', { p_pelada: id }),
           supabase.rpc('get_pelada_entitlement', { p_pelada: id }),
           supabase.from('pelada_memberships').select('id, user_id, player_name, preferred_position, position_code, role').eq('pelada_id', id).eq('status', 'active').order('player_name'),
           supabase.from('peladas').select('name, crest_path').eq('id', id).maybeSingle(),
+          supabase.rpc('get_team_compositions', { p_pelada: id }),
         ]);
         if (!alive) return;
         if (error) return setMsg(friendly(error.message));
         setMsg(null);
         setLineups(ls as Lineup[]);
+        setComps((cs ?? []) as Composition[]);
         setPremium(!!(ent as { is_premium?: boolean } | null)?.is_premium);
         setMembers((ms ?? []) as Member[]);
         setPelada(p);
@@ -270,11 +275,23 @@ export default function Escalacoes() {
     <Screen>
       <Title>Escalações</Title>
       <Sub>Times antes do jogo.</Sub>
+      {comps.map((c) => (
+        <Pressable key={c.id} onPress={() => router.push({ pathname: '/pelada/[id]/composicao/[cid]', params: { id, cid: c.id } })} accessibilityRole="button">
+          <Card>
+            <Body>{c.label}</Body>
+            <Sub>
+              {c.team_a_name} {c.members.filter((m) => m.team === 'A').length} x {c.members.filter((m) => m.team === 'B').length} {c.team_b_name}
+              {c.round_date ? ` · ${new Date(c.round_date).toLocaleDateString('pt-BR')}` : ''}
+            </Sub>
+          </Card>
+        </Pressable>
+      ))}
+      {comps.length > 0 && !!lineups?.length && <Text style={{ fontSize: 13, color: colors.muted, marginTop: 8 }}>Escalações anteriores</Text>}
       <ErrorText>{msg}</ErrorText>
       {msg && !lineups && <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />}
       {!lineups && !msg && <LoadingBlock />}
 
-      {lineups?.length === 0 && !editing && <EmptyState title="Nenhuma escalação" />}
+      {lineups?.length === 0 && comps.length === 0 && !editing && <EmptyState title="Nenhuma escalação" />}
       {lineups?.map((l) => (
         <Card key={l.id}>
           <Body>{l.label}</Body>

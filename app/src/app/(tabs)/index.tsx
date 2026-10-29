@@ -307,7 +307,11 @@ export default function Home() {
             round={rounds[0]}
             more={rounds.length - 1}
             stale={!centralTrusted}
-            onPress={() => go({ pathname: '/pelada/[id]/escalacoes', params: { id: rounds[0].pelada_id } })}
+            onPress={() =>
+              rounds[0].composition_id
+                ? go({ pathname: '/pelada/[id]/composicao/[cid]', params: { id: rounds[0].pelada_id, cid: rounds[0].composition_id } })
+                : go({ pathname: '/pelada/[id]/escalacoes', params: { id: rounds[0].pelada_id } })
+            }
           />
         </View>
       );

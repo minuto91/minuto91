@@ -558,7 +558,7 @@ export function NextRoundCard({ round, more, stale, onPress }: { round: NextRoun
           {round.team_name} × {round.opponent_name}
         </Text>
         <Text style={type.meta} numberOfLines={2}>
-          {[round.label, time, round.location, 'Escalação planejada'].filter(Boolean).join(' · ')}
+          {[round.label, time, round.location, round.rescheduled ? 'Remarcada' : null, 'Escalação prevista'].filter(Boolean).join(' · ')}
           {more > 0 ? ` · +${more} ${more === 1 ? 'rodada' : 'rodadas'}` : ''}
         </Text>
         {stale ? <Text style={type.meta}>Informação anterior: confirme na rodada.</Text> : null}

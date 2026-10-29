@@ -44,11 +44,14 @@ export function SharePanel({
   fileName,
   title,
   children,
+  validate,
 }: {
   label: string;
   fileName: string;
   title: string;
   children: ReactNode;
+  /** V8.5 (REV-65): conferência antes de liberar o arquivo; devolve a mensagem que impede, ou null. */
+  validate?: () => Promise<string | null> | string | null;
 }) {
   const ref = useRef<ComponentRef<typeof View>>(null);
   const [open, setOpen] = useState(false);
@@ -61,6 +64,12 @@ export function SharePanel({
     setBusy(true);
     setMsg(null);
     try {
+      const problem = validate ? await validate() : null;
+      if (problem) {
+        setMsg(problem);
+        setBusy(false);
+        return;
+      }
       // A25: espera foto e escudo (até 5 s; o que não carregar sai com iniciais ou o escudo padrão).
       await new Promise((r) => setTimeout(r, 250));
       await images.idle(5000);

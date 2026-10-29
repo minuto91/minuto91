@@ -85,13 +85,18 @@ export type Pelada = {
 };
 
 export type NextRoundItem = {
-  lineup_id: string;
+  /** Escalação anterior à V8.5 (planned_lineups); null nas rodadas pré-cadastradas da V8.5. */
+  lineup_id: string | null;
+  /** V8.5: partida pré-cadastrada e escalação oficial de origem. */
+  match_id?: string | null;
+  composition_id?: string | null;
+  rescheduled?: boolean;
   pelada_id: string;
   pelada_name: string;
   label: string;
   team_name: string;
   opponent_name: string;
-  // Reservado: o servidor ainda não guarda data, horário nem local da rodada. Se vier, a Central mostra (E04).
+  // V8.5: data/horário (partida pré-cadastrada) e local da pelada, quando existem (E04).
   scheduled_at?: string | null;
   location?: string | null;
 };
