@@ -91,6 +91,8 @@ export const AWARD_LABEL: Record<string, string> = {
   most_improved: 'Maior evolução',
   match_craque: 'Craque da Partida',
   bola_murcha: 'Bola Murcha',
+  monthly_goalkeeper: 'Paredão do Mês',
+  season_craque: 'Craque da Temporada',
 };
 
 // "1 jogo", "2 jogos".

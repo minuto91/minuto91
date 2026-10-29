@@ -2,6 +2,18 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
+## V8.6 — Paredão do Mês + Craque da Temporada (29/10/2026) — parcial, com bloqueios fail-closed
+
+Detalhes: `docs/V8.6_IMPLEMENTACAO.md`, matriz `docs/V8.6_MATRIZ_RASTREABILIDADE.md`, anexo normativo `docs/V8.6_DECISOES_COMPLETAS.md`.
+
+### Feito
+- Migração `063_v86_paredao_craque_temporada.sql` + teste SQL `049_v86_paredao_craque.sql`: Paredão (REF mensal pela fórmula vigente, publicação só após confirmação do admin, versões de retificação) e Craque da Temporada (candidatos, eleitores congelados, 1º/2º turno, quórum, prorrogação única, voto secreto, desempate, reinício por correção).
+- App: tela `craque-temporada`, troféus novos na Sala de Troféus, mensagens de erro, `v86logic.ts` + `tests/v86.test.ts`.
+- Regressão: 49/49 testes SQL; 60/60 testes do app; `tsc` e `eslint` sem erros.
+
+### Pendente (decisão do produto)
+- Empate de OVR na formação de candidatos (G03), ordem dos atributos no desempate final e passo do admin (F04), política de retificação pós-publicação (G10), arte dedicada dos dois troféus, avisos de abertura/encerramento da votação.
+
 ## V8.4 — Central do Jogador + padronização global (28/10/2026) — Entrega A implementada com pendências; Entrega B parcial
 
 Detalhes: `docs/V8.4_*.md` (decisões E01–E16, matriz, auditoria, padronização, testes).

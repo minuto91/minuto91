@@ -17,9 +17,9 @@ import { supabase } from './supabase';
 import { colors } from './theme';
 import { Button, LoadingBlock, Sub } from './ui';
 
-export type TrophyType = 'match_craque' | 'monthly_king' | 'bola_murcha' | 'monthly_garcom' | 'top_scorer';
+export type TrophyType = 'match_craque' | 'monthly_king' | 'bola_murcha' | 'monthly_garcom' | 'top_scorer' | 'monthly_goalkeeper' | 'season_craque';
 // Servidor antigo (antes da 049) não manda o Garçom do Mês: conta como zero. O Garçom da Partida não existe mais (V7.7).
-export type TrophyCounts = Record<'match_craque' | 'monthly_king' | 'bola_murcha', number> & Partial<Record<'monthly_garcom' | 'top_scorer', number>>;
+export type TrophyCounts = Record<'match_craque' | 'monthly_king' | 'bola_murcha', number> & Partial<Record<'monthly_garcom' | 'top_scorer' | 'monthly_goalkeeper' | 'season_craque', number>>;
 
 export const TROPHIES: { type: TrophyType; label: string; hint: string }[] = [
   { type: 'match_craque', label: 'Craque da Partida', hint: 'Mais votado como Craque numa partida.' },
@@ -27,6 +27,8 @@ export const TROPHIES: { type: TrophyType; label: string; hint: string }[] = [
   { type: 'top_scorer', label: 'Artilheiro do Mês', hint: 'Mais gols oficiais no mês (empate divide o troféu).' },
   { type: 'bola_murcha', label: 'Bola Murcha', hint: 'Escolhido como Bola Murcha numa partida.' },
   { type: 'monthly_garcom', label: 'Garçom do Mês', hint: 'Mais assistências no mês (mínimo 2; desempate pela média e pelas partidas com assistência).' },
+  { type: 'monthly_goalkeeper', label: 'Paredão do Mês', hint: 'Melhor goleiro do mês (GOL com 2+ jogos no gol; vale o REF do mês).' },
+  { type: 'season_craque', label: 'Craque da Temporada', hint: 'Escolhido por votação no fim da temporada.' },
 ];
 
 const GOLD_LIGHT = '#F3D98B';
@@ -93,7 +95,7 @@ export function TrophyArt({ type, size = 96, dim = false }: { type: TrophyType; 
           <Stop offset="1" stopColor={GOLD_DARK} />
         </LinearGradient>
       </Defs>
-      {type === 'match_craque' && (
+      {(type === 'match_craque' || type === 'monthly_goalkeeper' || type === 'season_craque') && (
         <G>
           <Circle cx={50} cy={58} r={26} fill={`url(#${gid})`} stroke={GOLD_DARK} strokeWidth={1.2} />
           <Polygon points="50,47 59,53.5 55.5,64 44.5,64 41,53.5" fill={colors.deepBlue} opacity={0.85} />
@@ -139,9 +141,9 @@ export function TrophyArt({ type, size = 96, dim = false }: { type: TrophyType; 
       {type === 'monthly_garcom' && <Garcom gid={gid} />}
       {type === 'top_scorer' && <GoldenBoot gid={gid} />}
       {type !== 'top_scorer' && <Pedestal />}
-      {type === 'monthly_garcom' && (
+      {(type === 'monthly_garcom' || type === 'monthly_goalkeeper' || type === 'season_craque') && (
         <SvgText x={50} y={106.6} textAnchor="middle" fontSize={4.2} fontWeight="700" fill={colors.gold} letterSpacing={0.4}>
-          MÊS
+          {type === 'season_craque' ? 'TEMP' : type === 'monthly_goalkeeper' ? 'GOL' : 'MÊS'}
         </SvgText>
       )}
     </Svg>

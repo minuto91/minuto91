@@ -188,6 +188,7 @@ export default function CentralDaRodada() {
     ...(me ? [{ icon: 'card' as const, label: 'Meu Card', sub: 'Overall, atributos e álbum', onPress: go({ pathname: '/jogador/[id]', params: { id: me.id } }) }] : []),
     { icon: 'jogadores', label: 'Jogadores e estatísticas', sub: 'Cards e números de cada um', onPress: go({ pathname: '/pelada/[id]/jogadores', params: { id } }) },
     { icon: 'retro', label: 'Retrospectiva', sub: 'Resumo da temporada', onPress: go({ pathname: '/pelada/[id]/retrospectiva', params: { id } }) },
+    { icon: 'rankings', label: 'Craque da Temporada', sub: 'Votação no fim da temporada', onPress: go({ pathname: '/pelada/[id]/craque-temporada', params: { id } }) },
     { icon: 'temporadas', label: 'Temporadas', sub: 'Atual e anteriores', onPress: go({ pathname: '/pelada/[id]/temporadas', params: { id } }) },
   ];
   const gestao: GroupItem[] = [

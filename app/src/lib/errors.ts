@@ -189,6 +189,14 @@ const MAP: Record<string, string> = {
   LAYOUT_VERSION_CONFLICT: 'A sua Central foi personalizada em outro lugar. Mostramos a versão atual; faça a alteração de novo.',
   INVALID_LAYOUT: 'Essa combinação de blocos não é permitida.',
   NOTIFICATION_NOT_FOUND: 'Aviso não encontrado.',
+  // V8.6 Craque da Temporada / Paredão do Mês
+  SEASON_NOT_CLOSED: 'A temporada ainda não foi encerrada.',
+  SEASON_NOT_CONSOLIDATED: 'Ainda há partidas ou votações pendentes na temporada.',
+  BEFORE_ACTIVATION: 'Esta temporada terminou antes da ativação do prêmio.',
+  POLL_ALREADY_EXISTS: 'A votação desta temporada já foi aberta.',
+  CANDIDATE_TIE_UNRESOLVED: 'Empate de OVR na escolha dos candidatos: aguardando decisão do produto.',
+  INVALID_CANDIDATE: 'Esse jogador não é candidato neste turno.',
+  NOTHING_TO_CONFIRM: 'Não há nada para confirmar.',
 };
 
 export function friendly(message?: string | null): string {
