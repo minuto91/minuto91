@@ -1,6 +1,6 @@
 -- V8.6 (migração 064): decisão A (desempate na formação de candidatos) e C (retificação feita pelo admin).
--- Termina SEMPRE com o erro proposital "PASS: 050_v86_decisions_a_c".
--- Cole no SQL Editor do Supabase DEV. Termina SEMPRE com o erro proposital "PASS: 049_v86_paredao_craque" = tudo certo, nada gravado.
+-- Termina SEMPRE com o erro proposital "PASS: 053_v86_decisions_a_c".
+-- Cole no SQL Editor do Supabase DEV. Termina SEMPRE com o erro proposital "PASS: 052_v86_paredao_craque" = tudo certo, nada gravado.
 create function pg_temp.uid(n int) returns uuid language sql as
  $$ select ('99860000-0000-4000-8000-' || lpad(n::text,12,'0'))::uuid $$;
 create function pg_temp.as_user(n int) returns void language plpgsql as
@@ -140,5 +140,5 @@ perform pg_temp.assert((j->>'changed')::boolean = ((select winner_membership_id 
 perform pg_temp.assert(not (pg_temp.mem(v_a,2) = any(array(select (e->>'membership_id')::uuid from private.season_craque_polls p, jsonb_array_elements(p.candidates) e where p.season_id=v_s))), 'candidatos atualizados');
 perform pg_temp.assert(array_length(pg_temp.craque_winner(v_s),1) = 1, 'um único troféu ativo');
 perform pg_temp.assert((select count(*) from private.v86_events where kind='rectified') = 1, 'trilha da retificação');
-raise exception 'PASS: 050_v86_decisions_a_c';
+raise exception 'PASS: 053_v86_decisions_a_c';
 end $test$;

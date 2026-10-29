@@ -1,4 +1,4 @@
--- Minuto 91 / 063: V8.6 — Paredão do Mês (PM-01..PM-12) e Craque da Temporada (CT-01..CT-13, V01..V30, F01..F04).
+-- Minuto 91 / 066: V8.6 — Paredão do Mês (PM-01..PM-12) e Craque da Temporada (CT-01..CT-13, V01..V30, F01..F04).
 -- Especificação normativa: docs/V8.6_DECISOES_COMPLETAS.md. Rastreabilidade: docs/V8.6_MATRIZ_RASTREABILIDADE.md.
 --
 -- Não altera as fórmulas globais de OVR/REF (051), nem as seis premiações anteriores. Acrescenta:

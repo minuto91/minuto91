@@ -7,7 +7,7 @@ Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `
 Detalhes: `docs/V8.6_IMPLEMENTACAO.md`, matriz `docs/V8.6_MATRIZ_RASTREABILIDADE.md`, anexo normativo `docs/V8.6_DECISOES_COMPLETAS.md`.
 
 ### Feito
-- Migração `063_v86_paredao_craque_temporada.sql` + teste SQL `049_v86_paredao_craque.sql`: Paredão (REF mensal pela fórmula vigente, publicação só após confirmação do admin, versões de retificação) e Craque da Temporada (candidatos, eleitores congelados, 1º/2º turno, quórum, prorrogação única, voto secreto, desempate, reinício por correção).
+- Migração `066_v86_paredao_craque_temporada.sql` + teste SQL `052_v86_paredao_craque.sql`: Paredão (REF mensal pela fórmula vigente, publicação só após confirmação do admin, versões de retificação) e Craque da Temporada (candidatos, eleitores congelados, 1º/2º turno, quórum, prorrogação única, voto secreto, desempate, reinício por correção).
 - App: tela `craque-temporada`, troféus novos na Sala de Troféus, mensagens de erro, `v86logic.ts` + `tests/v86.test.ts`.
 - Regressão: 49/49 testes SQL; 60/60 testes do app; `tsc` e `eslint` sem erros.
 

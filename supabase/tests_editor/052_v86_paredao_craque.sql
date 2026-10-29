@@ -1,6 +1,6 @@
 -- V8.6 (migração 063): Paredão do Mês e Craque da Temporada.
 -- Cobre PM-01..PM-11, CT-01..CT-13, V01..V30 (sigilo, turnos, quórum, prorrogação, empates, reinício, retificação) e F01..F04 (fail-closed).
--- Cole no SQL Editor do Supabase DEV. Termina SEMPRE com o erro proposital "PASS: 049_v86_paredao_craque" = tudo certo, nada gravado.
+-- Cole no SQL Editor do Supabase DEV. Termina SEMPRE com o erro proposital "PASS: 052_v86_paredao_craque" = tudo certo, nada gravado.
 create function pg_temp.uid(n int) returns uuid language sql as
  $$ select ('99860000-0000-4000-8000-' || lpad(n::text,12,'0'))::uuid $$;
 create function pg_temp.as_user(n int) returns void language plpgsql as
@@ -402,5 +402,5 @@ perform pg_temp.expect_error(format('select public.get_season_craque(%L)', v_s),
 perform pg_temp.expect_error(format('select public.get_monthly_goalkeeper(%L,%L)', v_a, '2026-08-01'), 'PELADA_NOT_FOUND');
 execute 'reset role';
 
-raise exception 'PASS: 049_v86_paredao_craque';
+raise exception 'PASS: 052_v86_paredao_craque';
 end $test$;

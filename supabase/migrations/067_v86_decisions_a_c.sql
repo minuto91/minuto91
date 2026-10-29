@@ -1,4 +1,4 @@
--- Minuto 91 / 064: V8.6, decisões do produto sobre as pendências A e C (docs/V8.6_IMPLEMENTACAO.md §4).
+-- Minuto 91 / 067: V8.6, decisões do produto sobre as pendências A e C (docs/V8.6_IMPLEMENTACAO.md §4).
 --  A (G03): empate completo na formação de candidatos desempata por MAIS PARTIDAS na temporada e, persistindo,
 --     por ENTRADA MAIS ANTIGA na pelada. Só se ainda empatar (mesma data de entrada) o fluxo continua bloqueado.
 --  C (G10): retificação pós-publicação feita pelo admin: refaz a apuração com os votos já dados (último turno com votos),
