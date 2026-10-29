@@ -112,3 +112,16 @@ export function mergePage(current: Notif[], page: Notif[]): Notif[] {
 export const markRead = (items: Notif[], id: string, readAt: string): Notif[] =>
   items.map((n) => (n.id === id && !n.read_at ? { ...n, read_at: readAt } : n));
 export const markAllRead = (items: Notif[], readAt: string): Notif[] => items.map((n) => (n.read_at ? n : { ...n, read_at: readAt }));
+
+const WEEKDAY = ['dom', 'seg', 'ter', 'qua', 'qui', 'sex', 'sáb'];
+const two = (n: number) => String(n).padStart(2, '0');
+
+/** Rótulo curto de hora/data de cada aviso (já agrupado por dia): hora, 'ontem', dia da semana ou dd/mm. */
+export function whenLabel(createdAt: string, now: number): string {
+  const d = new Date(createdAt);
+  const g = groupOf(createdAt, now);
+  if (g === 'today') return `${two(d.getHours())}:${two(d.getMinutes())}`;
+  if (g === 'yesterday') return 'ontem';
+  if (g === 'week') return WEEKDAY[d.getDay()];
+  return `${two(d.getDate())}/${two(d.getMonth() + 1)}`;
+}

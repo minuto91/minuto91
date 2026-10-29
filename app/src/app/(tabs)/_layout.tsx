@@ -5,6 +5,7 @@
 import { Tabs } from 'expo-router/js-tabs';
 import Svg, { Circle, Path } from 'react-native-svg';
 
+import { emitHomeTabRepress } from '../../lib/tabevents';
 import { colors } from '../../lib/theme';
 
 type TabIcon = 'inicio' | 'peladas' | 'carreira' | 'perfil';
@@ -34,6 +35,8 @@ function Icon({ name, color }: { name: TabIcon; color: string }) {
 export default function TabsLayout() {
   return (
     <Tabs
+      // E15: o "voltar" do sistema devolve à aba de onde a pessoa veio (ex.: Carta → Carreira → voltar à Central).
+      backBehavior="history"
       screenOptions={{
         headerTintColor: colors.blue,
         headerTitleStyle: { color: colors.deepBlue, fontFamily: 'Inter_700Bold', fontSize: 17 },
@@ -48,6 +51,8 @@ export default function TabsLayout() {
         name="index"
         // Central 2.0: cabeçalho próprio (foto, saudação, "Central do Jogador" e avisos), com a área segura do topo.
         options={{ title: 'Início', headerShown: false, tabBarIcon: ({ color }) => <Icon name="inicio" color={String(color)} /> }}
+        // E09: toque na aba já ativa — a tela decide (topo da página ou atualização de leitura).
+        listeners={{ tabPress: () => emitHomeTabRepress() }}
       />
       <Tabs.Screen
         name="peladas"

@@ -113,3 +113,28 @@ export function careerStats(position: string | null, t: CareerTotals): StatCell[
       return [jogos, v, g, a];
   }
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// E02 seletor de pelada / E08 Minhas Peladas
+// ---------------------------------------------------------------------------------------------------------------
+const plain = (t: string) => t.normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase().trim();
+
+/** Pelada ativa primeiro, as demais em ordem alfabética (E02). */
+export function orderForSelector<T extends { id: string; name: string }>(peladas: T[], activeId: string | null): T[] {
+  const active = peladas.filter((p) => p.id === activeId);
+  const rest = peladas.filter((p) => p.id !== activeId).sort((a, b) => a.name.localeCompare(b.name, 'pt-BR', { sensitivity: 'base' }));
+  return [...active, ...rest];
+}
+
+/** Pesquisa do seletor: aparece a partir de 6 peladas (E02); sem acento nem caixa. */
+export const SEARCH_FROM = 6;
+export const filterPeladas = <T extends { name: string }>(peladas: T[], query: string): T[] => {
+  const q = plain(query);
+  return q ? peladas.filter((p) => plain(p.name).includes(q)) : peladas;
+};
+
+/** E08: até 2 no resumo (ativa primeiro); "Ver todas" só com 3 ou mais. */
+export function myPeladasSummary<T extends { id: string; name: string }>(peladas: T[], activeId: string | null) {
+  const ordered = orderForSelector(peladas, activeId);
+  return { shown: ordered.slice(0, 2), seeAll: ordered.length >= 3 };
+}

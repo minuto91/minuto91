@@ -1,26 +1,30 @@
-// Vitrine da Central do Jogador 2.0 (só em desenvolvimento, sem login, DADOS SIMULADOS). Mostra os blocos da Central
-// em cada estado (?s=ovr-up, ovr-down, ovr-neutro, avaliacao, urgente, insuficiente, nao-jogou, sem-pelada) para
-// conferir o desenho no navegador e gerar as capturas. Nada aqui lê o banco.
+// Vitrine da Central do Jogador V8.4 (só em desenvolvimento, sem login, DADOS SIMULADOS). Mostra os blocos da Central
+// em cada estado (?s=ovr-up, ovr-down, ovr-neutro, primeira, avaliacao, urgente, nota-insuficiente, goleiro,
+// uma-pelada, seis-peladas, offline, sem-pelada) para conferir o desenho no navegador e gerar as capturas. Nada aqui
+// lê o banco.
 import { useLocalSearchParams } from 'expo-router';
 import { ScrollView, View } from 'react-native';
 
 import type { Card as CardData } from '../lib/career';
 import {
+  AttentionBlock,
   BlockTitle,
-  CareerHero,
-  CareerRecap,
+  CardEvolution,
+  CareerSummaryCard,
   CentralHeader,
-  HeroData,
-  LastGame,
-  LastGameData,
-  NextRound,
-  PeladaSwitcher,
-  PendingList,
+  type HeroData,
+  LastGameCard,
+  MyPeladasBlock,
+  NextRoundCard,
+  Notice,
+  PeladaSelector,
   UrgentVote,
-  VoteItem,
+  type VoteItem,
 } from '../lib/central';
-import { colors } from '../lib/theme';
+import type { LastGameRow, Pelada, PeladaRating } from '../lib/centraldata';
+import { colors, layout as L } from '../lib/theme';
 import { Button, Card, EmptyState, Sub } from '../lib/ui';
+import { myPeladasSummary, splitAttention } from '../lib/v84logic';
 
 const card: Omit<CardData, 'id'> = {
   position: 'midfielder',
@@ -42,10 +46,19 @@ const card: Omit<CardData, 'id'> = {
   dis: 88.5,
   ovr_display: 82,
 };
-const peladas = [
-  { id: 'a', name: 'Pelada de Quinta', crest_path: null, role: 'admin' },
-  { id: 'b', name: 'Resenha FC', crest_path: null, role: 'player' },
-];
+const mk = (id: string, name: string, role: Pelada['role'] = 'player'): Pelada => ({
+  id,
+  name,
+  crest_path: null,
+  role,
+  membership_id: `m-${id}`,
+  position: 'midfielder',
+  position_code: 'MEI',
+  is_primary: id === 'a',
+  drafts: 0,
+  setup: null,
+});
+const peladas = [mk('a', 'Pelada de Quinta', 'admin'), mk('b', 'Resenha FC'), mk('c', 'Racha dos Amigos'), mk('d', 'Society da Firma'), mk('e', 'Futebol de Domingo'), mk('f', 'Várzea Premium')];
 const hero: HeroData = {
   name: 'Rafael Abreu',
   avatarPath: null,
@@ -55,18 +68,24 @@ const hero: HeroData = {
   card,
   seasonName: 'Temporada 2026',
   seasonStart: '2026-01-01',
-  season: { matches_played: 18, goals: 11, assists: 7 },
 };
-const game: LastGameData = {
+const game: LastGameRow = {
   match_id: 'm',
   played_at: '2026-10-22T22:00:00Z',
-  status: 'finalized',
   team_a_name: 'Azul',
   team_b_name: 'Branco',
   team_a_score: 5,
   team_b_score: 3,
-  me: { team: 'A', goals: 2, assists: 1 },
-  rating: { kind: 'rated', value: 8.25 },
+  my_team: 'A',
+  position: 'MEI',
+  goals: 2,
+  assists: 0,
+  red_cards: 0,
+  hard_saves: null,
+  final_rating: 8.25,
+  has_valid_rating: true,
+  rating_session_status: 'published',
+  legacy_finalized: false,
 };
 const vote = (mins: number): VoteItem => ({
   match_id: 'v',
@@ -91,88 +110,71 @@ export default function DevCentralRoute() {
 
 function DevCentral() {
   const { s = 'ovr-up' } = useLocalSearchParams<{ s?: string }>();
+  const first = s === 'primeira';
   const delta = s === 'ovr-down' ? -3 : s === 'ovr-neutro' ? 0 : s === 'ovr-up' ? 2 : null;
   const evaluating = s === 'avaliacao';
-  const h: HeroData = evaluating
-    ? {
-        ...hero,
-        card: { ...card, tier: 'prata', is_provisional: true, matches_played: 3, ovr_display: null },
-        season: { matches_played: 3, goals: 1, assists: 2 },
-      }
-    : s === 'sem-carta'
-      ? { ...hero, card: null, season: { matches_played: 1, goals: 0, assists: 0 } }
-      : hero;
-  const rating = evaluating
+  const h: HeroData = evaluating ? { ...hero, card: { ...card, tier: 'prata', is_provisional: true, matches_played: 3, ovr_display: null } } : hero;
+  const rating: PeladaRating = evaluating
     ? { rating: { eligible: false, matches_played: 3, ovr: null, tier: null, position: 'MEI' }, delta: null }
-    : s === 'sem-carta'
-      ? { rating: { eligible: false, matches_played: 1, ovr: null, tier: null, position: 'MEI' }, delta: null }
-      : { rating: { eligible: true, matches_played: 18, ovr: s === 'ovr-down' ? 79 : 82, tier: 'ouro' as const, position: 'MEI' }, delta };
-  const g: LastGameData =
-    s === 'insuficiente'
-      ? { ...game, rating: { kind: 'insufficient' } }
-      : s === 'nao-jogou'
-        ? { ...game, me: null, rating: { kind: 'none' } }
-        : s === 'urgente'
-          ? { ...game, status: 'finalized', rating: { kind: 'pending' } }
-          : game;
+    : { rating: { eligible: true, matches_played: 18, ovr: s === 'ovr-down' ? 79 : 82, tier: 'ouro', position: 'MEI' }, delta: first ? null : delta };
+  const ovr = evaluating ? null : s === 'ovr-down' ? 79 : 82;
+  const gk = s === 'goleiro';
+  const g: LastGameRow = gk
+    ? { ...game, position: 'GOL', hard_saves: 4, goals: 0 }
+    : s === 'nota-insuficiente'
+      ? { ...game, final_rating: null, has_valid_rating: false }
+      : game;
+  const list = s === 'uma-pelada' ? peladas.slice(0, 1) : s === 'seis-peladas' ? peladas : peladas.slice(0, 3);
+  const att = splitAttention([
+    { key: 'v', rank: 1, title: 'Votação aberta: Azul 5 x 3 Branco', detail: 'Faltam 5h20 · você avaliou 2 de 11', action: 'Continuar', tone: 'blue' as const, onPress: noop },
+    { key: 'o', rank: 1, title: 'Votação aberta em Resenha FC', detail: 'Faltam 1d 3h', action: 'Votar', tone: 'blue' as const, onPress: noop },
+    { key: 'c', rank: 2, title: 'Você tem um convite para aceitar', detail: 'Veja a pelada e entre.', action: 'Ver', tone: 'blue' as const, onPress: noop },
+    { key: 'p', rank: 4, title: 'Coloque uma foto no seu perfil', detail: 'Ela aparece na sua carta.', action: 'Perfil', tone: 'gold' as const, onPress: noop },
+  ]);
+  const sum = myPeladasSummary(list, 'a');
 
   return (
-    <ScrollView style={{ backgroundColor: colors.white }} contentContainerStyle={{ padding: 20, paddingTop: 16, gap: 12 }}>
-      <CentralHeader name="Rafael Abreu" avatarPath={null} onProfile={noop} onBell={noop} />
-      <Sub>Dados simulados · estado: {s}</Sub>
-      {s === 'sem-pelada' ? (
-        <Card>
-          <EmptyState
-            title="Sua carreira começa numa pelada"
-            hint="Crie a pelada da sua turma ou entre com o convite que recebeu. Depois de cinco partidas, sua carta ganha o OVR.">
-            <Button title="Criar pelada" onPress={noop} />
-            <Button title="Entrar com convite" kind="secondary" onPress={noop} />
-          </EmptyState>
-        </Card>
-      ) : (
-        <>
-          <PeladaSwitcher peladas={s === 'uma-pelada' ? peladas.slice(0, 1) : peladas} selected="a" onSelect={noop} />
-          {s === 'urgente' && <UrgentVote vote={vote(42)} offset={0} onPress={noop} />}
-          <CareerHero data={h} rating={rating} ratingLoading={false} onCareer={noop} />
-          <BlockTitle>Pendências</BlockTitle>
-          <PendingList
-            items={[
-              ...(s === 'urgente'
-                ? []
-                : [
-                    {
-                      key: 'v',
-                      title: 'Votação aberta: Azul 5 x 3 Branco',
-                      detail: 'Faltam 5h20 · você avaliou 2 de 11',
-                      action: 'Continuar',
-                      tone: 'blue' as const,
-                      onPress: noop,
-                    },
-                  ]),
-              { key: 'o', title: 'Votação aberta em Resenha FC', detail: 'Faltam 1d 3h', action: 'Abrir', tone: 'blue', onPress: noop },
-              {
-                key: 'p',
-                title: 'Coloque uma foto no seu perfil',
-                detail: 'Ela aparece na sua carta.',
-                action: 'Perfil',
-                tone: 'gold',
-                onPress: noop,
-              },
-            ]}
-          />
-          <BlockTitle>Próxima rodada</BlockTitle>
-          <NextRound
-            round={{ lineup_id: 'l', pelada_id: 'a', pelada_name: 'Pelada de Quinta', label: 'Rodada 3', team_name: 'Azul', opponent_name: 'Branco' }}
-            more={1}
-            onPress={noop}
-          />
-          <BlockTitle>Último jogo</BlockTitle>
-          <LastGame game={g} onPress={noop} />
-          <BlockTitle>Resumo da carreira</BlockTitle>
-          <CareerRecap totals={{ matches_played: 42, wins: 23, goals: 27, assists: 15 }} conquests={6} hiddenSeasons={0} onPress={noop} />
-          <View style={{ height: 12 }} />
-        </>
-      )}
+    <ScrollView style={{ backgroundColor: colors.white }} contentContainerStyle={{ alignItems: 'center', paddingTop: 16, paddingBottom: 32 }}>
+      <View style={{ width: '100%', maxWidth: L.maxWidth, paddingHorizontal: L.gutter, gap: L.gap }}>
+        <CentralHeader name="Rafael Abreu" avatarPath={null} position={s === 'sem-pelada' ? null : 'MEI'} ovr={s === 'sem-pelada' ? null : ovr} unread={s !== 'ovr-neutro'} onProfile={noop} onBell={noop} />
+        <Sub>Dados simulados · estado: {s}</Sub>
+        {s === 'offline' && <Notice tone="warn">Sem conexão. Você vê os dados salvos neste aparelho (atualizado há 12 min). Nada pode ser alterado até reconectar.</Notice>}
+        {s === 'sem-pelada' ? (
+          <Card>
+            <EmptyState
+              title="Sua carreira começa numa pelada"
+              hint="Crie a pelada da sua turma ou entre com o convite que recebeu. A carta ganha o OVR depois de cinco partidas disputadas e publicadas.">
+              <Button title="Criar pelada" onPress={noop} />
+              <Button title="Entrar com convite" kind="secondary" onPress={noop} />
+            </EmptyState>
+          </Card>
+        ) : (
+          <>
+            <PeladaSelector peladas={list} activeId="a" onSelect={async () => {}} />
+            {s === 'urgente' && <UrgentVote vote={vote(42)} offset={0} onPress={noop} />}
+            <CardEvolution data={h} rating={rating} loading={false} stale={s === 'offline'} onCareer={noop} />
+            <View style={{ gap: 4 }}>
+              <BlockTitle>Próxima Rodada</BlockTitle>
+              <NextRoundCard
+                round={{ lineup_id: 'l', pelada_id: 'a', pelada_name: 'Pelada de Quinta', label: 'Rodada 3', team_name: 'Azul', opponent_name: 'Branco' }}
+                more={1}
+                stale={s === 'offline'}
+                onPress={noop}
+              />
+            </View>
+            <View style={{ gap: 4 }}>
+              <BlockTitle>Último Jogo</BlockTitle>
+              <LastGameCard game={g} stale={s === 'offline'} onPress={noop} />
+            </View>
+            <View style={{ gap: 4 }}>
+              <BlockTitle>Resumo da Carreira</BlockTitle>
+              <CareerSummaryCard position={gk ? 'GOL' : 'MEI'} totals={{ matches_played: 42, wins: 23, draws: 6, losses: 13, goals: 27, assists: 15 }} stale={s === 'offline'} onPress={noop} />
+            </View>
+            <AttentionBlock {...att} stale={s === 'offline'} />
+            {list.length >= 2 && <MyPeladasBlock shown={sum.shown} seeAll={sum.seeAll} onOpen={noop} onSeeAll={noop} />}
+          </>
+        )}
+      </View>
     </ScrollView>
   );
 }

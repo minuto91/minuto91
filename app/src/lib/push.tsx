@@ -8,14 +8,16 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import * as Device from 'expo-device';
 import * as Notifications from 'expo-notifications';
+import { AndroidImportance } from 'expo-notifications';
 import { useRouter } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Platform, Switch, View } from 'react-native';
 import { Text } from './text';
 
 import { friendly } from './errors';
+import { planPushOpen } from './navguard';
 import { supabase } from './supabase';
-import { colors } from './theme';
+import { colors, HOME } from './theme';
 import { Button, Sub } from './ui';
 
 const TOKEN_KEY = 'push_token';
@@ -44,7 +46,7 @@ async function register() {
   if (Platform.OS === 'android') {
     await Notifications.setNotificationChannelAsync('default', {
       name: 'Avisos da pelada',
-      importance: Notifications.AndroidImportance.HIGH,
+      importance: AndroidImportance.HIGH,
     });
   }
   const { data: token } = await Notifications.getExpoPushTokenAsync({ projectId });
@@ -76,20 +78,27 @@ export async function unregisterPush() {
   await AsyncStorage.removeItem(TOKEN_KEY);
 }
 
-// Só caminhos do próprio app (o servidor manda o caminho; mesmo assim conferimos aqui).
-const UUID = '[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}';
-const SAFE_PATH = new RegExp(`^/(partida/${UUID}|pelada/${UUID}(/(retrospectiva|rankings))?|conta)?$`, 'i');
-
-/** Montado só quando pushSupported: abre a tela do aviso tocado e acompanha a troca de token. */
+/**
+ * Montado só quando pushSupported: abre a tela do aviso tocado e acompanha a troca de token. E15-17/20: o caminho
+ * vem do servidor mas só rotas do app com ID válido abrem (navguard); com o app encerrado a Central entra primeiro,
+ * para o "voltar" terminar nela; com o app aberto o destino empilha. O destino revalida login e acesso sozinho.
+ */
 export function PushHandler() {
   const router = useRouter();
   const response = Notifications.useLastNotificationResponse();
+  const handledFirst = useRef(false);
 
   useEffect(() => {
     if (!response || response.actionIdentifier !== Notifications.DEFAULT_ACTION_IDENTIFIER) return;
+    // A primeira resposta lida logo ao montar é a de um toque que abriu o app (partida a frio).
+    const cold = !handledFirst.current;
+    handledFirst.current = true;
     const path = response.notification.request.content.data?.path;
     Notifications.clearLastNotificationResponse();
-    if (typeof path === 'string' && SAFE_PATH.test(path)) router.push(path as never);
+    for (const step of planPushOpen(path, cold)) {
+      if (step === '/') router.replace(HOME);
+      else router.push(step as never);
+    }
   }, [response, router]);
 
   useEffect(() => {

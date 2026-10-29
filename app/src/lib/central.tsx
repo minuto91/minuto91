@@ -1,37 +1,41 @@
-// Central do Jogador 2.0 (24/10/2026): blocos da tela inicial. A tela (app/(tabs)/index.tsx) junta os dados; aqui
-// ficam a apresentação e as duas leituras que dependem da pelada escolhida (OVR com a variação e o último jogo).
-// Regras: tudo é da pelada selecionada (nunca misturar peladas), nada provisório aparece antes da publicação e nenhum
-// valor é inventado para preencher a interface. As fórmulas (ATU, EST, PEQ, RES, DIS, OVR) e a votação não mudam aqui.
+// Central do Jogador V8.4 (E01–E08, E10–E12): blocos da tela inicial. A tela (app/(tabs)/index.tsx) junta os dados;
+// aqui ficam só a apresentação. Regras: tudo é da pelada ativa (nunca misturar peladas), nada provisório aparece antes
+// da publicação oficial e nenhum valor é inventado. OVR, nota, prazo e estatística vêm prontos do servidor; as
+// fórmulas (ATU, EST, PEQ, RES, DIS, OVR) e a votação não mudam aqui.
 import { type ReactNode, useEffect, useState } from 'react';
-import { Pressable, ScrollView, useWindowDimensions, View, type ViewStyle } from 'react-native';
+import { ActivityIndicator, Animated, Pressable, View, type ViewStyle } from 'react-native';
 import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from './avatar';
 import { Card as CardData, cardOverall, isV2, plural, TIER } from './career';
+import type { LastGameRow, NextRoundItem, Pelada, PeladaRating } from './centraldata';
+import { deltaA11y, deltaText, leftLabel, matchRating, type MatchRating } from './centrallogic';
 import { Crest } from './crest';
-import { deltaA11y, deltaText, HistoryRow, leftLabel, matchRating, MatchRating, ovrDelta, resultOf } from './centrallogic';
-import { friendly } from './errors';
+import { hair, StatStrip, VotePendingRow } from './domain';
 import { fmtDate } from './match';
+import { haptic, useReducedMotion } from './motion';
 import { CARD_RATIO, PlayerCard } from './playercard';
-import { supabase } from './supabase';
-import { Text } from './text';
+import { BottomSheet } from './sheet';
+import { Text, TextInput } from './text';
 import { colors, positionLabel, positionShort, radius, shadow, type } from './theme';
-import { hair, MatchScore, PlayerOVR, StatStrip, VotePendingRow } from './domain';
+import { careerStats, filterPeladas, lastGameStats, orderForSelector, SEARCH_FROM, type StatCell } from './v84logic';
 
-const box: ViewStyle = {
+/** Cartão branco de borda sutil (E10): o padrão visual dos blocos da Central. */
+export const box: ViewStyle = {
   backgroundColor: colors.white,
   borderRadius: radius.card,
   borderWidth: 1,
   borderColor: colors.line,
   padding: 16,
-  gap: 8,
+  gap: 10,
   ...shadow.card,
 };
 const link = { color: colors.blue, fontWeight: '700' as const, fontSize: 15 };
+const eyebrow = { fontSize: 11, lineHeight: 14, fontWeight: '800' as const, letterSpacing: 0.9, color: colors.muted };
 
 // ---------------------------------------------------------------------------------------------------------------
-// Cabeçalho
+// E01 — Cabeçalho pessoal
 // ---------------------------------------------------------------------------------------------------------------
 function Bell({ color }: { color: string }) {
   const p = { stroke: color, strokeWidth: 1.9, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -43,48 +47,67 @@ function Bell({ color }: { color: string }) {
   );
 }
 
-const greeting = (h: number) => (h < 5 ? 'Boa noite' : h < 12 ? 'Bom dia' : h < 18 ? 'Boa tarde' : 'Boa noite');
-
+/**
+ * Foto circular de 52 px (iniciais como fallback), nome em destaque e, só se existirem, posição e OVR oficial da pelada
+ * ativa. O sino é global (não filtra pela pelada) e mostra um ponto dourado quando há não lidas, nunca um número.
+ */
 export function CentralHeader({
   name,
   avatarPath,
+  position,
+  ovr,
+  unread,
   onProfile,
   onBell,
 }: {
   name: string | null;
   avatarPath: string | null | undefined;
+  position: string | null;
+  ovr: number | null;
+  unread: boolean;
   onProfile: () => void;
   onBell: () => void;
 }) {
-  const first = name?.trim().split(/\s+/)[0] ?? '';
+  const sub = [position ? positionShort(position) : null, ovr !== null ? String(ovr) : null].filter(Boolean).join(' · ');
   return (
     <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <Pressable
         onPress={onProfile}
         accessibilityRole="button"
-        accessibilityLabel="Abrir meu perfil"
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, minHeight: 48 }}>
-        <Avatar path={avatarPath} name={name ?? ' '} size={44} />
-        <View style={{ flex: 1 }}>
+        accessibilityLabel={`Abrir meu perfil${name ? `, ${name}` : ''}`}
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, minHeight: 52 }}>
+        <Avatar path={avatarPath} name={name ?? ' '} size={52} />
+        <View style={{ flex: 1, minWidth: 0 }}>
           <Text style={{ fontSize: 22, lineHeight: 28, fontWeight: '800', color: colors.deepBlue }} numberOfLines={1}>
-            {name ? `${greeting(new Date().getHours())}, ${first}` : ' '}
+            {name ?? ' '}
           </Text>
+          {sub ? (
+            <Text style={{ fontSize: 14, lineHeight: 19, fontWeight: '600', color: colors.muted }} numberOfLines={1} accessibilityLabel={ovr !== null ? `${position ? positionLabel(position) + ', ' : ''}OVR ${ovr}` : undefined}>
+              {sub}
+            </Text>
+          ) : null}
         </View>
       </Pressable>
       <Pressable
         onPress={onBell}
         accessibilityRole="button"
-        accessibilityLabel="Avisos e notificações"
-        hitSlop={4}
+        accessibilityLabel={unread ? 'Notificações, há avisos novos' : 'Notificações'}
         style={({ pressed }) => ({
-          width: 44,
-          height: 44,
-          borderRadius: 22,
+          width: 48,
+          height: 48,
+          borderRadius: 24,
           alignItems: 'center',
           justifyContent: 'center',
           backgroundColor: pressed ? colors.bg : 'transparent',
         })}>
-        <Bell color={colors.deepBlue} />
+        <Bell color={colors.blue} />
+        {unread && (
+          <View
+            accessibilityElementsHidden
+            importantForAccessibility="no"
+            style={{ position: 'absolute', top: 10, right: 11, width: 10, height: 10, borderRadius: 5, backgroundColor: colors.gold, borderWidth: 2, borderColor: colors.white }}
+          />
+        )}
       </Pressable>
     </View>
   );
@@ -96,74 +119,146 @@ export function useTopInset() {
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Seletor de pelada
+// E02 — Seletor da pelada ativa (cartão + Bottom Sheet)
 // ---------------------------------------------------------------------------------------------------------------
-export type PeladaOption = { id: string; name: string; crest_path: string | null; role: string };
+const roleNote = (r: string) => (r === 'admin' ? 'Administrador' : r === 'assistant' ? 'Assistente' : 'Jogador');
 
-export function PeladaSwitcher({
+function Chevrons({ color }: { color: string }) {
+  const p = { stroke: color, strokeWidth: 1.9, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+  return (
+    <Svg width={20} height={20} viewBox="0 0 24 24">
+      <Path d="M7 9.5 12 5l5 4.5" {...p} />
+      <Path d="M7 14.5 12 19l5-4.5" {...p} />
+    </Svg>
+  );
+}
+
+export function PeladaSelector({
   peladas,
-  selected,
+  activeId,
   onSelect,
+  disabledReason,
 }: {
-  peladas: PeladaOption[];
-  selected: string | null;
-  onSelect: (id: string) => void;
+  peladas: Pelada[];
+  activeId: string | null;
+  /** Troca atômica: resolve só depois de o servidor confirmar; rejeita com a mensagem a mostrar. */
+  onSelect: (id: string) => Promise<void>;
+  /** Ex.: sem conexão. A troca exige o servidor. */
+  disabledReason?: string | null;
 }) {
-  if (peladas.length === 0) return null;
-  const roleNote = (r: string) => (r === 'admin' ? ' · Administrador' : r === 'assistant' ? ' · Assistente' : '');
-  // Uma pelada só: o contexto aparece, sem controle de troca.
-  if (peladas.length === 1) {
-    const p = peladas[0];
-    return (
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }} accessibilityLabel={`Pelada: ${p.name}`}>
-        <Crest path={p.crest_path} name={p.name} size={24} />
-        <Text style={{ ...type.meta, color: colors.ink, flexShrink: 1 }} numberOfLines={1}>
-          {p.name}
-          <Text style={{ color: colors.muted }}>{roleNote(p.role)}</Text>
+  const [open, setOpen] = useState(false);
+  const [query, setQuery] = useState('');
+  const [busy, setBusy] = useState<string | null>(null);
+  const [err, setErr] = useState<string | null>(null);
+  const active = peladas.find((p) => p.id === activeId) ?? null;
+  if (!active) return null;
+  const several = peladas.length > 1;
+  const ordered = filterPeladas(orderForSelector(peladas, activeId), query);
+
+  const pick = async (id: string) => {
+    if (busy) return;
+    if (id === activeId) return setOpen(false);
+    setBusy(id);
+    setErr(null);
+    try {
+      await onSelect(id);
+      haptic.select();
+      setOpen(false);
+      setQuery('');
+    } catch (e) {
+      setErr((e as Error).message);
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const body = (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+      <Crest path={active.crest_path} name={active.name} size={48} />
+      <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+        <Text style={eyebrow}>MINHA PELADA</Text>
+        <Text style={{ fontSize: 17, lineHeight: 23, fontWeight: '700', color: colors.ink }} numberOfLines={1}>
+          {active.name}
         </Text>
       </View>
-    );
-  }
+      {several ? <Chevrons color={colors.muted} /> : null}
+    </View>
+  );
+
   return (
-    <View accessibilityRole="tablist" accessibilityLabel="Escolher a pelada" style={{ backgroundColor: colors.bg, borderRadius: radius.pill, padding: 4 }}>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 4 }}>
-        {peladas.map((p) => {
-          const on = p.id === selected;
+    <>
+      {several ? (
+        <Pressable
+          onPress={() => {
+            setErr(null);
+            setOpen(true);
+          }}
+          accessibilityRole="button"
+          accessibilityLabel={`Minha pelada: ${active.name}. Toque para trocar de pelada.`}
+          style={({ pressed }) => ({ ...box, opacity: pressed ? 0.85 : 1, minHeight: 80, justifyContent: 'center' })}>
+          {body}
+        </Pressable>
+      ) : (
+        <View style={{ ...box, minHeight: 80, justifyContent: 'center' }} accessibilityLabel={`Minha pelada: ${active.name}`}>
+          {body}
+        </View>
+      )}
+      <BottomSheet visible={open} onClose={() => setOpen(false)} title="Escolher pelada">
+        {peladas.length >= SEARCH_FROM && (
+          <TextInput
+            value={query}
+            onChangeText={setQuery}
+            placeholder="Buscar pelada"
+            placeholderTextColor={colors.muted}
+            accessibilityLabel="Buscar pelada"
+            autoCorrect={false}
+            style={{ borderWidth: 1, borderColor: colors.line, borderRadius: radius.md, paddingHorizontal: 14, minHeight: 48, fontSize: 16, color: colors.ink, marginBottom: 6 }}
+          />
+        )}
+        {disabledReason ? <Text style={{ ...type.caption, color: colors.danger }}>{disabledReason}</Text> : null}
+        {err ? (
+          <Text style={{ ...type.caption, color: colors.danger }} accessibilityLiveRegion="polite">
+            {err}
+          </Text>
+        ) : null}
+        {ordered.length === 0 && <Text style={type.caption}>Nenhuma pelada com esse nome.</Text>}
+        {ordered.map((p) => {
+          const on = p.id === activeId;
           return (
             <Pressable
               key={p.id}
-              onPress={() => onSelect(p.id)}
-              accessibilityRole="tab"
-              accessibilityState={{ selected: on }}
-              accessibilityLabel={`${p.name}${roleNote(p.role)}`}
-              style={{
+              onPress={() => pick(p.id)}
+              disabled={!!disabledReason || !!busy}
+              accessibilityRole="radio"
+              accessibilityState={{ selected: on, busy: busy === p.id, disabled: !!disabledReason }}
+              accessibilityLabel={`${p.name}, ${roleNote(p.role)}${on ? ', pelada ativa' : ''}`}
+              style={({ pressed }) => ({
                 flexDirection: 'row',
                 alignItems: 'center',
-                gap: 8,
-                minHeight: 40,
-                maxWidth: 220,
-                paddingLeft: 6,
-                paddingRight: 14,
-                borderRadius: radius.pill,
-                backgroundColor: on ? colors.white : 'transparent',
-                ...(on ? shadow.card : null),
-              }}>
-              <Crest path={p.crest_path} name={p.name} size={26} />
-              <Text
-                style={{ fontSize: 14, fontWeight: on ? '700' : '500', color: on ? colors.deepBlue : colors.muted, flexShrink: 1 }}
-                numberOfLines={1}>
-                {p.name}
-              </Text>
+                gap: 12,
+                minHeight: 60,
+                borderBottomWidth: 1,
+                borderBottomColor: hair,
+                opacity: disabledReason ? 0.5 : pressed ? 0.6 : 1,
+              })}>
+              <Crest path={p.crest_path} name={p.name} size={40} />
+              <View style={{ flex: 1, minWidth: 0 }}>
+                <Text style={{ fontSize: 16, fontWeight: on ? '800' : '600', color: colors.ink }} numberOfLines={1}>
+                  {p.name}
+                </Text>
+                <Text style={type.meta}>{roleNote(p.role)}</Text>
+              </View>
+              {busy === p.id ? <ActivityIndicator color={colors.blue} /> : on ? <Text style={{ color: colors.blue, fontSize: 20, fontWeight: '800' }}>✓</Text> : null}
             </Pressable>
           );
         })}
-      </ScrollView>
-    </View>
+      </BottomSheet>
+    </>
   );
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Votação urgente (acima da carta) e pendências (abaixo)
+// Votação urgente (acima da Carta, E03) e Central de Atenção (E07)
 // ---------------------------------------------------------------------------------------------------------------
 export type VoteItem = {
   match_id: string;
@@ -181,6 +276,7 @@ export type VoteItem = {
 };
 
 const scoreLine = (v: VoteItem) => `${v.team_a_name} ${v.team_a_score} x ${v.team_b_score} ${v.team_b_name}`;
+export const voteLine = scoreLine;
 
 export function UrgentVote({ vote, offset, onPress }: { vote: VoteItem; offset: number; onPress: () => void }) {
   const progress = vote.v2 && vote.total ? Math.min(1, (vote.rated ?? 0) / vote.total) : null;
@@ -228,116 +324,54 @@ export function UrgentVote({ vote, offset, onPress }: { vote: VoteItem; offset: 
   );
 }
 
-export type PendingItem = { key: string; title: string; detail?: string; action: string; tone: 'blue' | 'gold'; onPress: () => void };
-
-/** Pendências não urgentes: lista compacta; acima de três, o resto fica atrás de "ver todas". */
-export function PendingList({ items }: { items: PendingItem[] }) {
-  const [open, setOpen] = useState(false);
-  if (items.length === 0) return null;
-  const shown = open ? items : items.slice(0, 3);
-  return (
-    <View>
-      {shown.map((p, i) => (
-        <VotePendingRow key={p.key} first={i === 0} title={p.title} detail={p.detail} action={p.action} tone={p.tone} onPress={p.onPress} />
-      ))}
-      {items.length > 3 && (
-        <Pressable
-          onPress={() => setOpen((o) => !o)}
-          accessibilityRole="button"
-          accessibilityState={{ expanded: open }}
-          style={{ minHeight: 44, justifyContent: 'center', borderTopWidth: 1, borderTopColor: hair }}>
-          <Text style={{ ...link, fontSize: 14 }}>{open ? 'Mostrar menos' : `Ver todas (${items.length})`}</Text>
-        </Pressable>
-      )}
-    </View>
-  );
-}
-
-export const voteLine = scoreLine;
-
-// ---------------------------------------------------------------------------------------------------------------
-// OVR oficial da pelada e variação desde a última publicação
-// ---------------------------------------------------------------------------------------------------------------
-type RatingRow = {
-  eligible: boolean;
-  matches_played: number;
-  matches_needed?: number;
-  ovr: number | null;
-  tier: 'bronze' | 'prata' | 'ouro' | null;
-  position?: string;
-};
-export type PeladaRating = { rating: RatingRow | null; delta: number | null };
+export type AttentionItem = { key: string; rank: number; title: string; detail?: string; action: string; tone: 'blue' | 'gold'; onPress: () => void };
 
 /**
- * OVR atual (get_player_rating, 051) e o histórico oficial da mesma inscrição (player_rating_history, mesma regra de
- * acesso das cartas). Inscrição sem registro na V5 (rating sem "position"): a Central usa a carta da temporada.
+ * E07: "Precisa de atenção" — 1 principal + até 2 secundárias; as demais ficam no Bottom Sheet. Some inteira quando não
+ * há pendência elegível. Ler uma notificação não resolve pendência: a lista vem do estado real do servidor.
  */
-export function usePeladaRating(membershipId: string | null, reload: number) {
-  const [state, setState] = useState<{ key: string; data: PeladaRating | null; error: string | null } | null>(null);
-  useEffect(() => {
-    if (!membershipId) return;
-    let alive = true;
-    void reload;
-    (async () => {
-      const [r, h] = await Promise.all([
-        supabase.rpc('get_player_rating', { p_membership: membershipId }),
-        supabase
-          .from('player_rating_history')
-          .select('match_id, ovr_display, created_at')
-          .eq('membership_id', membershipId)
-          .not('ovr_display', 'is', null)
-          .order('created_at', { ascending: false })
-          .limit(40),
-      ]);
-      if (!alive) return;
-      if (r.error) return setState({ key: membershipId, data: null, error: friendly(r.error.message) });
-      const row = r.data as RatingRow;
-      const rating = row && row.position ? row : null;
-      setState({
-        key: membershipId,
-        data: { rating, delta: rating?.eligible ? ovrDelta(rating.ovr, (h.data ?? []) as HistoryRow[]) : null },
-        error: null,
-      });
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [membershipId, reload]);
-  // Troca de pelada: o dado da pelada anterior nunca aparece na nova.
-  return state && state.key === membershipId ? state : null;
-}
-
-export function OvrDelta({ delta }: { delta: number | null }) {
-  // REV-023: sem variação (0) ou sem base anterior válida, nada aparece.
-  if (delta === null || delta === 0) return null;
-  const up = delta > 0;
-  const down = delta < 0;
-  const fg = up ? '#0B6B3A' : down ? '#9A3412' : colors.muted;
-  const bg = up ? '#E7F5EC' : down ? '#FDEEE6' : colors.bg;
+export function AttentionBlock({ primary, secondary, rest, total, stale }: {
+  primary: AttentionItem | null;
+  secondary: AttentionItem[];
+  rest: AttentionItem[];
+  total: number;
+  stale: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  if (!primary) return null;
+  const row = (p: AttentionItem, first: boolean) => (
+    <VotePendingRow key={p.key} first={first} title={p.title} detail={p.detail} action={p.action} tone={p.tone} onPress={p.onPress} />
+  );
   return (
-    <View
-      accessibilityLabel={`OVR ${deltaA11y(delta)}`}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 3,
-        paddingHorizontal: 8,
-        paddingVertical: 3,
-        borderRadius: radius.pill,
-        backgroundColor: bg,
-        alignSelf: 'flex-start',
-      }}>
-      {/* Seta e sinal: a variação não depende só da cor. */}
-      <Text style={{ fontSize: 12, fontWeight: '800', color: fg }} importantForAccessibility="no" accessibilityElementsHidden>
-        {up ? '▲' : down ? '▼' : '='}
-      </Text>
-      <Text style={{ fontSize: 13, fontWeight: '800', color: fg, fontVariant: ['tabular-nums'] }}>{deltaText(delta)}</Text>
+    <View style={{ gap: 4 }}>
+      <BlockTitle>Precisa de atenção</BlockTitle>
+      <View style={{ ...box, paddingVertical: 6, gap: 0 }}>
+        {row(primary, true)}
+        {secondary.map((p) => row(p, false))}
+        {rest.length > 0 && (
+          <Pressable
+            onPress={() => setOpen(true)}
+            accessibilityRole="button"
+            style={{ minHeight: 48, justifyContent: 'center', borderTopWidth: 1, borderTopColor: hair }}>
+            <Text style={{ ...link, fontSize: 14 }}>{`Ver todas as pendências (${total})`}</Text>
+          </Pressable>
+        )}
+        {stale && <Text style={{ ...type.meta, paddingBottom: 8 }}>Informação anterior: confirme ao abrir cada item.</Text>}
+      </View>
+      <BottomSheet visible={open} onClose={() => setOpen(false)} title="Pendências">
+        {[primary, ...secondary, ...rest].map((p, i) => (
+          <VotePendingRow key={p.key} first={i === 0} title={p.title} detail={p.detail} action={p.action} tone={p.tone} onPress={() => {
+            setOpen(false);
+            p.onPress();
+          }} />
+        ))}
+      </BottomSheet>
     </View>
   );
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Card principal: carta compacta + resumo
+// E03 — Carta compacta e evolução
 // ---------------------------------------------------------------------------------------------------------------
 export type HeroData = {
   name: string;
@@ -348,27 +382,18 @@ export type HeroData = {
   card: Omit<CardData, 'id'> | null;
   seasonName: string | null;
   seasonStart: string | null;
-  season: { matches_played: number; goals: number; assists: number } | null;
 };
 
+export const CARD_W = 104;
+
 /** Carta "em avaliação" quando ainda não há carta: mesma silhueta neutra, sem número. */
-function EvaluatingCard({
-  width,
-  name,
-  avatarPath,
-  position,
-}: {
-  width: number;
-  name: string;
-  avatarPath: string | null | undefined;
-  position: string | null;
-}) {
-  const height = Math.round(width * CARD_RATIO);
+function EvaluatingCard({ name, avatarPath, position }: { name: string; avatarPath: string | null | undefined; position: string | null }) {
+  const height = Math.round(CARD_W * CARD_RATIO);
   return (
     <View
       accessibilityLabel={`Card de ${name} em avaliação`}
       style={{
-        width,
+        width: CARD_W,
         height,
         borderRadius: 14,
         borderWidth: 1.5,
@@ -380,47 +405,105 @@ function EvaluatingCard({
         gap: 8,
         padding: 8,
       }}>
-      <Avatar path={avatarPath} name={name} size={Math.round(width * 0.46)} />
+      <Avatar path={avatarPath} name={name} size={Math.round(CARD_W * 0.46)} />
       <Text style={{ fontSize: 13, fontWeight: '800', color: colors.deepBlue }}>{positionShort(position)}</Text>
-      <Text
-        style={{ fontSize: 12, fontWeight: '600', color: colors.muted, textAlign: 'center' }}
-        numberOfLines={1}
-        adjustsFontSizeToFit
-        minimumFontScale={0.7}>
+      <Text style={{ fontSize: 12, fontWeight: '600', color: colors.muted, textAlign: 'center' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {name}
       </Text>
     </View>
   );
 }
 
-export function CareerHero({
+/** OVR oficial exibido: o da V5; sem registro na V5, o da carta (nunca antes de 5 partidas disputadas e publicadas). */
+export function officialOvr(rating: PeladaRating | null, card: Omit<CardData, 'id'> | null): number | null {
+  const r = rating?.rating ?? null;
+  if (r) return r.eligible ? r.ovr : null;
+  const legacy = card ? cardOverall(card) : null;
+  return legacy !== null && (card?.matches_played ?? 0) >= 5 ? legacy : null;
+}
+
+export function OvrDelta({ delta }: { delta: number }) {
+  const up = delta > 0;
+  const fg = up ? '#0B6B3A' : '#9A3412';
+  const bg = up ? '#E7F5EC' : '#FDEEE6';
+  return (
+    <View
+      accessibilityLabel={`Carta ${deltaA11y(delta)}`}
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: bg, alignSelf: 'flex-start' }}>
+      {/* Seta e sinal: a variação não depende só da cor. */}
+      <Text style={{ fontSize: 12, fontWeight: '800', color: fg }} importantForAccessibility="no" accessibilityElementsHidden>
+        {up ? '▲' : '▼'}
+      </Text>
+      <Text style={{ fontSize: 17, fontWeight: '800', color: fg, fontVariant: ['tabular-nums'] }}>{deltaText(delta)}</Text>
+    </View>
+  );
+}
+
+/**
+ * Carta oficial compacta (104 px) à esquerda; à direita, "EVOLUÇÃO DA CARTA" desde a última publicação oficial, e o link
+ * Minha Carreira. A Carta e o link abrem o MESMO destino. Sem variação "+0"/"−0"; sem OVR duplicado ao lado da Carta.
+ */
+export function CardEvolution({
   data,
   rating,
-  ratingLoading,
+  loading,
+  unavailable,
+  stale,
   onCareer,
 }: {
   data: HeroData;
   rating: PeladaRating | null;
-  ratingLoading: boolean;
+  loading: boolean;
+  /** A leitura do OVR falhou: não se afirma "primeira avaliação" nem variação. */
+  unavailable?: boolean;
+  stale: boolean;
   onCareer: () => void;
 }) {
-  const { width: screen } = useWindowDimensions();
-  // Carta proporcional à tela: 104 px em telas de 320, até 132 px em telas largas; o resumo ocupa o resto.
-  const cardW = Math.max(100, Math.min(132, Math.round((Math.min(screen, 520) - 40) * 0.33)));
-  const narrow = screen < 350;
-  const r = rating?.rating ?? null;
   const card = data.card;
-  // OVR exibido: o oficial da V5; sem registro na V5, o da carta (e nunca antes de 5 partidas).
-  const legacyOvr = card ? cardOverall(card) : null;
-  const ovr = r ? (r.eligible ? r.ovr : null) : legacyOvr !== null && (card?.matches_played ?? 0) >= 5 ? legacyOvr : null;
-  const played = r?.matches_played ?? card?.matches_played ?? data.season?.matches_played ?? 0;
-  const needed = Math.max(0, 5 - played);
-  const tier = (r?.tier ?? card?.tier ?? null) as keyof typeof TIER | null;
+  const ovr = officialOvr(rating, card);
+  const r = rating?.rating ?? null;
+  const played = r?.matches_played ?? card?.matches_played ?? 0;
+  const delta = rating?.delta ?? null;
   const showOfficialCard = !!card && (ovr !== null || isV2(card));
+  const tier = (r?.tier ?? card?.tier ?? null) as keyof typeof TIER | null;
+
+  let evolution: ReactNode;
+  if (loading) {
+    evolution = <Skeleton height={20} style={{ width: 120 }} />;
+  } else if (unavailable) {
+    evolution = <Text style={type.meta}>Evolução indisponível agora</Text>;
+  } else if (ovr === null) {
+    const needed = Math.max(0, 5 - played);
+    evolution = (
+      <View style={{ gap: 6 }} accessibilityLabel={`Aguardando avaliação: ${Math.min(played, 5)} de 5 partidas`}>
+        <Text style={{ fontSize: 16, fontWeight: '800', color: colors.deepBlue }}>Aguardando avaliação</Text>
+        <View style={{ flexDirection: 'row', gap: 4 }}>
+          {[0, 1, 2, 3, 4].map((i) => (
+            <View key={i} style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: i < played ? colors.blue : colors.line }} />
+          ))}
+        </View>
+        <Text style={type.meta}>
+          {Math.min(played, 5)} de 5 partidas
+          {needed > 0 ? ` · faltam ${plural(needed, 'partida', 'partidas')}` : ''}
+        </Text>
+      </View>
+    );
+  } else if (delta !== null && delta !== 0) {
+    evolution = (
+      <View style={{ gap: 4 }}>
+        <OvrDelta delta={delta} />
+        <Text style={type.meta}>desde a última publicação</Text>
+      </View>
+    );
+  } else if (delta === 0) {
+    evolution = <Text style={type.meta}>Sem mudança desde a última publicação</Text>;
+  } else {
+    evolution = <Text style={{ fontSize: 16, fontWeight: '800', color: colors.deepBlue }}>Primeira avaliação</Text>;
+  }
 
   return (
-    <View style={{ backgroundColor: colors.bg, borderRadius: radius.lg, padding: narrow ? 12 : 16, gap: 12 }}>
-      <View style={{ flexDirection: 'row', gap: narrow ? 12 : 16, alignItems: 'center' }}>
+    <View style={{ ...box, flexDirection: 'row', gap: 16, alignItems: 'center' }}>
+      <Pressable onPress={onCareer} accessibilityRole="button" accessibilityLabel="Abrir Minha Carreira pela Carta" accessibilityHint="Abre Minha Carreira">
         {showOfficialCard ? (
           <PlayerCard
             card={{ id: 'central', ...card! }}
@@ -430,59 +513,19 @@ export function CareerHero({
             crestPath={data.crestPath}
             seasonName={data.seasonName ?? ''}
             seasonStart={data.seasonStart}
-            width={cardW}
+            width={CARD_W}
             mini
           />
         ) : (
-          <EvaluatingCard width={cardW} name={data.name} avatarPath={data.avatarPath} position={data.position} />
+          <EvaluatingCard name={data.name} avatarPath={data.avatarPath} position={data.position} />
         )}
-
-        <View style={{ flex: 1, minWidth: 0, gap: 6 }}>
-          <Text style={{ fontSize: 13, fontWeight: '600', color: colors.muted }} numberOfLines={1}>
-            {positionLabel(data.position)}
-            {tier && ovr !== null ? ` · ${TIER[tier].label}` : ''}
-          </Text>
-          {ovr !== null ? (
-            <PlayerOVR
-              ovr={ovr}
-              color={tier ? TIER[tier].color : colors.deepBlue}
-              narrow={narrow}
-              aside={ratingLoading ? null : <OvrDelta delta={rating?.delta ?? null} />}
-            />
-          ) : (
-            <View style={{ gap: 6 }} accessibilityLabel={`Avaliação em andamento: ${played} de 5 partidas`}>
-              <Text style={{ fontSize: 17, fontWeight: '800', color: colors.deepBlue }}>Avaliação em andamento</Text>
-              <View style={{ flexDirection: 'row', gap: 4 }}>
-                {[0, 1, 2, 3, 4].map((i) => (
-                  <View key={i} style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: i < played ? colors.blue : colors.line }} />
-                ))}
-              </View>
-              <Text style={type.meta}>
-                {Math.min(played, 5)} de 5 partidas ·{' '}
-                {needed > 0 ? `o OVR aparece depois de ${plural(needed, 'partida', 'partidas')}` : 'aguardando o cálculo'}
-              </Text>
-            </View>
-          )}
-          <StatStrip
-            size="sm"
-            items={[
-              { value: data.season?.matches_played ?? 0, label: 'Jogos' },
-              { value: data.season?.goals ?? 0, label: 'Gols' },
-              { value: data.season?.assists ?? 0, label: 'Assist.' },
-            ]}
-          />
-        </View>
-      </View>
-      <View style={{ flexDirection: 'row', alignItems: 'center', borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 4 }}>
-        <Text style={{ ...type.meta, flex: 1 }} numberOfLines={1}>
-          {data.seasonName ?? data.peladaName}
-        </Text>
-        <Pressable
-          onPress={onCareer}
-          accessibilityRole="button"
-          accessibilityLabel="Abrir Minha Carreira"
-          hitSlop={8}
-          style={{ minHeight: 44, justifyContent: 'center' }}>
+      </Pressable>
+      <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
+        <Text style={eyebrow}>EVOLUÇÃO DA CARTA</Text>
+        {evolution}
+        {stale && !loading && <Text style={type.meta}>Pode estar desatualizada</Text>}
+        {tier && ovr !== null ? <Text style={type.meta}>Nível {TIER[tier].label}</Text> : null}
+        <Pressable onPress={onCareer} accessibilityRole="button" accessibilityLabel="Minha Carreira" style={{ minHeight: 44, justifyContent: 'center' }}>
           <Text style={link}>Minha Carreira ›</Text>
         </Pressable>
       </View>
@@ -491,221 +534,195 @@ export function CareerHero({
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Próxima rodada (escalação planejada; o app não tem data, local nem confirmação de presença)
+// E04 — Próxima Rodada
 // ---------------------------------------------------------------------------------------------------------------
-export type NextRoundData = { lineup_id: string; pelada_id: string; pelada_name: string; label: string; team_name: string; opponent_name: string };
+const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
 
-export function NextRound({ round, more, onPress }: { round: NextRoundData; more: number; onPress: () => void }) {
+export function NextRoundCard({ round, more, stale, onPress }: { round: NextRoundItem; more: number; stale: boolean; onPress: () => void }) {
+  // Data, horário e local só aparecem quando oficialmente existem (o servidor ainda não guarda esses dados).
+  const when = round.scheduled_at ? new Date(round.scheduled_at) : null;
+  const hasDate = !!when && !Number.isNaN(when.getTime());
+  const time = hasDate ? when!.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : null;
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
-      accessibilityLabel={`Próxima rodada: ${round.label}. ${round.team_name} contra ${round.opponent_name}. Você está no ${round.team_name}. Ver rodada.`}>
-      <View style={{ gap: 8 }}>
-        <MatchScore
-          a={round.team_name}
-          b={round.opponent_name}
-          scoreA={null}
-          scoreB={null}
-          mine="A"
-          light
-          top={
-            <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: colors.muted }} numberOfLines={1}>
-              {round.label.toUpperCase()} · {round.pelada_name}
-            </Text>
-          }
-        />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}>
-          <Text style={{ ...type.meta, flex: 1 }} numberOfLines={2}>
-            Escalado no {round.team_name}
-            {more > 0 ? ` · +${more} ${more === 1 ? 'rodada' : 'rodadas'} planejadas` : ''}
-          </Text>
-          <Text style={link}>Ver rodada ›</Text>
-        </View>
+      accessibilityLabel={`Próxima rodada: ${round.label}. ${round.team_name} contra ${round.opponent_name}. Você está no ${round.team_name}.${time ? ` ${time}.` : ''}${round.location ? ` ${round.location}.` : ''} Ver rodada.`}
+      style={({ pressed }) => ({ ...box, flexDirection: 'row', gap: 14, alignItems: 'center', opacity: pressed ? 0.9 : 1 })}>
+      <View style={{ width: 60, height: 68, borderRadius: radius.md, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+        <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: 0.8, color: colors.gold }}>{hasDate ? MONTHS[when!.getMonth()] : 'PRÓXIMA'}</Text>
+        <Text style={{ fontSize: hasDate ? 28 : 13, lineHeight: hasDate ? 32 : 17, fontWeight: '900', color: colors.white }}>{hasDate ? when!.getDate() : 'RODADA'}</Text>
+      </View>
+      <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
+        <Text style={{ fontSize: 16, lineHeight: 21, fontWeight: '700', color: colors.ink }} numberOfLines={1}>
+          {round.team_name} × {round.opponent_name}
+        </Text>
+        <Text style={type.meta} numberOfLines={2}>
+          {[round.label, time, round.location, 'Escalação planejada'].filter(Boolean).join(' · ')}
+          {more > 0 ? ` · +${more} ${more === 1 ? 'rodada' : 'rodadas'}` : ''}
+        </Text>
+        {stale ? <Text style={type.meta}>Informação anterior: confirme na rodada.</Text> : null}
+        <Text style={{ ...link, fontSize: 14 }}>Ver rodada ›</Text>
       </View>
     </Pressable>
   );
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Último jogo da pelada selecionada
+// E05 — Último Jogo
 // ---------------------------------------------------------------------------------------------------------------
-export type LastGameData = {
-  match_id: string;
-  played_at: string;
-  status: string;
-  team_a_name: string;
-  team_b_name: string;
-  team_a_score: number;
-  team_b_score: number;
-  me: { team: 'A' | 'B'; goals: number; assists: number } | null; // null = o jogador não jogou
-  rating: MatchRating;
-};
-
-/**
- * Última partida oficial (ou em votação) da pelada: placar, se o jogador jogou, gols e assistências dele e a nota
- * publicada. Leituras com a mesma regra de acesso da tela da partida (RLS de membro ativo).
- */
-export function useLastGame(peladaId: string | null, membershipId: string | null, reload: number) {
-  const [state, setState] = useState<{ key: string; data: LastGameData | null; error: string | null } | null>(null);
-  const key = `${peladaId}:${membershipId}`;
-  useEffect(() => {
-    if (!peladaId || !membershipId) return;
-    let alive = true;
-    void reload;
-    (async () => {
-      const { data: m, error } = await supabase
-        .from('matches')
-        .select('id, played_at, status, team_a_name, team_b_name, team_a_score:public_team_a_score, team_b_score:public_team_b_score')
-        .eq('pelada_id', peladaId)
-        .in('status', ['voting_open', 'finalizing', 'finalized'])
-        .order('played_at', { ascending: false })
-        .order('id', { ascending: false })
-        .limit(1)
-        .maybeSingle();
-      if (!alive) return;
-      if (error) return setState({ key, data: null, error: friendly(error.message) });
-      if (!m) return setState({ key, data: null, error: null });
-      const [part, res, sess, legacy] = await Promise.all([
-        supabase.from('match_participants').select('id, team').eq('match_id', m.id).eq('membership_id', membershipId).maybeSingle(),
-        supabase
-          .from('match_player_results')
-          .select('final_rating, has_valid_rating')
-          .eq('match_id', m.id)
-          .eq('membership_id', membershipId)
-          .maybeSingle(),
-        supabase.from('rating_vote_sessions').select('status, closes_at').eq('match_id', m.id).maybeSingle(),
-        supabase.from('voting_sessions').select('status').eq('match_id', m.id).eq('status', 'finalized').maybeSingle(),
-      ]);
-      if (!alive) return;
-      if (part.error) return setState({ key, data: null, error: friendly(part.error.message) });
-      let me: LastGameData['me'] = null;
-      if (part.data) {
-        const { data: ev } = await supabase
-          .from('match_events')
-          .select('event_type, quantity')
-          .eq('match_id', m.id)
-          .eq('participant_id', part.data.id);
-        if (!alive) return;
-        const sum = (t: string) => (ev ?? []).filter((e) => e.event_type === t).reduce((n, e) => n + Number(e.quantity ?? 1), 0);
-        me = { team: part.data.team as 'A' | 'B', goals: sum('goal'), assists: sum('assist') };
-      }
-      // Sessão v2 vencida mas ainda "open" no banco: para a Central já está aguardando publicação.
-      const s = sess.data
-        ? { status: sess.data.status === 'open' && new Date(sess.data.closes_at).getTime() <= Date.now() ? 'awaiting_publication' : sess.data.status }
-        : null;
-      const rating = matchRating({ played: !!me, result: res.data ?? null, session: s, legacyFinalized: !!legacy.data });
-      setState({ key, data: { ...(m as Omit<LastGameData, 'me' | 'rating' | 'match_id'>), match_id: m.id, me, rating }, error: null });
-    })();
-    return () => {
-      alive = false;
-    };
-  }, [peladaId, membershipId, reload, key]);
-  return state && state.key === key ? state : null;
-}
-
-const RESULT = { win: 'Vitória', draw: 'Empate', loss: 'Derrota' } as const;
-const RESULT_COLOR = { win: colors.blue, draw: colors.muted, loss: colors.danger } as const;
 const fmtRating = (v: number) => v.toFixed(1).replace('.', ',');
 
-export function LastGame({ game, onPress }: { game: LastGameData; onPress: () => void }) {
-  const res = game.me ? resultOf(game.me.team, game.team_a_score, game.team_b_score) : null;
-  const official = game.status === 'finalized';
-  const mineA = game.me?.team === 'A';
-  const mineB = game.me?.team === 'B';
-  return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityHint="Abre os detalhes da partida">
-      <View style={{ gap: 10 }}>
-        <MatchScore
-          a={game.team_a_name}
-          b={game.team_b_name}
-          scoreA={game.team_a_score}
-          scoreB={game.team_b_score}
-          mine={mineA ? 'A' : mineB ? 'B' : null}
-          top={
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.4, color: '#9DB8E8', flex: 1 }} numberOfLines={1}>
-                {fmtDate(game.played_at).toUpperCase()}
-                {official ? '' : ' · NÃO OFICIAL'}
-              </Text>
-              {res && (
-                <View style={{ paddingHorizontal: 8, paddingVertical: 2, borderRadius: radius.pill, backgroundColor: colors.white }}>
-                  <Text style={{ fontSize: 12, fontWeight: '800', color: RESULT_COLOR[res] }}>{RESULT[res]}</Text>
-                </View>
-              )}
-            </View>
-          }
-        />
-        {game.me ? (
-          <StatStrip
-            items={[
-              { value: game.me.goals, label: game.me.goals === 1 ? 'Gol' : 'Gols' },
-              { value: game.me.assists, label: 'Assist.' },
-              ratingItem(game.rating),
-            ]}
-          />
-        ) : (
-          <Text style={type.meta}>Você não jogou esta partida.</Text>
-        )}
-        <Text style={link}>Ver partida ›</Text>
-      </View>
-    </Pressable>
+function ratingOf(g: LastGameRow): MatchRating {
+  return matchRating({
+    played: true,
+    result: { final_rating: g.final_rating, has_valid_rating: g.has_valid_rating },
+    session: g.rating_session_status ? { status: g.rating_session_status } : null,
+    legacyFinalized: g.legacy_finalized,
+  });
+}
+
+export function LastGameCard({ game, stale, onPress }: { game: LastGameRow; stale: boolean; onPress: () => void }) {
+  const rating = ratingOf(game);
+  const stats: StatCell[] = lastGameStats(game.position, game);
+  const side = (name: string, mine: boolean, align: 'left' | 'right') => (
+    <View style={{ flex: 1, minWidth: 0, alignItems: align === 'right' ? 'flex-end' : 'flex-start', gap: 2 }}>
+      <Text style={{ fontSize: 16, lineHeight: 21, fontWeight: mine ? '800' : '500', color: mine ? colors.deepBlue : colors.muted, textAlign: align }} numberOfLines={2}>
+        {name}
+      </Text>
+      {mine && <Text style={{ fontSize: 10, fontWeight: '800', letterSpacing: 0.8, color: colors.darkGold }}>SEU TIME</Text>}
+    </View>
   );
-}
-
-function ratingItem(rating: MatchRating) {
-  if (rating.kind === 'rated') return { value: fmtRating(rating.value), label: 'Nota da partida' };
-  const text = rating.kind === 'pending' ? 'Aguardando' : rating.kind === 'insufficient' ? 'Insuficiente' : 'Sem votação';
-  return { value: <Text style={{ fontSize: 14, lineHeight: 18, fontWeight: '700', color: colors.muted }}>{text}</Text>, label: 'Nota da partida', a11y: `Nota da partida: ${text}` };
-}
-
-// ---------------------------------------------------------------------------------------------------------------
-// Resumo complementar (incentiva a aba Carreira; não repete o card)
-// ---------------------------------------------------------------------------------------------------------------
-export function CareerRecap({
-  totals,
-  conquests,
-  hiddenSeasons,
-  onPress,
-}: {
-  totals: { matches_played: number; wins: number; goals: number; assists: number };
-  conquests: number;
-  hiddenSeasons: number;
-  onPress: () => void;
-}) {
-  const winRate = totals.matches_played ? Math.round((totals.wins / totals.matches_played) * 100) : null;
+  const noteText = rating.kind === 'rated' ? fmtRating(rating.value) : rating.kind === 'pending' ? 'Aguardando' : rating.kind === 'insufficient' ? 'Insuficiente' : 'Sem votação';
   return (
-    <Pressable onPress={onPress} accessibilityRole="button" accessibilityLabel="Ver o histórico em Minha Carreira">
-      <View style={{ gap: 10 }}>
-        <StatStrip
-          items={[
-            { value: totals.matches_played, label: 'Jogos' },
-            { value: winRate === null ? '–' : `${winRate}%`, label: 'Vitórias' },
-            { value: totals.goals + totals.assists, label: 'Gols e assist.' },
-            { value: conquests, label: 'Prêmios', gold: true, a11y: `Prêmios: ${conquests}` },
-          ]}
-        />
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, minHeight: 44 }}>
-          <Text style={{ ...type.meta, flex: 1 }} numberOfLines={2}>
-            Desde o primeiro jogo nesta pelada{hiddenSeasons > 0 ? ' (temporadas antigas no plano)' : ''}
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Último jogo, ${fmtDate(game.played_at)}. ${game.team_a_name} ${game.team_a_score} a ${game.team_b_score} ${game.team_b_name}. Sua nota: ${noteText}. Ver partida.`}
+      style={({ pressed }) => ({ ...box, opacity: pressed ? 0.9 : 1 })}>
+      <Text style={eyebrow}>
+        {fmtDate(game.played_at).toUpperCase()}
+        {stale ? ' · PODE ESTAR DESATUALIZADO' : ''}
+      </Text>
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+        {side(game.team_a_name, game.my_team === 'A', 'right')}
+        <Text style={{ fontSize: 32, lineHeight: 38, fontWeight: '900', color: colors.deepBlue, fontVariant: ['tabular-nums'] }}>
+          {game.team_a_score}–{game.team_b_score}
+        </Text>
+        {side(game.team_b_name, game.my_team === 'B', 'left')}
+      </View>
+      <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16, borderTopWidth: 1, borderTopColor: hair, paddingTop: 10 }}>
+        <View accessible accessibilityLabel={`Sua nota: ${noteText}`} style={{ minWidth: 88 }}>
+          <Text style={{ fontSize: rating.kind === 'rated' ? 26 : 15, lineHeight: 32, fontWeight: '800', color: rating.kind === 'rated' ? colors.deepBlue : colors.muted, fontVariant: ['tabular-nums'] }}>
+            {noteText}
           </Text>
-          <Text style={link}>Carreira ›</Text>
+          <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: 0.8, color: colors.muted }}>SUA NOTA</Text>
+        </View>
+        <View style={{ flex: 1 }}>
+          <StatStrip size="sm" items={stats.map((s) => ({ value: s.value, label: s.label }))} />
         </View>
       </View>
+      <Text style={link}>Ver partida ›</Text>
     </Pressable>
   );
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// Placeholders discretos e títulos
+// E06 — Resumo da Carreira
 // ---------------------------------------------------------------------------------------------------------------
+export function CareerSummaryCard({
+  position,
+  totals,
+  stale,
+  onPress,
+}: {
+  position: string | null;
+  totals: { matches_played: number; wins: number; draws: number; losses: number; goals: number; assists: number };
+  stale: boolean;
+  onPress: () => void;
+}) {
+  const stats = careerStats(position, totals);
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={`Resumo da carreira. ${stats.map((s) => `${s.label}: ${s.value}`).join('. ')}. Abrir Minha Carreira.`}
+      style={({ pressed }) => ({ ...box, opacity: pressed ? 0.9 : 1 })}>
+      <StatStrip items={stats.map((s) => ({ value: s.value, label: s.label }))} />
+      <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 44 }}>
+        <Text style={{ ...type.meta, flex: 1 }}>{stale ? 'Pode estar desatualizado' : 'Nesta pelada'}</Text>
+        <Text style={link}>Minha Carreira ›</Text>
+      </View>
+    </Pressable>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// E08 — Minhas Peladas
+// ---------------------------------------------------------------------------------------------------------------
+export function MyPeladasBlock({
+  shown,
+  seeAll,
+  onOpen,
+  onSeeAll,
+}: {
+  shown: Pelada[];
+  seeAll: boolean;
+  onOpen: (p: Pelada) => void;
+  onSeeAll: () => void;
+}) {
+  return (
+    <View style={{ gap: 4 }}>
+      <BlockTitle right={seeAll ? <Pressable onPress={onSeeAll} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ ...link, fontSize: 14 }}>Ver todas ›</Text></Pressable> : undefined}>
+        Minhas Peladas
+      </BlockTitle>
+      <View style={{ ...box, paddingVertical: 4, gap: 0 }}>
+        {shown.map((p, i) => (
+          <Pressable
+            key={p.id}
+            onPress={() => onOpen(p)}
+            accessibilityRole="button"
+            accessibilityLabel={`Abrir ${p.name}, ${roleNote(p.role)}`}
+            style={({ pressed }) => ({ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 60, borderTopWidth: i ? 1 : 0, borderTopColor: hair, opacity: pressed ? 0.6 : 1 })}>
+            <Crest path={p.crest_path} name={p.name} size={40} />
+            <View style={{ flex: 1, minWidth: 0 }}>
+              <Text style={{ fontSize: 16, fontWeight: '700', color: colors.ink }} numberOfLines={1}>
+                {p.name}
+              </Text>
+              <Text style={type.meta}>{roleNote(p.role)}</Text>
+            </View>
+            <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text>
+          </Pressable>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+// ---------------------------------------------------------------------------------------------------------------
+// E11/E16 — Placeholders, títulos e avisos
+// ---------------------------------------------------------------------------------------------------------------
+/** Skeleton discreto (E16-05/07/37): sem pulsar quando o sistema pede movimento reduzido. */
 export function Skeleton({ height, style }: { height: number; style?: ViewStyle }) {
-  return <View style={[{ height, borderRadius: radius.card, backgroundColor: colors.bg }, style]} accessibilityLabel="Carregando" />;
+  const reduced = useReducedMotion();
+  const [opacity] = useState(() => new Animated.Value(1));
+  useEffect(() => {
+    if (reduced) {
+      opacity.setValue(1);
+      return;
+    }
+    const loop = Animated.loop(
+      Animated.sequence([Animated.timing(opacity, { toValue: 0.55, duration: 900, useNativeDriver: true }), Animated.timing(opacity, { toValue: 1, duration: 900, useNativeDriver: true })]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [reduced, opacity]);
+  return <Animated.View style={[{ height, borderRadius: radius.card, backgroundColor: colors.bg, opacity }, style]} accessibilityElementsHidden importantForAccessibility="no" />;
 }
 
 export function BlockTitle({ children, right }: { children: string; right?: ReactNode }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', marginTop: 8 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', minHeight: 28 }}>
       <Text style={{ ...type.section, fontSize: 17, lineHeight: 22, flex: 1 }} accessibilityRole="header">
         {children}
       </Text>
@@ -714,17 +731,28 @@ export function BlockTitle({ children, right }: { children: string; right?: Reac
   );
 }
 
+/** Erro localizado de um bloco (E16-10/11): só aquele bloco, com "tentar de novo". */
 export function InlineError({ text, onRetry }: { text: string; onRetry?: () => void }) {
   return (
-    <View
-      style={{ ...box, flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: '#F3C7C2', shadowOpacity: 0, elevation: 0 }}
-      accessibilityLiveRegion="polite">
+    <View style={{ ...box, flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: '#F3C7C2', shadowOpacity: 0, elevation: 0 }} accessibilityLiveRegion="polite">
       <Text style={{ ...type.caption, flex: 1, color: colors.danger }}>{text}</Text>
       {onRetry && (
         <Pressable onPress={onRetry} accessibilityRole="button" hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}>
           <Text style={{ ...link, fontSize: 14 }}>Tentar de novo</Text>
         </Pressable>
       )}
+    </View>
+  );
+}
+
+/** Aviso geral único (E11/E16-43): offline ou desatualizado, proporcional, com a última sincronização só se real. */
+export function Notice({ tone, children }: { tone: 'warn' | 'info'; children: ReactNode }) {
+  return (
+    <View
+      accessibilityRole="alert"
+      accessibilityLiveRegion="polite"
+      style={{ borderRadius: radius.md, backgroundColor: tone === 'warn' ? '#FFF6E0' : colors.bg, paddingHorizontal: 14, paddingVertical: 10 }}>
+      <Text style={{ fontSize: 13, lineHeight: 18, color: tone === 'warn' ? colors.darkGold : colors.deepBlue, fontWeight: '600' }}>{children}</Text>
     </View>
   );
 }

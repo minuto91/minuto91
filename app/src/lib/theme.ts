@@ -27,8 +27,10 @@ export const type: Record<'title' | 'section' | 'cardTitle' | 'body' | 'bodySm' 
   number: { fontSize: 32, lineHeight: 38, fontWeight: '800', color: '#103675', fontVariant: ['tabular-nums'] },
 };
 
-/** Raios: campos e botões 12, cartões 14, folhas e modais 20, chips 22 (pílula). */
-export const radius = { sm: 8, md: 12, card: 14, lg: 20, pill: 22 } as const;
+/** Raios: campos e botões 12, cartões 16 (V8.4, E10), folhas e modais 20, chips 22 (pílula). */
+export const radius = { sm: 8, md: 12, card: 16, lg: 20, pill: 22 } as const;
+/** V8.4 (E10): margens laterais 20, espaço entre blocos 16, largura máxima do conteúdo ~560. */
+export const layout = { gutter: 20, gap: 16, maxWidth: 560 } as const;
 /** Espaçamento em múltiplos de 4. */
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28 } as const;
 /** Sombra moderada dos cartões (iOS/web) e elevação equivalente (Android). */

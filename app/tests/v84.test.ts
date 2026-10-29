@@ -15,10 +15,14 @@ import {
   type KV,
 } from '../src/lib/loadstate.ts';
 import { createNavLock, isSafePath, planPushOpen, validParam } from '../src/lib/navguard.ts';
-import { groupNotifs, groupOf, markAllRead, markRead, mergePage, notifPath, notifText, type Notif } from '../src/lib/notifs.ts';
+import { groupNotifs, groupOf, markAllRead, markRead, mergePage, notifPath, notifText, type Notif, whenLabel } from '../src/lib/notifs.ts';
 import {
   careerStats,
   DEFAULT_LAYOUT,
+  filterPeladas,
+  myPeladasSummary,
+  orderForSelector,
+  SEARCH_FROM,
   lastGameStats,
   moveBlock,
   normalizeLayout,
@@ -335,4 +339,40 @@ test('E16-26/27: cache segregado por usuário e apagado no logout', async () => 
   assert.equal(await cache.get(U1, 'central'), null);
   assert.equal(await cache.get(U2, 'central'), null);
   assert.deepEqual(kv.dump(), ['outra_chave_do_app'], 'só apaga o que é da Central');
+});
+
+// ---------------------------------------------------------------- E02 / E08
+const P = (id: string, name: string) => ({ id, name });
+test('E02: ativa primeiro, demais em ordem alfabética (sem diferenciar acento)', () => {
+  const l = [P('c', 'Zagueiros FC'), P('a', 'Árvore'), P('b', 'Barão'), P('d', 'Resenha')];
+  assert.deepEqual(orderForSelector(l, 'd').map((p) => p.id), ['d', 'a', 'b', 'c']);
+  assert.deepEqual(orderForSelector(l, null).map((p) => p.id), ['a', 'b', 'd', 'c']);
+  assert.equal(orderForSelector(l, 'não existe').length, 4);
+});
+
+test('E02: pesquisa a partir de 6 peladas; sem acento nem caixa', () => {
+  assert.equal(SEARCH_FROM, 6);
+  const l = [P('1', 'Pelada de Quinta'), P('2', 'Resenha São João'), P('3', 'Quarta FC')];
+  assert.deepEqual(filterPeladas(l, 'sao joao').map((p) => p.id), ['2']);
+  assert.deepEqual(filterPeladas(l, 'QU').map((p) => p.id), ['1', '3']);
+  assert.equal(filterPeladas(l, '   ').length, 3);
+  assert.equal(filterPeladas(l, 'xyz').length, 0);
+});
+
+test('E08: até 2 no resumo com a ativa primeiro; Ver todas só com 3 ou mais', () => {
+  const two = myPeladasSummary([P('a', 'A'), P('b', 'B')], 'b');
+  assert.deepEqual(two.shown.map((p) => p.id), ['b', 'a']);
+  assert.equal(two.seeAll, false);
+  const four = myPeladasSummary([P('a', 'A'), P('b', 'B'), P('c', 'C'), P('d', 'D')], 'c');
+  assert.deepEqual(four.shown.map((p) => p.id), ['c', 'a']);
+  assert.equal(four.seeAll, true);
+});
+
+test('E14: rótulo de hora por grupo', () => {
+  const now = new Date(2026, 9, 28, 12, 0, 0).getTime();
+  const at = (d: number, h: number, m = 5) => new Date(2026, 9, d, h, m, 0).toISOString();
+  assert.equal(whenLabel(at(28, 9), now), '09:05');
+  assert.equal(whenLabel(at(27, 23), now), 'ontem');
+  assert.equal(whenLabel(at(24, 9), now), 'sáb');
+  assert.equal(whenLabel(at(10, 9), now), '10/10');
 });

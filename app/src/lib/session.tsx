@@ -5,9 +5,11 @@ import {
   useCallback,
   useContext,
   useEffect,
+  useRef,
   useState,
 } from 'react';
 
+import { resetCentralData } from './centraldata';
 import { refreshPushRegistration, unregisterPush } from './push';
 import { resetPurchasesUser } from './purchases';
 import { supabase } from './supabase';
@@ -33,6 +35,8 @@ export const useAuth = () => useContext(AuthContext);
 export async function signOut() {
   await unregisterPush().catch(() => {});
   await supabase.auth.signOut();
+  // E16-27: nenhuma resposta em voo nem cache da Central sobrevive ao logout.
+  await resetCentralData().catch(() => {});
 }
 
 // Cadastro completo = 18+ e termos declarados no perfil E aceite da versão vigente de Termos e Privacidade
@@ -65,14 +69,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [loading, setLoading] = useState(true);
   const [onboarded, setOnboarded] = useState<boolean | null>(null);
+  const lastUid = useRef<string | null>(null);
 
   useEffect(() => {
     supabase.auth.getSession().then(async ({ data }) => {
+      if (lastUid.current === null) lastUid.current = data.session?.user.id ?? null;
       setSession(data.session);
       setOnboarded(await fetchOnboarded(data.session));
       setLoading(false);
     });
     const { data: sub } = supabase.auth.onAuthStateChange((event, s) => {
+      // Saiu ou trocou de conta (E15-21, E16-27): invalida respostas em voo e apaga o cache privado da Central.
+      const uid = s?.user.id ?? null;
+      if (lastUid.current !== null && lastUid.current !== uid) void resetCentralData().catch(() => {});
+      if (uid !== null || event === 'SIGNED_OUT') lastUid.current = uid;
       setSession(s);
       if (!s) resetPurchasesUser(); // a próxima conta não herda o comprador da loja
       // Com permissão já dada, mantém o aparelho registrado para esta conta (não pergunta nada).

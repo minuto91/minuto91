@@ -78,6 +78,8 @@ function Gate() {
         <Stack.Screen name="pelada/[id]/financeiro/lancamentos" options={{ title: 'Receitas e despesas' }} />
         <Stack.Screen name="pelada/[id]/financeiro/relatorio" options={{ title: 'Relatórios' }} />
         <Stack.Screen name="conta" options={{ title: 'Minha conta' }} />
+        <Stack.Screen name="notificacoes" options={{ title: 'Notificações' }} />
+        <Stack.Screen name="personalizar-central" options={{ title: 'Personalizar Central' }} />
         <Stack.Screen name="termos" options={{ title: 'Termos de Uso' }} />
         <Stack.Screen name="privacidade" options={{ title: 'Política de Privacidade' }} />
         <Stack.Screen name="redefinir-senha" options={{ title: 'Nova senha' }} />

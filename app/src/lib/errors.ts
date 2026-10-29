@@ -185,6 +185,10 @@ const MAP: Record<string, string> = {
   INVALID_TROPHY: 'Troféu inválido.',
   INVALID_GUIDE_STEP: 'Não foi possível salvar o passo do guia.',
   INVALID_PREFERENCES: 'Preferência de aviso inválida.',
+  // V8.4
+  LAYOUT_VERSION_CONFLICT: 'A sua Central foi personalizada em outro lugar. Mostramos a versão atual; faça a alteração de novo.',
+  INVALID_LAYOUT: 'Essa combinação de blocos não é permitida.',
+  NOTIFICATION_NOT_FOUND: 'Aviso não encontrado.',
 };
 
 export function friendly(message?: string | null): string {
