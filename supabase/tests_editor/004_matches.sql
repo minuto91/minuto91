@@ -52,7 +52,8 @@ perform pg_temp.expect_error(format('select public.create_match(%L,%L)',v_pid,v_
 perform pg_temp.as_user(4);
 perform pg_temp.expect_error(format('select public.create_match(%L,%L)',v_pid,v_now),'STAFF_REQUIRED');
 perform pg_temp.as_user(2);
-perform pg_temp.expect_error(format('select public.create_match(%L,%L)',v_pid,v_now+interval '2 days'),'INVALID_MATCH_DATE');
+-- V8.5 (063): rascunho pode ter data futura (pré-cadastro); o limite é 366 dias e publicar exige a data (049).
+perform pg_temp.expect_error(format('select public.create_match(%L,%L)',v_pid,v_now+interval '400 days'),'INVALID_MATCH_DATE');
 perform pg_temp.expect_error(format('select public.create_match(%L,null)',v_pid),'INVALID_MATCH_DATE');
 perform pg_temp.expect_error(format('select public.create_match(%L,%L,%L)',v_pid,v_now,repeat('x',41)),'INVALID_TEAM_NAME');
 execute 'reset role';
@@ -98,7 +99,7 @@ perform pg_temp.expect_error(format('select public.update_match_draft(%L,%L)',v_
 perform pg_temp.expect_error(format('select public.discard_match_draft(%L)',v_x3),'STAFF_REQUIRED');
 perform pg_temp.as_user(1);
 perform public.update_match_draft(v_x1,v_now-interval '1 day','Preto',null);
-perform pg_temp.expect_error(format('select public.update_match_draft(%L,%L)',v_x1,v_now+interval '2 days'),'INVALID_MATCH_DATE');
+perform pg_temp.expect_error(format('select public.update_match_draft(%L,%L)',v_x1,v_now+interval '400 days'),'INVALID_MATCH_DATE');
 perform pg_temp.as_user(2);
 perform public.discard_match_draft(v_x3);
 perform pg_temp.expect_error(format('select public.discard_match_draft(%L)',v_x3),'MATCH_NOT_FOUND');
