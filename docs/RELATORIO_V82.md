@@ -39,3 +39,6 @@ Provedor, sessão, regras de acesso, cadastro, recuperação, Google, termos, ba
 | Validação, erro de credencial, olho da senha, recuperação (abertura), Termos | testados na web |
 | Login válido, cadastro, link de recuperação, Google, pós-login | **não testados** — exigem conta/serviços reais |
 | Teclado nativo e aparelhos reais | **pendente** (só web emulada em 4 tamanhos) |
+
+## Encerramento (28/10/2026)
+V8.2 **encerrada por decisão do fundador, com pendências registradas**: login válido e pós-login, cadastro, link de recuperação, Google/Apple, aparelho real, teclado nativo e sobreposição pixel a pixel com a referência. Devem ser conferidos no iPhone; desvios achados lá viram ajuste de visual, sem mudar os fluxos.

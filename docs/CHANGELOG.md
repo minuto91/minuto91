@@ -2,7 +2,7 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
-## V8.2 — tela de login (28/10/2026)
+## V8.2 — tela de login (28/10/2026) — encerrada com pendências (ver RELATORIO_V82.md)
 
 - Nova identidade visual da entrada (`app/src/lib/loginui.tsx`, `app/src/app/login.tsx`, fundo em `app/assets/login/`). Fluxos de autenticação não alterados. Detalhes, diferenças e testes não feitos: `RELATORIO_V82.md`.
 
