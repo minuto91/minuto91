@@ -26,7 +26,7 @@ function Gate() {
     const open = first === 'termos' || first === 'privacidade' || first === 'redefinir-senha';
     if (!session) {
       // A vitrine de Cards (só em desenvolvimento) abre sem login, para conferir o desenho.
-      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && (first === 'dev-cards' || first === 'dev-v42' || first === 'dev-v43' || first === 'dev-v44' || first === 'dev-v45' || first === 'dev-v46' || first === 'dev-v5' || first === 'dev-central' || first === 'dev-v85' || first === 'dev-v86'))) router.replace('/login');
+      if (first !== 'login' && first !== 'convite' && !open && !(__DEV__ && (first === 'dev-cards' || first === 'dev-v42' || first === 'dev-v43' || first === 'dev-v44' || first === 'dev-v45' || first === 'dev-v46' || first === 'dev-v5' || first === 'dev-central' || first === 'dev-v85' || first === 'dev-v86' || first === 'dev-v87'))) router.replace('/login');
       return;
     }
     if (onboarded === null) return;
@@ -81,6 +81,7 @@ function Gate() {
         <Stack.Screen name="pelada/[id]/convidar" options={{ title: 'Convidar' }} />
         <Stack.Screen name="pelada/[id]/retrospectiva" options={{ title: 'Retrospectiva' }} />
         <Stack.Screen name="pelada/[id]/craque-temporada" options={{ title: 'Craque da Temporada' }} />
+        <Stack.Screen name="pelada/[id]/premios-temporada" options={{ title: 'Prêmios da temporada' }} />
         <Stack.Screen name="pelada/[id]/configuracoes" options={{ title: 'Configurações' }} />
         <Stack.Screen name="pelada/[id]/temporadas" options={{ title: 'Temporadas' }} />
         <Stack.Screen name="pelada/[id]/duelo" options={{ title: 'Duelo' }} />

@@ -9,7 +9,7 @@ nem gerados: nada de emoji, CSS, SVG novo ou IA no lugar deles.
 | Troféu | Representação obrigatória | Tipo de prêmio no banco | Na Sala hoje (`app/src/lib/trophies.tsx`) | Arquivo oficial |
 |---|---|---|---|---|
 | Craque da Partida | Jogador dourado em ação, estrela, detalhes azuis/dourados, base da coleção | `match_craque` | Sim — desenho SVG da V4.4 (bola dourada), **não** o jogador | pendente |
-| Artilheiro da Temporada | Chuteira dourada **com bola**, composição mais imponente | **inexistente** | **Não existe** (nem prêmio, nem tela) | pendente |
+| Artilheiro da Temporada | Chuteira dourada **com bola**, composição mais imponente | `season_top_scorer` (V8.7, 068) | Contador na Sala, desenho SVG **provisório** (chuteira dourada + bola dourada sobre o pedestal, selo TEMP) | pendente |
 | Artilheiro do Mês | Chuteira dourada **sem bola** | `top_scorer` | Sim — SVG, sem pedestal (REV-001) | pendente |
 | Rei do Mês | Coroa dourada com pedras azuis | `monthly_king` | Sim — SVG | pendente |
 | Garçom do Mês | Mão dourada saindo **do centro da base**, bandeja e bola; sem deslocamento lateral | `monthly_garcom` | Sim — SVG (mão com bandeja e bola) | pendente |
@@ -39,3 +39,13 @@ Pedestal do **Artilheiro do Mês**: V8.0 (REV-001) = "sem pedestal"; arte poster
 ## 5. Critérios de validação de assets (quando chegarem)
 
 PNG/WebP com transparência real (sem fundo preto), sem cortes, proporção única entre as sete, resolução ≥ 3× do tamanho exibido (a Sala usa 72 pt; compartilhamento 150 pt; Story 1080×1920 / Feed 1080×1350), peso por arquivo baixo, versão bloqueada em escala de cinza (hoje é só opacidade 0,35), conferência em tela pequena e em Story/Feed 1:1 e 9:16.
+
+## 6. V8.7: três identidades de temporada (C01) — arte provisória
+
+| Prêmio | Representação (C01) | Tipo no banco | No app hoje (`trophies.tsx`) | Arquivo oficial |
+|---|---|---|---|---|
+| Artilheiro da Temporada | Chuteira dourada com a bola previamente aprovada | `season_top_scorer` | `SeasonBoot` (kind scorer): reaproveita `GoldenBoot` e a bola dourada, pedestal azul/dourado, selo TEMP | pendente |
+| Maestro da Temporada | Chuteira com efeito de passe | `season_maestro` | `SeasonBoot` (kind maestro): arco tracejado até a bola | pendente |
+| Luva de Ouro | Luvas douradas | `season_golden_glove` | `GoldenGloves`: luvas douradas com punho azul | pendente |
+
+Nenhum arquivo oficial existe no repositório; os desenhos acima são provisórios e **não** foram apresentados como oficiais. Substituir pelos arquivos quando chegarem, validados pelos critérios do §5. A V8.7 supera a restrição RST-04 (luva "não é categoria") apenas neste ponto. "Chuteira de Ouro" é só a referência da arte do Artilheiro da Temporada, nunca nome de prêmio.

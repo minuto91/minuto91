@@ -11,6 +11,9 @@ Criada na V8.1 (28/10/2026). **Este é o ponto de partida de qualquer alteraçã
 | V8.0 | 50 revisões REV-001–050 | Entregue, REV-024/025 bloqueadas (`docs/rev80/`) |
 | V8.1 | 45 etapas da Sala de Troféus, sete troféus, branding, documentação permanente | **Em andamento — ver CHANGELOG** |
 | V8.4 | Central do Jogador (E01–E16) + padronização global | Entrega A com pendências; Entrega B parcial (`V8.4_*.md`) |
+| V8.5 | Sorteio, escalação oficial, partidas, súmula, Central e avisos | Entregue (`V8.5_*.md`) |
+| V8.6 | Paredão do Mês e Craque da Temporada | Parcial, com bloqueios fail-closed (`V8.6_*.md`) |
+| V8.7 | Artilheiro da Temporada, Maestro da Temporada, Luva de Ouro, Meus Prêmios (32 decisões) | Implementada localmente; ver `V8.7_IMPLEMENTACAO.md` e `V8.7_MATRIZ_RASTREABILIDADE.md` |
 
 ## Documentos
 
@@ -22,6 +25,9 @@ Criada na V8.1 (28/10/2026). **Este é o ponto de partida de qualquer alteraçã
 | `TROFEUS_BRANDING.md` | Sete troféus, logo, paleta, restrições visuais e arquivos oficiais pendentes. |
 | `MATRIZ_RASTREABILIDADE.md` | Cada etapa/requisito: fonte, arquivos, testes, resultado. |
 | `CHANGELOG.md` | Só trabalho efetivamente feito, por versão. |
+| `V8.7_DECISOES_COMPLETAS.md` | Anexo normativo da V8.7, integral (32 decisões). |
+| `V8.7_IMPLEMENTACAO.md` | Auditoria, divergências, ADR, limitação da REF móvel, testes, rollback e pendências da V8.7. |
+| `V8.7_MATRIZ_RASTREABILIDADE.md` | Cada ID da V8.7 → código → teste → status. |
 
 ## Ordem de leitura
 

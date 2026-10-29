@@ -16,10 +16,24 @@ import { TrophyTile } from './domain';
 import { supabase } from './supabase';
 import { colors } from './theme';
 import { Button, LoadingBlock, Sub } from './ui';
+import { COUNTER_ONLY as COUNTER_ONLY_TYPES } from './v87logic';
 
-export type TrophyType = 'match_craque' | 'monthly_king' | 'bola_murcha' | 'monthly_garcom' | 'top_scorer' | 'monthly_goalkeeper' | 'season_craque';
+export type TrophyType =
+  | 'match_craque'
+  | 'monthly_king'
+  | 'bola_murcha'
+  | 'monthly_garcom'
+  | 'top_scorer'
+  | 'monthly_goalkeeper'
+  | 'season_craque'
+  | 'season_top_scorer'
+  | 'season_maestro'
+  | 'season_golden_glove';
 // Servidor antigo (antes da 049) não manda o Garçom do Mês: conta como zero. O Garçom da Partida não existe mais (V7.7).
-export type TrophyCounts = Record<'match_craque' | 'monthly_king' | 'bola_murcha', number> & Partial<Record<'monthly_garcom' | 'top_scorer' | 'monthly_goalkeeper' | 'season_craque', number>>;
+export type TrophyCounts = Record<'match_craque' | 'monthly_king' | 'bola_murcha', number> & Partial<Record<'monthly_garcom' | 'top_scorer' | 'monthly_goalkeeper' | 'season_craque' | 'season_top_scorer' | 'season_maestro' | 'season_golden_glove', number>>;
+
+// V8.7 (C02/F02): estes três mostram só o contador acumulado na Sala; o detalhe por temporada vive em Meus Prêmios e na Retrospectiva.
+export const COUNTER_ONLY: readonly TrophyType[] = COUNTER_ONLY_TYPES;
 
 export const TROPHIES: { type: TrophyType; label: string; hint: string }[] = [
   { type: 'match_craque', label: 'Craque da Partida', hint: 'Mais votado como Craque numa partida.' },
@@ -29,6 +43,9 @@ export const TROPHIES: { type: TrophyType; label: string; hint: string }[] = [
   { type: 'monthly_garcom', label: 'Garçom do Mês', hint: 'Mais assistências no mês (mínimo 2; desempate pela média e pelas partidas com assistência).' },
   { type: 'monthly_goalkeeper', label: 'Paredão do Mês', hint: 'Melhor goleiro do mês (GOL com 2+ jogos no gol; vale o REF do mês).' },
   { type: 'season_craque', label: 'Craque da Temporada', hint: 'Escolhido por votação no fim da temporada.' },
+  { type: 'season_top_scorer', label: 'Artilheiro da Temporada', hint: 'Mais gols oficiais na temporada (mínimo 1; empate compartilha o título).' },
+  { type: 'season_maestro', label: 'Maestro da Temporada', hint: 'Mais assistências oficiais na temporada (mínimo 1; empate compartilha o título).' },
+  { type: 'season_golden_glove', label: 'Luva de Ouro', hint: 'Goleiro com a maior REF no encerramento da temporada (a janela da REF pode incluir temporadas anteriores).' },
 ];
 
 const GOLD_LIGHT = '#F3D98B';
@@ -140,10 +157,13 @@ export function TrophyArt({ type, size = 96, dim = false }: { type: TrophyType; 
       )}
       {type === 'monthly_garcom' && <Garcom gid={gid} />}
       {type === 'top_scorer' && <GoldenBoot gid={gid} />}
+      {type === 'season_top_scorer' && <SeasonBoot gid={gid} kind="scorer" />}
+      {type === 'season_maestro' && <SeasonBoot gid={gid} kind="maestro" />}
+      {type === 'season_golden_glove' && <GoldenGloves gid={gid} />}
       {type !== 'top_scorer' && <Pedestal />}
-      {(type === 'monthly_garcom' || type === 'monthly_goalkeeper' || type === 'season_craque') && (
+      {(type === 'monthly_garcom' || type === 'monthly_goalkeeper' || COUNTER_ONLY.includes(type) || type === 'season_craque') && (
         <SvgText x={50} y={106.6} textAnchor="middle" fontSize={4.2} fontWeight="700" fill={colors.gold} letterSpacing={0.4}>
-          {type === 'season_craque' ? 'TEMP' : type === 'monthly_goalkeeper' ? 'GOL' : 'MÊS'}
+          {type === 'season_craque' || COUNTER_ONLY.includes(type) ? 'TEMP' : type === 'monthly_goalkeeper' ? 'GOL' : 'MÊS'}
         </SvgText>
       )}
     </Svg>
@@ -168,6 +188,52 @@ function GoldenBoot({ gid }: { gid: string }) {
       <Path d="M38 44 L50 41 M38 50 L51 47 M38 56 L52 53" stroke={colors.blue} strokeWidth={2.2} strokeLinecap="round" />
       <Path d="M58 66 C63 70 70 72 78 74" stroke={GOLD_DARK} strokeWidth={1} fill="none" opacity={0.8} />
       <Path d="M33 40 C33 38 35 37 37 37" stroke="#FFFFFF" strokeWidth={2} strokeLinecap="round" opacity={0.6} fill="none" />
+    </G>
+  );
+}
+
+// V8.7 (C01): três identidades premium azul/dourado, todas sobre o mesmo pedestal. ARTE PROVISÓRIA: o repositório não tem
+// os arquivos oficiais (docs/TROFEUS_BRANDING.md); estes desenhos reaproveitam a chuteira dourada e a bola dourada já
+// aprovadas e serão trocados pelos arquivos oficiais quando chegarem. Artilheiro = chuteira com bola; Maestro = chuteira com
+// efeito de passe (arco tracejado até a bola); Luva = luvas douradas.
+function SeasonBoot({ gid, kind }: { gid: string; kind: 'scorer' | 'maestro' }) {
+  return (
+    <G>
+      <G transform="translate(12 19) scale(0.7)">
+        <GoldenBoot gid={gid} />
+      </G>
+      {kind === 'scorer' ? (
+        <G>
+          <Circle cx={84} cy={74} r={9} fill={`url(#${gid})`} stroke={GOLD_DARK} strokeWidth={1} />
+          <Polygon points="84,69.4 87.8,72.2 86.4,76.6 81.6,76.6 80.2,72.2" fill={colors.deepBlue} opacity={0.85} />
+          <Path d="M84 69.4 V65.4 M87.8 72.2 L91.6 71 M81.6 76.6 L79.2 80.4 M86.4 76.6 L88.8 80.4 M80.2 72.2 L76.4 71" stroke={GOLD_DARK} strokeWidth={0.8} fill="none" />
+          <Path d="M78.4 69 C79.6 67 81.6 66 83.6 65.8" stroke="#FFFFFF" strokeWidth={1.2} strokeLinecap="round" opacity={0.6} fill="none" />
+        </G>
+      ) : (
+        <G>
+          <Path d="M70 64 C78 50 86 44 94 40" stroke={colors.gold} strokeWidth={1.8} strokeDasharray="3 2.4" strokeLinecap="round" fill="none" />
+          <Path d="M72 70 C82 58 90 52 97 49" stroke={GOLD_DARK} strokeWidth={1} strokeDasharray="2 2.4" strokeLinecap="round" fill="none" opacity={0.7} />
+          <Circle cx={92} cy={36} r={6.5} fill={`url(#${gid})`} stroke={GOLD_DARK} strokeWidth={1} />
+          <Polygon points="92,32.6 94.8,34.6 93.8,37.8 90.2,37.8 89.2,34.6" fill={colors.deepBlue} opacity={0.85} />
+        </G>
+      )}
+    </G>
+  );
+}
+
+function GoldenGloves({ gid }: { gid: string }) {
+  const f = `url(#${gid})`;
+  return (
+    <G>
+      {[35, 44, 53, 62].map((x, i) => (
+        <Rect key={x} x={x} y={i === 1 || i === 2 ? 30 : 34} width={8.4} height={i === 1 || i === 2 ? 30 : 26} rx={4.2} fill={f} stroke={GOLD_DARK} strokeWidth={1} />
+      ))}
+      <Rect x={33.4} y={52} width={39} height={28} rx={9} fill={f} stroke={GOLD_DARK} strokeWidth={1.1} />
+      <Rect x={22} y={52} width={10} height={22} rx={5} transform="rotate(-24 27 63)" fill={f} stroke={GOLD_DARK} strokeWidth={1} />
+      <Path d="M39 40 V56 M48 38 V56 M57 38 V56 M66 42 V56" stroke={GOLD_DARK} strokeWidth={0.8} opacity={0.6} fill="none" />
+      <Rect x={36} y={76} width={34} height={9} rx={2.5} fill={colors.deepBlue} />
+      <Rect x={36} y={79} width={34} height={2} fill={colors.gold} />
+      <Path d="M38 56 C38 52 40 50 43 49" stroke="#FFFFFF" strokeWidth={1.4} strokeLinecap="round" opacity={0.55} fill="none" />
     </G>
   );
 }
@@ -213,7 +279,8 @@ export function TrophyRoom({ userId, counts, partial, shareName }: { userId: str
     setOpen(type);
     setItems([]);
     setNext(null);
-    if ((counts[type] ?? 0) > 0) load(type, null);
+    // V8.7: os três prêmios de temporada novos só têm contador na Sala (sem cartões por temporada).
+    if ((counts[type] ?? 0) > 0 && !COUNTER_ONLY.includes(type)) load(type, null);
   }
 
   return (
@@ -240,6 +307,7 @@ export function TrophyRoom({ userId, counts, partial, shareName }: { userId: str
           <Text style={{ fontWeight: '800', color: colors.deepBlue }}>{TROPHIES.find((t) => t.type === open)!.label}</Text>
           <Sub>{TROPHIES.find((t) => t.type === open)!.hint}</Sub>
           {(counts[open] ?? 0) === 0 && <Sub>Ainda não conquistado.</Sub>}
+          {COUNTER_ONLY.includes(open) && (counts[open] ?? 0) > 0 && <Sub>Cada título por temporada aparece em Meus Prêmios e na Retrospectiva.</Sub>}
           {msg && <Text style={{ color: colors.danger }}>{msg}</Text>}
           {items.map((it) => (
             <View key={it.id} style={{ paddingVertical: 6, borderTopWidth: 1, borderTopColor: colors.line }}>

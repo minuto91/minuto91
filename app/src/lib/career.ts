@@ -93,6 +93,9 @@ export const AWARD_LABEL: Record<string, string> = {
   bola_murcha: 'Bola Murcha',
   monthly_goalkeeper: 'Paredão do Mês',
   season_craque: 'Craque da Temporada',
+  season_top_scorer: 'Artilheiro da Temporada',
+  season_maestro: 'Maestro da Temporada',
+  season_golden_glove: 'Luva de Ouro',
 };
 
 // "1 jogo", "2 jogos".

@@ -24,9 +24,9 @@ Decisões V8.0 (REV-001–050): `docs/ESPECIFICACAO_V8.0.md`.
 | RST-01 | Motor V7.7 congelado; sem LET V7.9; sem cálculo de nota no app | aprovada, **preservada** | `git diff` de `050–052` e `supabase/local_db/rating/` vazio nesta entrega |
 | RST-02 | Nada de Etapa 46 (anulação excepcional de partida oficializada) | adiada/não aprovada | Fora do escopo |
 | RST-03 | Maior Evolução adiada | adiada | — |
-| RST-04 | Luva de goleiro (exploração visual) não é categoria | aprovada | — |
+| RST-04 | Luva de goleiro (exploração visual) não é categoria | aprovada — **superada parcialmente pela V8.7 (C01/A03)**: a Luva de Ouro passa a ser prêmio oficial de temporada; a arte continua sem arquivo oficial | — |
 | RST-05 | Garçom da Partida e Garçom da Rodada não são troféus históricos (Garçom da Rodada fica como destaque temporário) | aprovada | Garçom da Partida já excluído na V7.7 (A3) |
-| RST-06 | Sem novas categorias/premiações | aprovada | — |
+| RST-06 | Sem novas categorias/premiações | aprovada — **superada somente neste ponto pela V8.7**, que cria expressamente Maestro da Temporada e Luva de Ouro (e o Artilheiro da Temporada, que não existia como prêmio) | — |
 
 ## 3. Etapas 1–45 da Sala de Troféus
 
@@ -69,3 +69,20 @@ Registro completo, por ID, em `V8.4_DECISOES_E01_E16.md` (E15-01…40 e E16-01�
 3. Textos originais das etapas 8–9, 16–19 e condições das 20–40.
 4. O que é um "ranking oficial" (042). (Suspensão/cancelamento/reativação resolvidos em 28/10/2026: só admin, com motivo.) Abertas por não estarem especificadas: partidas novas em temporada cancelada/suspensa não são bloqueadas; cancelamento de temporada já consolidada é permitido.
 5. `docs/rev80` informa que os artefatos V7.5/V7.7 (DEF/LET/APR, 3,22) não existem no repositório: o motor v2 existente foi tratado como o congelado (herdado de `docs/v77`).
+
+## 6. V8.7 — prêmios de temporada e Meus Prêmios (29/10/2026)
+
+Registro completo por ID em `V8.7_MATRIZ_RASTREABILIDADE.md`; texto normativo em `V8.7_DECISOES_COMPLETAS.md`. Resumo:
+
+| ID | Decisão | Status |
+|---|---|---|
+| A01–A05 | Artilheiro da Temporada (nome preservado; "Chuteira de Ouro" só arte), Maestro da Temporada, Luva de Ouro (REF no encerramento; 50% e mínimo 5; desempates) | **implementadas** (M068, T054) |
+| B01–B10 | Encerramento antecipado, anuladas fora, correções recalculam, precisão interna, REF publicada com janela de 20, denominador, improvisados, posição no encerramento, exceção, publicação conjunta | **implementadas** |
+| C01 | Três identidades visuais | **implementada com arte provisória** (arquivos oficiais ausentes) |
+| C02–C04, C06, C08–C12 | Sala só com contadores, troféu integral nos empates, retrospectiva, álbum de 48, exceção controlada, limitação da REF explícita, histórico versionado, saída/retorno, auditoria e testes | **implementadas** |
+| C05, C07 | Artes compartilháveis; avisos | **implementadas**; compartilhamento real e envio real de push não executados |
+| F01–F04 | Exceção com piso de 3, Sala só com contadores, ex-integrante, REF corrigida no contexto do encerramento | **implementadas** |
+| AD01 | Meus Prêmios em Minha Carreira | **implementada** (tela real não aberta com sessão real) |
+| V87-DIV-1 | Artilheiro da Temporada não existia no repositório; criado uma vez | registrado |
+| V87-DIV-2 | Retroatividade não definida: sem concessão a temporadas já encerradas | **pendente — decisão do produto** |
+| V87-DIV-5 | Recorte do desempate = temporada; média sobre partidas com registro | **pendente — confirmar** |

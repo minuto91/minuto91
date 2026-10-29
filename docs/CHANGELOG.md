@@ -2,6 +2,29 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
+## V8.7 — Artilheiro da Temporada, Maestro da Temporada, Luva de Ouro + Meus Prêmios (29/10/2026) — implementada localmente; 4 IDs com ressalva (C01, C05, C07, AD01), nenhum bloqueado
+
+Detalhes: `docs/V8.7_IMPLEMENTACAO.md`, matriz `docs/V8.7_MATRIZ_RASTREABILIDADE.md`, anexo normativo `docs/V8.7_DECISOES_COMPLETAS.md` (32 decisões: A01–A05, B01–B10, C01–C12, F01–F04, AD01).
+
+### Feito
+- Migração `068_v87_season_awards.sql` (incremental, reversível; **não aplicada em banco remoto**) + teste SQL `054_v87_season_awards.sql`:
+  três prêmios de temporada (`season_top_scorer`, `season_maestro`, `season_golden_glove`) com apuração conjunta, transacional e idempotente depois do encerramento e da consolidação; resultados versionados e imutáveis em `private.season_award_results`, auditoria em `private.v87_events`;
+  REF da Luva **no contexto do encerramento** (mesma conta do motor 051, janela móvel de até 20 partidas que pode atravessar temporadas, sem partidas posteriores, 6 casas); elegibilidade `max(5, ceil(50%))` com posição oficial GOL no encerramento, improvisados fora, ex-integrante pela última posição oficial; desempate REF → defesas difíceis por partida como GOL → partidas como GOL → compartilhado;
+  exceção administrativa da Luva (só admin, só sem elegível normal, justificativa e auditoria, piso de 3 atuações), revogável, anulada quando surge elegível normal;
+  recálculo em anulação, restauração, correção de súmula, defesas difíceis e posição (ganchos em `close_month` e `after_rating_inputs_changed`), no agendador (`process_season_awards`) e na primeira leitura;
+  avisos (coletivo deduplicado, individual do vencedor, revogação só para quem perdeu); Sala de Troféus só com contadores; `get_player_season_titles` (AD01); bloco `season_awards` na retrospectiva oficial.
+- App: tela `pelada/[id]/premios-temporada` (vencedores, REF e a exceção do admin), bloco condicional **Meus Prêmios** em Minha Carreira, três ladrilhos com contador na Sala, tela de prêmios na retrospectiva e artes `P07` (conjunta) e `I06` (individual), textos de avisos (`notifs.ts` e `push-sender/logic.ts`), vitrine `dev-v87`, `v87logic.ts` + `tests/v87.test.ts`.
+- Carga e concorrência: `supabase/local_db/v87_load.mjs` (100 jogadores) e `v87_concurrency.mjs` (PostgreSQL 17 real, 20 rodadas × 3 disputas).
+- Evidências visuais da vitrine: `docs/evidencias_v87/`.
+
+### Testes (resultados reais)
+- SQL: baseline V8.6 53/53 → final com a V8.7 54/54 (ver `V8.7_IMPLEMENTACAO.md` §7); `node --test` 48/48; app `tsc` 0 erros, `expo lint` limpo, 80/80 testes; carga e concorrência passam.
+
+### Pendente / divergências
+- Artilheiro da Temporada **não existia** no repositório (o prompt dizia que sim): criado uma vez pela regra do anexo (DIV-1).
+- Sem concessão retroativa a temporadas já encerradas até decisão do produto (DIV-2); arte dos três troféus é **provisória** (DIV-3); recorte do desempate = temporada, a confirmar (DIV-5).
+- Não executados: aplicação no Supabase dev, teste em dispositivo, compartilhamento real das artes e envio real de push.
+
 ## V8.6 — Paredão do Mês + Craque da Temporada (29/10/2026) — parcial, com bloqueios fail-closed
 
 Detalhes: `docs/V8.6_IMPLEMENTACAO.md`, matriz `docs/V8.6_MATRIZ_RASTREABILIDADE.md`, anexo normativo `docs/V8.6_DECISOES_COMPLETAS.md`.

@@ -37,3 +37,11 @@ precisa falhar). `node concurrency.mjs 15` roda tudo (votação, Financeiro e ex
 compara V4.4 (migrações até a 046) × V4.5 (todas) com a mesma massa, mede as telas nos dois bancos com p50 e p95 (`REPS`,
 padrão 15) e grava em `docs/evidencias_v45/`. `node --test` inclui `pager_logic.test.mjs` (paginação do app sob pedidos
 simultâneos e respostas fora de ordem) e a conferência da exportação. Novo teste SQL: `039_v45_finance_export`.
+
+V8.7: `node v87_load.mjs` (PGlite) monta uma pelada de 100 jogadores com 12 goleiros oficiais e 2 temporadas e mede a publicação conjunta
+dos prêmios de temporada, o recálculo idempotente e as leituras (Sala, Meus Prêmios, tela do admin). `node v87_concurrency.mjs 20` sobe um
+**PostgreSQL 17 real** e disputa apurações simultâneas, correção × apuração e concessões simultâneas da exceção da Luva, conferindo as
+invariantes (uma versão corrente por categoria, nenhum prêmio ativo duplicado, avisos deduplicados, estado final igual ao de um recálculo limpo).
+O `initdb` do PostgreSQL recusa root: em contêiner root rode como usuário comum, por exemplo
+`mkdir -p /tmp/pg87 && chown nobody /tmp/pg87 && runuser -u nobody -- env TMPDIR=/tmp/pg87 HOME=/tmp/pg87 node v87_concurrency.mjs 20`.
+Novo teste SQL: `054_v87_season_awards` (T054, ~6 s no PGlite). `node --test` inclui os avisos da V8.7 em `push_logic.test.mjs`.

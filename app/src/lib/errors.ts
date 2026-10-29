@@ -232,6 +232,11 @@ const MAP: Record<string, string> = {
   CANDIDATE_TIE_UNRESOLVED: 'Empate de OVR na escolha dos candidatos: aguardando decisão do produto.',
   INVALID_CANDIDATE: 'Esse jogador não é candidato neste turno.',
   NOTHING_TO_CONFIRM: 'Não há nada para confirmar.',
+  // V8.7 Luva de Ouro / prêmios de temporada
+  EXCEPTION_REASON_REQUIRED: 'Explique o motivo (de 10 a 500 caracteres).',
+  INVALID_EXCEPTION_PARAMS: 'Valores inválidos: o percentual vai de 0 a 50, o mínimo de 3 a 5, e é preciso reduzir um dos dois.',
+  EXCEPTION_NOT_AVAILABLE: 'Não há exceção possível: já existe goleiro elegível ou nenhum chegou ao piso de 3 atuações.',
+  EXCEPTION_NOT_FOUND: 'Não há exceção ativa nesta temporada.',
 };
 
 export function friendly(message?: string | null): string {

@@ -21,6 +21,17 @@ test('todos os tipos produzidos pelo banco têm texto, menos Bola Murcha', () =>
   assert.equal(texts('tipo_desconhecido', {}, 'Pelada X'), null);
 });
 
+test('V8.7: avisos dos prêmios de temporada têm texto, abrem a retrospectiva e não trazem vencedores', () => {
+  for (const t of ['award_season_top_scorer', 'award_season_maestro', 'award_season_golden_glove', 'season_awards_published', 'season_awards_corrected', 'season_award_revoked'])
+    assert.ok(texts(t, { winner: 'Fulano', season_id: M }, 'Pelada X'), t);
+  assert.match(texts('award_season_golden_glove', {}, 'Pelada X').body, /Luva de Ouro/);
+  for (const t of ['season_awards_published', 'season_awards_corrected', 'season_award_revoked', 'award_season_maestro'])
+    assert.equal(pathFor(t, {}, P), `/pelada/${P}/retrospectiva`, t);
+  assert.doesNotMatch(texts('season_awards_published', { winner: 'Fulano' }, 'Pelada X').body, /Fulano/);
+  assert.equal(buildMessages(n('award_season_top_scorer'), 'X')[0].priority, 'default');
+  assert.equal(buildMessages(n('season_award_revoked'), 'X')[0].priority, 'high');
+});
+
 test('texto sem dados sensíveis: só o nome da pelada', () => {
   const t = texts('result_published', { match_id: M, rating: 9.5 }, 'Resenha FC');
   assert.match(t.body, /Resenha FC/);

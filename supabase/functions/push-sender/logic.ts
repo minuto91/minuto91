@@ -39,6 +39,10 @@ const AWARD: Record<string, string> = {
   top_assist: 'Você é o Garçom do mês',
   monthly_garcom: 'Você é o Garçom do Mês',
   most_improved: 'Você teve a Maior evolução do mês',
+  // V8.7 (068): títulos de temporada.
+  season_top_scorer: 'Você é o Artilheiro da Temporada',
+  season_maestro: 'Você é o Maestro da Temporada',
+  season_golden_glove: 'Você ganhou a Luva de Ouro da temporada',
 };
 
 const str = (v: unknown) => (typeof v === 'string' ? v : null);
@@ -86,6 +90,13 @@ export function texts(eventType: string, payload: Record<string, unknown>, pelad
       return { title: 'Figurinha nova', body: `Você liberou uma figurinha no álbum ${da}.` };
     case 'season_review':
       return { title: 'Temporada encerrada', body: `A temporada ${da} terminou. Veja a retrospectiva.` };
+    // V8.7 (C07): avisos coletivos e de correção; nunca trazem vencedores nem dados privados.
+    case 'season_awards_published':
+      return { title: 'Prêmios da temporada', body: `Os prêmios da temporada ${da} foram publicados. Veja na retrospectiva.` };
+    case 'season_awards_corrected':
+      return { title: 'Prêmios da temporada atualizados', body: `Uma correção oficial mudou os prêmios da temporada ${da}.` };
+    case 'season_award_revoked':
+      return { title: 'Título revisado', body: `Uma correção oficial mudou um dos seus títulos de temporada ${da}.` };
   }
   if (eventType.startsWith('award_')) {
     const t = AWARD[eventType.slice(6)];
@@ -99,7 +110,9 @@ export function pathFor(eventType: string, payload: Record<string, unknown>, pel
   const match = uuid(payload.match_id);
   const pelada = uuid(peladaId) ?? uuid(payload.pelada_id);
   if (eventType === 'account_transferred') return '/conta';
-  if (eventType === 'season_review' && pelada) return `/pelada/${pelada}/retrospectiva`;
+  if ((eventType === 'season_review' || eventType.startsWith('season_award') || eventType.startsWith('award_season_')) && pelada) {
+    return `/pelada/${pelada}/retrospectiva`;
+  }
   if (eventType.startsWith('award_') && !match && pelada) return `/pelada/${pelada}/rankings`;
   if (match) return `/partida/${match}`;
   if (pelada) return `/pelada/${pelada}`;

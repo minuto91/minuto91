@@ -1,4 +1,4 @@
-import { useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 
 import { loadSeasons, Season } from '../../../lib/career';
@@ -30,6 +30,7 @@ function parseDay(v: string): string | null {
 
 export default function Temporadas() {
   const { id } = useLocalSearchParams<{ id: string }>();
+  const router = useRouter();
   const [seasons, setSeasons] = useState<Season[] | null>(null);
   const [isAdmin, setIsAdmin] = useState(false);
   const [premium, setPremium] = useState(false);
@@ -110,6 +111,13 @@ export default function Temporadas() {
           <Sub>
             {fmt(s.starts_on)} a {fmt(s.ends_on)} · {s.kind === 'custom' ? 'personalizada' : 'ano civil'}
           </Sub>
+          {s.starts_on <= today && (
+            <Button
+              title="Prêmios da temporada"
+              kind="ghost"
+              onPress={() => router.push({ pathname: '/pelada/[id]/premios-temporada', params: { id, season: s.id } })}
+            />
+          )}
           <SeasonLifecycle seasonId={s.id} isAdmin={isAdmin} onChanged={() => setReload((n) => n + 1)} />
         </Card>
       ))}

@@ -8,18 +8,19 @@ import { Skeleton } from '../../../lib/central';
 import { todayIn } from '../../../lib/dates';
 import { friendly } from '../../../lib/errors';
 import { useEvolution } from '../../../lib/evolution';
-import { ArtId, COLLECTIVE, INDIVIDUAL, OfficialRetro, RetroArt, RetroTop } from '../../../lib/retroarts';
+import { ArtId, AWARD_CATEGORIES, COLLECTIVE, INDIVIDUAL, myAwardTitles, OfficialRetro, RetroArt, RetroTop } from '../../../lib/retroarts';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors, type } from '../../../lib/theme';
+import { CATEGORY_TYPE, SEASON_AWARD_LABEL, sharedLabel, statText } from '../../../lib/v87logic';
 import { Button, Chips, EmptyState, ErrorText, Screen, Section, Sub, Title } from '../../../lib/ui';
 
 // REV-019 / REV-026: retrospectiva oficial da temporada, Premium, só depois do fim do calendário E da consolidação
 // (súmulas e votações resolvidas). A versão vem do servidor (nova versão se uma correção mudar os dados).
 // Oito telas navegáveis; as artes (REV-020) ficam no fim, coletivas e individuais.
 type Consolidation = { calendar_closed: boolean; pending_matches: number; pending_votes: number; ready: boolean; premium: boolean };
-const SCREENS = ['Capa', 'Números', 'Artilheiro e garçom', 'Craque', 'Seleção da Rodada', 'Partidas memoráveis', 'Recordes', 'Encerramento'];
+const SCREENS = ['Capa', 'Números', 'Artilheiro e garçom', 'Craque', 'Seleção da Rodada', 'Partidas memoráveis', 'Recordes', 'Prêmios da temporada', 'Encerramento'];
 
 export default function Retrospectiva() {
   const { id, season: seasonParam } = useLocalSearchParams<{ id: string; season?: string }>();
@@ -30,6 +31,7 @@ export default function Retrospectiva() {
   const [seasonId, setSeasonId] = useState<string | null>(seasonParam ?? null);
   const [pelada, setPelada] = useState<{ name: string; crest_path: string | null } | null>(null);
   const [me, setMe] = useState<{ id: string; player_name: string } | null>(null);
+  const [myPhoto, setMyPhoto] = useState<string | null>(null);
   const [cons, setCons] = useState<Consolidation | null>(null);
   const [retro, setRetro] = useState<{ seasonId: string; data: OfficialRetro } | null>(null);
   const [page, setPage] = useState(0);
@@ -50,6 +52,8 @@ export default function Retrospectiva() {
       setSeasonId((cur) => cur ?? started.find((s) => s.ends_on < today)?.id ?? started[0]?.id ?? null);
       setPelada(p);
       setMe(m);
+      const { data: prof } = await supabase.rpc('get_my_profile');
+      if (alive) setMyPhoto((prof as { avatar_path?: string | null } | null)?.avatar_path ?? null);
     })().catch((e) => alive && setMsg(friendly((e as Error).message)));
     return () => {
       alive = false;
@@ -127,13 +131,13 @@ export default function Retrospectiva() {
           <Sub>{`Versão oficial ${data.version}`}</Sub>
 
           <Section>Artes da pelada</Section>
-          {COLLECTIVE.map((a) => (
+          {COLLECTIVE.filter((a) => a.id !== 'P07' || AWARD_CATEGORIES.some((c) => data.season_awards?.[c]?.winners.length)).map((a) => (
             <ArtShare key={a.id} id={a.id} label={a.label} r={data} name={name} crest={pelada?.crest_path ?? null} />
           ))}
           {data.me && me && (
             <>
               <Section>Minhas artes</Section>
-              {INDIVIDUAL.map((a) => (
+              {INDIVIDUAL.filter((a) => a.id !== 'I06' || myAwardTitles(data, me.id).length > 0).map((a) => (
                 <ArtShare
                   key={a.id}
                   id={a.id}
@@ -142,6 +146,8 @@ export default function Retrospectiva() {
                   name={name}
                   crest={pelada?.crest_path ?? null}
                   playerName={me.player_name}
+                  myMembershipId={me.id}
+                  myPhotoPath={myPhoto}
                   evolution={(evo.data?.points ?? []).map((p) => p.overall).filter((v): v is number => v !== null)}
                 />
               ))}
@@ -153,10 +159,22 @@ export default function Retrospectiva() {
   );
 }
 
-function ArtShare(props: { id: ArtId; label: string; r: OfficialRetro; name: string; crest: string | null; playerName?: string; evolution?: number[] }) {
+function ArtShare(props: {
+  id: ArtId; label: string; r: OfficialRetro; name: string; crest: string | null; playerName?: string; evolution?: number[];
+  myMembershipId?: string | null; myPhotoPath?: string | null;
+}) {
   return (
     <SharePanel label={`${props.id} · ${props.label}`} fileName={`minuto91-${props.id.toLowerCase()}`} title={props.label}>
-      <RetroArt id={props.id} retro={props.r} peladaName={props.name} crestPath={props.crest} playerName={props.playerName} evolution={props.evolution} />
+      <RetroArt
+        id={props.id}
+        retro={props.r}
+        peladaName={props.name}
+        crestPath={props.crest}
+        playerName={props.playerName}
+        evolution={props.evolution}
+        myMembershipId={props.myMembershipId}
+        myPhotoPath={props.myPhotoPath}
+      />
     </SharePanel>
   );
 }
@@ -226,6 +244,23 @@ function ScreenBody({ page, r, peladaName }: { page: number; r: OfficialRetro; p
         ['MAIOR INVENCIBILIDADE', rec.best_unbeaten_streak?.value],
       ].filter(([, v]) => v !== null && v !== undefined) as [string, number][];
       return rows.length ? <>{rows.map(([k, v]) => <Line key={k} k={k} v={String(v)} />)}</> : <Sub>Sem recordes registrados.</Sub>;
+    }
+    case 7: {
+      const cats = AWARD_CATEGORIES.filter((c) => r.season_awards?.[c]?.winners.length);
+      return cats.length ? (
+        <>
+          {cats.map((c) => (
+            <Line
+              key={c}
+              k={SEASON_AWARD_LABEL[CATEGORY_TYPE[c]].toUpperCase()}
+              v={`${r.season_awards![c]!.winners.map((w) => `${w.name} · ${statText(c, w.value)}`).join(', ')}${r.season_awards![c]!.winners.length > 1 ? ` (${sharedLabel(true).toLowerCase()})` : ''}`}
+            />
+          ))}
+          {r.season_awards?.golden_glove && <Sub>A REF da Luva de Ouro usa as últimas 20 partidas do goleiro e pode incluir temporadas anteriores.</Sub>}
+        </>
+      ) : (
+        <Sub>Sem prêmios de temporada publicados.</Sub>
+      );
     }
     default:
       return <Text style={[big, { fontSize: 26 }]}>Até a próxima temporada</Text>;

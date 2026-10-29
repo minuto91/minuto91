@@ -16,6 +16,8 @@ import { useSticky } from '../../lib/sticky';
 import { supabase } from '../../lib/supabase';
 import { colors, footLabel, positionLabel } from '../../lib/theme';
 import { MatchHistory } from '../../lib/history';
+import { MyAwardsList } from '../../lib/myawards';
+import { scopedTitles, SeasonTitle, showMyAwards, showOrigin } from '../../lib/v87logic';
 import { TrophyRoom } from '../../lib/trophies';
 import { Button, Card, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
 
@@ -32,6 +34,7 @@ export default function Carreira() {
   const uid = session?.user.id ?? '';
   const [me, setMe] = useState<Me | null>(null);
   const [career, setCareer] = useState<CareerSummary | null>(null);
+  const [titles, setTitles] = useState<SeasonTitle[] | null>(null);
   const [primary, setPrimary] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
@@ -52,6 +55,9 @@ export default function Carreira() {
           ]);
           if (!alive) return;
           setCareer(c);
+          // AD01: Meus Prêmios. Falha aqui não derruba a carreira: o bloco simplesmente não aparece.
+          const t = await supabase.rpc('get_player_season_titles', { p_user: uid });
+          if (alive) setTitles(t.error || !(t.data as { visible?: boolean } | null)?.visible ? null : ((t.data as { items: SeasonTitle[] }).items ?? []));
           setMe(p as Me);
           setPrimary((st as { primary_pelada_id: string | null } | null)?.primary_pelada_id ?? null);
           setErr(null);
@@ -187,6 +193,13 @@ export default function Carreira() {
 
       <Text style={section}>Sala de Troféus</Text>
       <TrophyRoom userId={uid} counts={career.trophies} partial={career.partial} shareName={me.display_name} />
+
+      {showMyAwards(scopedTitles(titles, selected?.pelada_id)) && (
+        <>
+          <Text style={section}>Meus Prêmios</Text>
+          <MyAwardsList items={scopedTitles(titles, selected?.pelada_id)} withOrigin={showOrigin(titles ?? [])} />
+        </>
+      )}
 
       <Text style={section}>Álbum</Text>
       <Button title="Abrir meu álbum" kind="secondary" onPress={() => router.push('/album')} />

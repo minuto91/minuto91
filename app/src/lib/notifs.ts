@@ -42,6 +42,19 @@ export function notifText(n: Pick<Notif, 'event_type' | 'pelada_name'>): { title
       return { title: 'Retrospectiva pronta', body: `A retrospectiva${where} está disponível.` };
     case 'account_transferred':
       return { title: 'Histórico transferido', body: 'O histórico desta conta foi transferido.' };
+    // V8.7 (C07): avisos de prêmios de temporada; sem vencedores nem dados de terceiros.
+    case 'season_awards_published':
+      return { title: 'Prêmios da temporada', body: `Os prêmios da temporada${where} foram publicados.` };
+    case 'season_awards_corrected':
+      return { title: 'Prêmios da temporada atualizados', body: `Uma correção oficial${where} mudou os prêmios da temporada.` };
+    case 'season_award_revoked':
+      return { title: 'Título revisado', body: `Uma correção oficial${where} mudou um dos seus títulos de temporada.` };
+    case 'award_season_top_scorer':
+      return { title: 'Nova conquista', body: `Você é o Artilheiro da Temporada${where}.` };
+    case 'award_season_maestro':
+      return { title: 'Nova conquista', body: `Você é o Maestro da Temporada${where}.` };
+    case 'award_season_golden_glove':
+      return { title: 'Nova conquista', body: `Você ganhou a Luva de Ouro${where}.` };
     // V8.5 (Etapa 29): prioridade para data/horário e cancelamento; escalação só para quem foi afetado.
     case 'round_rescheduled':
       return { title: 'Rodada remarcada', body: `A data ou o horário de uma rodada${where} mudou.` };
@@ -86,6 +99,12 @@ export function notifPath(n: Pick<Notif, 'event_type' | 'pelada_id' | 'payload'>
     case 'sticker_unlocked':
       return '/album';
     case 'season_review':
+    case 'season_awards_published':
+    case 'season_awards_corrected':
+    case 'season_award_revoked':
+    case 'award_season_top_scorer':
+    case 'award_season_maestro':
+    case 'award_season_golden_glove':
       return pelada ? `/pelada/${pelada}/retrospectiva` : null;
     case 'account_transferred':
       return '/conta';
