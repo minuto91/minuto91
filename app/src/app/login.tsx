@@ -3,18 +3,20 @@ import * as Linking from 'expo-linking';
 import * as WebBrowser from 'expo-web-browser';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'expo-router';
-import { Platform, Pressable, View } from 'react-native';
+import { StatusBar } from 'expo-status-bar';
+import { Dimensions, Platform, Pressable, ScrollView, StyleSheet, View } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Text } from '../lib/text';
 
 import { friendly } from '../lib/errors';
 import { supabase } from '../lib/supabase';
-import { colors } from '../lib/theme';
-import { Body, Button, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
+import { L, LoginBackground, LoginBrand, LoginButton, LoginDivider, LoginField } from '../lib/loginui';
 
 WebBrowser.maybeCompleteAuthSession();
 
 export default function Login() {
   const router = useRouter();
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
   const [senha, setSenha] = useState('');
   const [busy, setBusy] = useState<string | null>(null);
@@ -56,12 +58,16 @@ export default function Login() {
 
   const entrar = () =>
     run('entrar', async () => {
+      if (!/^S+@S+.S+$/.test(email.trim())) return 'Digite um e-mail válido.';
+      if (senha.length < 6) return 'A senha precisa ter 6 ou mais caracteres.';
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha });
       return error ? 'E-mail ou senha incorretos.' : null;
     });
 
   const cadastrar = () =>
     run('cadastrar', async () => {
+      if (!/^S+@S+.S+$/.test(email.trim())) return 'Digite um e-mail válido.';
+      if (senha.length < 6) return 'A senha precisa ter 6 ou mais caracteres.';
       const { data, error } = await supabase.auth.signUp({ email: email.trim(), password: senha });
       if (error) return error.message;
       return data.session ? null : 'Enviamos um e-mail de confirmação. Confirme e depois entre.';
@@ -117,41 +123,49 @@ export default function Login() {
     });
 
   return (
-    <Screen>
-      <View style={{ height: 40 }} />
-      <Title>Minuto 91</Title>
-      <Sub>O jogo acaba. A resenha começa.</Sub>
-      <View style={{ height: 12 }} />
-      <Input placeholder="e-mail" keyboardType="email-address" value={email} onChangeText={setEmail} />
-      {forgot ? (
-        <>
-          <Sub>Digite o e-mail da conta. Vamos mandar um link para criar uma senha nova.</Sub>
-          <ErrorText>{msg}</ErrorText>
-          {info && <Body>{info}</Body>}
-          <Button title="Enviar link" onPress={recuperar} loading={busy === 'recuperar'} />
-          <Button title="Voltar para entrar" kind="secondary" onPress={() => { setForgot(false); setMsg(null); setInfo(null); }} />
-        </>
-      ) : (
-        <>
-          <Input placeholder="senha (6 ou mais caracteres)" secureTextEntry value={senha} onChangeText={setSenha} />
-          <ErrorText>{msg}</ErrorText>
-          <Button title="Entrar" onPress={entrar} loading={busy === 'entrar'} />
-          <Button title="Criar conta" kind="secondary" onPress={cadastrar} loading={busy === 'cadastrar'} />
-          <Pressable accessibilityRole="button" onPress={() => { setForgot(true); setMsg(null); }} style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'center' }}>
-            <Text style={{ color: colors.blue, fontWeight: '600' }}>Esqueci minha senha</Text>
-          </Pressable>
-        </>
-      )}
-      <View style={{ height: 8 }} />
-      <Button title="Continuar com Google" kind="secondary" onPress={google} loading={busy === 'google'} />
-      <Text style={{ color: colors.muted, fontSize: 13, textAlign: 'center' }}>
-        Ao continuar você poderá ler os{' '}
-        <Text style={{ color: colors.blue }} onPress={() => router.push('/termos')}>Termos de Uso</Text> e a{' '}
-        <Text style={{ color: colors.blue }} onPress={() => router.push('/privacidade')}>Política de Privacidade</Text> antes de aceitar.
-      </Text>
-      {appleOk && (
-        <Button title="Continuar com Apple" kind="secondary" onPress={apple} loading={busy === 'apple'} />
-      )}
-    </Screen>
+    <View style={{ flex: 1, backgroundColor: L.black }}>
+      <StatusBar style="light" />
+      <LoginBackground />
+      <ScrollView
+        contentContainerStyle={{ flexGrow: 1, justifyContent: 'space-between', paddingHorizontal: 20, paddingTop: Math.max(insets.top, 24) + Math.round(Dimensions.get('window').height * 0.07), paddingBottom: Math.max(insets.bottom, 16) + 8 }}
+        automaticallyAdjustKeyboardInsets
+        keyboardDismissMode="interactive"
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
+        <LoginBrand />
+        <View style={{ gap: 8, marginTop: 24 }}>
+          <LoginField icon="mail" placeholder="e-mail" keyboardType="email-address" textContentType="emailAddress" autoComplete="email" value={email} onChangeText={setEmail} accessibilityLabel="e-mail" />
+          {forgot ? (
+            <>
+              <Text style={{ color: L.soft, fontSize: 14, textAlign: 'center' }}>Digite o e-mail da conta. Vamos mandar um link para criar uma senha nova.</Text>
+              {msg && <Text accessibilityRole="alert" style={s.err}>{msg}</Text>}
+              {info && <Text style={{ color: L.text, fontSize: 14, textAlign: 'center' }}>{info}</Text>}
+              <LoginButton kind="primary" title="Enviar link" onPress={recuperar} loading={busy === 'recuperar'} />
+              <LoginButton kind="outline" title="Voltar para entrar" onPress={() => { setForgot(false); setMsg(null); setInfo(null); }} />
+            </>
+          ) : (
+            <>
+              <LoginField icon="lock" secure placeholder="senha (6 ou mais caracteres)" textContentType="password" autoComplete="password" value={senha} onChangeText={setSenha} accessibilityLabel="senha" />
+              {msg && <Text accessibilityRole="alert" style={s.err}>{msg}</Text>}
+              <LoginButton kind="primary" title="Entrar" onPress={entrar} loading={busy === 'entrar'} disabled={busy !== null && busy !== 'entrar'} />
+              <LoginButton kind="outline" title="Criar conta" onPress={cadastrar} loading={busy === 'cadastrar'} disabled={busy !== null && busy !== 'cadastrar'} />
+              <Pressable accessibilityRole="button" onPress={() => { setForgot(true); setMsg(null); }} style={{ minHeight: 36, justifyContent: 'center', alignSelf: 'center' }}>
+                <Text style={{ color: L.gold, fontWeight: '500', fontSize: 16 }}>Esqueci minha senha</Text>
+              </Pressable>
+            </>
+          )}
+          <LoginDivider>ou</LoginDivider>
+          <LoginButton kind="google" title="Continuar com Google" onPress={google} loading={busy === 'google'} disabled={busy !== null && busy !== 'google'} />
+          {appleOk && <LoginButton kind="google" title="Continuar com Apple" onPress={apple} loading={busy === 'apple'} disabled={busy !== null && busy !== 'apple'} />}
+          <Text style={{ color: L.soft, fontSize: 13, lineHeight: 19, textAlign: 'center' }}>
+            Ao continuar você poderá ler os{' '}
+            <Text style={{ color: L.gold }} accessibilityRole="link" onPress={() => router.push('/termos')}>Termos de Uso</Text> e a{' '}
+            <Text style={{ color: L.gold }} accessibilityRole="link" onPress={() => router.push('/privacidade')}>Política de Privacidade</Text> antes de aceitar.
+          </Text>
+        </View>
+      </ScrollView>
+    </View>
   );
 }
+
+const s = StyleSheet.create({ err: { color: L.danger, fontSize: 14, textAlign: 'center' } });

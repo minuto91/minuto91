@@ -2,6 +2,10 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
+## V8.2 — tela de login (28/10/2026)
+
+- Nova identidade visual da entrada (`app/src/lib/loginui.tsx`, `app/src/app/login.tsx`, fundo em `app/assets/login/`). Fluxos de autenticação não alterados. Detalhes, diferenças e testes não feitos: `RELATORIO_V82.md`.
+
 ## V8.1 — etapa 3: telas do ciclo de vida (28/10/2026)
 
 - `app/src/lib/seasonlifecycle.tsx` (novo) integrado em `app/src/app/pelada/[id]/temporadas.tsx`: estado (suspensa/cancelada), linha do tempo, e para o admin botões Suspender/Retomar/Cancelar/Reativar com motivo obrigatório e confirmação. Mensagem nova em `errors.ts` (`INVALID_SEASON_STATE`).
