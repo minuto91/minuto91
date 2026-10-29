@@ -133,6 +133,13 @@ r := public.get_match_detail_v85(v_m2);
 perform pg_temp.assert(jsonb_array_length(r->'planned')=11 and r->'team_a_score'='null'::jsonb and r->'draft_version'='null'::jsonb, 'previsto sem súmula');
 perform pg_temp.expect_error(format('select public.get_match_sheet_review(%L)',v_m),'STAFF_REQUIRED');
 perform pg_temp.as_user(1);
+v_x := public.create_match(v_p, now());
+perform pg_temp.as_user(7);
+perform pg_temp.expect_error(format('select public.get_match_detail_v85(%L)',v_x),'MATCH_NOT_FOUND');
+perform pg_temp.assert(not exists(select 1 from jsonb_array_elements(public.get_pelada_matches_v85(v_p)->'items') it where (it->>'id')::uuid=v_x),
+ 'rascunho manual some para jogador');
+perform pg_temp.as_user(1);
+perform public.discard_match_draft(v_x);
 
 -- ===== publicar =====
 r := public.publish_match(v_m);

@@ -412,6 +412,7 @@ begin
  select * into v from public.matches where id=p_match;
  if not found or not private.is_active_member(v.pelada_id) then raise exception 'MATCH_NOT_FOUND'; end if;
  v_staff := private.is_active_staff(v.pelada_id);
+ if not v_staff and v.status = 'draft' and v.composition_id is null then raise exception 'MATCH_NOT_FOUND'; end if;
  return jsonb_build_object('id', v.id, 'pelada_id', v.pelada_id, 'status', v.status, 'played_at', v.played_at,
   'originally_scheduled_at', v.originally_scheduled_at, 'team_a_name', v.team_a_name, 'team_b_name', v.team_b_name,
   'draft_version', case when v_staff then v.draft_version end, 'planned_status', v.planned_status,
@@ -466,7 +467,9 @@ begin
      else 'VIEW' end) r
   from public.matches m
   where m.pelada_id=p_pelada
-   -- rascunhos aparecem para todos (Próxima Rodada, Etapa 28), sem placar nem súmula para quem não administra
+   -- Rascunho manual: só administração (regra anterior). Rodada pré-cadastrada: todos veem (Próxima Rodada, Etapa 28),
+   -- sem placar nem súmula.
+   and (v_staff or m.status <> 'draft' or m.composition_id is not null)
    and (v_status is null or m.status = any(v_status))
    and (p_filters->>'season_id' is null or m.season_id=private.try_uuid(p_filters->>'season_id'))
    and (p_filters->>'from' is null or private.pelada_local_date(m.pelada_id,m.played_at) >= (p_filters->>'from')::date)

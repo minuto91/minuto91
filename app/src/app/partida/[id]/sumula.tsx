@@ -28,6 +28,8 @@ import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, Position, positionLabel } from '../../../lib/theme';
 import { TeamColorPicker } from '../../../lib/selection';
+import { requestId } from '../../../lib/ids';
+import { idempotent, REVIEW_CODE } from '../../../lib/v85';
 import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
 const TEAMS = [
@@ -75,6 +77,14 @@ export default function Sumula() {
   const [original, setOriginal] = useState<SheetPlayer[] | null>(null);
   const [localDraft, setLocalDraft] = useState<{ players: SheetPlayer[]; extras: TeamExtras } | null>(null);
   const dKey = session ? draftKey(session.user.id, `sumula:${id}`) : null;
+  // V8.5: versão do rascunho no servidor (salvamento sem sobrescrita obsoleta), escalação prevista e
+  // confirmação coletiva de quem jogou (Etapas 2, 14, 21) e revisão do servidor (Etapa 15).
+  type Planned = { pid: string; membership_id: string | null; guest_id: string | null; guest: boolean; name: string; team: Team; position: string | null; eligible: boolean };
+  const [draftVersion, setDraftVersion] = useState<number | null>(null);
+  const [planned, setPlanned] = useState<Planned[]>([]);
+  const [confirmed, setConfirmed] = useState(true);
+  const [present, setPresent] = useState<Record<string, { on: boolean; team: Team; position: string | null }>>({});
+  const [serverReview, setServerReview] = useState<{ blocking: string[]; warnings: { code: string; count?: number }[] } | null>(null);
 
   useEffect(() => {
     let alive = true;
@@ -97,6 +107,15 @@ export default function Sumula() {
         setTeamA(m.team_a_name);
         setTeamB(m.team_b_name);
         setMatch(m);
+        if (m.status === 'draft') {
+          const { data: det } = await supabase.rpc('get_match_detail_v85', { p_match: id });
+          if (!alive) return;
+          const d = det as { draft_version: number; planned: Planned[] | null; participation_confirmed: boolean } | null;
+          setDraftVersion(d?.draft_version ?? null);
+          setPlanned(d?.planned ?? []);
+          setConfirmed(!d?.planned?.length || d.participation_confirmed);
+          setPresent(Object.fromEntries((d?.planned ?? []).map((x) => [x.pid, { on: x.eligible, team: x.team, position: x.position }])));
+        }
         setMembers(ms);
         setGuests(gs);
         setPlayers(sheet.players);
@@ -192,7 +211,53 @@ export default function Sumula() {
     }
   }
 
-  const salvarRascunho = () => call('save_match_sheet', { p_match: id, ...asArgs() });
+  // Etapa 21: salva com a versão vista e request_id; se a resposta se perder, recupera o resultado gravado.
+  const salvarRascunho = async () => {
+    if (!isDraft) return call('save_match_sheet', { p_match: id, ...asArgs() });
+    const rid = requestId();
+    setBusy(true);
+    setMsg(null);
+    const r = await idempotent(
+      async () => await supabase.rpc('save_match_sheet_v85', { p_match: id, p_expected: draftVersion, ...asArgs(), p_request: rid }),
+      async () => (await supabase.rpc('get_v85_operation', { p_request: rid })) as never,
+    );
+    setBusy(false);
+    if (r.error) {
+      setMsg(friendly(r.error.message));
+      // Versão antiga: o rascunho local fica guardado no aparelho; a tela busca a versão atual.
+      if (/VERSION_CONFLICT/.test(r.error.message)) setReload((n) => n + 1);
+      return { ok: false, data: null };
+    }
+    setDraftVersion((r.data as { draft_version: number }).draft_version);
+    return { ok: true, data: r.data };
+  };
+
+  async function confirmarParticipacao() {
+    const list = planned
+      .filter((x) => present[x.pid]?.on)
+      .map((x) =>
+        x.guest_id
+          ? { guest_id: x.guest_id, team: present[x.pid].team, position: present[x.pid].position }
+          : { membership_id: x.membership_id, team: present[x.pid].team },
+      );
+    const rid = requestId();
+    setBusy(true);
+    setMsg(null);
+    const r = await idempotent(
+      async () => await supabase.rpc('confirm_match_participation', { p_match: id, p_expected: draftVersion, p_present: list, p_request: rid }),
+      async () => (await supabase.rpc('get_v85_operation', { p_request: rid })) as never,
+    );
+    setBusy(false);
+    if (r.error) return setMsg(friendly(r.error.message));
+    notify('Participação confirmada', 'Agora complete placar, gols e assistências. Confirmar não publica nem abre votação.');
+    setReload((n) => n + 1);
+  }
+
+  async function revisarNoServidor() {
+    const { data, error } = await supabase.rpc('get_match_sheet_review', { p_match: id });
+    if (error) return setMsg(friendly(error.message));
+    setServerReview(data as { blocking: string[]; warnings: { code: string; count?: number }[] });
+  }
   const asArgs = () => {
     const { participants, events } = sheetPayload(players, extras);
     return { p_participants: participants, p_events: events };
@@ -208,6 +273,12 @@ export default function Sumula() {
 
   async function publicar() {
     if (!(await salvarRascunho()).ok) return;
+    const { data: rv } = await supabase.rpc('get_match_sheet_review', { p_match: id });
+    const blocking = ((rv as { blocking?: string[] } | null)?.blocking ?? []) as string[];
+    if (blocking.length) {
+      setServerReview(rv as { blocking: string[]; warnings: { code: string }[] });
+      return setMsg(blocking.map((b) => REVIEW_CODE[b] ?? b).join(' '));
+    }
     const { ok, data: r } = await call<{ status: string; eligible_voter_count: number }>(
       'publish_match',
       closeMode === 'fixed'
@@ -269,6 +340,53 @@ export default function Sumula() {
   return (
     <Screen>
       <Title>{isCorrection ? 'Corrigir súmula' : 'Súmula'}</Title>
+      {isDraft && !confirmed && (
+        <Card>
+          <Body>Quem jogou?</Body>
+          <Sub>Escalação prevista não é presença. Desmarque quem não entrou em campo; quem não entrou não conta. Para incluir substitutos, confirme e adicione na súmula.</Sub>
+          {planned.map((x) => {
+            const st = present[x.pid] ?? { on: false, team: x.team, position: x.position };
+            return (
+              <View key={x.pid} style={{ gap: 4 }}>
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <Switch value={st.on} disabled={!x.eligible} onValueChange={(on) => setPresent((p) => ({ ...p, [x.pid]: { ...st, on } }))} />
+                  <Text style={{ flex: 1, color: x.eligible ? colors.ink : colors.danger }} numberOfLines={1}>
+                    {x.name}
+                    {x.guest ? ' (convidado)' : ''}
+                    {!x.eligible ? ' · não faz mais parte' : ''}
+                  </Text>
+                  <Chips options={TEAMS} value={st.team} onChange={(team) => setPresent((p) => ({ ...p, [x.pid]: { ...st, team } }))} />
+                </View>
+                {x.guest && st.on && !x.position && (
+                  <>
+                    <Sub>Posição em que o convidado jogou</Sub>
+                    <PositionPicker value={st.position} onChange={(pos) => setPresent((p) => ({ ...p, [x.pid]: { ...st, position: pos } }))} />
+                  </>
+                )}
+              </View>
+            );
+          })}
+          <Button title="Confirmar quem jogou" onPress={confirmarParticipacao} loading={busy} />
+        </Card>
+      )}
+      {serverReview && (
+        <Card>
+          <Body>Revisão</Body>
+          {serverReview.blocking.map((b) => (
+            <Text key={b} style={{ color: colors.danger }}>
+              • {REVIEW_CODE[b] ?? b}
+            </Text>
+          ))}
+          {serverReview.warnings.map((w) => (
+            <Text key={w.code} style={{ color: colors.darkGold }}>
+              • {REVIEW_CODE[w.code] ?? w.code}
+              {w.count ? ` (${w.count})` : ''}
+            </Text>
+          ))}
+          {!serverReview.blocking.length && !serverReview.warnings.length && <Sub>Tudo certo para publicar.</Sub>}
+        </Card>
+      )}
+      {isDraft && confirmed && <Button title="Revisar antes de publicar" kind="ghost" onPress={revisarNoServidor} />}
       {localDraft && (
         <DraftBanner
           onResume={() => {

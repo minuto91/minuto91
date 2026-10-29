@@ -42,6 +42,15 @@ export function notifText(n: Pick<Notif, 'event_type' | 'pelada_name'>): { title
       return { title: 'Retrospectiva pronta', body: `A retrospectiva${where} está disponível.` };
     case 'account_transferred':
       return { title: 'Histórico transferido', body: 'O histórico desta conta foi transferido.' };
+    // V8.5 (Etapa 29): prioridade para data/horário e cancelamento; escalação só para quem foi afetado.
+    case 'round_rescheduled':
+      return { title: 'Rodada remarcada', body: `A data ou o horário de uma rodada${where} mudou.` };
+    case 'round_cancelled':
+      return { title: 'Rodada cancelada', body: `Uma rodada${where} foi cancelada.` };
+    case 'lineup_published':
+      return { title: 'Escalação disponível', body: `Os times da próxima rodada${where} foram definidos.` };
+    case 'lineup_changed':
+      return { title: 'Sua escalação mudou', body: `Houve mudança no seu time${where}.` };
     default:
       return n.event_type.startsWith('award_')
         ? { title: 'Nova conquista', body: `Você recebeu um prêmio${where}.` }
@@ -69,6 +78,11 @@ export function notifPath(n: Pick<Notif, 'event_type' | 'pelada_id' | 'payload'>
     case 'successor_designated':
     case 'subscription_changed':
       return pelada ? `/pelada/${pelada}` : null;
+    case 'round_rescheduled':
+    case 'round_cancelled':
+    case 'lineup_published':
+    case 'lineup_changed':
+      return pelada ? `/pelada/${pelada}/escalacoes` : null;
     case 'sticker_unlocked':
       return '/album';
     case 'season_review':
