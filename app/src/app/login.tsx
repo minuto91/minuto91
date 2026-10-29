@@ -58,7 +58,7 @@ export default function Login() {
 
   const entrar = () =>
     run('entrar', async () => {
-      if (!/^S+@S+.S+$/.test(email.trim())) return 'Digite um e-mail válido.';
+      if (!/^\S+@\S+\.\S+$/.test(email.trim())) return 'Digite um e-mail válido.';
       if (senha.length < 6) return 'A senha precisa ter 6 ou mais caracteres.';
       const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password: senha });
       return error ? 'E-mail ou senha incorretos.' : null;
@@ -66,7 +66,7 @@ export default function Login() {
 
   const cadastrar = () =>
     run('cadastrar', async () => {
-      if (!/^S+@S+.S+$/.test(email.trim())) return 'Digite um e-mail válido.';
+      if (!/^\S+@\S+\.\S+$/.test(email.trim())) return 'Digite um e-mail válido.';
       if (senha.length < 6) return 'A senha precisa ter 6 ou mais caracteres.';
       const { data, error } = await supabase.auth.signUp({ email: email.trim(), password: senha });
       if (error) return error.message;

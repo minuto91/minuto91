@@ -1,7 +1,7 @@
 // V8.2 — visual da tela de entrada (exceção cinematográfica escura; o resto do app segue o branding V8.1).
 import { Image } from 'expo-image';
 import { ReactNode, useState } from 'react';
-import { ActivityIndicator, Pressable, StyleSheet, TextInputProps, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Pressable, StyleSheet, TextInputProps, View } from 'react-native';
 import Svg, { Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 import { Text, TextInput } from './text';
@@ -109,7 +109,7 @@ export function LoginField({
   const [hide, setHide] = useState(true);
   return (
     <View style={[s.field, { borderColor: focus ? L.gold : L.line }]}>
-      {icon === 'mail' ? <Mail /> : <Lock />}
+      <View style={{ width: 22, height: 22 }}>{icon === 'mail' ? <Mail /> : <Lock />}</View>
       <TextInput
         placeholderTextColor={L.soft}
         autoCapitalize="none"
@@ -225,7 +225,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 18,
     gap: 16,
   },
-  fieldInput: { flex: 1, outlineStyle: 'none' as never, color: L.text, fontSize: 17, paddingVertical: 10 },
+  fieldInput: { flex: 1, minWidth: 0, outlineStyle: 'none' as never, color: L.text, fontSize: Dimensions.get('window').width < 360 ? 12 : 17, paddingVertical: 10 },
   btnRow: { minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   shadow: { shadowColor: L.gold3, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
   rule: { flex: 1, height: StyleSheet.hairlineWidth * 2, backgroundColor: L.line },

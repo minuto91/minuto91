@@ -23,18 +23,19 @@ Provedor, sessão, regras de acesso, cadastro, recuperação, Google, termos, ba
 
 ## Testes
 - `tsc --noEmit` 0 erros; `npm test` 29/29; lint: só o erro antigo de `lib/push.tsx:47`.
-- Visual: web em 390×844 (mesma proporção da referência). Conferido a olho contra a referência: título, slogan, jogador, 91, campos, botões, divisor, Google e termos visíveis sem corte.
-- **Não executado:** login/cadastro/recuperação/Google contra o Supabase, aparelho iOS/Android reais, teclado nativo, outras resoluções, sobreposição pixel a pixel.
-
-## Diferenças remanescentes
-- Fonte Inter (a do app) no lugar da fonte da referência; título um pouco maior que 55–60% da largura.
-- Formulário começa um pouco mais acima que na referência (~52% × 54%) para caber o texto legal sem rolagem em 844 px.
-- Sem hint de erro por campo; a mensagem aparece acima do botão Entrar.
+- **Executados na web (Metro, Supabase dev), 28/10/2026:**
+  - Campos vazios → "Digite um e-mail válido."; senha de 3 caracteres → "A senha precisa ter 6 ou mais caracteres."
+  - E-mail inexistente + senha de 6 caracteres → chamada real ao Supabase → "E-mail ou senha incorretos."
+  - Mostrar/ocultar senha (input password ↔ text); modo "Esqueci minha senha" abre com "Enviar link"/"Voltar para entrar"; "Termos de Uso" navega para `/termos`.
+  - Viewports 390×844, 375×667, 320×568, 412×915: sem sobreposição nem corte; em 667 e 568 de altura o formulário cobre parte do número 91 (a tela rola quando precisa).
+- **Bug encontrado e corrigido nos testes:** a validação de e-mail que acrescentei perdeu as barras invertidas da regex e rejeitava qualquer e-mail (bloquearia todo login e cadastro). Corrigido. Também corrigidos: ícone do cadeado encolhido e olho da senha empurrado para fora em 320 px.
+- **NÃO executados (sem evidência):** login com conta válida; cadastro (criaria conta real); envio do link de recuperação (dispararia e-mail real); Google OAuth e Apple; aparelho iOS/Android real; comportamento do teclado nativo; sobreposição pixel a pixel com a referência; redirecionamento pós-login.
 
 ## Matriz
 | Requisito | Situação |
 |---|---|
 | Fundo original, jogador e 91 preservados | feito |
 | Nome, slogan, campos, botões, divisor, Google, termos | feito (visual conferido na web) |
-| Fluxos de autenticação | preservados no código; **não testados em execução** |
-| Teclado / múltiplos aparelhos | **pendente** |
+| Validação, erro de credencial, olho da senha, recuperação (abertura), Termos | testados na web |
+| Login válido, cadastro, link de recuperação, Google, pós-login | **não testados** — exigem conta/serviços reais |
+| Teclado nativo e aparelhos reais | **pendente** (só web emulada em 4 tamanhos) |
