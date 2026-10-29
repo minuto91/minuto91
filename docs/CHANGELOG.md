@@ -2,6 +2,22 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
+## V8.4 — Central do Jogador + padronização global (28/10/2026) — Entrega A implementada com pendências; Entrega B parcial
+
+Detalhes: `docs/V8.4_*.md` (decisões E01–E16, matriz, auditoria, padronização, testes).
+
+### Feito
+- Migração `060_v84_central.sql` (incremental) + teste SQL `047_v84_central.sql`: feed de notificações com leitura persistida e retenção de 90 dias, layout versionado da Central, `get_my_last_game`.
+- App: Central reescrita (cabeçalho, seletor com Bottom Sheet, Carta e evolução, Próxima Rodada, Último Jogo, Resumo, Atenção, Minhas Peladas), tela de Notificações, Personalizar Central, carregamento por bloco com cache autorizado, push a frio pela Central, proteção de parâmetros de rota, toque repetido na aba Início.
+- Padronização compartilhada: tokens (`layout`, `radius.card = 16`), `Screen`/`ListScreen` centralizados (máx. 560), `Card` branco com borda, `Skeleton`/`BottomSheet` únicos.
+- Dependência nova: `expo-haptics`. `package-lock.json` regenerado (estava fora de sincronia).
+- Corrigido o erro de lint preexistente de `push.tsx` (`AndroidImportance`).
+
+### Não feito / pendente
+- Pilhas e rolagem **independentes por aba** (E09/E15-18): exige mover as rotas; precisa de aprovação e teste em dispositivo.
+- Data, horário e local da rodada (E04): o modelo não os guarda.
+- Reorganização página a página (Entrega B), verificação autenticada, em dispositivo e com leitor de tela.
+
 ## V8.2 — tela de login (28/10/2026) — encerrada com pendências (ver RELATORIO_V82.md)
 
 - Nova identidade visual da entrada (`app/src/lib/loginui.tsx`, `app/src/app/login.tsx`, fundo em `app/assets/login/`). Fluxos de autenticação não alterados. Detalhes, diferenças e testes não feitos: `RELATORIO_V82.md`.

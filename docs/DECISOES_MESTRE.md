@@ -58,6 +58,10 @@ Etapas 41–45 têm conteúdo funcional recuperado (resumo abaixo, texto na `ESP
 | DOC-01 | Pasta `docs` permanente com 7 arquivos | **implementada nesta entrega** |
 | DOC-02 | ESPECIFICACAO_V8.0 deve conter as 50 revisões integralmente "da fonte fornecida" | **pendente de fonte**: o texto original não está no repositório; só o relatório `docs/rev80/RELATORIO_REV80.md` |
 
+## 4b. Central do Jogador V8.4 (anexo E01–E16)
+
+Registro completo, por ID, em `V8.4_DECISOES_E01_E16.md` (E15-01…40 e E16-01…50 individualmente). Resumo: **C-01** REV-028 (resumo administrativo na Central) × E07 → vale E07 no bloco Atenção; **L-01** data/horário/local de rodada inexistentes; **L-04** pilhas independentes por aba não feitas (aguardam aprovação). Nenhuma regra de OVR, votação, finanças, planos ou RLS foi alterada.
+
 ## 5. Conflitos e perguntas abertas
 
 1. Pedestal do Artilheiro do Mês (TRO-04).

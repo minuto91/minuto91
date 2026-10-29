@@ -1,5 +1,5 @@
 import { useFonts } from 'expo-font';
-import { Stack, useRouter, useSegments } from 'expo-router';
+import { Stack, useGlobalSearchParams, useRouter, useSegments } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
@@ -7,12 +7,17 @@ import { HOME , colors } from '../lib/theme';
 
 import { PushHandler, pushSupported } from '../lib/push';
 import { AuthProvider, useAuth } from '../lib/session';
+import { validParam } from '../lib/navguard';
 import { INTER_FONTS } from '../lib/text';
+import { Button, EmptyState } from '../lib/ui';
 
 function Gate() {
   const { session, loading, onboarded } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+  const params = useGlobalSearchParams<{ id?: string }>();
+  // E15-32: rota com [id] cujo parâmetro não é um UUID válido nunca abre conteúdo (nem de outra pelada ou partida).
+  const invalidLink = !!session && !!onboarded && (segments as string[]).includes('[id]') && !validParam(params.id);
 
   useEffect(() => {
     if (loading) return;
@@ -44,6 +49,15 @@ function Gate() {
     <>
       {/* Toque no aviso abre a tela dele; só no app instalado, com login. */}
       {pushSupported && session && onboarded && <PushHandler />}
+      {invalidLink && (
+        <View
+          accessibilityViewIsModal
+          style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, zIndex: 10, backgroundColor: colors.white, justifyContent: 'center', padding: 20 }}>
+          <EmptyState title="Este link não é válido" hint="O endereço está incompleto ou foi alterado. Nenhum conteúdo foi aberto.">
+            <Button title="Ir para a Central" onPress={() => router.replace(HOME)} />
+          </EmptyState>
+        </View>
+      )}
       <Stack
         screenOptions={{
           headerTintColor: colors.blue,

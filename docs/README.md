@@ -10,6 +10,7 @@ Criada na V8.1 (28/10/2026). **Este é o ponto de partida de qualquer alteraçã
 | V7.7 | Motor de notas congelado, votação, anulação, Seleção 4-3-3 | Entregue (`docs/v77/`) |
 | V8.0 | 50 revisões REV-001–050 | Entregue, REV-024/025 bloqueadas (`docs/rev80/`) |
 | V8.1 | 45 etapas da Sala de Troféus, sete troféus, branding, documentação permanente | **Em andamento — ver CHANGELOG** |
+| V8.4 | Central do Jogador (E01–E16) + padronização global | Entrega A com pendências; Entrega B parcial (`V8.4_*.md`) |
 
 ## Documentos
 

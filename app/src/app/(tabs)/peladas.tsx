@@ -96,11 +96,11 @@ export default function Peladas() {
           {peladas!.length > 1 && (
             <Pressable
               accessibilityRole="button"
-              accessibilityLabel={p.is_primary ? `${p.name} é a pelada principal. Toque para desmarcar.` : `Tornar ${p.name} a pelada principal`}
+              accessibilityLabel={p.is_primary ? `${p.name} é a pelada ativa na Central. Toque para desmarcar.` : `Usar ${p.name} na Central`}
               onPress={() => principal(p)}
               style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', paddingRight: 12 }}>
               <Text style={{ fontSize: 13, fontWeight: '600', color: p.is_primary ? colors.darkGold : colors.blue }}>
-                {p.is_primary ? 'Pelada principal' : 'Tornar principal'}
+                {p.is_primary ? 'Ativa na Central' : 'Usar na Central'}
               </Text>
             </Pressable>
           )}

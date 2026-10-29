@@ -2,13 +2,14 @@ import { ReactNode } from 'react';
 import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, TextInputProps, View } from 'react-native';
 import { Text, TextInput } from './text';
 
-import { colors, POSITIONS, Position, radius, Sector, type } from './theme';
+import { colors, layout, POSITIONS, Position, radius, Sector, shadow, type } from './theme';
 
 export function Screen({ children }: { children: ReactNode }) {
   return (
     <ScrollView
       style={{ backgroundColor: colors.white }}
-      contentContainerStyle={{ padding: 20, gap: 12, flexGrow: 1 }}
+      // V8.4 (E10): conteúdo centralizado com largura máxima, margens de 20 e espaço de 16 entre blocos.
+      contentContainerStyle={{ alignSelf: 'center', width: '100%', maxWidth: layout.maxWidth, padding: layout.gutter, gap: layout.gap, flexGrow: 1 }}
       // REV-043: o teclado não cobre o campo (iOS ajusta o recuo; Android já redimensiona) e some ao rolar.
       automaticallyAdjustKeyboardInsets
       keyboardDismissMode="interactive"
@@ -44,7 +45,7 @@ export function ListScreen<T>({
   return (
     <FlatList
       style={{ backgroundColor: colors.white }}
-      contentContainerStyle={{ padding: 20, flexGrow: 1 }}
+      contentContainerStyle={{ alignSelf: 'center', width: '100%', maxWidth: layout.maxWidth, padding: layout.gutter, flexGrow: 1 }}
       keyboardShouldPersistTaps="handled"
       automaticallyAdjustKeyboardInsets
       keyboardDismissMode="interactive"
@@ -342,11 +343,15 @@ const styles = StyleSheet.create({
   stepTxt: { fontSize: 20, fontWeight: '700', color: colors.blue },
   // V6.2: superfície cinza-clara sem borda nem sombra. Separa o conteúdo pelo tom, não por moldura; campos e botões
   // brancos por dentro ganham contraste. Destaques (placar, voto urgente) usam os componentes de lib/domain.tsx.
+  // V8.4 (E10): o cartão padrão do app passa a ser o da Central — branco, borda sutil, raio 16 e sombra leve.
   card: {
-    backgroundColor: colors.bg,
+    backgroundColor: colors.white,
     borderRadius: radius.card,
+    borderWidth: 1,
+    borderColor: colors.line,
     padding: 16,
     gap: 6,
+    ...shadow.card,
   },
 });
 

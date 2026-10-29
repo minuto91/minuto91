@@ -549,7 +549,7 @@ export function NextRoundCard({ round, more, stale, onPress }: { round: NextRoun
       accessibilityRole="button"
       accessibilityLabel={`Próxima rodada: ${round.label}. ${round.team_name} contra ${round.opponent_name}. Você está no ${round.team_name}.${time ? ` ${time}.` : ''}${round.location ? ` ${round.location}.` : ''} Ver rodada.`}
       style={({ pressed }) => ({ ...box, flexDirection: 'row', gap: 14, alignItems: 'center', opacity: pressed ? 0.9 : 1 })}>
-      <View style={{ width: 60, height: 68, borderRadius: radius.md, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center', gap: 2 }}>
+      <View style={{ width: 68, height: 68, borderRadius: radius.md, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center', gap: 2 }}>
         <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: 0.8, color: colors.gold }}>{hasDate ? MONTHS[when!.getMonth()] : 'PRÓXIMA'}</Text>
         <Text style={{ fontSize: hasDate ? 28 : 13, lineHeight: hasDate ? 32 : 17, fontWeight: '900', color: colors.white }}>{hasDate ? when!.getDate() : 'RODADA'}</Text>
       </View>
