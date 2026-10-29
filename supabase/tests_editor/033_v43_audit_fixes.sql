@@ -37,6 +37,13 @@ create function pg_temp.name_in_draw_data(p_pelada uuid, p_name text) returns bo
      or exists(select 1 from public.team_draws d where d.pelada_id=p_pelada and private.draw_json(d.id)::text like '%'||p_name||'%')
      or exists(select 1 from public.planned_lineups l where l.pelada_id=p_pelada and private.lineup_json(l.id)::text like '%'||p_name||'%') $$;
 
+-- V8.5 (062): public.create_team_draw recusa novos sorteios por OVR (DRAW_ALGORITHM_SUPERSEDED). Os testes do
+-- sorteio histórico (algorithm_version 2) passam a chamar o núcleo antigo como dono do banco, só para manter
+-- a regressão do histórico (leitura, confirmação, escalações).
+create function pg_temp.legacy(p uuid, s uuid[], m text, r int) returns jsonb language plpgsql as
+ $$ declare v jsonb; begin
+  reset role; v := private.create_team_draw_core(p, s, m, r, null);
+  perform set_config('role','authenticated',true); return v; end $$;
 do $test$
 declare
  v_p uuid; v_tok text; v_d jsonb; v_d2 jsonb; v_sel uuid[]; v_l jsonb; v_l2 jsonb; v_x uuid; v_s uuid; v_req uuid;
@@ -61,10 +68,10 @@ perform pg_temp.as_user(1);
 
 -- ===================== 5.5 Sementes =====================
 v_sel := (select array_agg(pg_temp.mem(v_p,i)) from generate_series(1,12) i);
-v_d := public.create_team_draw(v_p, v_sel, 'single', 1);
+v_d := pg_temp.legacy(v_p, v_sel, 'single', 1);
 perform pg_temp.assert(v_d->>'seed_source'='server' and (v_d->>'algorithm_version')::int=2 and v_d->>'seed' ~ '^[0-9a-f]{32}$',
  'semente gerada no servidor (128 bits), origem e versão registradas');
-v_d2 := public.create_team_draw(v_p, v_sel, 'single', 1);
+v_d2 := pg_temp.legacy(v_p, v_sel, 'single', 1);
 perform pg_temp.assert(v_d->>'seed' <> v_d2->>'seed','cada sorteio oficial tem semente própria');
 perform pg_temp.expect_error(format('select public.create_team_draw(%L,%L,%L,1,%L)',v_p,v_sel,'single','minha-semente'),'does not exist');
 perform pg_temp.expect_error(format('select private.create_team_draw_core(%L,%L,%L,1,%L)',v_p,v_sel,'single','x'),'permission denied');
@@ -87,7 +94,7 @@ for k in 1..15 loop
 end loop;
 perform pg_temp.assert(v_ok=15,'sem repetição quando há alternativas: '||v_ok||' de 15');
 -- O sorteio oficial (semente do servidor) também.
-v_d := public.create_team_draw(v_p, v_sel, 'independent', 8);
+v_d := pg_temp.legacy(v_p, v_sel, 'independent', 8);
 perform pg_temp.assert(pg_temp.distinct_rounds(v_d)=8,'8 rodadas independentes diferentes');
 -- 2 goleiros apenas: uma composição possível -> repete e avisa, sem quebrar a regra.
 v_d := pg_temp.draw(v_p, array[pg_temp.mem(v_p,1),pg_temp.mem(v_p,2)], 'independent', 3, 'pouca');
@@ -109,13 +116,13 @@ perform pg_temp.assert((v_d->'warnings') ? 'LEGACY_POSITIONS','avisa que há pos
 -- ===================== 5.1 Privacidade dos sorteios =====================
 -- Atleta Jx (10, ativo) e Atleta Kx (11, sai antes de excluir) em sorteios confirmado, rascunho, cancelado e independente.
 v_sel := (select array_agg(pg_temp.mem(v_p,i)) from generate_series(1,14) i);
-v_d := public.create_team_draw(v_p, v_sel, 'single', 2); v_conf := (v_d->>'id')::uuid;
+v_d := pg_temp.legacy(v_p, v_sel, 'single', 2); v_conf := (v_d->>'id')::uuid;
 perform public.confirm_team_draw(v_conf);
-v_d := public.create_team_draw(v_p, v_sel, 'independent', 3); v_ind := (v_d->>'id')::uuid;
+v_d := pg_temp.legacy(v_p, v_sel, 'independent', 3); v_ind := (v_d->>'id')::uuid;
 perform public.confirm_team_draw(v_ind);
-v_d := public.create_team_draw(v_p, v_sel, 'single', 1); v_canc := (v_d->>'id')::uuid;
+v_d := pg_temp.legacy(v_p, v_sel, 'single', 1); v_canc := (v_d->>'id')::uuid;
 perform public.cancel_team_draw(v_canc);
-v_d := public.create_team_draw(v_p, v_sel, 'single', 1); v_draft := (v_d->>'id')::uuid;
+v_d := pg_temp.legacy(v_p, v_sel, 'single', 1); v_draft := (v_d->>'id')::uuid;
 v_l := public.save_lineup(v_p, null, 'Quinta', array[pg_temp.mem(v_p,10)], array[pg_temp.mem(v_p,11)]);
 execute 'reset role';
 perform pg_temp.assert(not exists(select 1 from public.team_draws where pelada_id=v_p and input::text like '%Atleta%'),

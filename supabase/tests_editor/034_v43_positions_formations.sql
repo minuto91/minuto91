@@ -27,6 +27,13 @@ create function pg_temp.team(p_lineup jsonb, p_team text) returns uuid[] languag
  $$ select array_agg((x->>'membership_id')::uuid order by x->>'membership_id') from jsonb_array_elements(p_lineup->'players') x
     where x->>'team'=p_team $$;
 
+-- V8.5 (062): public.create_team_draw recusa novos sorteios por OVR (DRAW_ALGORITHM_SUPERSEDED). Os testes do
+-- sorteio histórico (algorithm_version 2) passam a chamar o núcleo antigo como dono do banco, só para manter
+-- a regressão do histórico (leitura, confirmação, escalações).
+create function pg_temp.legacy(p uuid, s uuid[], m text, r int) returns jsonb language plpgsql as
+ $$ declare v jsonb; begin
+  reset role; v := private.create_team_draw_core(p, s, m, r, null);
+  perform set_config('role','authenticated',true); return v; end $$;
 do $test$
 declare
  v_p uuid; v_tok text; v_codes text[] := array['GOL','ZAG','LD','LE','VOL','MEI','CA','PD','PE','ATA']; v_m public.pelada_memberships;
@@ -164,7 +171,7 @@ for i in 16..31 loop perform pg_temp.as_user(i);
  perform public.join_pelada(v_tok, case when i=30 then 'defender' when i=31 then 'defender' else v_codes[2 + (i % 9)] end); end loop;
 perform pg_temp.as_user(1);
 v_a := (select array_agg(id) from public.pelada_memberships where pelada_id=v_p and status='active');
-v_d := public.create_team_draw(v_p, v_a, 'single', 1);
+v_d := pg_temp.legacy(v_p, v_a, 'single', 1);
 perform pg_temp.assert(not exists(select 1 from jsonb_array_elements(v_d->'rounds'->0->'by_position') x where abs((x->>'a')::int-(x->>'b')::int)>1),
  'cada uma das posições com diferença <= 1');
 perform pg_temp.assert(exists(select 1 from jsonb_array_elements(v_d->'rounds'->0->'by_position') x where x->>'position'='defender' and (x->>'a')::int=1 and (x->>'b')::int=1),
@@ -223,7 +230,7 @@ perform pg_temp.assert((select x->>'slot'='PD' and x->>'position'='defender' fro
  'jogador sem posição específica ocupa um espaço (PD), cadastro intacto');
 perform pg_temp.assert((pg_temp.memrow(v_p,30)).position_code is null,'formação não altera o cadastro');
 -- 9) escalação gerada por sorteio: formação só define o lugar, nunca o time.
-v_d := public.create_team_draw(v_p, v_a || v_b, 'single', 1);
+v_d := pg_temp.legacy(v_p, v_a || v_b, 'single', 1);
 v_d := public.confirm_team_draw((v_d->>'id')::uuid);
 v_l := (select x from jsonb_array_elements(public.get_lineups(v_p)) x where x->>'draw_id'=v_d->>'id');
 v_l2 := public.set_lineup_formation((v_l->>'id')::uuid, '4-3-3', '4-4-2',

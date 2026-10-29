@@ -44,6 +44,13 @@ create function pg_temp.members(p_pelada uuid, p_pos text[]) returns uuid[] lang
  $$ select array_agg(id order by id) from public.pelada_memberships where pelada_id=p_pelada and status='active'
      and preferred_position = any(p_pos) $$;
 
+-- V8.5 (062): public.create_team_draw recusa novos sorteios por OVR (DRAW_ALGORITHM_SUPERSEDED). Os testes do
+-- sorteio histórico (algorithm_version 2) passam a chamar o núcleo antigo como dono do banco, só para manter
+-- a regressão do histórico (leitura, confirmação, escalações).
+create function pg_temp.legacy(p uuid, s uuid[], m text, r int) returns jsonb language plpgsql as
+ $$ declare v jsonb; begin
+  reset role; v := private.create_team_draw_core(p, s, m, r, null);
+  perform set_config('role','authenticated',true); return v; end $$;
 do $test$
 declare
  v_p uuid; v_tok text; v_d jsonb; v_d2 jsonb; v_all uuid[]; v_sel uuid[]; v_gk uuid[]; v_l jsonb; v_x uuid; v_n int;
@@ -210,16 +217,17 @@ perform set_config('role','authenticated',true);
 
 -- 19) jogador comum não sorteia; assistente sorteia.
 perform pg_temp.as_user(9);
-perform pg_temp.expect_error(format('select public.create_team_draw(%L,%L,%L,1)',v_p,v_sel,'single'),'STAFF_REQUIRED');
+perform pg_temp.expect_error(format('select pg_temp.legacy(%L,%L,%L,1)',v_p,v_sel,'single'),'STAFF_REQUIRED');
+perform pg_temp.expect_error(format('select public.create_team_draw(%L,%L,%L,1)',v_p,v_sel,'single'),'DRAW_ALGORITHM_SUPERSEDED');
 perform pg_temp.as_user(5);
-perform pg_temp.assert(public.create_team_draw(v_p, v_sel, 'single', 1) ? 'id','assistente pode sortear');
+perform pg_temp.assert(pg_temp.legacy(v_p, v_sel, 'single', 1) ? 'id','assistente pode sortear');
 -- 20) manipulação direta da API.
 perform pg_temp.as_user(1);
-perform pg_temp.expect_error(format('select public.create_team_draw(%L,%L,%L,1)',v_p,v_sel||v_sel[1],'single'),'DRAW_DUPLICATE_PLAYER');
-perform pg_temp.expect_error(format('select public.create_team_draw(%L,%L,%L,1)',v_p,array[v_sel[1],pg_temp.uid(1)],'single'),'DRAW_INVALID_PLAYER');
-perform pg_temp.expect_error(format('select public.create_team_draw(%L,%L,%L,1)',v_p,v_sel[1:1],'single'),'DRAW_TOO_FEW_PLAYERS');
-perform pg_temp.expect_error(format('select public.create_team_draw(%L,%L,%L,13)',v_p,v_sel,'independent'),'DRAW_INVALID_ROUNDS');
-perform pg_temp.expect_error(format('select public.create_team_draw(%L,%L,%L,1)',v_p,v_sel,'tres_times'),'DRAW_INVALID_MODE');
+perform pg_temp.expect_error(format('select pg_temp.legacy(%L,%L,%L,1)',v_p,v_sel||v_sel[1],'single'),'DRAW_DUPLICATE_PLAYER');
+perform pg_temp.expect_error(format('select pg_temp.legacy(%L,%L,%L,1)',v_p,array[v_sel[1],pg_temp.uid(1)],'single'),'DRAW_INVALID_PLAYER');
+perform pg_temp.expect_error(format('select pg_temp.legacy(%L,%L,%L,1)',v_p,v_sel[1:1],'single'),'DRAW_TOO_FEW_PLAYERS');
+perform pg_temp.expect_error(format('select pg_temp.legacy(%L,%L,%L,13)',v_p,v_sel,'independent'),'DRAW_INVALID_ROUNDS');
+perform pg_temp.expect_error(format('select pg_temp.legacy(%L,%L,%L,1)',v_p,v_sel,'tres_times'),'DRAW_INVALID_MODE');
 perform pg_temp.expect_error('insert into public.team_draws(pelada_id,mode,rounds_total,seed,input) values(gen_random_uuid(),''single'',1,''x'',''[]'')','permission denied');
 perform pg_temp.expect_error('select * from public.team_draw_players','permission denied');
 perform pg_temp.expect_error('select private.draw_split(array[''a'',''b''],array[1,2]::numeric[],''x'')','permission denied');
@@ -259,7 +267,7 @@ perform pg_temp.assert(jsonb_array_length(v_r->'players')=16 and v_r->>'team_a_n
  and (select count(*) from jsonb_array_elements(v_r->'players') x where x->>'team'='A')=8,'escalação pós-jogo no Básico (sem Premium)');
 -- 18) Premium expirado: sem sorteio, sem Duelo, sem escalação antecipada.
 perform pg_temp.as_user(1);
-perform pg_temp.expect_error(format('select public.create_team_draw(%L,%L,%L,1)',v_p,v_sel,'single'),'PREMIUM_REQUIRED');
+perform pg_temp.expect_error(format('select pg_temp.legacy(%L,%L,%L,1)',v_p,v_sel,'single'),'PREMIUM_REQUIRED');
 perform pg_temp.expect_error(format('select public.save_lineup(%L,null,%L,%L,%L)',v_p,'x',array[v_gk[1]],array[v_gk[2]]),'PREMIUM_REQUIRED');
 perform pg_temp.expect_error(format('select public.get_player_duel(%L,%L,%L)',v_s,v_gk[1],v_gk[2]),'PREMIUM_REQUIRED');
 execute 'reset role';
