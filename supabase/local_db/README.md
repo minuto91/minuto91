@@ -45,3 +45,15 @@ invariantes (uma versão corrente por categoria, nenhum prêmio ativo duplicado,
 O `initdb` do PostgreSQL recusa root: em contêiner root rode como usuário comum, por exemplo
 `mkdir -p /tmp/pg87 && chown nobody /tmp/pg87 && runuser -u nobody -- env TMPDIR=/tmp/pg87 HOME=/tmp/pg87 node v87_concurrency.mjs 20`.
 Novo teste SQL: `054_v87_season_awards` (T054, ~6 s no PGlite). `node --test` inclui os avisos da V8.7 em `push_logic.test.mjs`.
+
+V7.7 (motor `formula_version 3`, migrações 070-071; relatório em `docs/relatorio_v77_2026-10-24.md`):
+- `node --test rating_v77.test.mjs` — fórmulas, regressões (LET 91,60) e conferência com o protótipo Python
+  (`rating/v77_reference/`, precisa de `python3`).
+- `node --test rating_v77_sql.test.mjs` — SQL (`private.v77_*`) = JS (`rating/v77.mjs`) rodada a rodada.
+- `node --test rating_v77_integration.test.mjs` — fluxo real do app (súmula, notas, resenha, defesas, cartões, correção,
+  anulação, troca de posição, duas temporadas, rollback) com o resultado do servidor conferido contra o JS.
+- `node rating_v77_concurrency.mjs 10` — concorrência do motor num PostgreSQL 17 real.
+- `PLAYERS=40 MATCHES=200 node rating_v77_perf.mjs` — custo do recálculo completo de uma pelada.
+- `node rating/simulate_v77.mjs 1000 30 20` — simulação populacional (grava `docs/v77_simulacao_resultados.json`).
+- Teste SQL novo: `055_v89_engine`. O `042_v5_rating_votes` roda com a V5 ativa (caminho de rollback).
+Rodando como root (contêineres), os scripts com `embedded-postgres` passam a pasta temporária para o usuário `postgres`.

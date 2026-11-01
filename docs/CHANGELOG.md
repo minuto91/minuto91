@@ -2,6 +2,29 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
+## V8.9 — fechamento (01/11/2026) — aplicada no Supabase dev
+
+- ZIP da V8.9 levado ao GitHub; migrações renumeradas para 070–074 (a 069 é a RLS da preparação do beta).
+- `073_v89_cutover_full_history.sql`: motor V7.7 em todo o histórico (decisão do fundador). `074_v89_evolution_corrections_display.sql`: correções da evolução mostram o OVR exibido, não o interno.
+- Testes: novo `056`; `031` e `rating_v77_integration` ajustados à regra nova. SQL 56/56, Node 68/68 (paridade Python incluída), app 84/84.
+- Supabase dev: 070–074 aplicadas; T054, T055 e T056 passam lá; 92 cartas recalculadas para a fórmula 3. Detalhe: `V8.9_IMPLEMENTACAO.md` §8.
+
+## V8.9 — Oficialização do motor V7.7 (DEF/LET-REF/APR/RES/DIS) (29/10/2026) — implementada localmente; 2 verificações bloqueadas pelo ambiente, 3 pendências de decisão
+
+Detalhes, matriz e divergências: `docs/V8.9_IMPLEMENTACAO.md`; evidências: `docs/evidencias_v89/`.
+
+### Feito
+- O motor V7.7 estava só na branch `origin/v7.7-motor`; portado sem alterar fórmulas: migrações `070_v89_rating_engine.sql` (idêntica à referência anexa, exceto o alvo do patch de Minha Carreira) e `071_v89_resenha_vote.sql`.
+- `072_v89_awards_pin_ref_params.sql`: REF do Paredão e da Luva fixados nos parâmetros v1 (prêmios não mudam com a versão ativa do motor).
+- App: cards e telas com os cinco atributos, pergunta da resenha, variação do OVR só entre publicações da mesma fórmula.
+- Testes: novo `055_v89_engine`; ajustes em `054_v87` e no teste de integração (assinatura atual de `annul_match`).
+
+### Testes (resultados reais)
+- SQL 55/55; Node 33/34 (a falha é a paridade com Python, indisponível na máquina); app 84/84 e `tsc` 0 erros.
+
+### Pendente
+- Paridade Python e concorrência em PostgreSQL real bloqueadas pelo ambiente; V7.5×V7.7 (3,22) não recalibrada; data de corte da v2 a confirmar antes de aplicar; V8.8 não existe no repositório; nada aplicado em banco remoto.
+
 ## V8.7 — Artilheiro da Temporada, Maestro da Temporada, Luva de Ouro + Meus Prêmios (29/10/2026) — implementada localmente; 4 IDs com ressalva (C01, C05, C07, AD01), nenhum bloqueado
 
 Detalhes: `docs/V8.7_IMPLEMENTACAO.md`, matriz `docs/V8.7_MATRIZ_RASTREABILIDADE.md`, anexo normativo `docs/V8.7_DECISOES_COMPLETAS.md` (32 decisões: A01–A05, B01–B10, C01–C12, F01–F04, AD01).

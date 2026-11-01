@@ -86,3 +86,19 @@ Registro completo por ID em `V8.7_MATRIZ_RASTREABILIDADE.md`; texto normativo em
 | V87-DIV-1 | Artilheiro da Temporada não existia no repositório; criado uma vez | registrado |
 | V87-DIV-2 | Retroatividade não definida: sem concessão a temporadas já encerradas | **pendente — decisão do produto** |
 | V87-DIV-5 | Recorte do desempate = temporada; média sobre partidas com registro | **pendente — confirmar** |
+
+## 7. V8.9 — motor V7.7 oficial e preparação do beta (01/11/2026)
+
+Decisões do fundador em 01/11/2026 (conversa de avaliação do projeto). Detalhe: `V8.9_IMPLEMENTACAO.md` §8.
+
+| ID | Decisão | Status |
+|---|---|---|
+| V89-01 | Motor oficial = V7.7 (DEF, LET/REF, APR, RES, DIS; formula_version 3), portado da branch `v7.7-motor` | **implementada** (M070–072, T055) — supera o motor V5 (ATU/EST/PEQ/RES/DIS) como fórmula ativa; o V5 fica só como rollback |
+| V89-02 | Corte da V7.7 **desde o início**: todas as temporadas de todas as peladas recalculadas | **implementada** (M073, T056) — supera o corte "temporada atual em diante" da 053 da V7.7 / 070 |
+| V89-03 | V7.5 × V7.7 (≈ 3,22): mantidos os parâmetros efetivos do SQL V7.7, sem recalibrar | **aprovada** |
+| V89-04 | A branch `v7.7-motor` equivale aos pacotes ZIP V7.7 (não localizados) | **aprovada** (SQL idêntico à referência) |
+| V89-05 | Evolução da carta: correções por anulação mostram o OVR exibido (nulo se provisória), nunca o interno | **implementada** (M074, T031 ajustado) — achado da V8.9; vazamento existia desde o motor V5 |
+| V89-06 | REV-024/025 (Resenha) | **implementadas pela V8.9** (M071: pergunta da resenha na votação alimenta o RES) — o bloqueio da V8.0 deixa de valer |
+| BETA-01 | RLS ligada nas 12 tabelas `private` que não tinham (defesa em profundidade) | **implementada** (M069, Fase 2 da preparação do beta) |
+| OPS-01 | Numeração: V8.9 renumerada para 070–074 depois da 069 (RLS); próxima migração livre = **075** | registrado |
+

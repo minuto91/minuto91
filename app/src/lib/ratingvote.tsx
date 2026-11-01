@@ -50,6 +50,10 @@ export type RatingVote = {
   reopened?: boolean;
   extension_used?: boolean;
   interruption?: { previous_status: 'open' | 'awaiting_publication' | 'published'; divergent: boolean } | null;
+  /** V7.7 (071): pergunta da resenha. my_resenha null = ainda não respondeu; [] = "ninguém ficou". */
+  resenha_enabled?: boolean;
+  my_resenha?: string[] | null;
+  resenha_answers?: number | null;
 };
 // Só progresso operacional: nunca notas, médias ou resultado provisório (053).
 type AdminSummary = {
@@ -285,6 +289,11 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
             <Sub>Pendentes: {admin.voters.filter((x) => x.progress !== 'complete').map((x) => x.name).join(', ')}</Sub>
           )}
           {v.extension_used && <Sub>Prorrogação já usada.</Sub>}
+          {v.resenha_answers !== null && v.resenha_answers !== undefined && (
+            <Sub>
+              Pergunta da resenha: {v.resenha_answers} de {admin.participants} responderam.
+            </Sub>
+          )}
           <Sub>Notas e escolhas ficam em sigilo até a publicação.</Sub>
         </View>
       )}

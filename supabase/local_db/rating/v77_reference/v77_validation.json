@@ -1,0 +1,29 @@
+{
+  "passed": 21,
+  "total": 21,
+  "checks": {
+    "REF_missing_preserved": true,
+    "APR_missing_preserved": true,
+    "two_voters_both_yes": true,
+    "two_voters_split_no": true,
+    "one_voter_unknown": true,
+    "self_excluded": true,
+    "three_voters_majority": true,
+    "five_voters_tie_no": true,
+    "initial_ovr_hidden": true,
+    "fifth_ovr_visible": true,
+    "absence_does_not_recover_dis": true,
+    "season_dis_continuity": true,
+    "season_20_games_half_strength": true,
+    "season_6_games_half_strength": true,
+    "striker_10_goals_gt90": true,
+    "missing_ref_not_zero": true,
+    "retro_replay": true,
+    "retro_correction_effect": true,
+    "res_attendance_decreases_on_absence": true,
+    "no_ovr_jump_from_eligibility": true,
+    "attributes_bounds": true
+  },
+  "striker_let": 91.60479306925015,
+  "note": "Experimental reference implementation, not SQL production engine; V7.5 positional references remain unchanged."
+}

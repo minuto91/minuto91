@@ -1,0 +1,68 @@
+✔ pesos somam 100% e fórmula expandida do goleiro é equivalente (6.9247ms)
+✔ interpolação da nota (1.0204ms)
+✔ nota da partida: 50/50 entre grupos, sem nota fictícia (1.5857ms)
+✔ ATU: neutro sem votos, partidas sem voto contam em J (2.7598ms)
+✔ OFF/DEF: neutro na referência, monotonicidade, sem NaN (2.3904ms)
+✔ REF: valores de referência, crescente, neutro sem registro, estabilização C4 (1.1986ms)
+✔ PEQ e RES: monotonia com N fixo, neutros sem dados (20.0268ms)
+✔ DIS: amarelo, vermelho, recuperação, limites, desativado = 70, pendente não é limpo (15.8752ms)
+✔ históricos de 0, 1, 4, 5, 20 e 25 partidas; elegibilidade aos 5 jogos (23.4479ms)
+✔ goleiro: EST = 0,7 REF + 0,3 DEF, sem GAR (3.8487ms)
+✔ transição de posição: EST interpola em 5 partidas, outros atributos intactos (1.6047ms)
+✔ referência local híbrida (15.643ms)
+✔ arredondamento: empate 0,5 para cima e faixas (0.6183ms)
+✔ SQL = JS nas funções puras do motor (29907.8785ms)
+Python n�o foi encontrado; executar sem argumentos para instalar do Microsoft Store ou desabilitar este atalho em Configura��es > Aplicativos > Configura��es avan�adas do aplicativo > Aliases de execu��o do aplicativo.
+✔ pesos posicionais congelados (DEF, LET/REF, APR, RES, DIS) somam 100% (6.1957ms)
+✔ referências V7.5 inalteradas (sem curva LET V7.9) (0.8533ms)
+✔ vote: curva da nota 0-10 para 40-99 (0.8744ms)
+✔ fórmulas: limites 40-99, monotonia e ausência de NaN (5.3224ms)
+✔ regressão: atacante, 10 gols em 10 partidas, nota 9,0 => LET 91,60 (protótipo 91.60479306925015) (4.0619ms)
+✔ OVR publicado só a partir da 5ª partida oficial, sem salto na elegibilidade (20.2556ms)
+✔ ausência não muda DEF/LET/APR nem DIS; reduz a frequência do RES (2.1121ms)
+✔ estatística ausente preserva o atributo; zero é observação (6.8896ms)
+✔ checkpoint: janela real de 10, quedas amortecidas, melhoria sem limite, RES/DIS sem checkpoint (3.5048ms)
+✔ DIS: 70, -8, -20, recuperação 6% até 99, piso 50, teto 99, igual para todas as posições (2.8831ms)
+✔ cartões: segundo amarelo = uma expulsão, sem contar o amarelo de novo (0.7473ms)
+✔ DIS: continuidade entre temporadas (1.0442ms)
+✔ resenha: autovoto, duas confirmações, maioria estrita, 1 eleitor indeterminado, falta de resposta neutra (2.2975ms)
+✔ herança: 50% das observações válidas, teto de 20; publicado não é dividido pela metade (9.0693ms)
+✔ transição de posição em 5 partidas (OVR), atributos da posição nova (32.1282ms)
+✔ replay determinístico; correção e anulação retroativas mudam o resultado (1.3885ms)
+✔ limites: atributos e OVR sempre entre 40 e 99, DIS entre 50 e 99 (306.5489ms)
+✖ JS = protótipo Python V7.7 (800 carreiras aleatórias, até 3 temporadas) e 21/21 checagens do protótipo (1134.338✔ V✔ V7.7 ponta a ponta: servidor = motor JS a partir do roteiro (64423.493ms)
+# SQL x JS: 2.400 fórmulas, 3153 rodadas e 250 carreiras; maior diferença 1.42e-14
+✔ SQL = JS no núcleo V7.7 (funções puras, rodada a rodada e carreira completa) (45332.7283ms)
+ℹ tests 34
+ℹ suites 0
+ℹ pass 33
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 67077.7779
+
+✖ failing tests:
+
+test at rating_v77.test.mjs:263:1
+✖ JS = protótipo Python V7.7 (800 carreiras aleatórias, até 3 temporadas) e 21/21 checagens do protótipo (1134.3389ms)
+  Error: Command failed: python3 -I C:\Users\Rafael\Documents\minuto91\.claude\worktrees\v89-rating-engine-0580c3\supabase\local_db\rating\v77_reference\run_cases.py C:\Users\Rafael\AppData\Local\Temp\m91-v77-aORxuO\cases.json
+  Python n�o foi encontrado; executar sem argumentos para instalar do Microsoft Store ou desabilitar este atalho em Configura��es > Aplicativos > Configura��es avan�adas do aplicativo > Aliases de execu��o do aplicativo.
+  
+      at genericNodeError (node:internal/errors:986:15)
+      at wrappedFn (node:internal/errors:540:14)
+      at checkExecSyncError (node:child_process:942:11)
+      at execFileSync (node:child_process:978:15)
+      at TestContext.<anonymous> (file:///C:/Users/Rafael/Documents/minuto91/.claude/worktrees/v89-rating-engine-0580c3/supabase/local_db/rating_v77.test.mjs:267:26)
+      at Test.runInAsyncScope (node:async_hooks:227:14)
+      at Test.run (node:internal/test_runner/test:1397:25)
+      at Test.processPendingSubtests (node:internal/test_runner/test:969:18)
+      at Test.postRun (node:internal/test_runner/test:1537:19)
+      at Test.run (node:internal/test_runner/test:1462:12) {
+    status: 9009,
+    signal: null,
+    output: [ null, <Buffer >, <Buffer 50 79 74 68 6f 6e 20 6e e3 6f 20 66 6f 69 20 65 6e 63 6f 6e 74 72 61 64 6f 3b 20 65 78 65 63 75 74 61 72 20 73 65 6d 20 61 72 67 75 6d 65 6e 74 6f 73 ... 170 more bytes> ],
+    pid: 19248,
+    stdout: <Buffer >,
+    stderr: <Buffer 50 79 74 68 6f 6e 20 6e e3 6f 20 66 6f 69 20 65 6e 63 6f 6e 74 72 61 64 6f 3b 20 65 78 65 63 75 74 61 72 20 73 65 6d 20 61 72 67 75 6d 65 6e 74 6f 73 ... 170 more bytes>
+  }
