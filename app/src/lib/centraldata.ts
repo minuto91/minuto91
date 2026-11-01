@@ -180,6 +180,7 @@ export type RatingRow = {
   ovr: number | null;
   tier: 'bronze' | 'prata' | 'ouro' | null;
   position?: string;
+  formula_version?: number;
 };
 export type PeladaRating = { rating: RatingRow | null; delta: number | null };
 
@@ -192,7 +193,7 @@ export async function loadRating(membershipId: string): Promise<Loaded<PeladaRat
     supabase.rpc('get_player_rating', { p_membership: membershipId }),
     supabase
       .from('player_rating_history')
-      .select('match_id, ovr_display, created_at')
+      .select('match_id, ovr_display, created_at, formula_version')
       .eq('membership_id', membershipId)
       .not('ovr_display', 'is', null)
       .order('created_at', { ascending: false })
@@ -203,5 +204,7 @@ export async function loadRating(membershipId: string): Promise<Loaded<PeladaRat
   if (h.error) throw h.error;
   const row = r.data as RatingRow;
   const rating = row && row.position ? row : null;
-  return { data: { rating, delta: rating?.eligible ? ovrDelta(rating.ovr, (h.data ?? []) as HistoryRow[]) : null } };
+  // V7.7: a variação compara só com publicações da mesma fórmula (sem "salto" na troca da V5 para a V7.7).
+  const same = ((h.data ?? []) as (HistoryRow & { formula_version?: number })[]).filter((x) => (x.formula_version ?? 2) === (rating?.formula_version ?? 2));
+  return { data: { rating, delta: rating?.eligible ? ovrDelta(rating.ovr, same) : null } };
 }

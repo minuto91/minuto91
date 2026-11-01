@@ -2,6 +2,22 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
+## V8.9 — Oficialização do motor V7.7 (DEF/LET-REF/APR/RES/DIS) (29/10/2026) — implementada localmente; 2 verificações bloqueadas pelo ambiente, 3 pendências de decisão
+
+Detalhes, matriz e divergências: `docs/V8.9_IMPLEMENTACAO.md`; evidências: `docs/evidencias_v89/`.
+
+### Feito
+- O motor V7.7 estava só na branch `origin/v7.7-motor`; portado sem alterar fórmulas: migrações `069_v89_rating_engine.sql` (idêntica à referência anexa, exceto o alvo do patch de Minha Carreira) e `070_v89_resenha_vote.sql`.
+- `071_v89_awards_pin_ref_params.sql`: REF do Paredão e da Luva fixados nos parâmetros v1 (prêmios não mudam com a versão ativa do motor).
+- App: cards e telas com os cinco atributos, pergunta da resenha, variação do OVR só entre publicações da mesma fórmula.
+- Testes: novo `055_v89_engine`; ajustes em `054_v87` e no teste de integração (assinatura atual de `annul_match`).
+
+### Testes (resultados reais)
+- SQL 55/55; Node 33/34 (a falha é a paridade com Python, indisponível na máquina); app 84/84 e `tsc` 0 erros.
+
+### Pendente
+- Paridade Python e concorrência em PostgreSQL real bloqueadas pelo ambiente; V7.5×V7.7 (3,22) não recalibrada; data de corte da v2 a confirmar antes de aplicar; V8.8 não existe no repositório; nada aplicado em banco remoto.
+
 ## V8.7 — Artilheiro da Temporada, Maestro da Temporada, Luva de Ouro + Meus Prêmios (29/10/2026) — implementada localmente; 4 IDs com ressalva (C01, C05, C07, AD01), nenhum bloqueado
 
 Detalhes: `docs/V8.7_IMPLEMENTACAO.md`, matriz `docs/V8.7_MATRIZ_RASTREABILIDADE.md`, anexo normativo `docs/V8.7_DECISOES_COMPLETAS.md` (32 decisões: A01–A05, B01–B10, C01–C12, F01–F04, AD01).

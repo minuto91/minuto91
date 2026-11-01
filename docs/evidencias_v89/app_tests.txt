@@ -1,0 +1,132 @@
+
+> app@1.0.0 test
+> node --experimental-strip-types --test tests/*.test.ts
+
+(node:24756) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Rafael/Documents/minuto91/.claude/worktrees/v89-rating-engine-0580c3/app/tests/cardattrs.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\Rafael\Documents\minuto91\.claude\worktrees\v89-rating-engine-0580c3\app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ carta V7.7 de jogador de linha: DEF, LET, APR, RES, DIS (sem REF) (15.6202ms)
+✔ carta V7.7 de goleiro: REF no lugar de LET, nunca os dois (0.6291ms)
+✔ V7.7 em avaliação (menos de 5 partidas): sem OVR (0.482ms)
+✔ cartas antigas continuam como eram (V5 e v1) (0.6926ms)
+(node:868) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Rafael/Documents/minuto91/.claude/worktrees/v89-rating-engine-0580c3/app/tests/central.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\Rafael\Documents\minuto91\.claude\worktrees\v89-rating-engine-0580c3\app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ votação com mais de 1 hora fica entre as pendências normais (8.3411ms)
+✔ votação com até 1 hora restante é urgente (0.4435ms)
+✔ votação encerrada não aparece como aberta (0.3801ms)
+✔ prorrogação além de 1 hora tira a votação do estado urgente (0.4497ms)
+✔ a urgência segue o relógio do servidor, não o do aparelho (0.6424ms)
+✔ tempo restante legível (1.0691ms)
+✔ a Central se reavalia ao entrar na última hora e no fim do prazo (0.7748ms)
+✔ variação positiva desde a última publicação (73.0788ms)
+✔ variação negativa (2.7105ms)
+✔ variação neutra (1.0965ms)
+✔ sem publicação anterior comparável: sem variação (0.5876ms)
+✔ vários eventos da mesma partida contam pelo último; recálculos sem partida ficam fora (5.434ms)
+✔ nota da partida só depois da publicação (2.5748ms)
+✔ avaliação insuficiente (0.4334ms)
+✔ quem não jogou não recebe nota; partida sem votação não mostra nota (1.5089ms)
+✔ resultado pelo time do jogador (0.4979ms)
+✔ seleção de pelada: guardada, senão principal, senão a primeira (1.1601ms)
+✔ isolamento: só itens da pelada escolhida (0.8346ms)
+(node:30628) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Rafael/Documents/minuto91/.claude/worktrees/v89-rating-engine-0580c3/app/tests/rev80.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\Rafael\Documents\minuto91\.claude\worktrees\v89-rating-engine-0580c3\app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ busca ignora acentos e maiúsculas (3.9513ms)
+✔ campo de busca só em listas a partir de 12 (0.6084ms)
+✔ homônimos: foto ou posição diferente bastam; identificador só se ainda houver empate (4.6491ms)
+(node:5720) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Rafael/Documents/minuto91/.claude/worktrees/v89-rating-engine-0580c3/app/tests/securestorage.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\Rafael\Documents\minuto91\.claude\worktrees\v89-rating-engine-0580c3\app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ sessão grande é dividida em partes de até CHUNK e lida inteira (3.5894ms)
+✔ regravar menor apaga as partes que sobraram (0.8461ms)
+✔ sessão antiga do AsyncStorage migra sem deslogar e sai de lá (0.7774ms)
+✔ parte faltando devolve null (sem sessão corrompida) (0.7797ms)
+✔ sair apaga tudo, inclusive no AsyncStorage (3.3269ms)
+(node:20800) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Rafael/Documents/minuto91/.claude/worktrees/v89-rating-engine-0580c3/app/tests/v77.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\Rafael\Documents\minuto91\.claude\worktrees\v89-rating-engine-0580c3\app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ partida anulada não mostra placar (2.8544ms)
+✔ partida válida mostra placar (0.4348ms)
+✔ id de pedido é UUID v4 e não repete (50.8001ms)
+(node:13028) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Rafael/Documents/minuto91/.claude/worktrees/v89-rating-engine-0580c3/app/tests/v84.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\Rafael\Documents\minuto91\.claude\worktrees\v89-rating-engine-0580c3\app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ E13: layout padrão tem E04, E05, E06 e nada oculto (9.3199ms)
+✔ E13: reordenar e ocultar só mexem em E04–E06; E08 só oculta (0.9602ms)
+✔ E13/E08: Minhas Peladas só com 2+ peladas e se não estiver oculto (0.8114ms)
+✔ E13: layout inválido do servidor cai no padrão (nunca some bloco obrigatório) (1.7679ms)
+✔ E07: 1 principal + até 2 secundárias; o restante vai para a folha (1.4206ms)
+✔ posições: siglas e setores antigos caem no mesmo grupo (0.7568ms)
+✔ E05: até 2 estatísticas; zero real aparece, dado ausente não (1.7684ms)
+✔ E06: no máximo 4 indicadores e "Jogos" sempre primeiro (1.0533ms)
+✔ E14: grupos Hoje / Ontem / Esta semana / Anteriores (3.9326ms)
+✔ E14: texto sem autoria de voto nem valores; link só com IDs válidos (4.3654ms)
+✔ E14: ler marca só aquele aviso; marcar todas é idempotente; páginas não repetem (1.4316ms)
+✔ E15: caminhos de aviso seguros; o resto cai na Central (3.8916ms)
+✔ E15-17/20: push a frio entra pela Central; com app aberto empilha; inseguro nunca abre destino (0.7121ms)
+✔ E15-32: parâmetro de rota inválido não abre conteúdo (1.8761ms)
+✔ E15-26/E12: toque repetido no mesmo destino é ignorado; outro destino passa (0.5236ms)
+✔ E16: classificação de falhas (1.3801ms)
+✔ E16: vazio confirmado ≠ erro ≠ offline ≠ acesso negado (1.2708ms)
+✔ E16-33 (C): falha informativa mantém o dado anterior sinalizado; refresh não troca por skeleton (0.9081ms)
+✔ E16: cache só preenche enquanto nada melhor chegou e vem marcado como não confirmado (0.4474ms)
+✔ E16-25/41: resposta antiga não sobrescreve a nova; logout invalida tudo (0.9478ms)
+✔ E16-44: só mostra "atualizado" com sincronização real (2.0265ms)
+✔ E16-18/39: atualização parcial não é sucesso total (4.2135ms)
+✔ E16-26/27: cache segregado por usuário e apagado no logout (2.5497ms)
+✔ E02: ativa primeiro, demais em ordem alfabética (sem diferenciar acento) (49.4497ms)
+✔ E02: pesquisa a partir de 6 peladas; sem acento nem caixa (0.8649ms)
+✔ E08: até 2 no resumo com a ativa primeiro; Ver todas só com 3 ou mais (1.1035ms)
+✔ E14: rótulo de hora por grupo (0.7798ms)
+(node:27344) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Rafael/Documents/minuto91/.claude/worktrees/v89-rating-engine-0580c3/app/tests/v85.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\Rafael\Documents\minuto91\.claude\worktrees\v89-rating-engine-0580c3\app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ grupos: CA/PD/PE/ATA juntos; legado sem inventar (3.2052ms)
+✔ resumo: inevitável explicado, sem OVR (92.1708ms)
+✔ homônimos: diferenciação discreta e estável (3.4708ms)
+✔ nomes longos: abrevia só sem ambiguidade (2.161ms)
+✔ paginação: 100 participantes, todos uma única vez, capitão primeiro (37.102ms)
+✔ integridade: falta, duplicidade, versão e capitão detectados (3.0209ms)
+✔ campo: posição automática por equipe, mantém as editadas, fora = neutro, sobreposição (2.001ms)
+✔ rede: resposta perdida é recuperada pelo resultado gravado, sem repetir (1.3414ms)
+✔ gate: resposta obsoleta não se aplica (1.1954ms)
+✔ avisos V8.5: texto e destino seguros (51.5716ms)
+✔ campo: posicionamento automático sem sobreposição (12 e 30 jogadores) (3.5255ms)
+(node:25596) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Rafael/Documents/minuto91/.claude/worktrees/v89-rating-engine-0580c3/app/tests/v86.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\Rafael\Documents\minuto91\.claude\worktrees\v89-rating-engine-0580c3\app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ V14: quórum arredondado para cima, mínimo um voto (2.564ms)
+✔ V24/V30: voto próprio só no 1º turno com 2 candidatos (0.4725ms)
+✔ textos de estado (0.7766ms)
+✔ motivo da candidatura e tempo restante (1.0959ms)
+(node:17912) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///C:/Users/Rafael/Documents/minuto91/.claude/worktrees/v89-rating-engine-0580c3/app/tests/v87.test.ts is not specified and it doesn't parse as CommonJS.
+Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+To eliminate this warning, add "type": "module" to \\?\C:\Users\Rafael\Documents\minuto91\.claude\worktrees\v89-rating-engine-0580c3\app\package.json.
+(Use `node --trace-warnings ...` to show where the warning was created)
+✔ A01: nome oficial; "Chuteira de Ouro" nunca é nome de prêmio (6.2695ms)
+✔ AD01: rótulo = nome oficial + ano/temporada (1.1815ms)
+✔ AD01: bloco só com título; mais recente primeiro; origem só com várias peladas (63.2772ms)
+✔ B06/A04: requisito = max(5, teto de 50%) — 19/20/21 partidas (0.5349ms)
+✔ F01: parâmetros da exceção só reduzem, com piso de 3 atuações (0.9433ms)
+✔ textos de estado e estatística principal (1.2203ms)
+✔ C02/F02: Sala só com contadores para os três tipos; total soma os novos (0.6806ms)
+✔ C07: avisos de prêmio de temporada não trazem vencedores e abrem a retrospectiva (1.4104ms)
+✔ C04/C05: arte individual só para quem ganhou título na temporada (1.6744ms)
+ℹ tests 84
+ℹ suites 0
+ℹ pass 84
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 3035.272

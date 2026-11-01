@@ -1,0 +1,346 @@
+{
+  "groups": 500,
+  "players": 16313,
+  "matches": 10000,
+  "appearances": 199348,
+  "eligible": 16284,
+  "actual_opportunities": {
+    "GOL": {
+      "players": 2534,
+      "goal_rate": 0.0101,
+      "assist_rate": 0.1868,
+      "save_rate": 2.3935
+    },
+    "ZAG": {
+      "players": 2469,
+      "goal_rate": 0.1046,
+      "assist_rate": 0.1829,
+      "save_rate": 0.0
+    },
+    "LAT": {
+      "players": 2416,
+      "goal_rate": 0.1557,
+      "assist_rate": 0.1746,
+      "save_rate": 0.0
+    },
+    "VOL": {
+      "players": 2353,
+      "goal_rate": 0.1999,
+      "assist_rate": 0.1767,
+      "save_rate": 0.0
+    },
+    "MEI": {
+      "players": 2245,
+      "goal_rate": 0.3782,
+      "assist_rate": 0.1651,
+      "save_rate": 0.0
+    },
+    "ATA": {
+      "players": 2172,
+      "goal_rate": 0.6114,
+      "assist_rate": 0.1534,
+      "save_rate": 0.0
+    },
+    "PON": {
+      "players": 2095,
+      "goal_rate": 0.6126,
+      "assist_rate": 0.1464,
+      "save_rate": 0.0
+    }
+  },
+  "original_references": {
+    "goals": {
+      "ZAG": 0.1,
+      "LAT": 0.15,
+      "VOL": 0.2,
+      "MEI": 0.4,
+      "ATA": 0.7,
+      "PON": 0.7
+    },
+    "assists": {
+      "ZAG": 0.1,
+      "LAT": 0.2,
+      "VOL": 0.25,
+      "MEI": 0.4,
+      "ATA": 0.3,
+      "PON": 0.3
+    }
+  },
+  "candidate_references": {
+    "ZAG": {
+      "goals": 0.1046,
+      "assists": 0.1829
+    },
+    "LAT": {
+      "goals": 0.1557,
+      "assists": 0.1746
+    },
+    "VOL": {
+      "goals": 0.1999,
+      "assists": 0.1767
+    },
+    "MEI": {
+      "goals": 0.3782,
+      "assists": 0.1651
+    },
+    "ATA": {
+      "goals": 0.6114,
+      "assists": 0.1534
+    },
+    "PON": {
+      "goals": 0.6126,
+      "assists": 0.1464
+    }
+  },
+  "baseline": {
+    "means": {
+      "GOL": 69.797,
+      "ZAG": 74.633,
+      "LAT": 73.331,
+      "VOL": 72.575,
+      "MEI": 70.981,
+      "ATA": 70.636,
+      "PON": 70.395
+    },
+    "spread": 4.836,
+    "components": {
+      "GOL": {
+        "DEF": 72.491,
+        "SECOND": 66.917,
+        "APR": 68.801
+      },
+      "ZAG": {
+        "DEF": 72.539,
+        "SECOND": 81.97,
+        "APR": 68.995
+      },
+      "LAT": {
+        "DEF": 72.559,
+        "SECOND": 76.927,
+        "APR": 68.824
+      },
+      "VOL": {
+        "DEF": 72.52,
+        "SECOND": 74.567,
+        "APR": 68.659
+      },
+      "MEI": {
+        "DEF": 72.558,
+        "SECOND": 70.9,
+        "APR": 68.916
+      },
+      "ATA": {
+        "DEF": 72.506,
+        "SECOND": 70.472,
+        "APR": 68.753
+      },
+      "PON": {
+        "DEF": 72.529,
+        "SECOND": 70.004,
+        "APR": 68.866
+      }
+    }
+  },
+  "opportunity_reference_only": {
+    "means": {
+      "GOL": 69.797,
+      "ZAG": 73.352,
+      "LAT": 73.622,
+      "VOL": 73.809,
+      "MEI": 74.733,
+      "ATA": 74.935,
+      "PON": 74.891
+    },
+    "spread": 5.138,
+    "components": {
+      "GOL": {
+        "DEF": 72.491,
+        "SECOND": 66.917,
+        "APR": 68.801
+      },
+      "ZAG": {
+        "DEF": 72.539,
+        "SECOND": 77.701,
+        "APR": 68.995
+      },
+      "LAT": {
+        "DEF": 72.559,
+        "SECOND": 77.759,
+        "APR": 68.824
+      },
+      "VOL": {
+        "DEF": 72.52,
+        "SECOND": 77.653,
+        "APR": 68.659
+      },
+      "MEI": {
+        "DEF": 72.558,
+        "SECOND": 78.403,
+        "APR": 68.916
+      },
+      "ATA": {
+        "DEF": 72.506,
+        "SECOND": 78.287,
+        "APR": 68.753
+      },
+      "PON": {
+        "DEF": 72.529,
+        "SECOND": 78.18,
+        "APR": 68.866
+      }
+    }
+  },
+  "opportunity_plus_keeper_reference": {
+    "means": {
+      "GOL": 71.716,
+      "ZAG": 73.352,
+      "LAT": 73.622,
+      "VOL": 73.809,
+      "MEI": 74.733,
+      "ATA": 74.935,
+      "PON": 74.891
+    },
+    "spread": 3.219,
+    "components": {
+      "GOL": {
+        "DEF": 72.491,
+        "SECOND": 72.399,
+        "APR": 68.801
+      },
+      "ZAG": {
+        "DEF": 72.539,
+        "SECOND": 77.701,
+        "APR": 68.995
+      },
+      "LAT": {
+        "DEF": 72.559,
+        "SECOND": 77.759,
+        "APR": 68.824
+      },
+      "VOL": {
+        "DEF": 72.52,
+        "SECOND": 77.653,
+        "APR": 68.659
+      },
+      "MEI": {
+        "DEF": 72.558,
+        "SECOND": 78.403,
+        "APR": 68.916
+      },
+      "ATA": {
+        "DEF": 72.506,
+        "SECOND": 78.287,
+        "APR": 68.753
+      },
+      "PON": {
+        "DEF": 72.529,
+        "SECOND": 78.18,
+        "APR": 68.866
+      }
+    }
+  },
+  "independent_fixed_reference_result": null,
+  "important": "No change to LET/DEF/REF/APR/OVR equations. Candidate refs derived from same simulated data, not independently validated; goalie underrepresentation and REF need separate treatment.",
+  "holdout": {
+    "seed": 92,
+    "groups": 500,
+    "original": {
+      "means": {
+        "GOL": 69.774,
+        "ZAG": 74.713,
+        "LAT": 73.245,
+        "VOL": 72.743,
+        "MEI": 70.972,
+        "ATA": 70.475,
+        "PON": 70.405
+      },
+      "spread": 4.939,
+      "components": {
+        "GOL": {
+          "DEF": 72.48,
+          "SECOND": 66.894,
+          "APR": 68.692
+        },
+        "ZAG": {
+          "DEF": 72.577,
+          "SECOND": 82.221,
+          "APR": 68.873
+        },
+        "LAT": {
+          "DEF": 72.576,
+          "SECOND": 76.705,
+          "APR": 68.68
+        },
+        "VOL": {
+          "DEF": 72.569,
+          "SECOND": 74.913,
+          "APR": 68.788
+        },
+        "MEI": {
+          "DEF": 72.496,
+          "SECOND": 70.965,
+          "APR": 68.659
+        },
+        "ATA": {
+          "DEF": 72.643,
+          "SECOND": 70.093,
+          "APR": 68.95
+        },
+        "PON": {
+          "DEF": 72.637,
+          "SECOND": 69.962,
+          "APR": 68.984
+        }
+      }
+    },
+    "fixed_reference": {
+      "means": {
+        "GOL": 71.686,
+        "ZAG": 73.404,
+        "LAT": 73.576,
+        "VOL": 73.912,
+        "MEI": 74.566,
+        "ATA": 74.769,
+        "PON": 74.909
+      },
+      "spread": 3.223,
+      "components": {
+        "GOL": {
+          "DEF": 72.48,
+          "SECOND": 72.356,
+          "APR": 68.692
+        },
+        "ZAG": {
+          "DEF": 72.577,
+          "SECOND": 77.858,
+          "APR": 68.873
+        },
+        "LAT": {
+          "DEF": 72.576,
+          "SECOND": 77.649,
+          "APR": 68.68
+        },
+        "VOL": {
+          "DEF": 72.569,
+          "SECOND": 77.835,
+          "APR": 68.788
+        },
+        "MEI": {
+          "DEF": 72.496,
+          "SECOND": 78.152,
+          "APR": 68.659
+        },
+        "ATA": {
+          "DEF": 72.643,
+          "SECOND": 77.901,
+          "APR": 68.95
+        },
+        "PON": {
+          "DEF": 72.637,
+          "SECOND": 78.151,
+          "APR": 68.984
+        }
+      }
+    }
+  }
+}
