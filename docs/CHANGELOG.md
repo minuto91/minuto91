@@ -2,6 +2,26 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
+## Preparação do beta fechado (01/11/2026) — sem funcionalidade nova
+
+Branch `claude/beta-prep-fase6` (a partir do `main` `390ded3`). Decisões BETA-02…06 e OPS-02…04 em `DECISOES_MESTRE.md` §7; matriz em `MATRIZ_RASTREABILIDADE.md` §I.
+
+### Feito
+- **Banco dev (`minuto91-dev`):** 068 aplicada (teste 054 passou no SQL Editor do dev) e 069 aplicada (RLS nas 12 tabelas `private`; funções que as usam são todas SECURITY DEFINER). Nenhuma função DEFINER do `public` é executável por `anon`; sem REVOKE.
+- **Edge Functions no dev:** `account-purge`, `push-sender`, `storage-cleanup` publicadas; `revenuecat-webhook` republicado (a versão do dev divergia do repositório). `account-purge` testado de ponta a ponta (banco + HTTP).
+- **App:** `EXPO_PUBLIC_BETA_SCOPE=core` esconde o que está fora do PRD v2.5 (lista em BETA-02); rotas `dev-*` só em `__DEV__`; `lib/scope.ts` + `tests/scope.test.ts`.
+- **Build:** `app.json` (splash branco, fundo do ícone Android `#1255C6`), `eas.json` com perfis `development`/`preview`/`production`, projeto EAS criado (`projectId` no `app.json`), `app/assets/branding/LEIA-ME.md` com os tamanhos exatos da logo.
+- **Documentação:** esta entrega + `docs/CHECKLIST_LANCAMENTO.md`.
+
+### Testes (resultados reais, 01/11/2026)
+- SQL local 56/56; `node --test` (local_db) 68/68; app 90/90 (lint, `tsc` e testes sem erro).
+- Dev: teste 054 (`PASS`); `account-purge` (banco e HTTP); advisors de segurança: `rls_enabled_no_policy` 59 (INFO), `authenticated_security_definer_function_executable` 202 (WARN, padrão do app), `auth_leaked_password_protection` 1 (WARN, configuração do painel).
+
+### Não feito / pendente
+- **Sem teste de ponta a ponta:** `push-sender`, `storage-cleanup`, `revenuecat-webhook`; registro de push em `push_devices` no aparelho; login com Apple; app com a flag `core` em aparelho ou build.
+- **Dev ainda com restos de teste:** usuário `zz-teste-purga-b@example.invalid`, pelada `ZZ-TESTE-PURGA` e duas solicitações de exclusão concluídas (a limpeza dependia de confirmação do MCP); Edge Function `seed-upload-tmp` (inofensiva, responde 410) ainda existe. `ACCOUNT_PURGE_AUTH` do dev está com valor de teste que apareceu no chat: **trocar**.
+- **Fundador:** logo oficial, variáveis por perfil no EAS, projeto Supabase de produção, contas das lojas, PT-05. Detalhe em `CHECKLIST_LANCAMENTO.md`.
+
 ## V8.9 — fechamento (01/11/2026) — aplicada no Supabase dev
 
 - ZIP da V8.9 levado ao GitHub; migrações renumeradas para 070–074 (a 069 é a RLS da preparação do beta).
