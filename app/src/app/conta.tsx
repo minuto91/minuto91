@@ -5,14 +5,16 @@ import { Text } from '../lib/text';
 
 import { friendly } from '../lib/errors';
 import { LEGAL_VERSIONS } from '../lib/legalText';
+import { loadMyProfile, VISIBILITY, type Visibility } from '../lib/profile';
 import { NotificationSettings } from '../lib/push';
 import { signOut } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors } from '../lib/theme';
-import { Body, Button, Card, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
+import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
 
 type Blocked = { user_id: string; name: string };
 
+const visLabel = (v: Visibility) => VISIBILITY.find((x) => x.value === v)?.label ?? v;
 const fmtDay = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
 
 export default function Conta() {
@@ -20,6 +22,10 @@ export default function Conta() {
   const [purgeAfter, setPurgeAfter] = useState<string | null>(null);
   // V7.7 (055): 'recoverable' (30 dias) ou 'finalizing' (prazo vencido, exclusão em andamento; sem recuperação).
   const [canRecover, setCanRecover] = useState(true);
+  // Quem vê meu perfil / minha carreira: valor salvo e valor em edição (null = ainda carregando).
+  const [saved, setSaved] = useState<{ profile: Visibility; career: Visibility } | null>(null);
+  const [profileVis, setProfileVis] = useState<Visibility>('peladas');
+  const [careerVis, setCareerVis] = useState<Visibility>('peladas');
   const [blocked, setBlocked] = useState<Blocked[]>([]);
   const [code, setCode] = useState<string | null>(null);
   const [redeem, setRedeem] = useState('');
@@ -32,9 +38,10 @@ export default function Conta() {
   useEffect(() => {
     let alive = true;
     (async () => {
-      const [{ data: st }, { data: bs }] = await Promise.all([
+      const [{ data: st }, { data: bs }, mine] = await Promise.all([
         supabase.rpc('get_account_status'),
         supabase.from('user_blocks').select('blocked_user_id'),
+        loadMyProfile().catch(() => null),
       ]);
       const ids = (bs ?? []).map((b) => b.blocked_user_id as string);
       // Nome que o bloqueado usa nas peladas em comum.
@@ -44,6 +51,11 @@ export default function Conta() {
       if (!alive) return;
       setPurgeAfter((st as { deletion_pending: boolean; purge_after: string | null })?.purge_after ?? null);
       setCanRecover((st as { can_recover?: boolean } | null)?.can_recover ?? true);
+      if (mine) {
+        setSaved({ profile: mine.profile_visibility, career: mine.career_visibility });
+        setProfileVis(mine.profile_visibility);
+        setCareerVis(mine.career_visibility);
+      }
       setBlocked(ids.map((u) => ({ user_id: u, name: ms?.find((m) => m.user_id === u)?.player_name ?? 'Jogador' })));
     })();
     return () => {
@@ -87,6 +99,13 @@ export default function Conta() {
       `Conta recuperada. Você voltou a ${r.data.restored_memberships} pelada(s), como jogador.` +
         (blocked ? ` ${blocked} pelada(s) estavam cheias antes da reserva de vaga: peça um convite ao administrador.` : ''),
     );
+    setReload((n) => n + 1);
+  }
+
+  async function salvarPrivacidade() {
+    const r = await run('privacidade', 'set_my_privacy', { p_profile: profileVis, p_career: careerVis });
+    if (!r.ok) return;
+    setOk('Privacidade salva. Vale na hora para o perfil e a carreira.');
     setReload((n) => n + 1);
   }
 
@@ -141,6 +160,38 @@ export default function Conta() {
       </Card>
 
       <Text style={section}>Privacidade</Text>
+      {saved && (
+        <>
+          <Card>
+            <Body>Quem vê meu perfil</Body>
+            <Sub>Pé dominante, suas peladas e conquistas. Agora: {visLabel(saved.profile)}.</Sub>
+            <Chips options={VISIBILITY} value={profileVis} onChange={setProfileVis} />
+            <Sub>{VISIBILITY.find((x) => x.value === profileVis)?.hint}</Sub>
+          </Card>
+          <Card>
+            <Body>Quem vê minha carreira</Body>
+            <Sub>Totais e histórico de todas as peladas. Agora: {visLabel(saved.career)}.</Sub>
+            <Chips options={VISIBILITY} value={careerVis} onChange={setCareerVis} />
+            <Sub>{VISIBILITY.find((x) => x.value === careerVis)?.hint}</Sub>
+          </Card>
+          <Button
+            title="Salvar privacidade"
+            onPress={salvarPrivacidade}
+            loading={busy === 'privacidade'}
+            disabled={(profileVis === saved.profile && careerVis === saved.career) || !!busy}
+          />
+          <Card>
+            <Sub>
+              Dentro de cada pelada, seu nome, foto, Card e estatísticas continuam visíveis para os colegas: a súmula, a votação e
+              os rankings precisam deles. Quem você bloqueia (ou quem bloqueou você) não vê seu perfil nem sua carreira.
+            </Sub>
+            <Sub>
+              Uma foto já aberta por alguém pode continuar na tela dele por até 15 minutos. Imagens que você compartilhou fora do
+              app (Cards e artes) não podem ser apagadas ou recuperadas pelo Minuto 91 depois do envio.
+            </Sub>
+          </Card>
+        </>
+      )}
       <Card>
         <Body>Jogadores bloqueados</Body>
         <Sub>Quem você bloqueia não aparece com foto e perfil para você.</Sub>

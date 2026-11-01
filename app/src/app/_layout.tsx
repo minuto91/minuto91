@@ -5,6 +5,7 @@ import { useEffect } from 'react';
 import { ActivityIndicator, View } from 'react-native';
 import { HOME , colors } from '../lib/theme';
 
+import { DevNav } from '../lib/devnav';
 import { PushHandler, pushSupported } from '../lib/push';
 import { AuthProvider, useAuth } from '../lib/session';
 import { validParam } from '../lib/navguard';
@@ -107,6 +108,7 @@ function Gate() {
         <Stack.Screen name="partida/[id]/sumula" options={{ title: 'Súmula' }} />
         <Stack.Screen name="partida/[id]/votar" options={{ title: 'Votação' }} />
       </Stack>
+      <DevNav />
     </>
   );
 }

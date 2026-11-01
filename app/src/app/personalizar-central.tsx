@@ -135,22 +135,6 @@ export default function PersonalizarCentral() {
             </View>
           );
         })}
-        <View style={{ gap: 6, paddingVertical: 6, borderTopWidth: 1, borderTopColor: colors.line }}>
-          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-            <View style={{ flex: 1 }}>
-              <Text style={{ ...type.cardTitle, opacity: draft.hidden.includes('my_peladas') ? 0.5 : 1 }}>{LABEL.my_peladas.title}</Text>
-              <Text style={type.meta}>{draft.hidden.includes('my_peladas') ? 'Oculto' : LABEL.my_peladas.hint}</Text>
-            </View>
-            <Switch
-              value={!draft.hidden.includes('my_peladas')}
-              onValueChange={() => setEdit({ ...draft, hidden: toggleHidden(draft.hidden, 'my_peladas') })}
-              trackColor={{ true: colors.blue, false: colors.line }}
-              thumbColor={colors.white}
-              ios_backgroundColor={colors.line}
-              accessibilityLabel={`Mostrar ${LABEL.my_peladas.title}`}
-            />
-          </View>
-        </View>
       </Card>
 
       <Sub>Sempre visíveis: seu cabeçalho, a escolha da pelada, votações perto do fim, a Carta e “Precisa de atenção”.</Sub>

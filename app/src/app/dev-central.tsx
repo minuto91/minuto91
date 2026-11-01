@@ -14,7 +14,6 @@ import {
   CentralHeader,
   type HeroData,
   LastGameCard,
-  MyPeladasBlock,
   NextRoundCard,
   Notice,
   PeladaSelector,
@@ -24,7 +23,7 @@ import {
 import type { LastGameRow, Pelada, PeladaRating } from '../lib/centraldata';
 import { colors, layout as L } from '../lib/theme';
 import { Button, Card, EmptyState, Sub } from '../lib/ui';
-import { myPeladasSummary, splitAttention } from '../lib/v84logic';
+import { splitAttention } from '../lib/v84logic';
 
 const card: Omit<CardData, 'id'> = {
   position: 'midfielder',
@@ -131,7 +130,6 @@ function DevCentral() {
     { key: 'c', rank: 2, title: 'Você tem um convite para aceitar', detail: 'Veja a pelada e entre.', action: 'Ver', tone: 'blue' as const, onPress: noop },
     { key: 'p', rank: 4, title: 'Coloque uma foto no seu perfil', detail: 'Ela aparece na sua carta.', action: 'Perfil', tone: 'gold' as const, onPress: noop },
   ]);
-  const sum = myPeladasSummary(list, 'a');
 
   return (
     <ScrollView style={{ backgroundColor: colors.white }} contentContainerStyle={{ alignItems: 'center', paddingTop: 16, paddingBottom: 32 }}>
@@ -171,7 +169,6 @@ function DevCentral() {
               <CareerSummaryCard position={gk ? 'GOL' : 'MEI'} totals={{ matches_played: 42, wins: 23, draws: 6, losses: 13, goals: 27, assists: 15 }} stale={s === 'offline'} onPress={noop} />
             </View>
             <AttentionBlock {...att} stale={s === 'offline'} />
-            {list.length >= 2 && <MyPeladasBlock shown={sum.shown} seeAll={sum.seeAll} onOpen={noop} onSeeAll={noop} />}
           </>
         )}
       </View>

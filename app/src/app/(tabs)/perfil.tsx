@@ -17,8 +17,6 @@ import {
   MyProfile,
   PeladasList,
   PlayerProfile,
-  VISIBILITY,
-  Visibility,
 } from '../../lib/profile';
 import { useAuth } from '../../lib/session';
 import { supabase } from '../../lib/supabase';
@@ -31,7 +29,6 @@ const TABS = [
   { value: 'peladas', label: 'Peladas' },
   { value: 'conquistas', label: 'Conquistas' },
   { value: 'cartas', label: 'Cards' },
-  { value: 'privacidade', label: 'Privacidade' },
 ] as const;
 type Tab = (typeof TABS)[number]['value'];
 
@@ -47,8 +44,6 @@ export default function Perfil() {
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState('');
   const [foot, setFoot] = useState<Foot | null>(null);
-  const [profileVis, setProfileVis] = useState<Visibility>('peladas');
-  const [careerVis, setCareerVis] = useState<Visibility>('peladas');
   const [reload, setReload] = useState(0);
   const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
@@ -66,8 +61,6 @@ export default function Perfil() {
         setMe(mine);
         setName(mine.display_name);
         setFoot((mine.dominant_foot as Foot | null) ?? null);
-        setProfileVis(mine.profile_visibility);
-        setCareerVis(mine.career_visibility);
         setPlayer(other.profile);
         setCareer(other.career);
       } catch (e) {
@@ -123,17 +116,6 @@ export default function Perfil() {
     setReload((n) => n + 1);
   }
 
-  async function salvarPrivacidade() {
-    setBusy('privacidade');
-    setMsg(null);
-    setOk(null);
-    const { error } = await supabase.rpc('set_my_privacy', { p_profile: profileVis, p_career: careerVis });
-    setBusy(null);
-    if (error) return setMsg(friendly(error.message));
-    setOk('Privacidade salva. Vale na hora para o perfil e a carreira.');
-    setReload((n) => n + 1);
-  }
-
   if (!me || !career || !player) {
     return (
       <Screen>
@@ -144,8 +126,6 @@ export default function Perfil() {
   }
 
   const changed = name.trim() !== me.display_name || foot !== me.dominant_foot;
-  const privacyChanged = profileVis !== me.profile_visibility || careerVis !== me.career_visibility;
-  const visLabel = (v: Visibility) => VISIBILITY.find((x) => x.value === v)?.label ?? v;
 
   return (
     <Screen>
@@ -215,34 +195,6 @@ export default function Perfil() {
       {tab === 'conquistas' && career.visible && <AchievementsList items={career.achievements} />}
 
       {tab === 'cartas' && career.visible && <CardsList career={career} playerName={me.display_name} photoPath={me.avatar_path} />}
-
-      {tab === 'privacidade' && (
-        <>
-          <Card>
-            <Body>Quem vê meu perfil</Body>
-            <Sub>Pé dominante, suas peladas e conquistas. Agora: {visLabel(me.profile_visibility)}.</Sub>
-            <Chips options={VISIBILITY} value={profileVis} onChange={setProfileVis} />
-            <Sub>{VISIBILITY.find((x) => x.value === profileVis)?.hint}</Sub>
-          </Card>
-          <Card>
-            <Body>Quem vê minha carreira</Body>
-            <Sub>Totais e histórico de todas as peladas. Agora: {visLabel(me.career_visibility)}.</Sub>
-            <Chips options={VISIBILITY} value={careerVis} onChange={setCareerVis} />
-            <Sub>{VISIBILITY.find((x) => x.value === careerVis)?.hint}</Sub>
-          </Card>
-          <Button title="Salvar privacidade" onPress={salvarPrivacidade} loading={busy === 'privacidade'} disabled={!privacyChanged || !!busy} />
-          <Card>
-            <Sub>
-              Dentro de cada pelada, seu nome, foto, Card e estatísticas continuam visíveis para os colegas: a súmula, a votação e
-              os rankings precisam deles. Quem você bloqueia (ou quem bloqueou você) não vê seu perfil nem sua carreira.
-            </Sub>
-            <Sub>
-              Uma foto já aberta por alguém pode continuar na tela dele por até 15 minutos. Imagens que você compartilhou fora do
-              app (Cards e artes) não podem ser apagadas ou recuperadas pelo Minuto 91 depois do envio.
-            </Sub>
-          </Card>
-        </>
-      )}
     </Screen>
   );
 }

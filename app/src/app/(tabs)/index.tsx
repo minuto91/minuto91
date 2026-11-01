@@ -12,7 +12,6 @@ import {
   CentralHeader,
   InlineError,
   LastGameCard,
-  MyPeladasBlock,
   NextRoundCard,
   Notice,
   officialOvr,
@@ -37,7 +36,7 @@ import { onHomeTabRepress } from '../../lib/tabevents';
 import { Text } from '../../lib/text';
 import { colors, layout as L, type } from '../../lib/theme';
 import { Button, Card, EmptyState } from '../../lib/ui';
-import { type BlockId, myPeladasSummary, normalizeLayout, showMyPeladas, splitAttention, visibleSportBlocks } from '../../lib/v84logic';
+import { type BlockId, normalizeLayout, splitAttention, visibleSportBlocks } from '../../lib/v84logic';
 
 // O convite guardado antes do login abre sozinho uma vez por sessão do app; depois fica como pendência até ser
 // aceito (ou se mostrar inválido) na tela do convite, que o apaga.
@@ -483,17 +482,6 @@ export default function Home() {
                   </Pressable>
                 ))}
               </Card>
-            )}
-
-            {showMyPeladas(lay, peladas.length) && (
-              <MyPeladasBlock
-                {...(() => {
-                  const s = myPeladasSummary(peladas, pid);
-                  return { shown: s.shown, seeAll: s.seeAll };
-                })()}
-                onOpen={(p) => go({ pathname: '/pelada/[id]', params: { id: p.id } })}
-                onSeeAll={() => go('/peladas')}
-              />
             )}
           </>
         )}
