@@ -100,3 +100,22 @@ Testes: SQL = `supabase/tests_editor/NNN_*.sql` (PGlite, `cd supabase/local_db; 
 | Motor V7.7 (050–052, `local_db/rating/*`) | nenhuma linha alterada nesta entrega; `git diff` vazio; testes do motor em `CHANGELOG.md` |
 | Decisões V7.7 / REV V8.0 | nenhum arquivo SQL/TS alterado nesta entrega; suite completa de base em `CHANGELOG.md` |
 | Documentos antigos | `docs/v77`, `docs/rev80`, `relatorio_*` intactos |
+
+
+## I. Preparação do beta fechado (01/11/2026) — branch `claude/beta-prep-fase6`
+
+Resultados reais em 01/11/2026: SQL local (`node run.mjs`) **56/56**; `node --test` (local_db) **68/68**; app `npm run check` (lint + tsc + testes) **90/90**.
+
+| ID | Requisito | Status | Arquivos | Teste | Resultado |
+|---|---|---|---|---|---|
+| BETA-01 | RLS nas 12 tabelas `private` sem policies | **implementado** (dev) | `migrations/069_beta_private_rls.sql` | SQL local 56/56; conferido no dev (`relrowsecurity` das 12 = true); advisors antes/depois | `rls_enabled_no_policy` 44 → 56 (esperado; subiu a 59 com as migrações da V8.9) |
+| (068 no dev) | V8.7 aplicada no dev | **implementado** (dev) | `migrations/068_v87_season_awards.sql` (registrada no dev sem os comentários SQL) | `tests_editor/054_v87_season_awards.sql` no SQL Editor do dev: `PASS: 054_v87_season_awards`; dev conferido limpo depois | passou |
+| BETA-02/05 | Escopo core e rotas dev-* | **implementado** (lógica); **não visto em aparelho/build** | `app/src/lib/scope.ts`, `_layout.tsx`, `pelada/[id]/index.tsx`, `configuracoes.tsx`, `temporadas.tsx`, `retrospectiva.tsx`, `(tabs)/{index,perfil,carreira}.tsx`, `lib/trophies.tsx`, `lib/trophycount.ts` | `app/tests/scope.test.ts` (6 testes) + suíte do app | 90/90 |
+| OPS-02a | `account-purge` | **implementado** | `supabase/functions/account-purge/` | banco: solicitação → purga → "Aposentado", perfil/login/push/avisos removidos, auditoria `account_purged`; HTTP: 403 sem/ com segredo errado, 200 `completed:1` e idempotente (2ª chamada `completed:0`) | passou |
+| OPS-02b | `push-sender` | **publicada, não testada de ponta a ponta** | `supabase/functions/push-sender/` | só `local_db/push_logic.test.mjs` (lógica pura) | requer `PUSH_SENDER_SECRET`, cron e aparelho |
+| OPS-02c | `storage-cleanup` | **publicada, não testada de ponta a ponta** | `supabase/functions/storage-cleanup/` | só `local_db/storage_logic.test.mjs` (lógica pura) | requer `STORAGE_CLEANUP_AUTH` e cron |
+| OPS-02d | `revenuecat-webhook` | **republicada, não testada** | `supabase/functions/revenuecat-webhook/` | nenhum teste de ponta a ponta | a versão antiga do dev não gravava o evento com falha (036) |
+| BETA-06 | Marca no `app.json` | **config feita; logo pendente** | `app/app.json`, `app/assets/branding/LEIA-ME.md` | `expo config` carrega; typecheck ok | arte oficial não fornecida |
+| OPS-03 | EAS | **feito (config)** | `app/eas.json`, `app.json` (`owner`, `extra.eas.projectId`) | `eas init` rodado pelo fundador | variáveis por perfil pendentes |
+| Push em `push_devices` | registro no aparelho | **verificado só no código** | `app/src/lib/push.tsx` | **nenhum** (precisa de build de desenvolvimento no aparelho) | pendente |
+| Login com Apple | fluxo nativo | **verificado só no código** | `app/src/app/login.tsx` | **nenhum** | configuração Apple/Supabase pendente |

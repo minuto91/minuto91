@@ -30,6 +30,7 @@ Criada na V8.1 (28/10/2026). **Este é o ponto de partida de qualquer alteraçã
 | `V8.7_DECISOES_COMPLETAS.md` | Anexo normativo da V8.7, integral (32 decisões). |
 | `V8.7_IMPLEMENTACAO.md` | Auditoria, divergências, ADR, limitação da REF móvel, testes, rollback e pendências da V8.7. |
 | `V8.7_MATRIZ_RASTREABILIDADE.md` | Cada ID da V8.7 → código → teste → status. |
+| `CHECKLIST_LANCAMENTO.md` | O que depende do fundador para o beta e o lançamento (contas, lojas, Supabase de produção, jurídico, arte), com o próximo passo de cada item. |
 
 ## Ordem de leitura
 

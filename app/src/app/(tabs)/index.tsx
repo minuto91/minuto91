@@ -1,3 +1,4 @@
+import { BETA_CORE } from '../../lib/scope';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { type Href, useFocusEffect, useIsFocused } from 'expo-router';
 import { type ComponentProps, useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -299,7 +300,7 @@ export default function Home() {
   function renderBlock(id: BlockId) {
     if (!pid) return null;
     if (id === 'next_round') {
-      if (rounds.length === 0) return null;
+      if (rounds.length === 0 || BETA_CORE) return null; // BETA-02: Escalações/Sorteio fora do PRD
       return (
         <View key={id} style={{ gap: 4 }}>
           <BlockTitle>Próxima Rodada</BlockTitle>
@@ -533,6 +534,6 @@ function guideSteps(c: CentralData, push: (h: Href) => void) {
       go: firstMembership ? go({ pathname: '/jogador/[id]', params: { id: firstMembership } }) : go('/entrar'),
     },
     { key: 'p4', label: 'Conhecer Minha Carreira', done: !!c.guide.seen.career, go: go('/carreira') },
-    { key: 'p5', label: 'Entender Cards e premiações', done: !!c.guide.seen.cards, go: go('/guia-cards') },
+    ...(BETA_CORE ? [] : [{ key: 'p5', label: 'Entender Cards e premiações', done: !!c.guide.seen.cards, go: go('/guia-cards') }]),
   ];
 }
