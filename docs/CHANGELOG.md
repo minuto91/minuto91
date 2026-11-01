@@ -2,6 +2,13 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
+## V8.9 — fechamento (01/11/2026) — aplicada no Supabase dev
+
+- ZIP da V8.9 levado ao GitHub; migrações renumeradas para 070–074 (a 069 é a RLS da preparação do beta).
+- `073_v89_cutover_full_history.sql`: motor V7.7 em todo o histórico (decisão do fundador). `074_v89_evolution_corrections_display.sql`: correções da evolução mostram o OVR exibido, não o interno.
+- Testes: novo `056`; `031` e `rating_v77_integration` ajustados à regra nova. SQL 56/56, Node 68/68 (paridade Python incluída), app 84/84.
+- Supabase dev: 070–074 aplicadas; T054, T055 e T056 passam lá; 92 cartas recalculadas para a fórmula 3. Detalhe: `V8.9_IMPLEMENTACAO.md` §8.
+
 ## V8.9 — Oficialização do motor V7.7 (DEF/LET-REF/APR/RES/DIS) (29/10/2026) — implementada localmente; 2 verificações bloqueadas pelo ambiente, 3 pendências de decisão
 
 Detalhes, matriz e divergências: `docs/V8.9_IMPLEMENTACAO.md`; evidências: `docs/evidencias_v89/`.

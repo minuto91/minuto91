@@ -14,6 +14,8 @@ Criada na V8.1 (28/10/2026). **Este é o ponto de partida de qualquer alteraçã
 | V8.5 | Sorteio, escalação oficial, partidas, súmula, Central e avisos | Entregue (`V8.5_*.md`) |
 | V8.6 | Paredão do Mês e Craque da Temporada | Parcial, com bloqueios fail-closed (`V8.6_*.md`) |
 | V8.7 | Artilheiro da Temporada, Maestro da Temporada, Luva de Ouro, Meus Prêmios (32 decisões) | Implementada localmente; ver `V8.7_IMPLEMENTACAO.md` e `V8.7_MATRIZ_RASTREABILIDADE.md` |
+| V8.8 | 11 troféus 3D (citada na V8.9) | **Não existe no repositório** |
+| V8.9 | Motor V7.7 oficial (DEF, LET/REF, APR, RES, DIS) em todo o histórico; Resenha na votação | Aplicada no Supabase dev em 01/11/2026 (`V8.9_IMPLEMENTACAO.md`) |
 
 ## Documentos
 
