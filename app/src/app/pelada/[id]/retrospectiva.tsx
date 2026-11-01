@@ -1,3 +1,4 @@
+import { BETA_CORE } from '../../../lib/scope';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -72,7 +73,9 @@ export default function Retrospectiva() {
       const { data, error: e2 } = await supabase.rpc('get_season_retrospective_official', { p_season: seasonId });
       if (!alive) return;
       if (e2) return setMsg(friendly(e2.message));
-      setRetro({ seasonId, data: data as OfficialRetro });
+      // BETA-02: no escopo core o bloco de prêmios de temporada (V8.7) não aparece; o servidor continua devolvendo.
+      const official = data as OfficialRetro;
+      setRetro({ seasonId, data: BETA_CORE ? { ...official, season_awards: undefined } : official });
     })();
     return () => {
       alive = false;

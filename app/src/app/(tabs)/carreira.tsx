@@ -1,3 +1,4 @@
+import { BETA_CORE } from '../../lib/scope';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -194,7 +195,7 @@ export default function Carreira() {
       <Text style={section}>Sala de Troféus</Text>
       <TrophyRoom userId={uid} counts={career.trophies} partial={career.partial} shareName={me.display_name} />
 
-      {showMyAwards(scopedTitles(titles, selected?.pelada_id)) && (
+      {!BETA_CORE && showMyAwards(scopedTitles(titles, selected?.pelada_id)) && (
         <>
           <Text style={section}>Meus Prêmios</Text>
           <MyAwardsList items={scopedTitles(titles, selected?.pelada_id)} withOrigin={showOrigin(titles ?? [])} />

@@ -1,3 +1,4 @@
+import { BETA_CORE } from '../../../lib/scope';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 
@@ -111,7 +112,7 @@ export default function Temporadas() {
           <Sub>
             {fmt(s.starts_on)} a {fmt(s.ends_on)} · {s.kind === 'custom' ? 'personalizada' : 'ano civil'}
           </Sub>
-          {s.starts_on <= today && (
+          {s.starts_on <= today && !BETA_CORE && (
             <Button
               title="Prêmios da temporada"
               kind="ghost"

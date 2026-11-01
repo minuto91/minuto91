@@ -1,3 +1,4 @@
+import { BETA_CORE } from '../../lib/scope';
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -198,7 +199,7 @@ export default function Perfil() {
           )}
           <Sub>A posição é escolhida em cada pelada: abra o seu Card na pelada para mudar.</Sub>
           <Button title="Minha Carreira" onPress={() => router.push('/carreira')} />
-          <Button title="Personalizar Central" kind="secondary" onPress={() => router.push('/personalizar-central')} />
+          {!BETA_CORE && <Button title="Personalizar Central" kind="secondary" onPress={() => router.push('/personalizar-central')} />}
           <Button title="Minha conta" kind="secondary" onPress={() => router.push('/conta')} />
         </>
       )}

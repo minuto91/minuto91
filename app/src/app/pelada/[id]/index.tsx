@@ -2,6 +2,7 @@ import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
 import { AppState, Pressable, View } from 'react-native';
 import { Text } from '../../../lib/text';
+import { BETA_CORE } from '../../../lib/scope';
 import { HOME , colors, needsPositionUpdate } from '../../../lib/theme';
 
 import { currentSeason, loadSeasons } from '../../../lib/career';
@@ -176,11 +177,12 @@ export default function CentralDaRodada() {
   // Linhas com ícone, nome e uma linha de apoio, em vez de uma grade de atalhos pequenos. Recursos da Pelada Premium
   // levam a marca dourada quando a pelada ainda está no Básico.
   const go = (pathname: Parameters<typeof router.push>[0]) => () => router.push(pathname);
+  const core = BETA_CORE; // BETA-02: fora do PRD v2.5 (ver lib/scope.ts)
   const jogo: GroupItem[] = [
     { icon: 'partidas', label: 'Partidas', sub: 'Súmula, votação e resultado', onPress: go({ pathname: '/pelada/[id]/partidas', params: { id } }) },
     { icon: 'elenco', label: 'Elenco', sub: loaded ? `${members.length} ${members.length === 1 ? 'jogador' : 'jogadores'}` : 'Jogadores da pelada', onPress: go({ pathname: '/pelada/[id]/elenco', params: { id } }) },
-    { icon: 'escalacao', label: 'Escalações', sub: 'Times da próxima rodada', onPress: go({ pathname: '/pelada/[id]/escalacoes', params: { id } }) },
-    ...(isStaff ? [{ icon: 'sorteio' as const, label: 'Sorteio', sub: 'Times equilibrados por posição', premium: true, onPress: go({ pathname: '/pelada/[id]/sorteio', params: { id } }) }] : []),
+    ...(core ? [] : [{ icon: 'escalacao' as const, label: 'Escalações', sub: 'Times da próxima rodada', onPress: go({ pathname: '/pelada/[id]/escalacoes', params: { id } }) }]),
+    ...(isStaff && !core ? [{ icon: 'sorteio' as const, label: 'Sorteio', sub: 'Times equilibrados por posição', premium: true, onPress: go({ pathname: '/pelada/[id]/sorteio', params: { id } }) }] : []),
     { icon: 'duelo', label: 'Duelo', sub: 'Compare dois jogadores', premium: true, onPress: go({ pathname: '/pelada/[id]/duelo', params: { id } }) },
   ];
   const desempenho: GroupItem[] = [
@@ -188,14 +190,14 @@ export default function CentralDaRodada() {
     ...(me ? [{ icon: 'card' as const, label: 'Meu Card', sub: 'Overall, atributos e álbum', onPress: go({ pathname: '/jogador/[id]', params: { id: me.id } }) }] : []),
     { icon: 'jogadores', label: 'Jogadores e estatísticas', sub: 'Cards e números de cada um', onPress: go({ pathname: '/pelada/[id]/jogadores', params: { id } }) },
     { icon: 'retro', label: 'Retrospectiva', sub: 'Resumo da temporada', onPress: go({ pathname: '/pelada/[id]/retrospectiva', params: { id } }) },
-    { icon: 'rankings', label: 'Craque da Temporada', sub: 'Votação no fim da temporada', onPress: go({ pathname: '/pelada/[id]/craque-temporada', params: { id } }) },
-    { icon: 'rankings', label: 'Prêmios da temporada', sub: 'Artilheiro, Maestro e Luva de Ouro', onPress: go({ pathname: '/pelada/[id]/premios-temporada', params: { id } }) },
+    ...(core ? [] : [{ icon: 'rankings' as const, label: 'Craque da Temporada', sub: 'Votação no fim da temporada', onPress: go({ pathname: '/pelada/[id]/craque-temporada', params: { id } }) }]),
+    ...(core ? [] : [{ icon: 'rankings' as const, label: 'Prêmios da temporada', sub: 'Artilheiro, Maestro e Luva de Ouro', onPress: go({ pathname: '/pelada/[id]/premios-temporada', params: { id } }) }]),
     { icon: 'temporadas', label: 'Temporadas', sub: 'Atual e anteriores', onPress: go({ pathname: '/pelada/[id]/temporadas', params: { id } }) },
   ];
   const gestao: GroupItem[] = [
     ...(isAdmin ? [{ icon: 'convite' as const, label: 'Convidar jogadores', sub: 'Link de convite', onPress: convidar }] : []),
     // Financeiro (V4.3): só admin e assistentes com permissão financeira; nenhum valor aparece fora dele.
-    ...(finance ? [{ icon: 'financeiro' as const, label: 'Financeiro', sub: 'Mensalidades, cobranças e relatórios', premium: true, onPress: go({ pathname: '/pelada/[id]/financeiro', params: { id } }) }] : []),
+    ...(finance && !core ? [{ icon: 'financeiro' as const, label: 'Financeiro', sub: 'Mensalidades, cobranças e relatórios', premium: true, onPress: go({ pathname: '/pelada/[id]/financeiro', params: { id } }) }] : []),
     ...(isAdmin ? [{ icon: 'config' as const, label: 'Configurações', sub: 'Escudo, votação, assistentes e Premium', onPress: go({ pathname: '/pelada/[id]/configuracoes', params: { id } }) }] : []),
   ];
 

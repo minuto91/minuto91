@@ -12,6 +12,7 @@ import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors, type } from '../../../lib/theme';
+import { BETA_CORE } from '../../../lib/scope';
 import { Toggle } from '../../../lib/toggle';
 import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
@@ -194,7 +195,7 @@ export default function Configuracoes() {
 
       {!section && (
         <View>
-          {SECTIONS.map((s) => (
+          {SECTIONS.filter((s) => !(BETA_CORE && s.key === 'financeiro')).map((s) => ( // BETA-02: Financeiro fora do PRD (10.4)
             <Pressable
               key={s.key}
               accessibilityRole="button"

@@ -4,6 +4,7 @@
 // carregado só quando a pessoa abre (get_trophy_history, paginado). Nada é contado de novo no app.
 // Desenho: todos dividem o mesmo pedestal azul com friso dourado, o mesmo tamanho e o mesmo acabamento dourado; cada
 // troféu tem escultura própria (o Garçom do Mês: mão dourada, bandeja e bola).
+import { isTrophyHidden } from './scope';
 import { useState } from 'react';
 import { View } from 'react-native';
 import { Text } from './text';
@@ -47,6 +48,9 @@ export const TROPHIES: { type: TrophyType; label: string; hint: string }[] = [
   { type: 'season_maestro', label: 'Maestro da Temporada', hint: 'Mais assistências oficiais na temporada (mínimo 1; empate compartilha o título).' },
   { type: 'season_golden_glove', label: 'Luva de Ouro', hint: 'Goleiro com a maior REF no encerramento da temporada (a janela da REF pode incluir temporadas anteriores).' },
 ];
+
+// BETA-02: com EXPO_PUBLIC_BETA_SCOPE=core a Sala mostra só os troféus do PRD; os outros continuam no servidor.
+export const VISIBLE_TROPHIES = TROPHIES.filter((t) => !isTrophyHidden(t.type));
 
 const GOLD_LIGHT = '#F3D98B';
 const GOLD_DARK = '#A97C1F';
@@ -286,7 +290,7 @@ export function TrophyRoom({ userId, counts, partial, shareName }: { userId: str
   return (
     <View style={{ gap: 12 }}>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', justifyContent: 'center', gap: 8 }}>
-        {TROPHIES.map((t) => {
+        {VISIBLE_TROPHIES.map((t) => {
           const n = counts[t.type] ?? 0;
           const on = open === t.type;
           return (

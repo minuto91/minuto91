@@ -8,6 +8,7 @@ import { HOME , colors } from '../lib/theme';
 import { PushHandler, pushSupported } from '../lib/push';
 import { AuthProvider, useAuth } from '../lib/session';
 import { validParam } from '../lib/navguard';
+import { isDevRouteBlocked, isRouteHidden } from '../lib/scope';
 import { INTER_FONTS } from '../lib/text';
 import { Button, EmptyState } from '../lib/ui';
 
@@ -35,6 +36,9 @@ function Gate() {
       return;
     }
     if (first === 'login' || first === 'onboarding') router.replace(HOME);
+    // Beta (BETA-02): rotas dev-* só existem em __DEV__; com EXPO_PUBLIC_BETA_SCOPE=core as telas fora do PRD também
+    // não abrem (link direto, aviso antigo, favorito): volta para a Central.
+    if (isDevRouteBlocked(segments as string[], __DEV__) || isRouteHidden(segments as string[])) router.replace(HOME);
   }, [loading, session, onboarded, segments, router]);
 
   if (loading) {
