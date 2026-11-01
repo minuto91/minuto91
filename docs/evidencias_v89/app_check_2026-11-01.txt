@@ -1,0 +1,566 @@
+
+> app@1.0.0 check
+> npm run lint && npm run typecheck && npm test
+
+
+> app@1.0.0 lint
+> expo lint
+
+
+> app@1.0.0 typecheck
+> tsc --noEmit
+
+
+> app@1.0.0 test
+> node --experimental-strip-types --test tests/*.test.ts
+
+TAP version 13
+# (node:1457) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/minuto91/app/tests/cardattrs.test.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/claude/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: carta V7.7 de jogador de linha: DEF, LET, APR, RES, DIS (sem REF)
+ok 1 - carta V7.7 de jogador de linha: DEF, LET, APR, RES, DIS (sem REF)
+  ---
+  duration_ms: 1.517616
+  type: 'test'
+  ...
+# Subtest: carta V7.7 de goleiro: REF no lugar de LET, nunca os dois
+ok 2 - carta V7.7 de goleiro: REF no lugar de LET, nunca os dois
+  ---
+  duration_ms: 0.202076
+  type: 'test'
+  ...
+# Subtest: V7.7 em avaliação (menos de 5 partidas): sem OVR
+ok 3 - V7.7 em avaliação (menos de 5 partidas): sem OVR
+  ---
+  duration_ms: 0.110793
+  type: 'test'
+  ...
+# Subtest: cartas antigas continuam como eram (V5 e v1)
+ok 4 - cartas antigas continuam como eram (V5 e v1)
+  ---
+  duration_ms: 0.13259
+  type: 'test'
+  ...
+# (node:1464) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/minuto91/app/tests/central.test.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/claude/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: votação com mais de 1 hora fica entre as pendências normais
+ok 5 - votação com mais de 1 hora fica entre as pendências normais
+  ---
+  duration_ms: 2.019524
+  type: 'test'
+  ...
+# Subtest: votação com até 1 hora restante é urgente
+ok 6 - votação com até 1 hora restante é urgente
+  ---
+  duration_ms: 0.203311
+  type: 'test'
+  ...
+# Subtest: votação encerrada não aparece como aberta
+ok 7 - votação encerrada não aparece como aberta
+  ---
+  duration_ms: 0.139214
+  type: 'test'
+  ...
+# Subtest: prorrogação além de 1 hora tira a votação do estado urgente
+ok 8 - prorrogação além de 1 hora tira a votação do estado urgente
+  ---
+  duration_ms: 0.16263
+  type: 'test'
+  ...
+# Subtest: a urgência segue o relógio do servidor, não o do aparelho
+ok 9 - a urgência segue o relógio do servidor, não o do aparelho
+  ---
+  duration_ms: 0.292437
+  type: 'test'
+  ...
+# Subtest: tempo restante legível
+ok 10 - tempo restante legível
+  ---
+  duration_ms: 1.219033
+  type: 'test'
+  ...
+# Subtest: a Central se reavalia ao entrar na última hora e no fim do prazo
+ok 11 - a Central se reavalia ao entrar na última hora e no fim do prazo
+  ---
+  duration_ms: 0.505248
+  type: 'test'
+  ...
+# Subtest: variação positiva desde a última publicação
+ok 12 - variação positiva desde a última publicação
+  ---
+  duration_ms: 11.299534
+  type: 'test'
+  ...
+# Subtest: variação negativa
+ok 13 - variação negativa
+  ---
+  duration_ms: 0.64867
+  type: 'test'
+  ...
+# Subtest: variação neutra
+ok 14 - variação neutra
+  ---
+  duration_ms: 0.518908
+  type: 'test'
+  ...
+# Subtest: sem publicação anterior comparável: sem variação
+ok 15 - sem publicação anterior comparável: sem variação
+  ---
+  duration_ms: 0.251084
+  type: 'test'
+  ...
+# Subtest: vários eventos da mesma partida contam pelo último; recálculos sem partida ficam fora
+ok 16 - vários eventos da mesma partida contam pelo último; recálculos sem partida ficam fora
+  ---
+  duration_ms: 0.14356
+  type: 'test'
+  ...
+# Subtest: nota da partida só depois da publicação
+ok 17 - nota da partida só depois da publicação
+  ---
+  duration_ms: 0.998314
+  type: 'test'
+  ...
+# Subtest: avaliação insuficiente
+ok 18 - avaliação insuficiente
+  ---
+  duration_ms: 0.122555
+  type: 'test'
+  ...
+# Subtest: quem não jogou não recebe nota; partida sem votação não mostra nota
+ok 19 - quem não jogou não recebe nota; partida sem votação não mostra nota
+  ---
+  duration_ms: 0.288886
+  type: 'test'
+  ...
+# Subtest: resultado pelo time do jogador
+ok 20 - resultado pelo time do jogador
+  ---
+  duration_ms: 0.183893
+  type: 'test'
+  ...
+# Subtest: seleção de pelada: guardada, senão principal, senão a primeira
+ok 21 - seleção de pelada: guardada, senão principal, senão a primeira
+  ---
+  duration_ms: 0.163549
+  type: 'test'
+  ...
+# Subtest: isolamento: só itens da pelada escolhida
+ok 22 - isolamento: só itens da pelada escolhida
+  ---
+  duration_ms: 0.137791
+  type: 'test'
+  ...
+# (node:1471) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/minuto91/app/tests/rev80.test.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/claude/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: busca ignora acentos e maiúsculas
+ok 23 - busca ignora acentos e maiúsculas
+  ---
+  duration_ms: 1.537966
+  type: 'test'
+  ...
+# Subtest: campo de busca só em listas a partir de 12
+ok 24 - campo de busca só em listas a partir de 12
+  ---
+  duration_ms: 0.214351
+  type: 'test'
+  ...
+# Subtest: homônimos: foto ou posição diferente bastam; identificador só se ainda houver empate
+ok 25 - homônimos: foto ou posição diferente bastam; identificador só se ainda houver empate
+  ---
+  duration_ms: 1.141356
+  type: 'test'
+  ...
+# (node:1478) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/minuto91/app/tests/securestorage.test.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/claude/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: sessão grande é dividida em partes de até CHUNK e lida inteira
+ok 26 - sessão grande é dividida em partes de até CHUNK e lida inteira
+  ---
+  duration_ms: 1.110098
+  type: 'test'
+  ...
+# Subtest: regravar menor apaga as partes que sobraram
+ok 27 - regravar menor apaga as partes que sobraram
+  ---
+  duration_ms: 0.238536
+  type: 'test'
+  ...
+# Subtest: sessão antiga do AsyncStorage migra sem deslogar e sai de lá
+ok 28 - sessão antiga do AsyncStorage migra sem deslogar e sai de lá
+  ---
+  duration_ms: 0.307281
+  type: 'test'
+  ...
+# Subtest: parte faltando devolve null (sem sessão corrompida)
+ok 29 - parte faltando devolve null (sem sessão corrompida)
+  ---
+  duration_ms: 0.267863
+  type: 'test'
+  ...
+# Subtest: sair apaga tudo, inclusive no AsyncStorage
+ok 30 - sair apaga tudo, inclusive no AsyncStorage
+  ---
+  duration_ms: 0.275249
+  type: 'test'
+  ...
+# (node:1485) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/minuto91/app/tests/v77.test.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/claude/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: partida anulada não mostra placar
+ok 31 - partida anulada não mostra placar
+  ---
+  duration_ms: 0.887077
+  type: 'test'
+  ...
+# Subtest: partida válida mostra placar
+ok 32 - partida válida mostra placar
+  ---
+  duration_ms: 0.132893
+  type: 'test'
+  ...
+# Subtest: id de pedido é UUID v4 e não repete
+ok 33 - id de pedido é UUID v4 e não repete
+  ---
+  duration_ms: 17.988514
+  type: 'test'
+  ...
+# (node:1492) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/minuto91/app/tests/v84.test.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/claude/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: E13: layout padrão tem E04, E05, E06 e nada oculto
+ok 34 - E13: layout padrão tem E04, E05, E06 e nada oculto
+  ---
+  duration_ms: 1.744805
+  type: 'test'
+  ...
+# Subtest: E13: reordenar e ocultar só mexem em E04–E06; E08 só oculta
+ok 35 - E13: reordenar e ocultar só mexem em E04–E06; E08 só oculta
+  ---
+  duration_ms: 0.24979
+  type: 'test'
+  ...
+# Subtest: E13/E08: Minhas Peladas só com 2+ peladas e se não estiver oculto
+ok 36 - E13/E08: Minhas Peladas só com 2+ peladas e se não estiver oculto
+  ---
+  duration_ms: 0.134163
+  type: 'test'
+  ...
+# Subtest: E13: layout inválido do servidor cai no padrão (nunca some bloco obrigatório)
+ok 37 - E13: layout inválido do servidor cai no padrão (nunca some bloco obrigatório)
+  ---
+  duration_ms: 0.290427
+  type: 'test'
+  ...
+# Subtest: E07: 1 principal + até 2 secundárias; o restante vai para a folha
+ok 38 - E07: 1 principal + até 2 secundárias; o restante vai para a folha
+  ---
+  duration_ms: 0.271757
+  type: 'test'
+  ...
+# Subtest: posições: siglas e setores antigos caem no mesmo grupo
+ok 39 - posições: siglas e setores antigos caem no mesmo grupo
+  ---
+  duration_ms: 0.141726
+  type: 'test'
+  ...
+# Subtest: E05: até 2 estatísticas; zero real aparece, dado ausente não
+ok 40 - E05: até 2 estatísticas; zero real aparece, dado ausente não
+  ---
+  duration_ms: 0.358187
+  type: 'test'
+  ...
+# Subtest: E06: no máximo 4 indicadores e "Jogos" sempre primeiro
+ok 41 - E06: no máximo 4 indicadores e "Jogos" sempre primeiro
+  ---
+  duration_ms: 0.284196
+  type: 'test'
+  ...
+# Subtest: E14: grupos Hoje / Ontem / Esta semana / Anteriores
+ok 42 - E14: grupos Hoje / Ontem / Esta semana / Anteriores
+  ---
+  duration_ms: 0.938215
+  type: 'test'
+  ...
+# Subtest: E14: texto sem autoria de voto nem valores; link só com IDs válidos
+ok 43 - E14: texto sem autoria de voto nem valores; link só com IDs válidos
+  ---
+  duration_ms: 1.332636
+  type: 'test'
+  ...
+# Subtest: E14: ler marca só aquele aviso; marcar todas é idempotente; páginas não repetem
+ok 44 - E14: ler marca só aquele aviso; marcar todas é idempotente; páginas não repetem
+  ---
+  duration_ms: 0.312073
+  type: 'test'
+  ...
+# Subtest: E15: caminhos de aviso seguros; o resto cai na Central
+ok 45 - E15: caminhos de aviso seguros; o resto cai na Central
+  ---
+  duration_ms: 0.115974
+  type: 'test'
+  ...
+# Subtest: E15-17/20: push a frio entra pela Central; com app aberto empilha; inseguro nunca abre destino
+ok 46 - E15-17/20: push a frio entra pela Central; com app aberto empilha; inseguro nunca abre destino
+  ---
+  duration_ms: 0.104634
+  type: 'test'
+  ...
+# Subtest: E15-32: parâmetro de rota inválido não abre conteúdo
+ok 47 - E15-32: parâmetro de rota inválido não abre conteúdo
+  ---
+  duration_ms: 0.075861
+  type: 'test'
+  ...
+# Subtest: E15-26/E12: toque repetido no mesmo destino é ignorado; outro destino passa
+ok 48 - E15-26/E12: toque repetido no mesmo destino é ignorado; outro destino passa
+  ---
+  duration_ms: 1.192412
+  type: 'test'
+  ...
+# Subtest: E16: classificação de falhas
+ok 49 - E16: classificação de falhas
+  ---
+  duration_ms: 0.486392
+  type: 'test'
+  ...
+# Subtest: E16: vazio confirmado ≠ erro ≠ offline ≠ acesso negado
+ok 50 - E16: vazio confirmado ≠ erro ≠ offline ≠ acesso negado
+  ---
+  duration_ms: 0.219705
+  type: 'test'
+  ...
+# Subtest: E16-33 (C): falha informativa mantém o dado anterior sinalizado; refresh não troca por skeleton
+ok 51 - E16-33 (C): falha informativa mantém o dado anterior sinalizado; refresh não troca por skeleton
+  ---
+  duration_ms: 0.114123
+  type: 'test'
+  ...
+# Subtest: E16: cache só preenche enquanto nada melhor chegou e vem marcado como não confirmado
+ok 52 - E16: cache só preenche enquanto nada melhor chegou e vem marcado como não confirmado
+  ---
+  duration_ms: 0.101201
+  type: 'test'
+  ...
+# Subtest: E16-25/41: resposta antiga não sobrescreve a nova; logout invalida tudo
+ok 53 - E16-25/41: resposta antiga não sobrescreve a nova; logout invalida tudo
+  ---
+  duration_ms: 0.152725
+  type: 'test'
+  ...
+# Subtest: E16-44: só mostra "atualizado" com sincronização real
+ok 54 - E16-44: só mostra "atualizado" com sincronização real
+  ---
+  duration_ms: 0.089304
+  type: 'test'
+  ...
+# Subtest: E16-18/39: atualização parcial não é sucesso total
+ok 55 - E16-18/39: atualização parcial não é sucesso total
+  ---
+  duration_ms: 0.078634
+  type: 'test'
+  ...
+# Subtest: E16-26/27: cache segregado por usuário e apagado no logout
+ok 56 - E16-26/27: cache segregado por usuário e apagado no logout
+  ---
+  duration_ms: 0.439204
+  type: 'test'
+  ...
+# Subtest: E02: ativa primeiro, demais em ordem alfabética (sem diferenciar acento)
+ok 57 - E02: ativa primeiro, demais em ordem alfabética (sem diferenciar acento)
+  ---
+  duration_ms: 7.291764
+  type: 'test'
+  ...
+# Subtest: E02: pesquisa a partir de 6 peladas; sem acento nem caixa
+ok 58 - E02: pesquisa a partir de 6 peladas; sem acento nem caixa
+  ---
+  duration_ms: 0.263488
+  type: 'test'
+  ...
+# Subtest: E08: até 2 no resumo com a ativa primeiro; Ver todas só com 3 ou mais
+ok 59 - E08: até 2 no resumo com a ativa primeiro; Ver todas só com 3 ou mais
+  ---
+  duration_ms: 0.200346
+  type: 'test'
+  ...
+# Subtest: E14: rótulo de hora por grupo
+ok 60 - E14: rótulo de hora por grupo
+  ---
+  duration_ms: 0.166965
+  type: 'test'
+  ...
+# (node:1499) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/minuto91/app/tests/v85.test.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/claude/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: grupos: CA/PD/PE/ATA juntos; legado sem inventar
+ok 61 - grupos: CA/PD/PE/ATA juntos; legado sem inventar
+  ---
+  duration_ms: 1.326043
+  type: 'test'
+  ...
+# Subtest: resumo: inevitável explicado, sem OVR
+ok 62 - resumo: inevitável explicado, sem OVR
+  ---
+  duration_ms: 19.600324
+  type: 'test'
+  ...
+# Subtest: homônimos: diferenciação discreta e estável
+ok 63 - homônimos: diferenciação discreta e estável
+  ---
+  duration_ms: 1.605448
+  type: 'test'
+  ...
+# Subtest: nomes longos: abrevia só sem ambiguidade
+ok 64 - nomes longos: abrevia só sem ambiguidade
+  ---
+  duration_ms: 0.965425
+  type: 'test'
+  ...
+# Subtest: paginação: 100 participantes, todos uma única vez, capitão primeiro
+ok 65 - paginação: 100 participantes, todos uma única vez, capitão primeiro
+  ---
+  duration_ms: 3.173886
+  type: 'test'
+  ...
+# Subtest: integridade: falta, duplicidade, versão e capitão detectados
+ok 66 - integridade: falta, duplicidade, versão e capitão detectados
+  ---
+  duration_ms: 1.377676
+  type: 'test'
+  ...
+# Subtest: campo: posição automática por equipe, mantém as editadas, fora = neutro, sobreposição
+ok 67 - campo: posição automática por equipe, mantém as editadas, fora = neutro, sobreposição
+  ---
+  duration_ms: 1.083913
+  type: 'test'
+  ...
+# Subtest: rede: resposta perdida é recuperada pelo resultado gravado, sem repetir
+ok 68 - rede: resposta perdida é recuperada pelo resultado gravado, sem repetir
+  ---
+  duration_ms: 0.784826
+  type: 'test'
+  ...
+# Subtest: gate: resposta obsoleta não se aplica
+ok 69 - gate: resposta obsoleta não se aplica
+  ---
+  duration_ms: 0.628397
+  type: 'test'
+  ...
+# Subtest: avisos V8.5: texto e destino seguros
+ok 70 - avisos V8.5: texto e destino seguros
+  ---
+  duration_ms: 7.888526
+  type: 'test'
+  ...
+# Subtest: campo: posicionamento automático sem sobreposição (12 e 30 jogadores)
+ok 71 - campo: posicionamento automático sem sobreposição (12 e 30 jogadores)
+  ---
+  duration_ms: 2.306216
+  type: 'test'
+  ...
+# (node:1506) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/minuto91/app/tests/v86.test.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/claude/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: V14: quórum arredondado para cima, mínimo um voto
+ok 72 - V14: quórum arredondado para cima, mínimo um voto
+  ---
+  duration_ms: 1.337319
+  type: 'test'
+  ...
+# Subtest: V24/V30: voto próprio só no 1º turno com 2 candidatos
+ok 73 - V24/V30: voto próprio só no 1º turno com 2 candidatos
+  ---
+  duration_ms: 0.161127
+  type: 'test'
+  ...
+# Subtest: textos de estado
+ok 74 - textos de estado
+  ---
+  duration_ms: 0.232183
+  type: 'test'
+  ...
+# Subtest: motivo da candidatura e tempo restante
+ok 75 - motivo da candidatura e tempo restante
+  ---
+  duration_ms: 0.249825
+  type: 'test'
+  ...
+# (node:1513) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/minuto91/app/tests/v87.test.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/claude/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: A01: nome oficial; "Chuteira de Ouro" nunca é nome de prêmio
+ok 76 - A01: nome oficial; "Chuteira de Ouro" nunca é nome de prêmio
+  ---
+  duration_ms: 4.508008
+  type: 'test'
+  ...
+# Subtest: AD01: rótulo = nome oficial + ano/temporada
+ok 77 - AD01: rótulo = nome oficial + ano/temporada
+  ---
+  duration_ms: 0.384588
+  type: 'test'
+  ...
+# Subtest: AD01: bloco só com título; mais recente primeiro; origem só com várias peladas
+ok 78 - AD01: bloco só com título; mais recente primeiro; origem só com várias peladas
+  ---
+  duration_ms: 11.713655
+  type: 'test'
+  ...
+# Subtest: B06/A04: requisito = max(5, teto de 50%) — 19/20/21 partidas
+ok 79 - B06/A04: requisito = max(5, teto de 50%) — 19/20/21 partidas
+  ---
+  duration_ms: 0.164437
+  type: 'test'
+  ...
+# Subtest: F01: parâmetros da exceção só reduzem, com piso de 3 atuações
+ok 80 - F01: parâmetros da exceção só reduzem, com piso de 3 atuações
+  ---
+  duration_ms: 0.363492
+  type: 'test'
+  ...
+# Subtest: textos de estado e estatística principal
+ok 81 - textos de estado e estatística principal
+  ---
+  duration_ms: 0.250507
+  type: 'test'
+  ...
+# Subtest: C02/F02: Sala só com contadores para os três tipos; total soma os novos
+ok 82 - C02/F02: Sala só com contadores para os três tipos; total soma os novos
+  ---
+  duration_ms: 0.261662
+  type: 'test'
+  ...
+# Subtest: C07: avisos de prêmio de temporada não trazem vencedores e abrem a retrospectiva
+ok 83 - C07: avisos de prêmio de temporada não trazem vencedores e abrem a retrospectiva
+  ---
+  duration_ms: 0.663128
+  type: 'test'
+  ...
+# Subtest: C04/C05: arte individual só para quem ganhou título na temporada
+ok 84 - C04/C05: arte individual só para quem ganhou título na temporada
+  ---
+  duration_ms: 0.530113
+  type: 'test'
+  ...
+1..84
+# tests 84
+# suites 0
+# pass 84
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 1353.399789

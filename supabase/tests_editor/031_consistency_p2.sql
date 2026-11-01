@@ -107,7 +107,7 @@ perform set_config('role','authenticated',true);
 perform pg_temp.as_user(2);
 v_r := public.get_player_evolution(v_m2, v_prev);
 perform pg_temp.assert(jsonb_array_length(v_r->'corrections')=1
- and (v_r->'corrections'->0->>'overall')::numeric=(v_r->'current'->>'overall')::numeric,
+ and (v_r->'corrections'->0->>'overall')::numeric is not distinct from (v_r->'current'->>'overall')::numeric,
  'evolução mostra publicado, corrigido e atual coerentes');
 perform pg_temp.assert(jsonb_array_length(v_r->'points')=1,'partida anulada fora da linha publicada');
 

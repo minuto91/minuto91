@@ -276,8 +276,10 @@ test('V7.7 ponta a ponta: servidor = motor JS a partir do roteiro', { timeout: 1
     assert.equal(c.ovr_display, c.rdisp); assert.equal(c.is_provisional, !c.rel);
     assert.ok(['LET', 'REF'].includes(c.sec_code));
   }
-  // Temporada anterior encerrada antes do corte: a carta é histórica (v1) e não foi reescrita pela V7.7.
-  assert.ok((await q(`select formula_version from public.player_cards where season_id=$1`, [prevSeason])).every((c) => c.formula_version < 3), 'carta histórica preservada');
+  // 072 (decisão de 01/11/2026): corte desde o início. A temporada anterior, já encerrada, também é V7.7.
+  const prevCards = await q(`select formula_version, atu, def from public.player_cards where season_id=$1`, [prevSeason]);
+  assert.ok(prevCards.length > 0 && prevCards.every((c) => c.formula_version === 3 && c.atu === null && c.def !== null),
+    'temporada encerrada também recalculada pela V7.7 (072)');
   // ... mas o estado V7.7 da temporada anterior existe (herança) com a evidência usada.
   const prevState = await q(`select membership_id, evidence, matches_played from public.player_season_ratings where season_id=$1`, [prevSeason]);
   assert.ok(prevState.length >= 8 && prevState.every((x) => x.evidence.SEC <= x.matches_played));

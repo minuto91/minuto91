@@ -1,0 +1,430 @@
+TAP version 13
+# uniformidade: 54 composições ótimas, 6000 sorteios, χ²=56.7 (crítico 90.6)
+# 100 participantes: custo 4, 37923487539242125335330816 composições ótimas, 20 ms
+# Subtest: ótimo e contagem exatos = força bruta (300 casos, n ≤ 12)
+ok 1 - ótimo e contagem exatos = força bruta (300 casos, n ≤ 12)
+  ---
+  duration_ms: 4992.534979
+  type: 'test'
+  ...
+# Subtest: decodificação é bijeção sobre o conjunto ótimo (80 casos, n ≤ 10)
+ok 2 - decodificação é bijeção sobre o conjunto ótimo (80 casos, n ≤ 10)
+  ---
+  duration_ms: 2214.880368
+  type: 'test'
+  ...
+# Subtest: uniformidade estatística (qui-quadrado) com aleatoriedade segura
+ok 3 - uniformidade estatística (qui-quadrado) com aleatoriedade segura
+  ---
+  duration_ms: 4027.384588
+  type: 'test'
+  ...
+# Subtest: 100 participantes, contagem BigInt, limites e casos-limite
+ok 4 - 100 participantes, contagem BigInt, limites e casos-limite
+  ---
+  duration_ms: 24.795918
+  type: 'test'
+  ...
+# (node:1265) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/minuto91/app/src/lib/money.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/claude/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: formatBRL: centavos inteiros em reais
+ok 5 - formatBRL: centavos inteiros em reais
+  ---
+  duration_ms: 0.975902
+  type: 'test'
+  ...
+# Subtest: parseBRL: o que a pessoa digita vira centavos exatos (sem float)
+ok 6 - parseBRL: o que a pessoa digita vira centavos exatos (sem float)
+  ---
+  duration_ms: 0.75438
+  type: 'test'
+  ...
+# Subtest: datas: DD/MM/AAAA <-> AAAA-MM-DD, sem datas impossíveis
+ok 7 - datas: DD/MM/AAAA <-> AAAA-MM-DD, sem datas impossíveis
+  ---
+  duration_ms: 0.443432
+  type: 'test'
+  ...
+# Subtest: meses: deslocamento e nome
+ok 8 - meses: deslocamento e nome
+  ---
+  duration_ms: 0.182548
+  type: 'test'
+  ...
+# Subtest: CSV e chave de idempotência
+ok 9 - CSV e chave de idempotência
+  ---
+  duration_ms: 2.087279
+  type: 'test'
+  ...
+# (node:1272) [MODULE_TYPELESS_PACKAGE_JSON] Warning: Module type of file:///home/claude/minuto91/app/src/lib/pager.ts is not specified and it doesn't parse as CommonJS.
+# Reparsing as ES module because module syntax was detected. This incurs a performance overhead.
+# To eliminate this warning, add "type": "module" to /home/claude/minuto91/app/package.json.
+# (Use `node --trace-warnings ...` to show where the warning was created)
+# Subtest: carrega a primeira página e as seguintes, sem repetir nem pular
+ok 10 - carrega a primeira página e as seguintes, sem repetir nem pular
+  ---
+  duration_ms: 2.141325
+  type: 'test'
+  ...
+# Subtest: dois loadMore seguidos (rolagem + botão) buscam a próxima página uma vez só
+ok 11 - dois loadMore seguidos (rolagem + botão) buscam a próxima página uma vez só
+  ---
+  duration_ms: 0.363535
+  type: 'test'
+  ...
+# Subtest: recarregar durante um loadMore: a página atrasada da lista antiga é descartada
+ok 12 - recarregar durante um loadMore: a página atrasada da lista antiga é descartada
+  ---
+  duration_ms: 0.303664
+  type: 'test'
+  ...
+# Subtest: loadMore enquanto a primeira página recarrega não usa o cursor antigo
+ok 13 - loadMore enquanto a primeira página recarrega não usa o cursor antigo
+  ---
+  duration_ms: 0.175957
+  type: 'test'
+  ...
+# Subtest: troca de filtro: lista limpa na hora e resposta do filtro anterior nunca entra
+ok 14 - troca de filtro: lista limpa na hora e resposta do filtro anterior nunca entra
+  ---
+  duration_ms: 0.186803
+  type: 'test'
+  ...
+# Subtest: duas trocas de filtro rápidas: vale a última, mesmo que a primeira responda depois
+ok 15 - duas trocas de filtro rápidas: vale a última, mesmo que a primeira responda depois
+  ---
+  duration_ms: 0.170766
+  type: 'test'
+  ...
+# Subtest: recarregar com o mesmo filtro mantém a lista na tela até chegar a resposta
+ok 16 - recarregar com o mesmo filtro mantém a lista na tela até chegar a resposta
+  ---
+  duration_ms: 0.276757
+  type: 'test'
+  ...
+# Subtest: tela sem foco (cancel) ou desmontada (dispose): nada atrasado entra nem avisa
+ok 17 - tela sem foco (cancel) ou desmontada (dispose): nada atrasado entra nem avisa
+  ---
+  duration_ms: 0.29268
+  type: 'test'
+  ...
+# Subtest: item repetido entre páginas (mudou de posição no servidor) entra uma vez só
+ok 18 - item repetido entre páginas (mudou de posição no servidor) entra uma vez só
+  ---
+  duration_ms: 1.379921
+  type: 'test'
+  ...
+# Subtest: erro na próxima página: mantém o que já carregou e permite tentar de novo
+ok 19 - erro na próxima página: mantém o que já carregou e permite tentar de novo
+  ---
+  duration_ms: 0.535234
+  type: 'test'
+  ...
+# Subtest: replace e resumo: troca só o item e mantém o resumo coerente
+ok 20 - replace e resumo: troca só o item e mantém o resumo coerente
+  ---
+  duration_ms: 0.29239
+  type: 'test'
+  ...
+# Subtest: readAllPages: lê tudo e nunca entra em laço se o servidor repetir o cursor
+ok 21 - readAllPages: lê tudo e nunca entra em laço se o servidor repetir o cursor
+  ---
+  duration_ms: 9.163025
+  type: 'test'
+  ...
+# Subtest: conferência da exportação: íntegra, linha repetida, quantidade e somas
+ok 22 - conferência da exportação: íntegra, linha repetida, quantidade e somas
+  ---
+  duration_ms: 0.448842
+  type: 'test'
+  ...
+# Subtest: todos os tipos produzidos pelo banco têm texto, menos Bola Murcha
+ok 23 - todos os tipos produzidos pelo banco têm texto, menos Bola Murcha
+  ---
+  duration_ms: 1.193517
+  type: 'test'
+  ...
+# Subtest: V8.7: avisos dos prêmios de temporada têm texto, abrem a retrospectiva e não trazem vencedores
+ok 24 - V8.7: avisos dos prêmios de temporada têm texto, abrem a retrospectiva e não trazem vencedores
+  ---
+  duration_ms: 0.618143
+  type: 'test'
+  ...
+# Subtest: texto sem dados sensíveis: só o nome da pelada
+ok 25 - texto sem dados sensíveis: só o nome da pelada
+  ---
+  duration_ms: 0.155236
+  type: 'test'
+  ...
+# Subtest: caminho do toque
+ok 26 - caminho do toque
+  ---
+  duration_ms: 0.214864
+  type: 'test'
+  ...
+# Subtest: uma mensagem por aparelho, com o id da notificação
+ok 27 - uma mensagem por aparelho, com o id da notificação
+  ---
+  duration_ms: 0.803559
+  type: 'test'
+  ...
+# Subtest: aceite: basta um aparelho; token morto é apagado
+ok 28 - aceite: basta um aparelho; token morto é apagado
+  ---
+  duration_ms: 0.265175
+  type: 'test'
+  ...
+# Subtest: todos os aparelhos mortos = falha; limite de envio = tentar de novo
+ok 29 - todos os aparelhos mortos = falha; limite de envio = tentar de novo
+  ---
+  duration_ms: 0.278893
+  type: 'test'
+  ...
+# Subtest: recibos: espera até 24h; depois marca indisponível
+ok 30 - recibos: espera até 24h; depois marca indisponível
+  ---
+  duration_ms: 0.29274
+  type: 'test'
+  ...
+# Subtest: lotes de 100
+ok 31 - lotes de 100
+  ---
+  duration_ms: 0.35728
+  type: 'test'
+  ...
+# Subtest: pesos somam 100% e fórmula expandida do goleiro é equivalente
+ok 32 - pesos somam 100% e fórmula expandida do goleiro é equivalente
+  ---
+  duration_ms: 3.747074
+  type: 'test'
+  ...
+# Subtest: interpolação da nota
+ok 33 - interpolação da nota
+  ---
+  duration_ms: 0.540532
+  type: 'test'
+  ...
+# Subtest: nota da partida: 50/50 entre grupos, sem nota fictícia
+ok 34 - nota da partida: 50/50 entre grupos, sem nota fictícia
+  ---
+  duration_ms: 0.327497
+  type: 'test'
+  ...
+# Subtest: ATU: neutro sem votos, partidas sem voto contam em J
+ok 35 - ATU: neutro sem votos, partidas sem voto contam em J
+  ---
+  duration_ms: 0.393502
+  type: 'test'
+  ...
+# Subtest: OFF/DEF: neutro na referência, monotonicidade, sem NaN
+ok 36 - OFF/DEF: neutro na referência, monotonicidade, sem NaN
+  ---
+  duration_ms: 2.346262
+  type: 'test'
+  ...
+# Subtest: REF: valores de referência, crescente, neutro sem registro, estabilização C4
+ok 37 - REF: valores de referência, crescente, neutro sem registro, estabilização C4
+  ---
+  duration_ms: 0.290152
+  type: 'test'
+  ...
+# Subtest: PEQ e RES: monotonia com N fixo, neutros sem dados
+ok 38 - PEQ e RES: monotonia com N fixo, neutros sem dados
+  ---
+  duration_ms: 0.47893
+  type: 'test'
+  ...
+# Subtest: DIS: amarelo, vermelho, recuperação, limites, desativado = 70, pendente não é limpo
+ok 39 - DIS: amarelo, vermelho, recuperação, limites, desativado = 70, pendente não é limpo
+  ---
+  duration_ms: 3.049944
+  type: 'test'
+  ...
+# Subtest: históricos de 0, 1, 4, 5, 20 e 25 partidas; elegibilidade aos 5 jogos
+ok 40 - históricos de 0, 1, 4, 5, 20 e 25 partidas; elegibilidade aos 5 jogos
+  ---
+  duration_ms: 1.069421
+  type: 'test'
+  ...
+# Subtest: goleiro: EST = 0,7 REF + 0,3 DEF, sem GAR
+ok 41 - goleiro: EST = 0,7 REF + 0,3 DEF, sem GAR
+  ---
+  duration_ms: 0.728728
+  type: 'test'
+  ...
+# Subtest: transição de posição: EST interpola em 5 partidas, outros atributos intactos
+ok 42 - transição de posição: EST interpola em 5 partidas, outros atributos intactos
+  ---
+  duration_ms: 0.345246
+  type: 'test'
+  ...
+# Subtest: referência local híbrida
+ok 43 - referência local híbrida
+  ---
+  duration_ms: 7.447209
+  type: 'test'
+  ...
+# Subtest: arredondamento: empate 0,5 para cima e faixas
+ok 44 - arredondamento: empate 0,5 para cima e faixas
+  ---
+  duration_ms: 0.160084
+  type: 'test'
+  ...
+# Subtest: SQL = JS nas funções puras do motor
+ok 45 - SQL = JS nas funções puras do motor
+  ---
+  duration_ms: 5747.39886
+  type: 'test'
+  ...
+# \# JS x Python: 26138 rodadas comparadas, maior diferença 2.84e-14
+# Subtest: pesos posicionais congelados (DEF, LET/REF, APR, RES, DIS) somam 100%
+ok 46 - pesos posicionais congelados (DEF, LET/REF, APR, RES, DIS) somam 100%
+  ---
+  duration_ms: 2.767836
+  type: 'test'
+  ...
+# Subtest: referências V7.5 inalteradas (sem curva LET V7.9)
+ok 47 - referências V7.5 inalteradas (sem curva LET V7.9)
+  ---
+  duration_ms: 0.5778
+  type: 'test'
+  ...
+# Subtest: vote: curva da nota 0-10 para 40-99
+ok 48 - vote: curva da nota 0-10 para 40-99
+  ---
+  duration_ms: 0.463622
+  type: 'test'
+  ...
+# Subtest: fórmulas: limites 40-99, monotonia e ausência de NaN
+ok 49 - fórmulas: limites 40-99, monotonia e ausência de NaN
+  ---
+  duration_ms: 4.622712
+  type: 'test'
+  ...
+# Subtest: regressão: atacante, 10 gols em 10 partidas, nota 9,0 => LET 91,60 (protótipo 91.60479306925015)
+ok 50 - regressão: atacante, 10 gols em 10 partidas, nota 9,0 => LET 91,60 (protótipo 91.60479306925015)
+  ---
+  duration_ms: 2.052196
+  type: 'test'
+  ...
+# Subtest: OVR publicado só a partir da 5ª partida oficial, sem salto na elegibilidade
+ok 51 - OVR publicado só a partir da 5ª partida oficial, sem salto na elegibilidade
+  ---
+  duration_ms: 1.616058
+  type: 'test'
+  ...
+# Subtest: ausência não muda DEF/LET/APR nem DIS; reduz a frequência do RES
+ok 52 - ausência não muda DEF/LET/APR nem DIS; reduz a frequência do RES
+  ---
+  duration_ms: 0.658256
+  type: 'test'
+  ...
+# Subtest: estatística ausente preserva o atributo; zero é observação
+ok 53 - estatística ausente preserva o atributo; zero é observação
+  ---
+  duration_ms: 1.468437
+  type: 'test'
+  ...
+# Subtest: checkpoint: janela real de 10, quedas amortecidas, melhoria sem limite, RES/DIS sem checkpoint
+ok 54 - checkpoint: janela real de 10, quedas amortecidas, melhoria sem limite, RES/DIS sem checkpoint
+  ---
+  duration_ms: 2.267276
+  type: 'test'
+  ...
+# Subtest: DIS: 70, -8, -20, recuperação 6% até 99, piso 50, teto 99, igual para todas as posições
+ok 55 - DIS: 70, -8, -20, recuperação 6% até 99, piso 50, teto 99, igual para todas as posições
+  ---
+  duration_ms: 2.637757
+  type: 'test'
+  ...
+# Subtest: cartões: segundo amarelo = uma expulsão, sem contar o amarelo de novo
+ok 56 - cartões: segundo amarelo = uma expulsão, sem contar o amarelo de novo
+  ---
+  duration_ms: 0.414749
+  type: 'test'
+  ...
+# Subtest: DIS: continuidade entre temporadas
+ok 57 - DIS: continuidade entre temporadas
+  ---
+  duration_ms: 0.380456
+  type: 'test'
+  ...
+# Subtest: resenha: autovoto, duas confirmações, maioria estrita, 1 eleitor indeterminado, falta de resposta neutra
+ok 58 - resenha: autovoto, duas confirmações, maioria estrita, 1 eleitor indeterminado, falta de resposta neutra
+  ---
+  duration_ms: 0.93487
+  type: 'test'
+  ...
+# Subtest: herança: 50% das observações válidas, teto de 20; publicado não é dividido pela metade
+ok 59 - herança: 50% das observações válidas, teto de 20; publicado não é dividido pela metade
+  ---
+  duration_ms: 1.947339
+  type: 'test'
+  ...
+# Subtest: transição de posição em 5 partidas (OVR), atributos da posição nova
+ok 60 - transição de posição em 5 partidas (OVR), atributos da posição nova
+  ---
+  duration_ms: 2.577573
+  type: 'test'
+  ...
+# Subtest: replay determinístico; correção e anulação retroativas mudam o resultado
+ok 61 - replay determinístico; correção e anulação retroativas mudam o resultado
+  ---
+  duration_ms: 1.652641
+  type: 'test'
+  ...
+# Subtest: limites: atributos e OVR sempre entre 40 e 99, DIS entre 50 e 99
+ok 62 - limites: atributos e OVR sempre entre 40 e 99, DIS entre 50 e 99
+  ---
+  duration_ms: 95.977232
+  type: 'test'
+  ...
+# Subtest: JS = protótipo Python V7.7 (800 carreiras aleatórias, até 3 temporadas) e 21/21 checagens do protótipo
+ok 63 - JS = protótipo Python V7.7 (800 carreiras aleatórias, até 3 temporadas) e 21/21 checagens do protótipo
+  ---
+  duration_ms: 2587.265793
+  type: 'test'
+  ...
+# Subtest: V7.7 ponta a ponta: servidor = motor JS a partir do roteiro
+ok 64 - V7.7 ponta a ponta: servidor = motor JS a partir do roteiro
+  ---
+  duration_ms: 15798.704713
+  type: 'test'
+  ...
+# \# SQL x JS: 2.400 fórmulas, 3153 rodadas e 250 carreiras; maior diferença 1.42e-14
+# Subtest: SQL = JS no núcleo V7.7 (funções puras, rodada a rodada e carreira completa)
+ok 65 - SQL = JS no núcleo V7.7 (funções puras, rodada a rodada e carreira completa)
+  ---
+  duration_ms: 9810.053745
+  type: 'test'
+  ...
+# Subtest: lista todos os arquivos de uma pasta com mais de 1.000
+ok 66 - lista todos os arquivos de uma pasta com mais de 1.000
+  ---
+  duration_ms: 0.932489
+  type: 'test'
+  ...
+# Subtest: candidatos: todos os antigos, nenhum recente, sem repetir
+ok 67 - candidatos: todos os antigos, nenhum recente, sem repetir
+  ---
+  duration_ms: 1.502465
+  type: 'test'
+  ...
+# Subtest: página exata (múltiplo do limite) também termina
+ok 68 - página exata (múltiplo do limite) também termina
+  ---
+  duration_ms: 1.210731
+  type: 'test'
+  ...
+1..68
+# tests 68
+# suites 0
+# pass 68
+# fail 0
+# cancelled 0
+# skipped 0
+# todo 0
+# duration_ms 56569.897878
