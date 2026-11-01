@@ -50,7 +50,7 @@ export type RatingVote = {
   reopened?: boolean;
   extension_used?: boolean;
   interruption?: { previous_status: 'open' | 'awaiting_publication' | 'published'; divergent: boolean } | null;
-  /** V7.7 (070): pergunta da resenha. my_resenha null = ainda não respondeu; [] = "ninguém ficou". */
+  /** V7.7 (071): pergunta da resenha. my_resenha null = ainda não respondeu; [] = "ninguém ficou". */
   resenha_enabled?: boolean;
   my_resenha?: string[] | null;
   resenha_answers?: number | null;

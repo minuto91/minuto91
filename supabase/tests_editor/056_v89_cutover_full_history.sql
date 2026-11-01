@@ -1,8 +1,8 @@
--- V8.9 / 072: motor V7.7 em todo o histórico.
+-- V8.9 / 073: motor V7.7 em todo o histórico.
 --  1) cutover_date da versão 2 = 0001-01-01.
 --  2) Partidas de uma temporada já encerrada (ano anterior) publicam carta formula_version 3 com DEF/LET/APR/RES/DIS.
 --  3) Discriminação: com o corte antigo (data de hoje) a carta da temporada encerrada NÃO vira v3; voltar ao corte
---     da 072 e recalcular a partir da temporada mais antiga (o mesmo que a 072 faz) leva as duas temporadas para v3.
+--     da 073 e recalcular a partir da temporada mais antiga (o mesmo que a 073 faz) leva as duas temporadas para v3.
 -- Cole no SQL Editor do Supabase DEV. Termina SEMPRE com o erro proposital "PASS: 056_v89_cutover_full_history".
 create function pg_temp.uid(n int) returns uuid language sql as
  $$ select ('99780000-0000-4000-8000-' || lpad(n::text,12,'0'))::uuid $$;
@@ -21,7 +21,7 @@ declare v_a uuid; v_tok text; i int; v_m uuid; v_old uuid; v_cur uuid; v_y int :
  v_fv_old int; v_fv_cur int; v_role text;
 begin
 perform pg_temp.assert((select params->>'cutover_date' from private.rating_params where version = 2) = '0001-01-01',
- '072: corte da versão 2 desde o início');
+ '073: corte da versão 2 desde o início');
 perform pg_temp.assert((private.rating_params_active()).version = 2, 'versão 2 (V7.7) ativa');
 
 insert into auth.users (id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
@@ -68,13 +68,13 @@ perform private.recompute_cards(v_old, null);
 perform pg_temp.assert((select bool_and(formula_version < 3) from public.player_cards where season_id = v_old),
  'com o corte antigo a temporada encerrada não é recalculada pela V7.7');
 
--- Mesmo procedimento da 072: corte desde o início e recálculo a partir da temporada mais antiga.
+-- Mesmo procedimento da 073: corte desde o início e recálculo a partir da temporada mais antiga.
 update private.rating_params set params = jsonb_set(params,'{cutover_date}',to_jsonb('0001-01-01'::text)) where version = 2;
 perform private.recompute_cards(v_old, null);
 perform pg_temp.assert((select bool_and(formula_version = 3) from public.player_cards where season_id = v_old),
- '072: temporada encerrada recalculada pela V7.7');
+ '073: temporada encerrada recalculada pela V7.7');
 perform pg_temp.assert((select bool_and(formula_version = 3) from public.player_cards where season_id = v_cur),
- '072: temporada atual continua V7.7 (propagação)');
+ '073: temporada atual continua V7.7 (propagação)');
 
 raise exception 'PASS: 056_v89_cutover_full_history';
 end $test$;

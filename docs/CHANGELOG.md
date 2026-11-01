@@ -7,8 +7,8 @@ Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `
 Detalhes, matriz e divergências: `docs/V8.9_IMPLEMENTACAO.md`; evidências: `docs/evidencias_v89/`.
 
 ### Feito
-- O motor V7.7 estava só na branch `origin/v7.7-motor`; portado sem alterar fórmulas: migrações `069_v89_rating_engine.sql` (idêntica à referência anexa, exceto o alvo do patch de Minha Carreira) e `070_v89_resenha_vote.sql`.
-- `071_v89_awards_pin_ref_params.sql`: REF do Paredão e da Luva fixados nos parâmetros v1 (prêmios não mudam com a versão ativa do motor).
+- O motor V7.7 estava só na branch `origin/v7.7-motor`; portado sem alterar fórmulas: migrações `070_v89_rating_engine.sql` (idêntica à referência anexa, exceto o alvo do patch de Minha Carreira) e `071_v89_resenha_vote.sql`.
+- `072_v89_awards_pin_ref_params.sql`: REF do Paredão e da Luva fixados nos parâmetros v1 (prêmios não mudam com a versão ativa do motor).
 - App: cards e telas com os cinco atributos, pergunta da resenha, variação do OVR só entre publicações da mesma fórmula.
 - Testes: novo `055_v89_engine`; ajustes em `054_v87` e no teste de integração (assinatura atual de `annul_match`).
 

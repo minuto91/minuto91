@@ -148,7 +148,7 @@ perform pg_temp.as_user(8);
 perform pg_temp.assert(not exists(select 1 from public.player_season_ratings where pelada_id=v_a), 'outra pelada não lê');
 perform pg_temp.assert(not exists(select 1 from public.player_ratings where pelada_id=v_b and matches_played>0), 'pelada B intacta');
 
--- ===== V8.9 (071): prêmios de temporada usam sempre os parâmetros V5 (versão 1), mesmo com a V7.7 ativa =====
+-- ===== V8.9 (072): prêmios de temporada usam sempre os parâmetros V5 (versão 1), mesmo com a V7.7 ativa =====
 perform set_config('role','postgres',true);
 perform pg_temp.assert((select version from private.rating_params_active()) = 2, 'V7.7 ativa');
 perform pg_temp.assert(private.v87_ref_at(pg_temp.mem(v_a,1), 'infinity') is not null, 'REF do encerramento calculável com a V7.7 ativa');

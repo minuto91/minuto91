@@ -1,4 +1,4 @@
--- Minuto 91 / 071: V8.9. Integração do motor V7.7 (069) com os prêmios de temporada (066, 068).
+-- Minuto 91 / 072: V8.9. Integração do motor V7.7 (070) com os prêmios de temporada (066, 068).
 --
 -- O REF do Paredão (V8.6) e o REF "do encerramento" da Luva de Ouro (V8.7, F04) usam a fórmula de goleiro da 051
 -- (ref_neutral 65, ref_shrink 3, janela `window` = 20), que é critério PRÓPRIO desses prêmios (V8.7: o REF do motor não
@@ -6,7 +6,7 @@
 -- Com a versão 2 (V7.7) ativa, ref_neutral/ref_shrink não existem e `window` passa a ser 10 (janela do checkpoint),
 -- o que mudaria os prêmios sem decisão. Aqui os parâmetros ficam fixados na versão 1 (valores aprovados dos prêmios);
 -- nenhuma conta muda e o resultado independe de qual versão do motor está ativa (rollback do motor continua seguro).
--- Mesmo método de cópia das migrações 051/069: se o texto esperado não existir, a migração para.
+-- Mesmo método de cópia das migrações 051/070: se o texto esperado não existir, a migração para.
 do $patch$
 declare v_def text; v_new text; v_sig text;
 begin

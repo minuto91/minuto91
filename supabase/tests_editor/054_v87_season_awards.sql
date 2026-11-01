@@ -167,7 +167,7 @@ perform pg_temp.assert(not exists(select 1 from private.season_award_results whe
 delete from public.matches where id = q1;
 
 -- REF: a mesma conta do motor (051) quando não há corte; o corte do encerramento só descarta partidas posteriores.
--- V8.9: rating_compute é o motor V5 (051), que lê a versão ativa de parâmetros; o teste inteiro roda com a V5 ativa (a 069 ativa a V7.7); os prêmios usam sempre os parâmetros da versão 1 (071).
+-- V8.9: rating_compute é o motor V5 (051), que lê a versão ativa de parâmetros; o teste inteiro roda com a V5 ativa (a 070 ativa a V7.7); os prêmios usam sempre os parâmetros da versão 1 (072).
 update private.rating_params set active = false where version = 2;
 ref2 := private.v87_ref_at(pg_temp.mem(v_a,2), 'infinity');
 perform pg_temp.assert(abs(ref2 - round((private.rating_compute(pg_temp.mem(v_a,2))->>'ref')::numeric, 6)) < 0.000001, 'v87_ref_at = REF do motor (goleiro 2)');

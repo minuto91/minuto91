@@ -46,7 +46,7 @@ O `initdb` do PostgreSQL recusa root: em contêiner root rode como usuário comu
 `mkdir -p /tmp/pg87 && chown nobody /tmp/pg87 && runuser -u nobody -- env TMPDIR=/tmp/pg87 HOME=/tmp/pg87 node v87_concurrency.mjs 20`.
 Novo teste SQL: `054_v87_season_awards` (T054, ~6 s no PGlite). `node --test` inclui os avisos da V8.7 em `push_logic.test.mjs`.
 
-V7.7 (motor `formula_version 3`, migrações 069-070; relatório em `docs/relatorio_v77_2026-10-24.md`):
+V7.7 (motor `formula_version 3`, migrações 070-071; relatório em `docs/relatorio_v77_2026-10-24.md`):
 - `node --test rating_v77.test.mjs` — fórmulas, regressões (LET 91,60) e conferência com o protótipo Python
   (`rating/v77_reference/`, precisa de `python3`).
 - `node --test rating_v77_sql.test.mjs` — SQL (`private.v77_*`) = JS (`rating/v77.mjs`) rodada a rodada.
