@@ -128,7 +128,7 @@ function DevCentral() {
     { key: 'v', rank: 1, title: 'Votação aberta: Azul 5 x 3 Branco', detail: 'Faltam 5h20 · você avaliou 2 de 11', action: 'Continuar', tone: 'blue' as const, onPress: noop },
     { key: 'o', rank: 1, title: 'Votação aberta em Resenha FC', detail: 'Faltam 1d 3h', action: 'Votar', tone: 'blue' as const, onPress: noop },
     { key: 'c', rank: 2, title: 'Você tem um convite para aceitar', detail: 'Veja a pelada e entre.', action: 'Ver', tone: 'blue' as const, onPress: noop },
-    { key: 'p', rank: 4, title: 'Coloque uma foto no seu perfil', detail: 'Ela aparece na sua carta.', action: 'Perfil', tone: 'gold' as const, onPress: noop },
+    { key: 'p', rank: 4, title: 'Coloque uma foto no seu perfil', detail: 'Ela aparece no seu Card.', action: 'Perfil', tone: 'gold' as const, onPress: noop },
   ]);
 
   return (
@@ -141,7 +141,7 @@ function DevCentral() {
           <Card>
             <EmptyState
               title="Sua carreira começa numa pelada"
-              hint="Crie a pelada da sua turma ou entre com o convite que recebeu. A carta ganha o OVR depois de cinco partidas disputadas e publicadas.">
+              hint="Crie a pelada da sua turma ou entre com o convite que recebeu. O Card ganha o OVR depois de cinco partidas disputadas e publicadas.">
               <Button title="Criar pelada" onPress={noop} />
               <Button title="Entrar com convite" kind="secondary" onPress={noop} />
             </EmptyState>

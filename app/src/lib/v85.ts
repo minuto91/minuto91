@@ -345,3 +345,16 @@ export const REVIEW_CODE: Record<string, string> = {
   NO_ASSISTS: 'Nenhuma assistência registrada.',
   TEAM_SIZES_DIFFER: 'Os times têm tamanhos diferentes.',
 };
+
+/**
+ * Aviso antes de sortear: o ideal é um goleiro em cada time. Nunca bloqueia (REV-34: grupo escasso é aceito); quem
+ * ficar sem goleiro usa o goleiro temporário definido na partida (REV-010).
+ */
+export function goalkeeperWarning(positions: (string | null | undefined)[]): string | null {
+  if (positions.length < 2) return null;
+  const gk = positions.filter((p) => p === 'GOL' || p === 'goalkeeper').length;
+  if (gk === 0) return 'Nenhum goleiro entre os jogadores: os dois times ficam sem goleiro. Quem for ao gol é definido na partida.';
+  if (gk === 1) return 'Só 1 goleiro entre os jogadores: um dos times fica sem goleiro. Quem for ao gol é definido na partida.';
+  if (gk % 2 === 1) return `${gk} goleiros: um dos times fica com um goleiro a mais que o outro.`;
+  return null;
+}

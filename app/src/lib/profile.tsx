@@ -6,7 +6,7 @@ import { Pressable, View } from 'react-native';
 import { Text } from './text';
 
 import { PlayerCard } from './arts';
-import { AWARD_LABEL, Card as CardData, overallLabel, plural } from './career';
+import { AWARD_LABEL, Card as CardData, plural } from './career';
 import { Crest } from './crest';
 import { fmtRating } from './match';
 import { supabase } from './supabase';
@@ -131,7 +131,7 @@ const fmtMonthShort = (isoDate: string) =>
 function Stat({ value, label }: { value: number | string; label: string }) {
   return (
     <View style={{ width: '25%', alignItems: 'center', paddingVertical: 6 }} accessibilityLabel={`${label}: ${value}`}>
-      <Text style={{ fontSize: 22, fontWeight: '800', color: colors.deepBlue }}>{value}</Text>
+      <Text style={{ fontSize: 22, fontWeight: '800', color: colors.ink }}>{value}</Text>
       <Text style={{ fontSize: 12, color: colors.muted, textAlign: 'center' }}>{label}</Text>
     </View>
   );
@@ -193,12 +193,10 @@ export function CareerByPelada({ career }: { career: Extract<Career, { visible: 
           {p.hidden_seasons > 0 && <Sub>Total das temporadas disponíveis</Sub>}
           <TotalsGrid totals={p.totals} />
           {p.seasons.length === 0 && <Sub>Sem partidas finalizadas nas temporadas disponíveis.</Sub>}
-          {p.seasons.map((s) => (
+          {p.seasons.length > 1 && p.seasons.map((s) => (
             <View key={s.season_id} style={{ borderTopWidth: 1, borderTopColor: colors.line, paddingTop: 8, gap: 2 }}>
               <Text style={{ fontWeight: '700', color: colors.ink }}>
                 {s.name}
-                {s.card ? ` · ${overallLabel(s.card)}` : ''}
-                {s.card?.is_provisional ? ' (provisório)' : ''}
               </Text>
               <Sub>
                 {plural(s.matches_played, 'jogo', 'jogos')} · {s.wins}V {s.draws}E {s.losses}D · {plural(s.goals, 'gol', 'gols')} ·{' '}

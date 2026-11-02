@@ -206,7 +206,7 @@ export function NotificationSettings() {
       )}
       {status === 'denied' && <Sub>Os avisos estão bloqueados nos ajustes do celular. Libere em Ajustes &gt; Minuto 91 &gt; Notificações.</Sub>}
       {status === 'undetermined' && <Button title="Ativar avisos neste celular" onPress={ativar} loading={busy} />}
-      {status === 'granted' && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>Avisos ativados neste celular.</Text>}
+      {status === 'granted' && <Text style={{ color: colors.ink, fontWeight: '600' }}>Avisos ativados neste celular.</Text>}
       {prefs &&
         TIERS.map((t) => (
           <View key={t.key} style={{ gap: 8 }}>

@@ -273,7 +273,7 @@ export default function Home() {
             key: 'photo',
             rank: 4,
             title: 'Coloque uma foto no seu perfil',
-            detail: 'Ela aparece na sua carta.',
+            detail: 'Ela aparece no seu Card.',
             action: 'Perfil',
             tone: 'gold' as const,
             onPress: () => go('/perfil'),
@@ -304,6 +304,7 @@ export default function Home() {
           <BlockTitle>Próxima Rodada</BlockTitle>
           <NextRoundCard
             round={rounds[0]}
+            crestPath={peladas.find((x) => x.id === rounds[0].pelada_id)?.crest_path}
             more={rounds.length - 1}
             stale={!centralTrusted}
             onPress={() =>
@@ -352,7 +353,7 @@ export default function Home() {
   return (
     <ScrollView
       ref={scrollRef}
-      style={{ backgroundColor: colors.white }}
+      style={{ backgroundColor: colors.screen }}
       contentContainerStyle={{ alignItems: 'center', paddingTop: top + 12, paddingBottom: 32, flexGrow: 1 }}
       scrollEventThrottle={32}
       onScroll={(e) => {
@@ -409,7 +410,7 @@ export default function Home() {
             <Card>
               <EmptyState
                 title="Sua carreira começa numa pelada"
-                hint="Crie a pelada da sua turma ou entre com o convite que recebeu. A carta ganha o OVR depois de cinco partidas disputadas e publicadas.">
+                hint="Crie a pelada da sua turma ou entre com o convite que recebeu. O Card ganha o OVR depois de cinco partidas disputadas e publicadas.">
                 <Button title="Criar pelada" onPress={() => go('/criar-pelada')} />
                 <Button title="Entrar com convite" kind="secondary" onPress={() => go('/entrar')} />
               </EmptyState>

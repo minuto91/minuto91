@@ -104,7 +104,7 @@ export function RatingSlider({ value, onChange, disabled }: { value: number; onC
   const step = (d: number) => onChange(Math.min(10, Math.max(0, value + d)));
   return (
     <View style={{ gap: 10, opacity: disabled ? 0.5 : 1 }} pointerEvents={disabled ? 'none' : 'auto'}>
-      <Text style={{ fontSize: 44, fontWeight: '900', color: colors.deepBlue, textAlign: 'center' }}>{fmtScore(value)}</Text>
+      <Text style={{ fontSize: 44, fontWeight: '900', color: colors.ink, textAlign: 'center' }}>{fmtScore(value)}</Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         <Pressable onPress={() => step(-0.5)} accessibilityRole="button" accessibilityLabel="Diminuir meio ponto" style={stepBtn}>
           <Text style={stepTxt}>−</Text>
@@ -150,7 +150,7 @@ export function RatingSlider({ value, onChange, disabled }: { value: number; onC
   );
 }
 const stepBtn = { width: 44, height: 44, borderRadius: 22, borderWidth: 1, borderColor: colors.line, alignItems: 'center' as const, justifyContent: 'center' as const };
-const stepTxt = { fontSize: 22, fontWeight: '800' as const, color: colors.deepBlue };
+const stepTxt = { fontSize: 22, fontWeight: '800' as const, color: colors.ink };
 
 const STATE_LABEL: Record<string, string> = {
   unavailable: 'Indisponível: a partida ainda não é oficial.',
@@ -214,7 +214,7 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
     <Card>
       {/* REV-012: só o essencial — status, prazo, progresso discreto e Avaliar. Detalhes ficam recolhidos. */}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={{ flex: 1, fontWeight: '800', color: colors.deepBlue, fontSize: 16 }}>Votação</Text>
+        <Text style={{ flex: 1, fontWeight: '800', color: colors.ink, fontSize: 16 }}>Votação</Text>
         {v.state === 'open' && v.is_voter && total > 0 && (
           <Text style={{ color: colors.muted, fontWeight: '700', fontVariant: ['tabular-nums'] }}>{`${v.rated ?? 0}/${total}`}</Text>
         )}

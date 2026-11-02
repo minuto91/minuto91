@@ -12,7 +12,7 @@ import { friendly } from '../../../lib/errors';
 import { supabase } from '../../../lib/supabase';
 import { useSticky } from '../../../lib/sticky';
 import { colors, POSITIONS, positionLabel, positionSector, SECTORS } from '../../../lib/theme';
-import { Body, Button, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Segmented, Sub, Title } from '../../../lib/ui';
 
 type Row = { card: CardData; membershipId: string; name: string; userId: string | null };
 
@@ -143,21 +143,18 @@ export default function Elenco() {
       ) : (
         <>
           <Input value={query} onChangeText={setQuery} placeholder="Buscar pelo nome" autoCapitalize="words" accessibilityLabel="Buscar jogador pelo nome" />
-          <Chips options={SECTOR_FILTER} value={sector} onChange={(v) => { setSector(v); setPos(ALL); }} />
+          <Segmented options={SECTOR_FILTER} value={sector} onChange={(v) => { setSector(v); setPos(ALL); }} />
           {sector !== ALL && (
-            <Chips
+            <Segmented
               options={[{ value: ALL, label: 'Todas do setor' }, ...POSITIONS.filter((p) => p.sector === sector).map((p) => ({ value: p.value as string, label: p.value }))]}
               value={pos}
               onChange={setPos}
             />
           )}
-          <View style={{ flexDirection: 'row', justifyContent: 'space-between', flexWrap: 'wrap', gap: 8 }}>
-            <Chips options={VIEWS} value={view} onChange={setView} />
-            <Chips options={SORTS} value={sort} onChange={setSort} />
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: 8 }}>
+            <Segmented options={VIEWS} value={view} onChange={setView} />
+            <Segmented options={SORTS} value={sort} onChange={setSort} />
           </View>
-          <Sub>
-            {shown.length} de {rows.length} com Card. Quem ainda não tem Card continua na pelada normalmente.
-          </Sub>
 
           {shown.length === 0 && <EmptyState title="Ninguém com esse filtro" />}
 
@@ -196,7 +193,7 @@ export default function Elenco() {
                     </Sub>
                   </View>
                   <View style={{ alignItems: 'center', minWidth: 52, paddingVertical: 4, borderRadius: 8, borderWidth: 2, borderColor: t.frame, backgroundColor: t.bg }}>
-                    <Text style={{ fontSize: 18, fontWeight: '800', color: colors.deepBlue }}>{cardOverall(r.card) ?? '—'}</Text>
+                    <Text style={{ fontSize: 18, fontWeight: '800', color: colors.ink }}>{cardOverall(r.card) ?? '—'}</Text>
                     <Text style={{ fontSize: 9, fontWeight: '800', color: t.deep }}>{t.label.toUpperCase()}</Text>
                   </View>
                 </Pressable>

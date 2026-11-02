@@ -227,7 +227,7 @@ export default function Configuracoes() {
                 </View>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10, padding: 10, borderWidth: 1, borderColor: colors.line, borderRadius: 12 }}>
                   <CrestView url={draft.uri} name={nome} size={44} />
-                  <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: colors.deepBlue }} numberOfLines={1}>
+                  <Text style={{ flex: 1, fontSize: 18, fontWeight: '800', color: colors.ink }} numberOfLines={1}>
                     {nome}
                   </Text>
                 </View>

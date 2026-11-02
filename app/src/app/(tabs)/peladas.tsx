@@ -1,11 +1,10 @@
-// V4.6: aba Peladas. A lista completa das minhas peladas, a pelada principal e os dois caminhos para entrar numa
+// V4.6: aba Peladas. A lista completa das minhas peladas e os dois caminhos para entrar numa
 // nova (criar ou convite). Lê a mesma get_player_central da Início (nada é recalculado aqui).
 import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useRef, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
 import { Crest } from '../../lib/crest';
-import { friendly } from '../../lib/errors';
 import { supabase } from '../../lib/supabase';
 import { Text } from '../../lib/text';
 import { colors, positionLabel, type } from '../../lib/theme';
@@ -47,20 +46,6 @@ export default function Peladas() {
     }, [reload]),
   );
 
-  // Um toque por vez: toque duplo não marca e desmarca em seguida.
-  const busy = useRef(false);
-  async function principal(p: Pelada) {
-    if (busy.current) return;
-    busy.current = true;
-    try {
-      const { error } = await supabase.rpc('set_primary_pelada', { p_pelada: p.is_primary ? null : p.id });
-      if (error) return setErr(friendly(error.message));
-      setReload((n) => n + 1);
-    } finally {
-      busy.current = false;
-    }
-  }
-
   return (
     <Screen>
       <ErrorText>{err}</ErrorText>
@@ -93,17 +78,6 @@ export default function Peladas() {
             </View>
             <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text>
           </Pressable>
-          {peladas!.length > 1 && (
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel={p.is_primary ? `${p.name} é a pelada ativa na Central. Toque para desmarcar.` : `Usar ${p.name} na Central`}
-              onPress={() => principal(p)}
-              style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'flex-start', paddingRight: 12 }}>
-              <Text style={{ fontSize: 13, fontWeight: '600', color: p.is_primary ? colors.darkGold : colors.blue }}>
-                {p.is_primary ? 'Ativa na Central' : 'Usar na Central'}
-              </Text>
-            </Pressable>
-          )}
         </Card>
       ))}
       {peladas && peladas.length > 0 && (

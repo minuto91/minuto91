@@ -1,32 +1,23 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
-import { Text } from '../../lib/text';
 
-import { Avatar, pickAndUploadAvatar, removeAvatar } from '../../lib/avatar';
-import { confirm } from '../../lib/dialog';
+import { Avatar } from '../../lib/avatar';
 import { friendly } from '../../lib/errors';
 import {
   AchievementsList,
   CardsList,
   Career,
-  CareerByPelada,
-  CareerSummary,
   loadMyProfile,
   loadPlayer,
   MyProfile,
-  PeladasList,
   PlayerProfile,
 } from '../../lib/profile';
 import { useAuth } from '../../lib/session';
-import { supabase } from '../../lib/supabase';
-import { colors, FEET, Foot, positionLabel } from '../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
+import { positionLabel } from '../../lib/theme';
+import { Button, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
 
 const TABS = [
-  { value: 'geral', label: 'Visão geral' },
-  { value: 'carreira', label: 'Carreira' },
-  { value: 'peladas', label: 'Peladas' },
   { value: 'conquistas', label: 'Conquistas' },
   { value: 'cartas', label: 'Cards' },
 ] as const;
@@ -37,17 +28,11 @@ type Tab = (typeof TABS)[number]['value'];
 export default function Perfil() {
   const router = useRouter();
   const { session } = useAuth();
-  const [tab, setTab] = useState<Tab>('geral');
+  const [tab, setTab] = useState<Tab>('conquistas');
   const [me, setMe] = useState<MyProfile | null>(null);
   const [player, setPlayer] = useState<PlayerProfile | null>(null);
   const [career, setCareer] = useState<Career | null>(null);
-  const [editing, setEditing] = useState(false);
-  const [name, setName] = useState('');
-  const [foot, setFoot] = useState<Foot | null>(null);
-  const [reload, setReload] = useState(0);
-  const [busy, setBusy] = useState<string | null>(null);
   const [msg, setMsg] = useState<string | null>(null);
-  const [ok, setOk] = useState<string | null>(null);
   const mainPosition = career?.visible ? (career.peladas.find((p) => p.status === 'active')?.position ?? null) : null;
 
   useEffect(() => {
@@ -59,8 +44,6 @@ export default function Perfil() {
         if (!alive) return;
         if (!mine) return setMsg('Perfil não encontrado.');
         setMe(mine);
-        setName(mine.display_name);
-        setFoot((mine.dominant_foot as Foot | null) ?? null);
         setPlayer(other.profile);
         setCareer(other.career);
       } catch (e) {
@@ -70,51 +53,7 @@ export default function Perfil() {
     return () => {
       alive = false;
     };
-  }, [session, reload]);
-
-  async function trocarFoto() {
-    if (!session) return;
-    setBusy('foto');
-    setMsg(null);
-    setOk(null);
-    try {
-      if (await pickAndUploadAvatar(session.user.id)) {
-        setOk('Foto atualizada.');
-        setReload((n) => n + 1);
-      }
-    } catch (e) {
-      setMsg(e instanceof Error ? e.message : 'Não foi possível usar essa foto.');
-    }
-    setBusy(null);
-  }
-
-  function tirarFoto() {
-    confirm('Remover foto', 'Sua foto sai do perfil e dos Cards. Você pode pôr outra depois.', 'Remover', async () => {
-      setBusy('remover');
-      setMsg(null);
-      setOk(null);
-      try {
-        await removeAvatar();
-        setOk('Foto removida.');
-        setReload((n) => n + 1);
-      } catch (e) {
-        setMsg((e as Error).message);
-      }
-      setBusy(null);
-    });
-  }
-
-  async function salvar() {
-    setBusy('salvar');
-    setMsg(null);
-    setOk(null);
-    const { error } = await supabase.rpc('update_my_profile', { p_display_name: name, p_dominant_foot: foot });
-    setBusy(null);
-    if (error) return setMsg(friendly(error.message));
-    setOk('Perfil salvo.');
-    setEditing(false);
-    setReload((n) => n + 1);
-  }
+  }, [session]);
 
   if (!me || !career || !player) {
     return (
@@ -124,8 +63,6 @@ export default function Perfil() {
       </Screen>
     );
   }
-
-  const changed = name.trim() !== me.display_name || foot !== me.dominant_foot;
 
   return (
     <Screen>
@@ -137,60 +74,12 @@ export default function Perfil() {
           {mainPosition ? <Sub>{positionLabel(mainPosition)}</Sub> : null}
         </View>
       </View>
-      <Chips options={TABS} value={tab} onChange={(v) => { setOk(null); setTab(v); }} />
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        <Button title="Minha conta" kind="secondary" size="sm" onPress={() => router.push('/conta')} />
+        <Button title="Personalizar Central" kind="secondary" size="sm" onPress={() => router.push('/personalizar-central')} />
+      </View>
+      <Chips options={TABS} value={tab} onChange={setTab} />
       <ErrorText>{msg}</ErrorText>
-      {ok && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{ok}</Text>}
-
-      {tab === 'geral' && (
-        <>
-          {career.visible && <CareerSummary career={career} />}
-          {!editing ? (
-            <Button title="Editar foto, nome e pé" kind="secondary" onPress={() => setEditing(true)} />
-          ) : (
-            <>
-              <Card>
-                <View style={{ alignItems: 'center', gap: 10, paddingVertical: 6 }}>
-                  <Avatar path={me.avatar_path} name={me.display_name} size={120} />
-                  <Sub>Aparece no perfil e nos Cards.</Sub>
-                </View>
-                <Button
-                  title={me.avatar_path ? 'Trocar foto' : 'Escolher foto'}
-                  kind="secondary"
-                  onPress={trocarFoto}
-                  loading={busy === 'foto'}
-                  disabled={!!busy}
-                />
-                {me.avatar_path && (
-                  <Button title="Remover foto" kind="danger" onPress={tirarFoto} loading={busy === 'remover'} disabled={!!busy} />
-                )}
-              </Card>
-              <Card>
-                <Body>Nome</Body>
-                <Sub>É o nome que aparece nas suas peladas.</Sub>
-                <Input value={name} onChangeText={setName} maxLength={80} autoCapitalize="words" placeholder="Seu apelido" />
-                <Body>Pé dominante</Body>
-                <Sub>Opcional. Só informativo: não muda nota nem Card.</Sub>
-                <Chips options={FEET} value={foot} onChange={(v) => setFoot(v === foot ? null : v)} />
-              </Card>
-              <Button title="Salvar" onPress={salvar} loading={busy === 'salvar'} disabled={!changed || !name.trim() || !!busy} />
-              <Button title="Cancelar" kind="secondary" onPress={() => setEditing(false)} />
-            </>
-          )}
-          <Sub>A posição é escolhida em cada pelada: abra o seu Card na pelada para mudar.</Sub>
-          <Button title="Minha Carreira" onPress={() => router.push('/carreira')} />
-          <Button title="Personalizar Central" kind="secondary" onPress={() => router.push('/personalizar-central')} />
-          <Button title="Minha conta" kind="secondary" onPress={() => router.push('/conta')} />
-        </>
-      )}
-
-      {tab === 'carreira' && career.visible && (
-        <>
-          <CareerSummary career={career} />
-          <CareerByPelada career={career} />
-        </>
-      )}
-
-      {tab === 'peladas' && player.visible && <PeladasList peladas={player.peladas} isMe />}
 
       {tab === 'conquistas' && career.visible && <AchievementsList items={career.achievements} />}
 

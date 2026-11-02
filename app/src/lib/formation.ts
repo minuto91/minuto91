@@ -7,8 +7,15 @@ export type Formation = '4-3-3' | '4-4-2';
 export const FORMATIONS: Formation[] = ['4-3-3', '4-4-2'];
 export const FORMATION_SIZE = 11;
 
-/** Espaço tático: posição sugerida (uma ou mais siglas) e lugar no campo (x e y em %, ataque em cima). */
-export type Slot = { id: string; suggested: string[]; x: number; y: number };
+/**
+ * Espaço tático: posição sugerida (uma ou mais siglas), outras posições que também servem ali (accepts) e lugar no
+ * campo (x e y em %, ataque em cima). Meio-campo: MEI e VOL servem em qualquer um dos espaços do meio. Ataque: PD, PE,
+ * ATA e CA servem em qualquer um dos espaços do ataque. Goleiro, laterais e zagueiros só servem na própria posição.
+ */
+export type Slot = { id: string; suggested: string[]; accepts?: string[]; x: number; y: number };
+
+const MID = ['MEI', 'VOL'];
+const FWD = ['PD', 'PE', 'ATA', 'CA'];
 
 const BACK: Slot[] = [
   { id: 'GOL', suggested: ['GOL'], x: 50, y: 81 },
@@ -21,21 +28,21 @@ const BACK: Slot[] = [
 export const SLOTS: Record<Formation, Slot[]> = {
   '4-3-3': [
     ...BACK,
-    { id: 'MEI1', suggested: ['MEI'], x: 24, y: 38 },
-    { id: 'VOL', suggested: ['VOL'], x: 50, y: 44 },
-    { id: 'MEI2', suggested: ['MEI'], x: 76, y: 38 },
-    { id: 'PE', suggested: ['PE'], x: 15, y: 14 },
-    { id: 'CA', suggested: ['CA'], x: 50, y: 9 },
-    { id: 'PD', suggested: ['PD'], x: 85, y: 14 },
+    { id: 'MEI1', suggested: ['MEI'], accepts: MID, x: 24, y: 38 },
+    { id: 'VOL', suggested: ['VOL'], accepts: MID, x: 50, y: 44 },
+    { id: 'MEI2', suggested: ['MEI'], accepts: MID, x: 76, y: 38 },
+    { id: 'PE', suggested: ['PE'], accepts: FWD, x: 15, y: 14 },
+    { id: 'CA', suggested: ['CA'], accepts: FWD, x: 50, y: 9 },
+    { id: 'PD', suggested: ['PD'], accepts: FWD, x: 85, y: 14 },
   ],
   '4-4-2': [
     ...BACK,
-    { id: 'MEI1', suggested: ['MEI'], x: 12, y: 36 },
-    { id: 'VOL1', suggested: ['VOL'], x: 37, y: 42 },
-    { id: 'VOL2', suggested: ['VOL', 'MEI'], x: 63, y: 42 },
-    { id: 'MEI2', suggested: ['MEI'], x: 88, y: 36 },
-    { id: 'CA', suggested: ['CA'], x: 35, y: 11 },
-    { id: 'ATA', suggested: ['ATA'], x: 65, y: 11 },
+    { id: 'MEI1', suggested: ['MEI'], accepts: MID, x: 12, y: 36 },
+    { id: 'VOL1', suggested: ['VOL'], accepts: MID, x: 37, y: 42 },
+    { id: 'VOL2', suggested: ['VOL', 'MEI'], accepts: MID, x: 63, y: 42 },
+    { id: 'MEI2', suggested: ['MEI'], accepts: MID, x: 88, y: 36 },
+    { id: 'CA', suggested: ['CA'], accepts: FWD, x: 35, y: 11 },
+    { id: 'ATA', suggested: ['ATA'], accepts: FWD, x: 65, y: 11 },
   ],
 };
 
@@ -45,7 +52,7 @@ export const slotLabel = (s: Slot) => s.suggested.join('/');
 /** O jogador está num espaço diferente da posição oficial dele? (indicação discreta, nunca bloqueia) */
 export function outOfPosition(slot: Slot, position: string | null | undefined) {
   if (!position) return true;
-  if (slot.suggested.includes(position)) return false;
+  if (slot.suggested.includes(position) || slot.accepts?.includes(position)) return false;
   // Cadastro antigo (só o setor): fora apenas se o setor for outro.
   if (!/^[A-Z]+$/.test(position)) return positionSector(slot.suggested[0]) !== position;
   return true;
@@ -82,7 +89,10 @@ export function autoAssign(
     }
   };
   fill((slot, pos) => !!pos && slot.suggested.includes(pos));
-  fill((slot, pos) => !!pos && positionSector(pos) === positionSector(slot.suggested[0]));
+  fill((slot, pos) => !!pos && !!slot.accepts?.includes(pos));
+  // Setor: nunca para o gol (jogador de linha só vai para o gol por último, quando o time não tem goleiro).
+  fill((slot, pos) => slot.id !== 'GOL' && !!pos && positionSector(pos) === positionSector(slot.suggested[0]));
+  fill((slot) => slot.id !== 'GOL');
   fill(() => true);
   return out;
 }

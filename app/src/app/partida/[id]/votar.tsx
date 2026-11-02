@@ -237,7 +237,7 @@ function PlayerBox({ t, team }: { t: RatingTarget; team: string }) {
     <Card>
       <View style={{ alignItems: 'center', gap: 6 }}>
         <Avatar path={t.avatar_path} name={t.name} size={88} />
-        <Text style={{ fontSize: 20, fontWeight: '800', color: colors.deepBlue, textAlign: 'center' }}>{t.name}</Text>
+        <Text style={{ fontSize: 20, fontWeight: '800', color: colors.ink, textAlign: 'center' }}>{t.name}</Text>
         <Sub>
           {positionLabel(t.position)} · {team} · {t.is_teammate ? 'seu time' : 'adversário'}
         </Sub>
@@ -270,7 +270,7 @@ function Resenha({ v, onSaved }: { v: RatingVote; onSaved: (r: RatingVote) => vo
   }
   return (
     <Card>
-      <Text style={{ fontWeight: '700', color: colors.deepBlue }}>Quem ficou para a resenha depois do jogo?</Text>
+      <Text style={{ fontWeight: '700', color: colors.ink }}>Quem ficou para a resenha depois do jogo?</Text>
       <Sub>Marque todos que ficaram. Ninguém vê a sua resposta.</Sub>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         {(v.targets ?? []).map((t) => {
@@ -331,11 +331,11 @@ function Awards({ v, onSaved }: { v: RatingVote; onSaved: (r: RatingVote) => voi
   }
   return (
     <Card>
-      <Text style={{ fontWeight: '700', color: colors.deepBlue }}>Craque da partida (opcional)</Text>
+      <Text style={{ fontWeight: '700', color: colors.ink }}>Craque da partida (opcional)</Text>
       <Chips options={options} value={craque} onChange={(x) => { const n = x === craque ? null : x; setCraque(n); void save(n, bola); }} />
       {v.bola_murcha_enabled && (
         <>
-          <Text style={{ fontWeight: '700', color: colors.deepBlue, marginTop: 8 }}>Bola Murcha (opcional)</Text>
+          <Text style={{ fontWeight: '700', color: colors.ink, marginTop: 8 }}>Bola Murcha (opcional)</Text>
           <Chips options={options} value={bola} onChange={(x) => { const n = x === bola ? null : x; setBola(n); void save(craque, n); }} />
         </>
       )}

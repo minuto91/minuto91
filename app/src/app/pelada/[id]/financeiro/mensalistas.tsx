@@ -169,7 +169,7 @@ export default function Mensalistas() {
           {m.overdue_cents > 0 ? (
             <Text style={{ color: colors.danger, fontWeight: '600' }}>Atrasado: {formatBRL(m.overdue_cents)}</Text>
           ) : m.status === 'active' ? (
-            <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>Em dia{m.open_cents > 0 ? ` · ${formatBRL(m.open_cents)} a vencer` : ''}</Text>
+            <Text style={{ color: colors.ink, fontWeight: '600' }}>Em dia{m.open_cents > 0 ? ` · ${formatBRL(m.open_cents)} a vencer` : ''}</Text>
           ) : null}
           {!m.person_active && <Sub>Fora da pelada: sem novas mensalidades.</Sub>}
           {m.notes && <Sub>{m.notes}</Sub>}

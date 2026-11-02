@@ -194,7 +194,7 @@ export default function Lancamentos() {
         <Pressable accessibilityRole="button" accessibilityLabel="Mês anterior" onPress={() => setMonth(monthShift(month, -1))} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}>
           <Text style={{ color: colors.blue, fontSize: 22, fontWeight: '800' }}>‹</Text>
         </Pressable>
-        <Text style={{ fontWeight: '800', color: colors.deepBlue, fontSize: 16 }}>{monthLabel(month)}</Text>
+        <Text style={{ fontWeight: '800', color: colors.ink, fontSize: 16 }}>{monthLabel(month)}</Text>
         <Pressable
           accessibilityRole="button"
           accessibilityLabel="Próximo mês"

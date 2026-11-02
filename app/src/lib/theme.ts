@@ -1,41 +1,45 @@
 import type { TextStyle } from 'react-native';
 
-// Brand Book v2.1 (sem modo escuro).
+// Brand Book v2.1 + revitalização visual (V9): paleta slate (equivalente à do Tailwind) com o azul e o dourado da marca.
+// Tela em slate-50, superfícies (cartões) brancas, texto em slate-900 e secundário em slate-500.
 export const colors = {
   blue: '#1255C6',
+  blueSoft: '#EAF1FD', // azul-50: fundo de item ativo e de botão secundário
   deepBlue: '#103675',
   gold: '#D4A63D', // apenas detalhe, nunca texto sobre branco
   darkGold: '#8A6414', // texto e ícones
-  bg: '#F4F7FC', // cinza claro: só superfícies secundárias (o fundo das telas é branco, Brand Book 5.1)
-  ink: '#15243B',
-  muted: '#5E6E86',
+  screen: '#F8FAFC', // slate-50: fundo das telas
+  bg: '#F1F5F9', // slate-100: superfícies secundárias e esqueletos
+  ink: '#0F172A', // slate-900
+  body: '#334155', // slate-700
+  muted: '#64748B', // slate-500
   white: '#FFFFFF',
   danger: '#B42318',
-  line: '#D9E0EC',
+  dangerSoft: '#FEF3F2',
+  line: '#E2E8F0', // slate-200
 };
 
-// V4.6 — Design System (docs/v46_design_system.md). Inter é a fonte única (lib/text.tsx).
-// Escala de texto: título 26, seção 19, cartão 17, texto 15–16, legenda 13–14, metadados 12–13, números 28–36.
+// V9 — escala de texto (Tailwind): título 24 bold, seção 18 semibold, cartão 16 semibold, texto 15, legenda 13, meta 12.
 export const type: Record<'title' | 'section' | 'cardTitle' | 'body' | 'bodySm' | 'caption' | 'meta' | 'number', TextStyle> = {
-  title: { fontSize: 26, lineHeight: 32, fontWeight: '700', color: '#103675' },
-  section: { fontSize: 19, lineHeight: 25, fontWeight: '700', color: '#103675' },
-  cardTitle: { fontSize: 17, lineHeight: 23, fontWeight: '600', color: '#15243B' },
-  body: { fontSize: 16, lineHeight: 23, fontWeight: '400', color: '#15243B' },
-  bodySm: { fontSize: 15, lineHeight: 21, fontWeight: '400', color: '#15243B' },
-  caption: { fontSize: 14, lineHeight: 20, fontWeight: '400', color: '#5E6E86' },
-  meta: { fontSize: 13, lineHeight: 18, fontWeight: '500', color: '#5E6E86' },
-  number: { fontSize: 32, lineHeight: 38, fontWeight: '800', color: '#103675', fontVariant: ['tabular-nums'] },
+  title: { fontSize: 24, lineHeight: 30, fontWeight: '700', color: '#0F172A', letterSpacing: -0.4 },
+  section: { fontSize: 18, lineHeight: 24, fontWeight: '700', color: '#0F172A', letterSpacing: -0.2 },
+  cardTitle: { fontSize: 16, lineHeight: 22, fontWeight: '600', color: '#0F172A' },
+  body: { fontSize: 15, lineHeight: 22, fontWeight: '400', color: '#334155' },
+  bodySm: { fontSize: 14, lineHeight: 20, fontWeight: '400', color: '#334155' },
+  caption: { fontSize: 13, lineHeight: 19, fontWeight: '400', color: '#64748B' },
+  meta: { fontSize: 12, lineHeight: 16, fontWeight: '500', color: '#64748B' },
+  number: { fontSize: 30, lineHeight: 36, fontWeight: '800', color: '#0F172A', fontVariant: ['tabular-nums'] },
 };
 
-/** Raios: campos e botões 12, cartões 16 (V8.4, E10), folhas e modais 20, chips 22 (pílula). */
-export const radius = { sm: 8, md: 12, card: 16, lg: 20, pill: 22 } as const;
-/** V8.4 (E10): margens laterais 20, espaço entre blocos 16, largura máxima do conteúdo ~560. */
-export const layout = { gutter: 20, gap: 16, maxWidth: 560 } as const;
-/** Espaçamento em múltiplos de 4. */
+/** Raios (Tailwind): sm 8 (rounded-lg), md 10, card 12 (rounded-xl), lg 16 (rounded-2xl), pill 999 (rounded-full). */
+export const radius = { sm: 8, md: 10, card: 12, lg: 16, pill: 999 } as const;
+/** Margens laterais 16, espaço entre blocos 16 (Tailwind p-4 / gap-4), largura máxima do conteúdo ~560. */
+export const layout = { gutter: 16, gap: 16, maxWidth: 560 } as const;
+/** Espaçamento em múltiplos de 4 (Tailwind: 1, 2, 3, 4, 5, 7). */
 export const space = { xs: 4, sm: 8, md: 12, lg: 16, xl: 20, xxl: 28 } as const;
-/** Sombra moderada dos cartões (iOS/web) e elevação equivalente (Android). */
+/** Sombra leve dos cartões (shadow-sm) e elevação equivalente (Android). */
 export const shadow = {
-  card: { shadowColor: '#103675', shadowOpacity: 0.07, shadowRadius: 10, shadowOffset: { width: 0, height: 3 }, elevation: 2 },
+  card: { shadowColor: '#0F172A', shadowOpacity: 0.05, shadowRadius: 6, shadowOffset: { width: 0, height: 1 }, elevation: 1 },
 } as const;
 
 // V4.3: as dez posições oficiais (041). O setor é o que as fórmulas oficiais usam (inalteradas); a sigla é a

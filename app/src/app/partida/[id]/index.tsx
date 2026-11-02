@@ -484,7 +484,7 @@ export default function Partida() {
       <Collapsible title="Estatísticas" initiallyOpen={match.status !== 'finalized'}>
       {(['A', 'B'] as Team[]).map((t) => (
         <View key={t} style={{ gap: 6 }}>
-          <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 8 }}>
+          <Text style={{ fontWeight: '800', color: colors.ink, marginTop: 8 }}>
             {t === 'A' ? match.team_a_name : match.team_b_name}
           </Text>
           {players

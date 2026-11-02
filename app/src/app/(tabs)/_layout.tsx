@@ -13,7 +13,7 @@ type TabIcon = 'inicio' | 'peladas' | 'carreira' | 'perfil';
 function Icon({ name, color }: { name: TabIcon; color: string }) {
   const p = { stroke: color, strokeWidth: 1.9, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   return (
-    <Svg width={24} height={24} viewBox="0 0 24 24">
+    <Svg width={22} height={22} viewBox="0 0 24 24">
       {name === 'inicio' && <Path d="M3 11 L12 4 L21 11 V20 H14 V14 H10 V20 H3 Z" {...p} />}
       {name === 'peladas' && (
         <>
@@ -38,14 +38,15 @@ export default function TabsLayout() {
       // E15: o "voltar" do sistema devolve à aba de onde a pessoa veio (ex.: Carta → Carreira → voltar à Central).
       backBehavior="history"
       screenOptions={{
-        headerTintColor: colors.blue,
-        headerTitleStyle: { color: colors.deepBlue, fontFamily: 'Inter_700Bold', fontSize: 17 },
+        headerTintColor: colors.ink,
+        headerTitleStyle: { color: colors.ink, fontFamily: 'Inter_700Bold', fontSize: 17 },
+        headerStyle: { backgroundColor: colors.screen },
         headerShadowVisible: false,
         tabBarActiveTintColor: colors.blue,
         tabBarInactiveTintColor: colors.muted,
-        tabBarLabelStyle: { fontFamily: 'Inter_600SemiBold', fontSize: 12 },
-        tabBarStyle: { borderTopColor: colors.line, backgroundColor: colors.white },
-        sceneStyle: { backgroundColor: colors.white },
+        tabBarLabelStyle: { fontFamily: 'Inter_600SemiBold', fontSize: 11 },
+        tabBarStyle: { borderTopColor: colors.line, backgroundColor: colors.white, height: 60, paddingTop: 6, paddingBottom: 6 },
+        sceneStyle: { backgroundColor: colors.screen },
       }}>
       <Tabs.Screen
         name="index"

@@ -61,11 +61,12 @@ function Gate() {
       )}
       <Stack
         screenOptions={{
-          headerTintColor: colors.blue,
-          headerTitleStyle: { color: colors.deepBlue, fontFamily: 'Inter_700Bold', fontSize: 17 },
+          headerTintColor: colors.ink,
+          headerTitleStyle: { color: colors.ink, fontFamily: 'Inter_700Bold', fontSize: 17 },
+          headerStyle: { backgroundColor: colors.screen },
           headerBackTitleStyle: { fontFamily: 'Inter_500Medium' },
           headerShadowVisible: false,
-          contentStyle: { backgroundColor: colors.white },
+          contentStyle: { backgroundColor: colors.screen },
         }}>
         {/* V4.6: Início, Peladas, Carreira e Perfil ficam nas abas ((tabs)/_layout.tsx); o resto abre por cima. */}
         <Stack.Screen name="(tabs)" options={{ headerShown: false, title: 'Início' }} />

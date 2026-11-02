@@ -20,7 +20,7 @@ export function LegalDocument({ doc }: { doc: 'terms' | 'privacy' }) {
           key={i}
           style={
             isHeading(l)
-              ? { fontSize: 17, fontWeight: '800', color: colors.deepBlue, marginTop: 10 }
+              ? { fontSize: 17, fontWeight: '800', color: colors.ink, marginTop: 10 }
               : { fontSize: 15, lineHeight: 22, color: colors.ink }
           }>
           {l}

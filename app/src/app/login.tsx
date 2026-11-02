@@ -150,7 +150,7 @@ export default function Login() {
               <LoginButton kind="primary" title="Entrar" onPress={entrar} loading={busy === 'entrar'} disabled={busy !== null && busy !== 'entrar'} />
               <LoginButton kind="outline" title="Criar conta" onPress={cadastrar} loading={busy === 'cadastrar'} disabled={busy !== null && busy !== 'cadastrar'} />
               <Pressable accessibilityRole="button" onPress={() => { setForgot(true); setMsg(null); }} style={{ minHeight: 36, justifyContent: 'center', alignSelf: 'center' }}>
-                <Text style={{ color: L.gold, fontWeight: '500', fontSize: 16 }}>Esqueci minha senha</Text>
+                <Text style={{ color: L.gold, fontWeight: '500', fontSize: 14 }}>Esqueci minha senha</Text>
               </Pressable>
             </>
           )}

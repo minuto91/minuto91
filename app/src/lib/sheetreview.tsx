@@ -64,7 +64,7 @@ export function SheetReview({
       </Text>
       {correction && (
         <View style={{ gap: 2 }}>
-          <Text style={[type.meta, { color: colors.deepBlue }]}>Diferenças</Text>
+          <Text style={[type.meta, { color: colors.ink }]}>Diferenças</Text>
           {diff.length === 0 ? <Text style={type.caption}>Nenhuma mudança de jogador ou estatística.</Text> : diff.map((d) => <Text key={d} style={type.bodySm}>{d}</Text>)}
           {diff.some((d) => d.startsWith('Entrou') || d.startsWith('Saiu')) && (
             <Text style={[type.caption, { color: colors.danger }]}>Mudar quem jogou pode reiniciar a votação.</Text>

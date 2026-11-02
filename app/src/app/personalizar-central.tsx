@@ -104,7 +104,7 @@ export default function PersonalizarCentral() {
       {offline || block.stale ? <Notice tone="warn">Sem conexão ou sem confirmação do servidor: não é possível salvar agora.</Notice> : null}
       <ErrorText>{msg}</ErrorText>
       {ok && (
-        <Text style={{ color: colors.deepBlue, fontWeight: '600' }} accessibilityLiveRegion="polite">
+        <Text style={{ color: colors.ink, fontWeight: '600' }} accessibilityLiveRegion="polite">
           {ok}
         </Text>
       )}
@@ -137,7 +137,7 @@ export default function PersonalizarCentral() {
         })}
       </Card>
 
-      <Sub>Sempre visíveis: seu cabeçalho, a escolha da pelada, votações perto do fim, a Carta e “Precisa de atenção”.</Sub>
+      <Sub>Sempre visíveis: seu cabeçalho, a escolha da pelada, votações perto do fim, o Card e “Precisa de atenção”.</Sub>
 
       <Button title="Salvar" onPress={salvar} loading={busy === 'save'} disabled={!dirty || !writable || !!busy} />
       <Button title="Restaurar padrão" kind="secondary" onPress={restaurar} loading={busy === 'reset'} disabled={server.version === 0 || !writable || !!busy} />

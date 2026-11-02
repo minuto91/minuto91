@@ -1,15 +1,17 @@
 import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Pressable, Share } from 'react-native';
+import { Share, View } from 'react-native';
 import { Text } from '../lib/text';
 
+import { Avatar, pickAndUploadAvatar, removeAvatar } from '../lib/avatar';
+import { confirm as confirmDialog } from '../lib/dialog';
 import { friendly } from '../lib/errors';
 import { LEGAL_VERSIONS } from '../lib/legalText';
-import { loadMyProfile, VISIBILITY, type Visibility } from '../lib/profile';
+import { loadMyProfile, type MyProfile, VISIBILITY, type Visibility } from '../lib/profile';
 import { NotificationSettings } from '../lib/push';
-import { signOut } from '../lib/session';
+import { signOut, useAuth } from '../lib/session';
 import { supabase } from '../lib/supabase';
-import { colors } from '../lib/theme';
+import { colors, FEET, type Foot } from '../lib/theme';
 import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
 
 type Blocked = { user_id: string; name: string };
@@ -19,6 +21,10 @@ const fmtDay = (iso: string) => new Date(iso).toLocaleDateString('pt-BR');
 
 export default function Conta() {
   const router = useRouter();
+  const { session } = useAuth();
+  const [me, setMe] = useState<MyProfile | null>(null);
+  const [name, setName] = useState('');
+  const [foot, setFoot] = useState<Foot | null>(null);
   const [purgeAfter, setPurgeAfter] = useState<string | null>(null);
   // V7.7 (055): 'recoverable' (30 dias) ou 'finalizing' (prazo vencido, exclusão em andamento; sem recuperação).
   const [canRecover, setCanRecover] = useState(true);
@@ -52,6 +58,9 @@ export default function Conta() {
       setPurgeAfter((st as { deletion_pending: boolean; purge_after: string | null })?.purge_after ?? null);
       setCanRecover((st as { can_recover?: boolean } | null)?.can_recover ?? true);
       if (mine) {
+        setMe(mine);
+        setName(mine.display_name);
+        setFoot((mine.dominant_foot as Foot | null) ?? null);
         setSaved({ profile: mine.profile_visibility, career: mine.career_visibility });
         setProfileVis(mine.profile_visibility);
         setCareerVis(mine.career_visibility);
@@ -102,6 +111,45 @@ export default function Conta() {
     setReload((n) => n + 1);
   }
 
+  async function trocarFoto() {
+    if (!session) return;
+    setBusy('foto');
+    setMsg(null);
+    setOk(null);
+    try {
+      if (await pickAndUploadAvatar(session.user.id)) {
+        setOk('Foto atualizada.');
+        setReload((n) => n + 1);
+      }
+    } catch (e) {
+      setMsg(e instanceof Error ? e.message : 'Não foi possível usar essa foto.');
+    }
+    setBusy(null);
+  }
+
+  function tirarFoto() {
+    confirmDialog('Remover foto', 'Sua foto sai do perfil e dos Cards. Você pode pôr outra depois.', 'Remover', async () => {
+      setBusy('remover');
+      setMsg(null);
+      setOk(null);
+      try {
+        await removeAvatar();
+        setOk('Foto removida.');
+        setReload((n) => n + 1);
+      } catch (e) {
+        setMsg((e as Error).message);
+      }
+      setBusy(null);
+    });
+  }
+
+  async function salvarPerfil() {
+    const r = await run('perfil', 'update_my_profile', { p_display_name: name, p_dominant_foot: foot });
+    if (!r.ok) return;
+    setOk('Perfil salvo.');
+    setReload((n) => n + 1);
+  }
+
   async function salvarPrivacidade() {
     const r = await run('privacidade', 'set_my_privacy', { p_profile: profileVis, p_career: careerVis });
     if (!r.ok) return;
@@ -144,14 +192,35 @@ export default function Conta() {
     <Screen>
       <Title>Minha conta</Title>
       <ErrorText>{msg}</ErrorText>
-      {ok && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{ok}</Text>}
+      {ok && <Text style={{ color: colors.ink, fontWeight: '600' }}>{ok}</Text>}
 
-      <Pressable onPress={() => router.push('/perfil')} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
-        <Card>
-          <Body>Meu perfil ›</Body>
-          <Sub>Foto, nome e pé dominante. A posição e o Card ficam em cada pelada.</Sub>
-        </Card>
-      </Pressable>
+      {me && (
+        <>
+          <Text style={section}>Meu perfil</Text>
+          <Card>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <Avatar path={me.avatar_path} name={me.display_name} size={64} />
+              <View style={{ flex: 1, gap: 8 }}>
+                <Sub>Aparece no perfil e nos Cards.</Sub>
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+                  <Button title={me.avatar_path ? 'Trocar foto' : 'Escolher foto'} kind="secondary" size="sm" onPress={trocarFoto} loading={busy === 'foto'} disabled={!!busy} />
+                  {me.avatar_path && <Button title="Remover" kind="danger" size="sm" onPress={tirarFoto} loading={busy === 'remover'} disabled={!!busy} />}
+                </View>
+              </View>
+            </View>
+            <Body>Nome</Body>
+            <Input value={name} onChangeText={setName} maxLength={80} autoCapitalize="words" placeholder="Seu apelido" />
+            <Body>Pé dominante</Body>
+            <Chips options={FEET} value={foot} onChange={(v) => setFoot(v === foot ? null : v)} />
+            <Button
+              title="Salvar"
+              onPress={salvarPerfil}
+              loading={busy === 'perfil'}
+              disabled={(name.trim() === me.display_name && foot === me.dominant_foot) || !name.trim() || !!busy}
+            />
+          </Card>
+        </>
+      )}
       <Button title="Sair da conta" kind="secondary" onPress={signOut} />
 
       <Text style={section}>Notificações</Text>
@@ -217,7 +286,7 @@ export default function Conta() {
         </Sub>
         {code ? (
           <>
-            <Text style={{ fontSize: 22, fontWeight: '900', color: colors.deepBlue, textAlign: 'center', letterSpacing: 1 }}>
+            <Text style={{ fontSize: 22, fontWeight: '900', color: colors.ink, textAlign: 'center', letterSpacing: 1 }}>
               {code}
             </Text>
             <Button title="Guardar o código" kind="secondary" onPress={() => Share.share({ message: code })} />
@@ -255,4 +324,4 @@ export default function Conta() {
   );
 }
 
-const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 10 };
+const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.ink, marginTop: 10 };

@@ -8,6 +8,7 @@ import {
   countLabel,
   createGate,
   displayNames,
+  goalkeeperWarning,
   groupKey,
   idempotent,
   isOutside,
@@ -154,4 +155,12 @@ test('campo: posicionamento automático sem sobreposição (12 e 30 jogadores)',
     assert.equal(overlaps(p).length, 0, `n=${n}`);
     assert.ok(Object.values(p).every((q) => !isOutside(q)), 'automático sempre dentro do campo');
   }
+});
+
+test('aviso de goleiro antes do sorteio: 0, 1 ou ímpar avisa; par não', () => {
+  assert.equal(goalkeeperWarning(['ZAG']), null);
+  assert.match(goalkeeperWarning(['ZAG', 'MEI'])!, /Nenhum goleiro/);
+  assert.match(goalkeeperWarning(['GOL', 'ZAG', 'MEI'])!, /Só 1 goleiro/);
+  assert.equal(goalkeeperWarning(['GOL', 'goalkeeper', 'ZAG']), null);
+  assert.match(goalkeeperWarning(['GOL', 'GOL', 'GOL', 'ZAG'])!, /3 goleiros/);
 });

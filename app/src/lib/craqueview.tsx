@@ -89,7 +89,7 @@ export function CraqueView({ state, seasons, seasonId, onSeason, busy, msg, now,
           )}
           {state.status === 'awaiting_admin' && state.is_admin && (
             <>
-              <Text style={[type.body, { color: colors.deepBlue }]}>Vencedor: {name(state.winner_membership_id)}</Text>
+              <Text style={[type.body, { color: colors.ink }]}>Vencedor: {name(state.winner_membership_id)}</Text>
               <Button title="Confirmar e publicar" loading={busy} onPress={() => onConfirm()} />
             </>
           )}

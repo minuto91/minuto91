@@ -1,7 +1,7 @@
 // V8.2 — visual da tela de entrada (exceção cinematográfica escura; o resto do app segue o branding V8.1).
 import { Image } from 'expo-image';
 import { ReactNode, useState } from 'react';
-import { ActivityIndicator, Dimensions, Pressable, StyleSheet, TextInputProps, View } from 'react-native';
+import { ActivityIndicator, Dimensions, Platform, Pressable, StyleSheet, TextInputProps, View } from 'react-native';
 import Svg, { Defs, G, LinearGradient, Path, Rect, Stop } from 'react-native-svg';
 
 import { Text, TextInput } from './text';
@@ -51,28 +51,23 @@ export function LoginBackground() {
 }
 
 const Mail = () => (
-  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={L.text} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={L.text} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
     <Rect x="3" y="5" width="18" height="14" rx="2.5" />
     <Path d="M3.5 7l8.5 6 8.5-6" />
   </Svg>
 );
 const Lock = () => (
-  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={L.text} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={L.text} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
     <Rect x="4.5" y="10.5" width="15" height="10" rx="2.5" />
     <Path d="M8 10.5V8a4 4 0 018 0v2.5" />
     <Path d="M12 14.5v2" />
   </Svg>
 );
 const Eye = ({ off }: { off: boolean }) => (
-  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={L.text} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
+  <Svg width={20} height={20} viewBox="0 0 24 24" fill="none" stroke={L.text} strokeWidth={1.6} strokeLinecap="round" strokeLinejoin="round">
     <Path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7S2 12 2 12z" />
     <Path d="M12 9.5a2.5 2.5 0 100 5 2.5 2.5 0 000-5z" />
     {off && <Path d="M4 4l16 16" strokeWidth={2.2} />}
-  </Svg>
-);
-const Arrow = () => (
-  <Svg width={22} height={22} viewBox="0 0 24 24" fill="none" stroke={L.black} strokeWidth={2.2} strokeLinecap="round" strokeLinejoin="round">
-    <Path d="M4 12h16M14 6l6 6-6 6" />
   </Svg>
 );
 const GoogleG = () => (
@@ -90,10 +85,10 @@ const GoogleG = () => (
 export function LoginBrand() {
   return (
     <View style={{ alignItems: 'center' }}>
-      <Text accessibilityRole="header" style={{ fontSize: 48, lineHeight: 56, fontWeight: '800', color: '#FFFFFF', letterSpacing: -1 }} adjustsFontSizeToFit numberOfLines={1}>
+      <Text accessibilityRole="header" style={{ fontSize: 40, lineHeight: 48, fontWeight: '800', color: '#FFFFFF', letterSpacing: -1 }} adjustsFontSizeToFit numberOfLines={1}>
         Minuto <Text style={{ color: L.gold }}>91</Text>
       </Text>
-      <Text style={{ fontSize: 16, color: L.soft, fontWeight: '400', textAlign: 'center' }} adjustsFontSizeToFit numberOfLines={1}>
+      <Text style={{ fontSize: 15, color: L.soft, fontWeight: '400', textAlign: 'center' }} adjustsFontSizeToFit numberOfLines={1}>
         O jogo acaba. A resenha começa.
       </Text>
     </View>
@@ -109,7 +104,7 @@ export function LoginField({
   const [hide, setHide] = useState(true);
   return (
     <View style={[s.field, { borderColor: focus ? L.gold : L.line }]}>
-      <View style={{ width: 22, height: 22 }}>{icon === 'mail' ? <Mail /> : <Lock />}</View>
+      <View style={{ width: 20, height: 20 }}>{icon === 'mail' ? <Mail /> : <Lock />}</View>
       <TextInput
         placeholderTextColor={L.soft}
         autoCapitalize="none"
@@ -157,12 +152,13 @@ export function LoginButton({
 }) {
   const off = !!(disabled || loading);
   const base = {
-    minHeight: 46,
-    borderRadius: 16,
-    borderWidth: kind === 'primary' ? 0 : 1.5,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: kind === 'primary' ? 0 : 1,
     borderColor: kind === 'outline' ? L.gold : L.line,
-    backgroundColor: kind === 'primary' ? L.gold2 : kind === 'outline' ? 'rgba(3,11,24,0.7)' : L.field,
+    backgroundColor: kind === 'primary' ? L.gold2 : kind === 'outline' ? 'rgba(3,11,24,0.55)' : L.field,
     overflow: 'hidden' as const,
+    ...(Platform.OS === 'web' ? ({ transitionProperty: 'all', transitionDuration: '200ms', transitionTimingFunction: 'ease-in-out' } as object) : {}),
   };
   const color = kind === 'primary' ? L.black : kind === 'outline' ? L.gold : '#FFFFFF';
   return (
@@ -172,31 +168,14 @@ export function LoginButton({
       accessibilityRole="button"
       accessibilityLabel={title}
       accessibilityState={{ disabled: off, busy: !!loading }}
-      style={({ pressed }) => [base, { opacity: disabled ? 0.5 : pressed ? 0.85 : 1 }, kind === 'primary' && s.shadow]}>
-      {kind === 'primary' && (
-        <Svg width="100%" height="100%" preserveAspectRatio="none" style={StyleSheet.absoluteFill}>
-          <Defs>
-            <LinearGradient id="b" x1="0" y1="0" x2="1" y2="1">
-              <Stop offset="0" stopColor={L.gold1} />
-              <Stop offset="0.5" stopColor={L.gold2} />
-              <Stop offset="1" stopColor={L.gold3} />
-            </LinearGradient>
-          </Defs>
-          <Rect x="0" y="0" width="100%" height="100%" fill="url(#b)" />
-        </Svg>
-      )}
+      style={({ pressed }) => [base, { opacity: disabled ? 0.5 : pressed ? 0.85 : 1, transform: [{ scale: pressed ? 0.98 : 1 }] }]}>
       <View style={s.btnRow}>
         {loading ? (
-          <ActivityIndicator color={color} />
+          <ActivityIndicator color={color} size="small" />
         ) : (
           <>
             {kind === 'google' && <GoogleG />}
-            <Text style={{ color, fontSize: kind === 'google' ? 17 : 18, fontWeight: kind === 'google' ? '500' : '700', marginLeft: kind === 'google' ? 14 : 0 }}>{title}</Text>
-            {kind === 'primary' && (
-              <View style={{ position: 'absolute', right: 20 }}>
-                <Arrow />
-              </View>
-            )}
+            <Text style={{ color, fontSize: 15, fontWeight: '600', marginLeft: kind === 'google' ? 10 : 0 }}>{title}</Text>
           </>
         )}
       </View>
@@ -206,9 +185,9 @@ export function LoginButton({
 
 export function LoginDivider({ children }: { children: ReactNode }) {
   return (
-    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 14 }}>
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
       <View style={s.rule} />
-      <Text style={{ color: L.soft, fontSize: 16 }}>{children}</Text>
+      <Text style={{ color: L.soft, fontSize: 13 }}>{children}</Text>
       <View style={s.rule} />
     </View>
   );
@@ -218,15 +197,15 @@ const s = StyleSheet.create({
   field: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: 46,
-    borderRadius: 16,
-    borderWidth: 1.2,
+    height: 44,
+    borderRadius: 12,
+    borderWidth: 1,
     backgroundColor: L.field,
-    paddingHorizontal: 18,
-    gap: 16,
+    paddingHorizontal: 14,
+    gap: 12,
   },
-  fieldInput: { flex: 1, minWidth: 0, outlineStyle: 'none' as never, color: L.text, fontSize: Dimensions.get('window').width < 360 ? 12 : 17, paddingVertical: 10 },
-  btnRow: { minHeight: 46, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
+  fieldInput: { flex: 1, minWidth: 0, outlineStyle: 'none' as never, color: L.text, fontSize: Dimensions.get('window').width < 360 ? 12 : 15, paddingVertical: 8 },
+  btnRow: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', paddingHorizontal: 16 },
   shadow: { shadowColor: L.gold3, shadowOpacity: 0.35, shadowRadius: 8, shadowOffset: { width: 0, height: 3 }, elevation: 4 },
   rule: { flex: 1, height: StyleSheet.hairlineWidth * 2, backgroundColor: L.line },
 });

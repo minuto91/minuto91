@@ -45,7 +45,7 @@ export function PositionRequests({ peladaId, isAdmin }: { peladaId: string; isAd
   }
   return (
     <Card>
-      <Text style={{ fontWeight: '800', color: colors.deepBlue }}>Pedidos de troca de posição</Text>
+      <Text style={{ fontWeight: '800', color: colors.ink }}>Pedidos de troca de posição</Text>
       <Sub>A nova posição muda o cálculo das Estatísticas aos poucos, ao longo de 5 partidas.</Sub>
       {rows.map((r) => (
         <View key={r.id} style={{ gap: 6, marginTop: 6 }}>
@@ -85,7 +85,7 @@ export function CardsTracking({ peladaId, isAdmin }: { peladaId: string; isAdmin
   if (on === null) return null;
   return (
     <Card>
-      <Text style={{ fontWeight: '800', color: colors.deepBlue }}>Registro de cartões</Text>
+      <Text style={{ fontWeight: '800', color: colors.ink }}>Registro de cartões</Text>
       <Sub>
         {on
           ? 'Ligado: a súmula publicada conta para a Disciplina.'
@@ -134,7 +134,7 @@ export function HardSaves({ matchId, keepers }: { matchId: string; keepers: { pa
   if (!rows.length) return null;
   return (
     <Card>
-      <Text style={{ fontWeight: '800', color: colors.deepBlue }}>Defesas difíceis</Text>
+      <Text style={{ fontWeight: '800', color: colors.ink }}>Defesas difíceis</Text>
       <Sub>Confirme quantas defesas difíceis cada goleiro fez. Sem registro não conta como zero.</Sub>
       {rows.map((k, i) => (
         <View key={k.participant_id} style={{ gap: 4 }}>

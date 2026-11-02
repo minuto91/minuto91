@@ -141,7 +141,7 @@ export default function Notificacoes() {
 
   return (
     <FlatList
-      style={{ backgroundColor: colors.white }}
+      style={{ backgroundColor: colors.screen }}
       contentContainerStyle={{ alignSelf: 'center', width: '100%', maxWidth: L.maxWidth, padding: L.gutter, flexGrow: 1 }}
       data={rows}
       keyExtractor={(r) => r.key}

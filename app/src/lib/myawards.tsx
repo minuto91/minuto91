@@ -18,7 +18,7 @@ export function MyAwardsList({ items, withOrigin }: { items: SeasonTitle[]; with
         <View key={t.id} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 8, borderTopWidth: i === 0 ? 0 : 1, borderTopColor: colors.line }}>
           <TrophyArt type={t.award_type} size={34} />
           <View style={{ flex: 1, gap: 2 }}>
-            <Text style={{ fontWeight: '800', color: colors.deepBlue, fontSize: 15 }}>{titleLabel(t)}</Text>
+            <Text style={{ fontWeight: '800', color: colors.ink, fontSize: 15 }}>{titleLabel(t)}</Text>
             <Sub>{[withOrigin ? t.pelada_name : null, sharedLabel(t.is_shared) || null].filter(Boolean).join(' · ')}</Sub>
           </View>
         </View>

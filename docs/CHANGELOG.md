@@ -2,6 +2,16 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
+## V9.1 — Revitalização visual e simplificação do app (01/11/2026) — só app, sem migração
+
+Detalhes: `docs/V9.1_IMPLEMENTACAO.md`.
+
+- Tema slate, botões e filtros compactos (`Button`, `Chips`, novo `Segmented`), esqueleto pulsante, `ErrorState`, abas e login modernizados.
+- Estrutura sem duplicidades: Perfil enxuto, foto/nome/pé e Privacidade em Minha conta, Card sempre por pelada na Carreira, Peladas sem "usar na Central", Central sem "Minhas Peladas".
+- Central: Card completo com a variação do OVR ao lado, escudo da pelada na Próxima Rodada, Último Jogo simplificado.
+- Escalação: 4-3-3/4-4-2 aceitam MEI/VOL no meio e PD/PE/ATA/CA no ataque; "Goleiro a definir" quando o time não tem goleiro; sorteio avisa quando faltam goleiros.
+- Testes: app 85/85, `tsc` 0 erros, `eslint` 0 erros. Nada aplicado em banco remoto. Não conferido em aparelho nem tela a tela (ver §5 do documento).
+
 ## V8.9 — fechamento (01/11/2026) — aplicada no Supabase dev
 
 - ZIP da V8.9 levado ao GitHub; migrações renumeradas para 070–074 (a 069 é a RLS da preparação do beta).

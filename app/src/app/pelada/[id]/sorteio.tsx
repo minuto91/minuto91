@@ -19,6 +19,7 @@ import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, PositionPick
 import {
   countLabel,
   createGate,
+  goalkeeperWarning,
   idempotent,
   nameHints,
   type Preparation,
@@ -156,6 +157,10 @@ export default function Sorteio() {
     .filter((m) => !q || m.player_name.toLocaleLowerCase('pt-BR').includes(q))
     .sort((a, b) => positionRank(memberPosition(a)) - positionRank(memberPosition(b)) || a.player_name.localeCompare(b.player_name, 'pt-BR'));
   const guests = prep.participants.filter((p) => p.guest);
+  const gkWarning = goalkeeperWarning([
+    ...members.filter((m) => selected.has(m.id)).map((m) => m.position_code ?? m.preferred_position),
+    ...guests.map((g) => g.position),
+  ]);
   const captainOf = (pid: string) => prep.participants.find((p) => p.pid === pid)?.captain_team ?? null;
   const capA = prep.participants.find((p) => p.captain_team === 'A')?.pid ?? null;
   const capB = prep.participants.find((p) => p.captain_team === 'B')?.pid ?? null;
@@ -340,6 +345,7 @@ export default function Sorteio() {
         }}
       />
       {selectionDirty && <Sub>Seleção alterada: será aplicada ao gerar a prévia.</Sub>}
+      {gkWarning && <Sub>⚠ {gkWarning}</Sub>}
       {prep.problems.length > 0 && <ErrorText>Há participante que não pode mais jogar (em vermelho). Remova-o para continuar.</ErrorText>}
       <ErrorText>{msg}</ErrorText>
       <Button title={preview ? 'Sortear de novo' : 'Sortear'} onPress={gerar} loading={busy === 'preview' || busy === 'members'} disabled={selected.size + guests.length < 2} />
@@ -354,7 +360,7 @@ export default function Sorteio() {
               <Card key={r.round}>
                 {prep.mode === 'independent' && <Body>Rodada {r.round}</Body>}
                 <LineupBoard teamA={nameA.trim() || 'Time A'} teamB={nameB.trim() || 'Time B'} players={board(r)} />
-                <Text style={{ color: colors.deepBlue, fontWeight: '700', marginTop: 6 }}>{s.headline}</Text>
+                <Text style={{ color: colors.ink, fontWeight: '700', marginTop: 6 }}>{s.headline}</Text>
                 {r.optimal && <Sub>{countLabel(r.optimal.count)}</Sub>}
                 {s.unavoidable && <Sub>Com essas posições, uma diferença pequena é inevitável.</Sub>}
                 <View style={{ gap: 2 }}>
@@ -430,4 +436,4 @@ function CaptainButtons({ value, onPick }: { value: Team | null; onPick: (t: Tea
   );
 }
 
-const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 10 };
+const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.ink, marginTop: 10 };

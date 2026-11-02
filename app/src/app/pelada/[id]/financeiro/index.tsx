@@ -216,12 +216,12 @@ export default function Financeiro() {
                   backgroundColor: colors.bg,
                   opacity: pressed ? 0.7 : 1,
                 })}>
-                <Text style={{ color: colors.deepBlue, fontWeight: '700' }}>{t} ›</Text>
+                <Text style={{ color: colors.ink, fontWeight: '700' }}>{t} ›</Text>
               </Pressable>
             ))}
           </View>
 
-          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.deepBlue, letterSpacing: 0.5, marginTop: 6 }}>Últimas movimentações</Text>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.ink, letterSpacing: 0.5, marginTop: 6 }}>Últimas movimentações</Text>
           {ov.latest.length === 0 && <Sub>Nada registrado ainda.</Sub>}
           {ov.latest.map((m) => (
             <View key={`${m.source}-${m.id}`} style={{ flexDirection: 'row', alignItems: 'center', gap: 8, paddingVertical: 8, borderBottomWidth: 1, borderBottomColor: colors.line }}>

@@ -414,7 +414,7 @@ export default function Sumula() {
         <TeamColorPicker matchId={id} teamA={match.team_a_name} teamB={match.team_b_name} />
       </Card>
       <Card>
-        <Text style={{ fontSize: 22, fontWeight: '800', color: colors.deepBlue, textAlign: 'center' }}>
+        <Text style={{ fontSize: 22, fontWeight: '800', color: colors.ink, textAlign: 'center' }}>
           {match.team_a_name} {score.A} x {score.B} {match.team_b_name}
         </Text>
         <Sub>O placar sai dos gols lançados abaixo.</Sub>
@@ -422,7 +422,7 @@ export default function Sumula() {
 
       {(['A', 'B'] as Team[]).map((t) => (
         <View key={t} style={{ gap: 8 }}>
-          <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 8 }}>
+          <Text style={{ fontWeight: '800', color: colors.ink, marginTop: 8 }}>
             {t === 'A' ? match.team_a_name : match.team_b_name}
           </Text>
           {players
@@ -462,13 +462,13 @@ export default function Sumula() {
         </View>
       ))}
 
-      <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 12 }}>Adicionar quem jogou</Text>
+      <Text style={{ fontWeight: '800', color: colors.ink, marginTop: 12 }}>Adicionar quem jogou</Text>
       {benchMembers.length === 0 && <Sub>Todos os jogadores da pelada já estão na súmula.</Sub>}
       {benchMembers.map((m) => (
         <BenchRow key={m.id} name={m.player_name} sub={positionLabel(memberPosition(m))} onAdd={(t) => addMember(m, t)} />
       ))}
 
-      <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 12 }}>Convidados</Text>
+      <Text style={{ fontWeight: '800', color: colors.ink, marginTop: 12 }}>Convidados</Text>
       <Sub>Posição do convidado ao adicionar:</Sub>
       <PositionPicker value={guestPos} onChange={setGuestPos} />
       {benchGuests.map((g) => (

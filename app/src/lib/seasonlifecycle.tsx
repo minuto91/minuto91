@@ -77,7 +77,7 @@ export function SeasonLifecycle({ seasonId, isAdmin, onChanged }: { seasonId: st
   return (
     <View style={{ gap: 6 }}>
       {info.lifecycle !== 'normal' && (
-        <Text style={[type.caption, { color: colors.deepBlue, fontWeight: '700' }]}>
+        <Text style={[type.caption, { color: colors.ink, fontWeight: '700' }]}>
           {info.lifecycle === 'suspended' ? 'Suspensa · segue em disputa' : 'Cancelada · histórico preservado'}
         </Text>
       )}

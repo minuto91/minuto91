@@ -51,6 +51,14 @@ function Column({ name, players, accent, compact }: { name: string; players: Lin
           {players.length} {players.length === 1 ? 'jogador' : 'jogadores'}
         </Text>
       </View>
+      {/* Sem goleiro no time: o gol aparece como vaga em aberto (nunca um jogador de linha como se fosse goleiro). */}
+      {players.length > 0 && !players.some((p) => p.position === 'GOL' || p.position === 'goalkeeper') && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <View style={{ width: compact ? 22 : 28, height: compact ? 22 : 28, borderRadius: 999, borderWidth: 1.5, borderStyle: 'dashed', borderColor: colors.muted }} />
+          <Text style={{ flex: 1, fontSize: compact ? 11 : 13, color: colors.muted }} numberOfLines={1}>Goleiro a definir</Text>
+          <Text style={{ fontSize: 10, fontWeight: '800', color: colors.muted }}>GOL</Text>
+        </View>
+      )}
       {sortLineup(players).map((p) => (
         <View key={p.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
           <Avatar path={p.avatar_path} name={p.name} size={compact ? 22 : 28} />

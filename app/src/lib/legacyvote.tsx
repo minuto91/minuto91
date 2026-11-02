@@ -263,11 +263,11 @@ export function LegacyVotar() {
         );
       })}
 
-      <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 8 }}>Craque da Partida</Text>
+      <Text style={{ fontWeight: '800', color: colors.ink, marginTop: 8 }}>Craque da Partida</Text>
       <Chips options={options} value={craque} onChange={setCraque} />
       {info.bola_murcha_required && (
         <>
-          <Text style={{ fontWeight: '800', color: colors.deepBlue, marginTop: 8 }}>Bola Murcha</Text>
+          <Text style={{ fontWeight: '800', color: colors.ink, marginTop: 8 }}>Bola Murcha</Text>
           <Chips options={options} value={bola} onChange={setBola} />
         </>
       )}

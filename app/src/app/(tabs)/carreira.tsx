@@ -5,16 +5,15 @@ import { Text } from '../../lib/text';
 
 import { PlayerCard } from '../../lib/arts';
 import { Avatar } from '../../lib/avatar';
-import { overallLabel } from '../../lib/career';
 import { CareerSummary, latestCard, loadCareerSummary, markGuide, referencePelada, SummaryPelada } from '../../lib/careerv2';
 import { friendly } from '../../lib/errors';
 import { EvolutionChart, useEvolution } from '../../lib/evolution';
 import { fmtRating } from '../../lib/match';
-import { TotalsGrid } from '../../lib/profile';
+import { type Career, CareerByPelada, loadPlayer, TotalsGrid } from '../../lib/profile';
 import { useAuth } from '../../lib/session';
 import { useSticky } from '../../lib/sticky';
 import { supabase } from '../../lib/supabase';
-import { colors, footLabel, positionLabel } from '../../lib/theme';
+import { colors, positionLabel } from '../../lib/theme';
 import { MatchHistory } from '../../lib/history';
 import { MyAwardsList } from '../../lib/myawards';
 import { scopedTitles, SeasonTitle, showMyAwards, showOrigin } from '../../lib/v87logic';
@@ -26,19 +25,20 @@ type Me = { display_name: string; avatar_path: string | null; dominant_foot: str
 // Minha Carreira (V4.4): a trajetória do jogador num lugar só — foto, nome, posição, pé, Card oficial, estatísticas,
 // evolução, Sala de Troféus, álbum e histórico de partidas. "Geral" soma só contadores (jogos, gols, assistências,
 // troféus) de todas as peladas; o Card e o overall aparecem sempre com a pelada e a temporada a que pertencem.
-// Evolução: escolha uma pelada e uma temporada (mesmos dados oficiais do Card, 033). O perfil (editar e privacidade)
-// continua em Meu perfil.
+// Evolução: escolha uma pelada e uma temporada (mesmos dados oficiais do Card, 033). O perfil (editar) continua em Meu
+// perfil; a privacidade fica em Minha conta.
 export default function Carreira() {
   const { session } = useAuth();
   const router = useRouter();
   const uid = session?.user.id ?? '';
   const [me, setMe] = useState<Me | null>(null);
   const [career, setCareer] = useState<CareerSummary | null>(null);
+  const [byPelada, setByPelada] = useState<Career | null>(null);
   const [titles, setTitles] = useState<SeasonTitle[] | null>(null);
   const [primary, setPrimary] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
-  const [scope, setScope] = useSticky<string>('carreira:scope', 'all'); // 'all' ou pelada_id (REV-035: lembrado)
+  const [scope, setScope] = useSticky<string>('carreira:scope', ''); // '' = pelada de referência, 'all' = geral (só números), ou pelada_id (REV-035: lembrado)
   const [season, setSeason] = useSticky<string | null>('carreira:season', null);
 
   useFocusEffect(
@@ -48,13 +48,15 @@ export default function Carreira() {
       void reload;
       (async () => {
         try {
-          const [c, { data: p }, { data: st }] = await Promise.all([
+          const [c, { data: p }, { data: st }, mine] = await Promise.all([
             loadCareerSummary(uid),
             supabase.rpc('get_my_profile'),
             supabase.from('user_app_state').select('primary_pelada_id').maybeSingle(),
+            loadPlayer(uid).catch(() => null),
           ]);
           if (!alive) return;
           setCareer(c);
+          setByPelada(mine?.career ?? null);
           // AD01: Meus Prêmios. Falha aqui não derruba a carreira: o bloco simplesmente não aparece.
           const t = await supabase.rpc('get_player_season_titles', { p_user: uid });
           if (alive) setTitles(t.error || !(t.data as { visible?: boolean } | null)?.visible ? null : ((t.data as { items: SeasonTitle[] }).items ?? []));
@@ -87,12 +89,14 @@ export default function Carreira() {
   if (!career.visible) return <Screen><Sub>Carreira indisponível.</Sub></Screen>;
 
   const ref = referencePelada(career.peladas, primary);
-  const selected: SummaryPelada | null = scope === 'all' ? null : (career.peladas.find((p) => p.pelada_id === scope) ?? null);
-  const cardPelada = selected ?? ref;
+  const selected: SummaryPelada | null = scope === 'all' ? null : (career.peladas.find((p) => p.pelada_id === scope) ?? ref);
+  const cardPelada = selected;
   const latest = cardPelada ? latestCard(cardPelada) : null;
   const seasonRow = selected ? (selected.seasons.find((s) => s.season_id === season) ?? selected.seasons[0] ?? null) : null;
   const totals = selected ? (seasonRow && season ? seasonRow : selected.totals) : career.totals;
-  const position = cardPelada ? (cardPelada.position_code ?? cardPelada.position) : null;
+  // A posição é sempre de uma pelada: a escolhida ou, no Geral, a de referência (nunca o pé dominante).
+  const posPelada = selected ?? ref;
+  const position = posPelada ? (posPelada.position_code ?? posPelada.position) : null;
 
   return (
     <Screen>
@@ -102,11 +106,9 @@ export default function Carreira() {
           <Title>{me.display_name}</Title>
           <Sub>
             {position ? positionLabel(position) : 'Posição não informada'}
-            {me.dominant_foot ? ` · ${footLabel(me.dominant_foot)}` : ''}
           </Sub>
         </View>
       </View>
-      <Button title="Editar perfil e privacidade" kind="secondary" onPress={() => router.push('/perfil')} />
 
       {career.peladas.length > 1 && (
         <Chips
@@ -115,7 +117,7 @@ export default function Carreira() {
             // REV-047: pelada que a pessoa deixou continua na carreira, identificada como encerrada.
             ...career.peladas.map((p) => ({ value: p.pelada_id, label: p.status === 'active' ? p.name : `${p.name} (encerrada)` })),
           ]}
-          value={scope}
+          value={selected?.pelada_id ?? 'all'}
           onChange={(v) => {
             setScope(v);
             setSeason(null);
@@ -123,7 +125,7 @@ export default function Carreira() {
         />
       )}
 
-      <Text style={section}>Card oficial</Text>
+      {cardPelada && <Text style={section}>Card oficial</Text>}
       {latest && cardPelada ? (
         <View style={{ alignItems: 'center', gap: 6 }}>
           <PlayerCard
@@ -135,20 +137,15 @@ export default function Carreira() {
             seasonName={latest.season.name}
             seasonStart={latest.season.starts_on}
           />
-          <Sub>
-            {overallLabel(latest.card)}
-            {latest.card.is_provisional ? ' (provisório)' : ''} · {cardPelada.name} · {latest.season.name}
-          </Sub>
-          {scope === 'all' && career.peladas.length > 1 && <Sub>O Card é de cada pelada. Escolha outra pelada acima para ver o Card dela.</Sub>}
           <Button
             title="Abrir o Card completo"
             kind="secondary"
             onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: cardPelada.membership_id } })}
           />
         </View>
-      ) : (
-        <Sub>O Card aparece depois da primeira partida finalizada {cardPelada ? `em ${cardPelada.name}` : 'numa pelada'}.</Sub>
-      )}
+      ) : cardPelada ? (
+        <Sub>O Card aparece depois da primeira partida finalizada em {cardPelada.name}.</Sub>
+      ) : null}
 
       <Text style={section}>Estatísticas</Text>
       <Card>
@@ -176,6 +173,13 @@ export default function Carreira() {
           <Sub>Temporadas antigas do Basic ficam de fora.</Sub>
         )}
       </Card>
+
+      {!selected && byPelada?.visible && byPelada.peladas.length > 0 && (
+        <>
+          <Text style={section}>Por pelada e temporada</Text>
+          <CareerByPelada career={byPelada} />
+        </>
+      )}
 
       <Text style={section}>Evolução</Text>
       {selected ? (
@@ -234,4 +238,4 @@ function Evolution({ membershipId, seasonId }: { membershipId: string; seasonId:
   return <EvolutionChart evolution={data} />;
 }
 
-const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 8 };
+const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.ink, marginTop: 8 };

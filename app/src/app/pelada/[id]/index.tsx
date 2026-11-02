@@ -212,7 +212,7 @@ export default function CentralDaRodada() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         {pelada ? <Crest path={pelada.crest_path} name={pelada.name} size={56} /> : <View style={{ width: 56, height: 56 }} />}
         <View style={{ flex: 1, gap: 2 }}>
-          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.deepBlue }} numberOfLines={2}>
+          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.ink }} numberOfLines={2}>
             {pelada?.name ?? ' '}
           </Text>
           <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={2}>
@@ -418,7 +418,7 @@ type GroupItem = { icon: IconName; label: string; sub: string; premium?: boolean
 function Group({ title, items, premium }: { title: string; items: GroupItem[]; premium: boolean }) {
   return (
     <View style={{ gap: 8, marginTop: 10 }}>
-      <Text style={{ fontSize: 19, lineHeight: 25, fontWeight: '700', color: colors.deepBlue }} accessibilityRole="header">
+      <Text style={{ fontSize: 19, lineHeight: 25, fontWeight: '700', color: colors.ink }} accessibilityRole="header">
         {title}
       </Text>
       <View>
@@ -469,4 +469,4 @@ function Row({ title, onPress, danger }: { title: string; onPress: () => void; d
 
 const box = { backgroundColor: colors.bg, borderRadius: 12, padding: 14, gap: 6 };
 const label = (color: string) => ({ fontSize: 14, fontWeight: '700' as const, color });
-const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 10 };
+const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.ink, marginTop: 10 };

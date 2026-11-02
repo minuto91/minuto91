@@ -217,7 +217,7 @@ export default function ComposicaoScreen() {
         />
         {s && (
           <>
-            <Text style={{ color: colors.deepBlue, fontWeight: '700' }}>{s.headline.replace(' · posições equilibradas', '')}</Text>
+            <Text style={{ color: colors.ink, fontWeight: '700' }}>{s.headline.replace(' · posições equilibradas', '')}</Text>
             <Collapsible title="Posições por time">
               {s.lines.map((l) => (
                 <Text key={l} style={{ color: colors.muted, fontSize: 13 }}>
@@ -451,4 +451,4 @@ export default function ComposicaoScreen() {
   );
 }
 
-const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.deepBlue, marginTop: 10 };
+const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.ink, marginTop: 10 };

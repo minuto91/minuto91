@@ -106,7 +106,7 @@ export default function Convidar() {
             </Text>
             <CopyIcon />
           </Pressable>
-          {copied && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{copied}</Text>}
+          {copied && <Text style={{ color: colors.ink, fontWeight: '600' }}>{copied}</Text>}
           <Button title="Gerar novo link (cancela os anteriores)" kind="secondary" onPress={regenerate} loading={busy} />
         </>
       ) : (

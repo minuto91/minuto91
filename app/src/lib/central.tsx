@@ -8,7 +8,7 @@ import Svg, { Path } from 'react-native-svg';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Avatar } from './avatar';
-import { Card as CardData, cardOverall, isV2, plural, TIER } from './career';
+import { Card as CardData, cardOverall, isV2, plural } from './career';
 import type { LastGameRow, NextRoundItem, Pelada, PeladaRating } from './centraldata';
 import { deltaA11y, deltaText, leftLabel, matchRating, type MatchRating } from './centrallogic';
 import { Crest } from './crest';
@@ -31,7 +31,7 @@ export const box: ViewStyle = {
   gap: 10,
   ...shadow.card,
 };
-const link = { color: colors.blue, fontWeight: '700' as const, fontSize: 15 };
+const link = { color: colors.blue, fontWeight: '600' as const, fontSize: 14 };
 const eyebrow = { fontSize: 11, lineHeight: 14, fontWeight: '800' as const, letterSpacing: 0.9, color: colors.muted };
 
 // ---------------------------------------------------------------------------------------------------------------
@@ -75,10 +75,10 @@ export function CentralHeader({
         onPress={onProfile}
         accessibilityRole="button"
         accessibilityLabel={`Abrir meu perfil${name ? `, ${name}` : ''}`}
-        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, minHeight: 52 }}>
-        <Avatar path={avatarPath} name={name ?? ' '} size={52} />
+        style={{ flexDirection: 'row', alignItems: 'center', gap: 12, flex: 1, minHeight: 44 }}>
+        <Avatar path={avatarPath} name={name ?? ' '} size={44} />
         <View style={{ flex: 1, minWidth: 0 }}>
-          <Text style={{ fontSize: 22, lineHeight: 28, fontWeight: '800', color: colors.deepBlue }} numberOfLines={1}>
+          <Text style={{ fontSize: 20, lineHeight: 26, fontWeight: '700', color: colors.ink }} numberOfLines={1}>
             {name ?? ' '}
           </Text>
           {sub ? (
@@ -384,7 +384,7 @@ export type HeroData = {
   seasonStart: string | null;
 };
 
-export const CARD_W = 104;
+export const CARD_W = 150;
 
 /** Carta "em avaliação" quando ainda não há carta: mesma silhueta neutra, sem número. */
 function EvaluatingCard({ name, avatarPath, position }: { name: string; avatarPath: string | null | undefined; position: string | null }) {
@@ -406,7 +406,7 @@ function EvaluatingCard({ name, avatarPath, position }: { name: string; avatarPa
         padding: 8,
       }}>
       <Avatar path={avatarPath} name={name} size={Math.round(CARD_W * 0.46)} />
-      <Text style={{ fontSize: 13, fontWeight: '800', color: colors.deepBlue }}>{positionShort(position)}</Text>
+      <Text style={{ fontSize: 13, fontWeight: '800', color: colors.ink }}>{positionShort(position)}</Text>
       <Text style={{ fontSize: 12, fontWeight: '600', color: colors.muted, textAlign: 'center' }} numberOfLines={1} adjustsFontSizeToFit minimumFontScale={0.7}>
         {name}
       </Text>
@@ -428,7 +428,7 @@ export function OvrDelta({ delta }: { delta: number }) {
   const bg = up ? '#E7F5EC' : '#FDEEE6';
   return (
     <View
-      accessibilityLabel={`Carta ${deltaA11y(delta)}`}
+      accessibilityLabel={`Card ${deltaA11y(delta)}`}
       style={{ flexDirection: 'row', alignItems: 'center', gap: 4, paddingHorizontal: 10, paddingVertical: 4, borderRadius: radius.pill, backgroundColor: bg, alignSelf: 'flex-start' }}>
       {/* Seta e sinal: a variação não depende só da cor. */}
       <Text style={{ fontSize: 12, fontWeight: '800', color: fg }} importantForAccessibility="no" accessibilityElementsHidden>
@@ -440,7 +440,7 @@ export function OvrDelta({ delta }: { delta: number }) {
 }
 
 /**
- * Carta oficial compacta (104 px) à esquerda; à direita, "EVOLUÇÃO DA CARTA" desde a última publicação oficial, e o link
+ * Carta oficial compacta (104 px) à esquerda; à direita, "variação do Card" desde a última publicação oficial, e o link
  * Minha Carreira. A Carta e o link abrem o MESMO destino. Sem variação "+0"/"−0"; sem OVR duplicado ao lado da Carta.
  */
 export function CardEvolution({
@@ -465,7 +465,6 @@ export function CardEvolution({
   const played = r?.matches_played ?? card?.matches_played ?? 0;
   const delta = rating?.delta ?? null;
   const showOfficialCard = !!card && (ovr !== null || isV2(card));
-  const tier = (r?.tier ?? card?.tier ?? null) as keyof typeof TIER | null;
 
   let evolution: ReactNode;
   if (loading) {
@@ -476,7 +475,7 @@ export function CardEvolution({
     const needed = Math.max(0, 5 - played);
     evolution = (
       <View style={{ gap: 6 }} accessibilityLabel={`Aguardando avaliação: ${Math.min(played, 5)} de 5 partidas`}>
-        <Text style={{ fontSize: 16, fontWeight: '800', color: colors.deepBlue }}>Aguardando avaliação</Text>
+        <Text style={{ fontSize: 16, fontWeight: '800', color: colors.ink }}>Aguardando avaliação</Text>
         <View style={{ flexDirection: 'row', gap: 4 }}>
           {[0, 1, 2, 3, 4].map((i) => (
             <View key={i} style={{ flex: 1, height: 6, borderRadius: 3, backgroundColor: i < played ? colors.blue : colors.line }} />
@@ -492,18 +491,18 @@ export function CardEvolution({
     evolution = (
       <View style={{ gap: 4 }}>
         <OvrDelta delta={delta} />
-        <Text style={type.meta}>desde a última publicação</Text>
       </View>
     );
   } else if (delta === 0) {
-    evolution = <Text style={type.meta}>Sem mudança desde a última publicação</Text>;
+    evolution = null;
   } else {
-    evolution = <Text style={{ fontSize: 16, fontWeight: '800', color: colors.deepBlue }}>Primeira avaliação</Text>;
+    evolution = null;
   }
 
+  const hasSide = evolution !== null || (stale && !loading);
   return (
     <View style={{ ...box, flexDirection: 'row', gap: 16, alignItems: 'center' }}>
-      <Pressable onPress={onCareer} accessibilityRole="button" accessibilityLabel="Abrir Minha Carreira pela Carta" accessibilityHint="Abre Minha Carreira">
+      <Pressable onPress={onCareer} accessibilityRole="button" accessibilityLabel="Abrir Minha Carreira pelo Card" accessibilityHint="Abre Minha Carreira">
         {showOfficialCard ? (
           <PlayerCard
             card={{ id: 'central', ...card! }}
@@ -514,21 +513,17 @@ export function CardEvolution({
             seasonName={data.seasonName ?? ''}
             seasonStart={data.seasonStart}
             width={CARD_W}
-            mini
           />
         ) : (
           <EvaluatingCard name={data.name} avatarPath={data.avatarPath} position={data.position} />
         )}
       </Pressable>
-      <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
-        <Text style={eyebrow}>EVOLUÇÃO DA CARTA</Text>
-        {evolution}
-        {stale && !loading && <Text style={type.meta}>Pode estar desatualizada</Text>}
-        {tier && ovr !== null ? <Text style={type.meta}>Nível {TIER[tier].label}</Text> : null}
-        <Pressable onPress={onCareer} accessibilityRole="button" accessibilityLabel="Minha Carreira" style={{ minHeight: 44, justifyContent: 'center' }}>
-          <Text style={link}>Minha Carreira ›</Text>
-        </Pressable>
-      </View>
+      {hasSide && (
+        <View style={{ flex: 1, minWidth: 0, gap: 8 }}>
+          {evolution}
+          {stale && !loading && <Text style={type.meta}>Pode estar desatualizada</Text>}
+        </View>
+      )}
     </View>
   );
 }
@@ -536,29 +531,26 @@ export function CardEvolution({
 // ---------------------------------------------------------------------------------------------------------------
 // E04 — Próxima Rodada
 // ---------------------------------------------------------------------------------------------------------------
-const MONTHS = ['JAN', 'FEV', 'MAR', 'ABR', 'MAI', 'JUN', 'JUL', 'AGO', 'SET', 'OUT', 'NOV', 'DEZ'];
-
-export function NextRoundCard({ round, more, stale, onPress }: { round: NextRoundItem; more: number; stale: boolean; onPress: () => void }) {
+export function NextRoundCard({ round, crestPath, more, stale, onPress }: { round: NextRoundItem; crestPath?: string | null; more: number; stale: boolean; onPress: () => void }) {
   // Data, horário e local só aparecem quando oficialmente existem (o servidor ainda não guarda esses dados).
   const when = round.scheduled_at ? new Date(round.scheduled_at) : null;
   const hasDate = !!when && !Number.isNaN(when.getTime());
   const time = hasDate ? when!.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' }) : null;
+  const day = hasDate ? when!.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }) : null;
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Próxima rodada: ${round.label}. ${round.team_name} contra ${round.opponent_name}. Você está no ${round.team_name}.${time ? ` ${time}.` : ''}${round.location ? ` ${round.location}.` : ''} Ver rodada.`}
       style={({ pressed }) => ({ ...box, flexDirection: 'row', gap: 14, alignItems: 'center', opacity: pressed ? 0.9 : 1 })}>
-      <View style={{ width: 68, height: 68, borderRadius: radius.md, backgroundColor: colors.blue, alignItems: 'center', justifyContent: 'center', gap: 2 }}>
-        <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: 0.8, color: colors.gold }}>{hasDate ? MONTHS[when!.getMonth()] : 'PRÓXIMA'}</Text>
-        <Text style={{ fontSize: hasDate ? 28 : 13, lineHeight: hasDate ? 32 : 17, fontWeight: '900', color: colors.white }}>{hasDate ? when!.getDate() : 'RODADA'}</Text>
-      </View>
+      {/* Escudo da pelada em que a partida será jogada. */}
+      <Crest path={crestPath} name={round.pelada_name} size={56} />
       <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
         <Text style={{ fontSize: 16, lineHeight: 21, fontWeight: '700', color: colors.ink }} numberOfLines={1}>
           {round.team_name} × {round.opponent_name}
         </Text>
         <Text style={type.meta} numberOfLines={2}>
-          {[round.label, time, round.location, round.rescheduled ? 'Remarcada' : null, 'Escalação prevista'].filter(Boolean).join(' · ')}
+          {[round.pelada_name, round.label, day, time, round.location, round.rescheduled ? 'Remarcada' : null, 'Escalação prevista'].filter(Boolean).join(' · ')}
           {more > 0 ? ` · +${more} ${more === 1 ? 'rodada' : 'rodadas'}` : ''}
         </Text>
         {stale ? <Text style={type.meta}>Informação anterior: confirme na rodada.</Text> : null}
@@ -587,13 +579,12 @@ export function LastGameCard({ game, stale, onPress }: { game: LastGameRow; stal
   const stats: StatCell[] = lastGameStats(game.position, game);
   const side = (name: string, mine: boolean, align: 'left' | 'right') => (
     <View style={{ flex: 1, minWidth: 0, alignItems: align === 'right' ? 'flex-end' : 'flex-start', gap: 2 }}>
-      <Text style={{ fontSize: 16, lineHeight: 21, fontWeight: mine ? '800' : '500', color: mine ? colors.deepBlue : colors.muted, textAlign: align }} numberOfLines={2}>
+      <Text style={{ fontSize: 16, lineHeight: 21, fontWeight: mine ? '800' : '500', color: mine ? colors.blue : colors.muted, textAlign: align }} numberOfLines={2}>
         {name}
       </Text>
-      {mine && <Text style={{ fontSize: 10, fontWeight: '800', letterSpacing: 0.8, color: colors.darkGold }}>SEU TIME</Text>}
     </View>
   );
-  const noteText = rating.kind === 'rated' ? fmtRating(rating.value) : rating.kind === 'pending' ? 'Aguardando' : rating.kind === 'insufficient' ? 'Insuficiente' : 'Sem votação';
+  const noteText = rating.kind === 'rated' ? fmtRating(rating.value) : 'Aguardando nota';
   return (
     <Pressable
       onPress={onPress}
@@ -606,17 +597,17 @@ export function LastGameCard({ game, stale, onPress }: { game: LastGameRow; stal
       </Text>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         {side(game.team_a_name, game.my_team === 'A', 'right')}
-        <Text style={{ fontSize: 32, lineHeight: 38, fontWeight: '900', color: colors.deepBlue, fontVariant: ['tabular-nums'] }}>
+        <Text style={{ fontSize: 32, lineHeight: 38, fontWeight: '900', color: colors.ink, fontVariant: ['tabular-nums'] }}>
           {game.team_a_score}–{game.team_b_score}
         </Text>
         {side(game.team_b_name, game.my_team === 'B', 'left')}
       </View>
       <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 16, borderTopWidth: 1, borderTopColor: hair, paddingTop: 10 }}>
         <View accessible accessibilityLabel={`Sua nota: ${noteText}`} style={{ minWidth: 88 }}>
-          <Text style={{ fontSize: rating.kind === 'rated' ? 26 : 15, lineHeight: 32, fontWeight: '800', color: rating.kind === 'rated' ? colors.deepBlue : colors.muted, fontVariant: ['tabular-nums'] }}>
+          <Text style={{ fontSize: rating.kind === 'rated' ? 26 : 14, lineHeight: 32, fontWeight: rating.kind === 'rated' ? '800' : '600', color: rating.kind === 'rated' ? colors.ink : colors.muted, fontVariant: ['tabular-nums'] }}>
             {noteText}
           </Text>
-          <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: 0.8, color: colors.muted }}>SUA NOTA</Text>
+          {rating.kind === 'rated' && <Text style={{ fontSize: 11, fontWeight: '800', letterSpacing: 0.8, color: colors.muted }}>SUA NOTA</Text>}
         </View>
         <View style={{ flex: 1 }}>
           <StatStrip size="sm" items={stats.map((s) => ({ value: s.value, label: s.label }))} />

@@ -89,7 +89,7 @@ export function SecondaryRequests({ peladaId, isAdmin }: { peladaId: string; isA
   }
   return (
     <Card>
-      <Text style={{ fontWeight: '800', color: colors.deepBlue }}>Posições secundárias para confirmar</Text>
+      <Text style={{ fontWeight: '800', color: colors.ink }}>Posições secundárias para confirmar</Text>
       <Sub>Confirmada, a secundária conta como a principal na Seleção da Rodada.</Sub>
       {rows.map((r) => (
         <View key={r.id} style={{ gap: 6, marginTop: 6 }}>

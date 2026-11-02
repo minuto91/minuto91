@@ -216,7 +216,7 @@ export default function Carta() {
                 <View key={a.key} style={{ gap: 4, marginBottom: 6 }}>
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
                     <Text style={{ color: colors.ink, fontWeight: '600' }}>{a.label}</Text>
-                    <Text style={{ color: colors.deepBlue, fontWeight: '800' }}>{Math.round(v)}</Text>
+                    <Text style={{ color: colors.ink, fontWeight: '800' }}>{Math.round(v)}</Text>
                   </View>
                   <View style={{ height: 8, borderRadius: 4, backgroundColor: colors.line }}>
                     <View style={{ height: 8, borderRadius: 4, width: `${Math.max(0, Math.min(100, v))}%`, backgroundColor: colors.blue }} />
@@ -310,7 +310,7 @@ export default function Carta() {
           {newPos && newPos !== member.position_code && (
             <Button title={`Mudar para ${positionLabel(newPos)}`} onPress={salvarPosicao} loading={posBusy} />
           )}
-          {posOk && <Text style={{ color: colors.deepBlue, fontWeight: '600' }}>{posOk}</Text>}
+          {posOk && <Text style={{ color: colors.ink, fontWeight: '600' }}>{posOk}</Text>}
         </Card>
       )}
       {isMe && member.status === 'active' && (
