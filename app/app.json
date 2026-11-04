@@ -2,7 +2,7 @@
   "expo": {
     "name": "Minuto 91",
     "slug": "minuto91",
-    "version": "1.0.0",
+    "version": "10.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "scheme": "minuto91",
@@ -10,6 +10,7 @@
     "ios": {
       "icon": "./assets/expo.icon",
       "bundleIdentifier": "com.minuto91.app",
+      "buildNumber": "1",
       "usesAppleSignIn": true
     },
     "android": {
@@ -20,7 +21,8 @@
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
       "predictiveBackGestureEnabled": false,
-      "package": "com.minuto91.app"
+      "package": "com.minuto91.app",
+      "versionCode": 1
     },
     "web": {
       "output": "single",

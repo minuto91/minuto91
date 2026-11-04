@@ -10,6 +10,7 @@ import { Text } from '../lib/text';
 
 import { friendly } from '../lib/errors';
 import { supabase } from '../lib/supabase';
+import { APP_VERSION_LABEL } from '../lib/version';
 import { L, LoginBackground, LoginBrand, LoginButton, LoginDivider, LoginField } from '../lib/loginui';
 
 WebBrowser.maybeCompleteAuthSession();
@@ -164,6 +165,12 @@ export default function Login() {
           </Text>
         </View>
       </ScrollView>
+      <Text
+        accessible={false}
+        pointerEvents="none"
+        style={{ position: 'absolute', right: Math.max(insets.right, 16), bottom: Math.max(insets.bottom, 8) + 2, color: L.soft, fontSize: 11, opacity: 0.7 }}>
+        {APP_VERSION_LABEL}
+      </Text>
     </View>
   );
 }
