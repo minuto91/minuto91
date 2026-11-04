@@ -141,6 +141,11 @@ perform pg_temp.as_user(15); perform public.cast_rating_vote(v_s, pg_temp.mem(v_
 perform pg_temp.as_user(16); perform public.cast_rating_vote(v_s, pg_temp.mem(v_a,14), 10);
 perform public.cast_rating_vote(v_s, pg_temp.mem(v_a,3), 0);
 perform pg_temp.as_user(4); perform public.cast_rating_vote(v_s, pg_temp.mem(v_a,3), 10); -- companheiro do 3
+-- V10.0 (076, REV-136): nota válida exige 7 votos recebidos. Votos extras sem mudar as médias (jogador 5: 10 e 6; jogador 3: 10 e 0).
+foreach i in array array[8,9,10] loop perform pg_temp.as_user(i); perform public.cast_rating_vote(v_s, pg_temp.mem(v_a,5), 10); end loop;
+foreach i in array array[17,18,19] loop perform pg_temp.as_user(i); perform public.cast_rating_vote(v_s, pg_temp.mem(v_a,5), 6); end loop;
+foreach i in array array[8,9,10,11] loop perform pg_temp.as_user(i); perform public.cast_rating_vote(v_s, pg_temp.mem(v_a,3), 10); end loop;
+foreach i in array array[17,18,19] loop perform pg_temp.as_user(i); perform public.cast_rating_vote(v_s, pg_temp.mem(v_a,3), 0); end loop;
 perform pg_temp.as_user(3); perform public.set_rating_vote_awards(v_s, pg_temp.mem(v_a,5), null);
 perform pg_temp.expect_error(format('select public.set_rating_vote_awards(%L,%L,null)',v_s,pg_temp.mem(v_a,3)),'SELF_VOTE_NOT_ALLOWED');
 -- Voto 2 do jogador 2 sobre o 5 e o 14 entrou no fluxo (6 ou 9,5): sobrescreve com valores conhecidos.

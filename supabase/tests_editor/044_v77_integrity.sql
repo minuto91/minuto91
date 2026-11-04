@@ -119,6 +119,8 @@ perform pg_temp.assert((public.get_rating_vote(v_m)->'my_awards') ? 'bola_murcha
 
 -- ===== 4) Invalidação e revalidação =====
 perform pg_temp.as_user(13); perform public.cast_rating_vote(v_s, pg_temp.mem(v_a,3), 8);
+-- V10.0 (076, REV-136): nota válida exige 7 votos recebidos; votos extras de 8 para o jogador 3 (mesma média).
+foreach i in array array[4,6,7,9,10,11,12] loop perform pg_temp.as_user(i); perform public.cast_rating_vote(v_s, pg_temp.mem(v_a,3), 8); end loop;
 perform pg_temp.as_user(2); perform public.cast_rating_vote(v_s, pg_temp.mem(v_a,13), 6);
 perform pg_temp.as_user(1);
 perform public.correct_match_sheet(v_m, pg_temp.sheet_without(v_a,1,14,13), v_ev, 'o 13 não jogou');
@@ -262,6 +264,9 @@ perform public.save_match_sheet(v_m2, pg_temp.sheet(v_a,1,14), '[]');
 perform public.publish_match(v_m2);
 r := public.open_rating_vote(v_m2); v_s2 := (r->>'session_id')::uuid;
 perform pg_temp.as_user(2); perform public.cast_rating_vote(v_s2, pg_temp.mem(v_a,9), 6);
+-- V10.0 (076, REV-136): 7 votos recebidos para o jogador 9 (adversários 6; companheiros 8), mesma média.
+foreach i in array array[3,4,6,7] loop perform pg_temp.as_user(i); perform public.cast_rating_vote(v_s2, pg_temp.mem(v_a,9), 6); end loop;
+foreach i in array array[11,12] loop perform pg_temp.as_user(i); perform public.cast_rating_vote(v_s2, pg_temp.mem(v_a,9), 8); end loop;
 
 -- 12) Ex-integrante continua eleitor da partida que jogou.
 v_x := pg_temp.mem(v_a,3); -- o ex-integrante não lê a lista de membros (RLS)
@@ -328,37 +333,27 @@ perform pg_temp.assert((select final_rating from public.match_player_results whe
 perform set_config('role','authenticated',true);
 
 -- ===== 13) Seleção global =====
-perform pg_temp.as_user(12);
-perform pg_temp.expect_error(format('select public.request_secondary_position(%L,%L)',v_a,'midfielder'),'SECONDARY_EQUALS_PRIMARY');
-perform public.request_secondary_position(v_a, 'attacker');
-perform pg_temp.expect_error(format('select public.decide_secondary_position(%L,%L,true)',pg_temp.mem(v_a,12),'attacker'),'ADMIN_REQUIRED');
-perform pg_temp.as_user(1);
-perform public.decide_secondary_position(pg_temp.mem(v_a,12), 'attacker', true);
-perform public.decide_secondary_position(pg_temp.mem(v_a,10), 'goalkeeper', true);
+-- V10.0 (075, REV-147): sem segunda posição; a Seleção usa só a posição principal (retrato da partida).
 execute 'reset role';
-perform pg_temp.assert((select secondary_status='confirmed' from public.pelada_memberships where id=pg_temp.mem(v_a,12)), 'secundária confirmada');
--- S1: meias sobrando, atacante faltando: o 12 (meia, secundária atacante) entra no ataque.
+-- S1: 11 notas válidas, todos cabem nas vagas 1-4-3-3 pela posição principal (o 12 é atacante).
 insert into public.matches(pelada_id,season_id,played_at,status,team_a_score,team_b_score,finalized_at)
 values(v_a,private.season_for_date(v_a,private.pelada_today(v_a)),now()-interval '1 hour','finalized',1,0,now()) returning id into v_x;
--- REV 8.0 (REV-011): a secundária só vale com a confirmação da administração para esta partida.
-insert into private.match_secondary_confirmations(match_id,membership_id,position)
-values(v_x,pg_temp.mem(v_a,12),'attacker'),(v_x,pg_temp.mem(v_a,10),'goalkeeper');
 insert into public.match_participants(pelada_id,match_id,membership_id,team,primary_position)
 select v_a, v_x, pg_temp.mem(v_a,n), case when n % 2 = 0 then 'A' else 'B' end, p
 from (values (1,'goalkeeper'),(2,'defender'),(4,'defender'),(8,'defender'),(11,'defender'),(5,'midfielder'),(6,'midfielder'),
- (9,'midfielder'),(12,'midfielder'),(3,'attacker'),(7,'attacker')) t(n,p);
+ (9,'midfielder'),(12,'attacker'),(3,'attacker'),(7,'attacker')) t(n,p);
 insert into public.match_player_results(pelada_id,match_id,membership_id,numeric_rating_count,peer_rating,objective_rating,final_rating,
  has_valid_rating,goals,assists,red_cards,match_result,position_snapshot,formula_version)
 select v_a, v_x, pg_temp.mem(v_a,n), 0, f, 5, f, true, 0, 0, 0, 'win', p, 2
 from (values (1,'goalkeeper',7.0),(2,'defender',7.0),(4,'defender',7.0),(8,'defender',7.0),(11,'defender',7.0),(5,'midfielder',9.0),
- (6,'midfielder',8.5),(9,'midfielder',8.0),(12,'midfielder',7.9),(3,'attacker',6.0),(7,'attacker',5.0)) t(n,p,f);
+ (6,'midfielder',8.5),(9,'midfielder',8.0),(12,'attacker',7.9),(3,'attacker',6.0),(7,'attacker',5.0)) t(n,p,f);
 perform private.compute_round_selection(v_x);
 select id into v_sel from public.round_selections where match_id=v_x and status='published';
 perform pg_temp.assert(v_sel is not null and (select count(*) from public.round_selection_players where selection_id=v_sel)=11, 'Seleção com 11');
 perform pg_temp.assert((select slot_position from public.round_selection_players where selection_id=v_sel and membership_id=pg_temp.mem(v_a,12))='attacker',
- 'secundária confirmada ocupa a vaga (combinação global)');
+ 'posição principal ocupa a vaga');
 perform pg_temp.assert((select algorithm_version from public.round_selections where id=v_sel)=2, 'algoritmo v2');
--- S2: sem goleiro de ofício; o 10 (atacante, secundária goleiro) fecha o gol.
+-- S2: sem goleiro de posição o gol não é fechado por ninguém (sem posição secundária): não publica.
 delete from public.round_selections where match_id=v_x;
 delete from public.match_player_results where match_id=v_x and membership_id=pg_temp.mem(v_a,1);
 insert into public.match_participants(pelada_id,match_id,membership_id,team,primary_position) values(v_a,v_x,pg_temp.mem(v_a,10),'A','attacker');
@@ -366,20 +361,12 @@ insert into public.match_player_results(pelada_id,match_id,membership_id,numeric
  has_valid_rating,goals,assists,red_cards,match_result,position_snapshot,formula_version)
 values(v_a,v_x,pg_temp.mem(v_a,10),0,4,5,4,true,0,0,0,'win','attacker',2);
 perform private.compute_round_selection(v_x);
-perform pg_temp.assert((select s.slot_position from public.round_selection_players s join public.round_selections r2 on r2.id=s.selection_id
- where r2.match_id=v_x and s.membership_id=pg_temp.mem(v_a,10))='goalkeeper', 'goleiro pela secundária');
+perform pg_temp.assert(not exists(select 1 from public.round_selections where match_id=v_x), 'sem goleiro: sem Seleção');
 -- S3: 10 notas válidas: não publica.
 delete from public.match_player_results where match_id=v_x and membership_id=pg_temp.mem(v_a,7);
 perform private.compute_round_selection(v_x);
 perform pg_temp.assert(not exists(select 1 from public.round_selections where match_id=v_x), 'menos de 11: sem Seleção');
--- S4: 11, mas ninguém pode ir ao gol: não publica.
-update public.pelada_memberships set secondary_position=null, secondary_status=null where id=pg_temp.mem(v_a,10);
-update public.match_participants set secondary_position=null where match_id=v_x and membership_id=pg_temp.mem(v_a,10);
-insert into public.match_player_results(pelada_id,match_id,membership_id,numeric_rating_count,peer_rating,objective_rating,final_rating,
- has_valid_rating,goals,assists,red_cards,match_result,position_snapshot,formula_version)
-values(v_a,v_x,pg_temp.mem(v_a,7),0,5,5,5,true,0,0,0,'win','attacker',2);
-perform private.compute_round_selection(v_x);
-perform pg_temp.assert(not exists(select 1 from public.round_selections where match_id=v_x), 'sem goleiro: sem Seleção');
+perform set_config('role','authenticated',true);
 perform set_config('role','authenticated',true);
 
 -- ===== 14) Exclusão de conta e vagas =====

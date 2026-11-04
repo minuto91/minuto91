@@ -116,7 +116,7 @@ perform pg_temp.assert((r->>'team_a_score')::int=2 and (r->>'team_b_score')::int
 perform pg_temp.assert((public.save_match_sheet_v85(v_m, 0, '[]', '[]', v_req)->>'replayed')::boolean, 'retry não regrava');
 perform pg_temp.expect_error(format('select public.save_match_sheet_v85(%L,%s,%L,%L,%L)',v_m,v_dv-1,'[]','[]',gen_random_uuid()),'VERSION_CONFLICT');
 r := public.get_match_sheet_review(v_m);
-perform pg_temp.assert((r->>'can_publish')::boolean and r->'warnings'->0->>'code'='UNATTRIBUTED_GOALS', 'aviso não bloqueante');
+perform pg_temp.assert(not (r->>'can_publish')::boolean and r->'blocking' ? 'UNATTRIBUTED_GOALS', 'V10.0 (078): gol sem autor bloqueia a publicação');
 -- linha do tempo opcional
 r := public.set_match_timeline(v_m, v_dv, jsonb_build_array(jsonb_build_object('type','goal','membership_id',v_x,'minute',12),
  jsonb_build_object('type','goal','membership_id',v_x)));

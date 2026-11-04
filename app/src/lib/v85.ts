@@ -341,7 +341,8 @@ export const REVIEW_CODE: Record<string, string> = {
   MATCH_IN_FUTURE: 'A data da partida ainda não chegou.',
   PARTICIPATION_NOT_CONFIRMED: 'Confirme quem realmente jogou.',
   PARTICIPANT_INELIGIBLE: 'Há jogador que não faz mais parte da pelada.',
-  UNATTRIBUTED_GOALS: 'Há gols sem autor (não contam para ninguém).',
+  UNATTRIBUTED_GOALS: 'Há gols sem autor. Identifique o autor de cada gol.',
+  OWN_GOAL_WITHOUT_PLAYER: 'Há gol contra sem o jogador responsável.',
   NO_ASSISTS: 'Nenhuma assistência registrada.',
   TEAM_SIZES_DIFFER: 'Os times têm tamanhos diferentes.',
 };

@@ -127,16 +127,9 @@ v_claim := public.submit_keeper_saves_claim(v_m, 5);
 perform public.review_keeper_saves_claim(v_claim, 5);
 perform pg_temp.assert((select hard_saves from public.match_keeper_saves where participant_id=(select participant_id from public.match_keeper_save_claims where id=v_claim))=5,
  'goleiro de posição confirmado vira dado oficial');
--- Secundária: cadastrada e confirmada não basta; precisa da confirmação da partida.
-perform pg_temp.as_user(4); perform public.request_secondary_position(v_a, 'goalkeeper');
-perform pg_temp.as_user(1); perform public.decide_secondary_position(pg_temp.mem(v_a,4), 'goalkeeper', true);
-perform pg_temp.assert((select secondary_position from public.match_participants where match_id=v_m and membership_id=pg_temp.mem(v_a,4)) is null,
- 'sem confirmação da partida não há secundária na súmula');
-perform public.set_match_secondary_played(v_m, pg_temp.mem(v_a,4), true);
-perform pg_temp.assert((select secondary_position from public.match_participants where match_id=v_m and membership_id=pg_temp.mem(v_a,4))='goalkeeper',
- 'confirmada naquela partida');
-perform public.set_match_secondary_played(v_m, pg_temp.mem(v_a,4), false);
-perform pg_temp.assert((select secondary_position from public.match_participants where match_id=v_m and membership_id=pg_temp.mem(v_a,4)) is null, 'desfeita');
+-- V10.0 (075, REV-147): segunda posição removida; as funções não existem mais e a principal fica intacta.
+perform pg_temp.assert(not exists(select 1 from pg_proc p join pg_namespace n on n.oid=p.pronamespace where n.nspname='public'
+ and p.proname in ('request_secondary_position','decide_secondary_position','set_match_secondary_played')), 'REV-147: sem funções de secundária');
 perform pg_temp.assert((select preferred_position from public.pelada_memberships where id=pg_temp.mem(v_a,4))='defender', 'principal intacta');
 
 -- ===== 2) Saída e retorno + financeiro =====

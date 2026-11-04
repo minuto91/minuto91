@@ -2,10 +2,10 @@
 // pdftotext), com as cláusulas alteradas pela V7.7 (Termos 1.2 e Política 1.3, MINUTAS: votação sem quórum percentual,
 // anulação a qualquer tempo e restauração, reserva de vaga na exclusão). Ao trocar a versão, trocar também
 // private.app_config.legal_versions (migração 057), para o app pedir o novo aceite. [VALIDAR COM ADVOGADO]
-export const LEGAL_VERSIONS = { terms: '1.2', privacy: '1.3' } as const;
+export const LEGAL_VERSIONS = { terms: '1.3', privacy: '1.3' } as const;
 
 export const TERMS: string[] = [
- "TERMOS DE USO — MINUTO 91 Versão: 1.2 — Minuta para revisão jurídica (V7.7: cláusulas 6.6, 6.8, 8.2 e 10 revistas) (alinhada ao PRD v2.5 e aos Documentos 02 v3.1, 03 v2.1 e 04 v1.1) Última atualização: 21 de outubro de 2026 Aplicação: Aplicativo Minuto 91 e serviços digitais associados",
+ "TERMOS DE USO — MINUTO 91 Versão: 1.3 — Minuta para revisão jurídica (V7.7: cláusulas 6.6, 6.8, 8.2 e 10 revistas; V10.0: cláusula 4.7 sobre convidados maiores de 18 anos) (alinhada ao PRD v2.5 e aos Documentos 02 v3.1, 03 v2.1 e 04 v1.1) Última atualização: 21 de outubro de 2026 Aplicação: Aplicativo Minuto 91 e serviços digitais associados",
  "1. Identificação e aceitação",
  "1.1. O Minuto 91 é uma plataforma digital destinada à organização de partidas de futebol amador, ao registro de resultados e estatísticas, à avaliação de desempenho e à disponibilização de funcionalidades de acompanhamento esportivo e colecionáveis digitais.",
  "1.2. A plataforma é disponibilizada por [RAZÃO SOCIAL OU NOME DO RESPONSÁVEL], inscrito no [CNPJ OU CPF, CONFORME A ESTRUTURA JURÍDICA], com endereço em [ENDEREÇO COMERCIAL], doravante denominado Minuto 91.",
@@ -30,6 +30,7 @@ export const TERMS: string[] = [
  "4.4. Os administradores e assistentes deverão utilizar suas permissões de boa-fé, respeitando os participantes e a integridade das informações.",
  "4.5. Quando o administrador deixar a pelada, a função será transferida automaticamente, nesta ordem: (a) ao sucessor previamente indicado pelo administrador; (b) na ausência de indicação válida, ao assistente ativo há mais tempo, contado da data de designação; (c) na ausência de assistentes, ao jogador ativo há mais tempo na pelada. Se não houver nenhuma pessoa elegível, a pelada ficará em modo restrito, com os dados preservados e sem novos registros, até que haja novo administrador. Quem sair e voltar à pelada por novo convite terá o mesmo registro reativado, com seu histórico, carta e figurinhas, e retornará como jogador comum.",
  "4.6. O Minuto 91 poderá disponibilizar mecanismos para contestação, correção ou revisão de registros indevidos.",
+ "4.7. Ao incluir um convidado em uma partida ou sorteio, o administrador ou assistente declara, sob sua responsabilidade, que o convidado tem 18 anos ou mais. A inclusão de menores de 18 anos é vedada. Essa declaração é feita uma única vez, neste aceite dos Termos, e se aplica a todos os convidados incluídos por ele.",
  "5. Registro de partidas e estatísticas",
  "5.1. Os registros esportivos dependem das informações fornecidas pelos participantes autorizados.",
  "5.2. O usuário responsável pelo lançamento deverá registrar os acontecimentos da partida de forma fiel.",

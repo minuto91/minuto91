@@ -161,11 +161,11 @@ perform pg_temp.assert((select (x->>'drafts')::int=0 from jsonb_array_elements(p
 perform pg_temp.as_user(5);
 perform pg_temp.assert(not (public.get_legal_status()->>'accepted')::boolean,'sem aceite registrado');
 perform pg_temp.expect_error('select public.accept_legal_documents(''1.1'',''1.2'')','LEGAL_VERSION_OUTDATED');
-perform public.accept_legal_documents('1.2','1.3'); -- V7.7 (057)
+perform public.accept_legal_documents('1.3','1.3'); -- V10.0 (077)
 perform pg_temp.assert((public.get_legal_status()->>'accepted')::boolean,'aceite da versão vigente');
 perform pg_temp.assert((select count(*)=2 from public.legal_acceptances where user_id=pg_temp.uid(5)),'documento + versão + momento');
 execute 'reset role';
-update private.app_config set value='{"terms":"1.3","privacy":"1.3"}'::jsonb where key='legal_versions';
+update private.app_config set value='{"terms":"1.4","privacy":"1.3"}'::jsonb where key='legal_versions';
 perform set_config('role','authenticated',true);
 perform pg_temp.assert(not (public.get_legal_status()->>'accepted')::boolean,'versão nova pede novo aceite');
 
