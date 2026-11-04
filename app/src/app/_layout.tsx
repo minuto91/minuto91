@@ -108,6 +108,7 @@ function Gate() {
         <Stack.Screen name="jogador/[id]/album" options={{ title: 'Álbum' }} />
         <Stack.Screen name="partida/[id]/index" options={{ title: 'Partida' }} />
         <Stack.Screen name="partida/[id]/sumula" options={{ title: 'Súmula' }} />
+        <Stack.Screen name="partida/[id]/selecao" options={{ title: 'Seleção da Rodada' }} />
         <Stack.Screen name="partida/[id]/votar" options={{ title: 'Votação' }} />
       </Stack>
       <DevNav />

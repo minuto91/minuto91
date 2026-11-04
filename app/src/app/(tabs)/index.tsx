@@ -8,25 +8,31 @@ import {
   type AttentionItem,
   BlockTitle,
   CardEvolution,
-  CareerSummaryCard,
-  CentralHeader,
   InlineError,
-  LastGameCard,
-  NextRoundCard,
   Notice,
   officialOvr,
-  PeladaSelector,
   Skeleton,
   UrgentVote,
   useTopInset,
   type VoteItem,
   voteLine,
 } from '../../lib/central';
-import { type CentralData, loadCentral, loadLastGame, loadLayout, loadRating, loadUnread, type Pelada, useBlock } from '../../lib/centraldata';
-import { leftLabel, nextVoteBoundary, ofPelada, voteState } from '../../lib/centrallogic';
-import { type CareerSummary, loadCareerSummary, markGuide } from '../../lib/careerv2';
-import { friendly } from '../../lib/errors';
+import {
+  type CentralData,
+  type HomeRatings,
+  loadCentral,
+  loadHomeLastGame,
+  loadHomeRatings,
+  loadLayout,
+  loadUnread,
+  useBlock,
+} from '../../lib/centraldata';
+import { leftLabel, nextVoteBoundary, voteState } from '../../lib/centrallogic';
+import { type CareerSummary, loadCareerSummary, markGuide, referencePelada } from '../../lib/careerv2';
+import { StatStrip } from '../../lib/domain';
 import { refreshOutcome, syncedLabel } from '../../lib/loadstate';
+import { GreetingHeader, HomeLastGameCard, NextGameCard } from '../../lib/homeui';
+import { greetingText, pickCard, pickGreetingIndex, pickNextRound } from '../../lib/homelogic';
 import { haptic } from '../../lib/motion';
 import { useGo } from '../../lib/nav';
 import { PushPrompt } from '../../lib/push';
@@ -41,12 +47,13 @@ import { type BlockId, normalizeLayout, splitAttention, visibleSportBlocks } fro
 // O convite guardado antes do login abre sozinho uma vez por sessão do app; depois fica como pendência até ser
 // aceito (ou se mostrar inválido) na tela do convite, que o apaga.
 let inviteOpened = false;
-const LEGACY_PELADA_KEY = (uid: string) => `central_pelada:${uid}`;
+const GREETING_KEY = (uid: string) => `home_greeting:${uid}`;
+// Ordem fixa dos blocos esportivos (REV-052): Card, Próximo Jogo, Último Jogo, Resumo da Carreira.
+const SPORT_ORDER: BlockId[] = ['next_round', 'last_game', 'career_summary'];
 
-// Central do Jogador V8.4: a tela inicial de todos, administradores incluídos (as funções de administração continuam
-// dentro de cada pelada). Tudo aparece no contexto da pelada ATIVA, que é a do servidor (set_primary_pelada) e só
-// muda pelo seletor. Cada bloco tem o seu próprio estado (useBlock): uma falha localizada não derruba a tela, o cache
-// do aparelho só alimenta leitura, e nada aqui recalcula OVR, nota ou prazo.
+// Início do jogador (V10.0, REV-051 a REV-095): visão geral de TODAS as peladas, sem pelada ativa nem seletor. O Card é o
+// de maior OVR entre as peladas; Próximo/Último Jogo e Resumo da Carreira somam todas. Cada bloco carrega sozinho
+// (useBlock): uma falha localizada não derruba a tela, o cache só alimenta leitura e nada aqui recalcula OVR ou nota.
 export default function Home() {
   const { session } = useAuth();
   const go = useGo();
@@ -55,11 +62,10 @@ export default function Home() {
   const uid = session?.user.id ?? '';
   const [reload, setReload] = useState(0);
   const [pendingInvite, setPendingInvite] = useState<string | null>(null);
-  // Pelada escolhida agora, confirmada pelo servidor; vale só até a próxima leitura da Central (atSync) trazer a verdade.
-  const [override, setOverride] = useState<{ uid: string; id: string; atSync: number | null } | null>(null);
   const [, setTick] = useState(0);
   const [awaiting, setAwaiting] = useState(false);
   const [refreshMsg, setRefreshMsg] = useState<string | null>(null);
+  const [greetIdx, setGreetIdx] = useState(0);
   const scrollRef = useRef<ScrollViewInstance>(null);
   const scrollY = useRef(0);
   const armed = useRef(false);
@@ -68,17 +74,13 @@ export default function Home() {
   // ---- Leituras independentes (E16-03) ----------------------------------------------------------------------
   const central = useBlock<CentralData>({ uid, scope: 'central', load: loadCentral, reload });
   const peladas = central.data?.peladas ?? [];
-  const serverActive = central.data?.primary_pelada_id ?? null;
-  const wanted = override && override.uid === uid && override.atSync === central.syncedAt ? override.id : serverActive;
-  const pelada: Pelada | null = peladas.find((p) => p.id === wanted) ?? peladas[0] ?? null;
-  const pid = pelada?.id ?? null;
-  const mid = pelada?.membership_id ?? null;
+  const peladaKey = peladas.map((p) => p.membership_id).join(',');
 
   const layoutBlock = useBlock<unknown>({ uid, scope: 'layout', load: loadLayout, reload });
   const unread = useBlock<boolean>({ uid, scope: 'unread', load: loadUnread, reload, cacheable: false });
   const career = useBlock<CareerSummary>({ uid, scope: 'career', load: async () => ({ data: await loadCareerSummary(uid) }), reload });
-  const rating = useBlock({ uid, scope: mid ? `rating:${mid}` : null, load: () => loadRating(mid!), reload });
-  const last = useBlock({ uid, scope: pid ? `last:${pid}` : null, load: () => loadLastGame(pid!), reload });
+  const ratings = useBlock<HomeRatings>({ uid, scope: peladas.length ? `ratings:${peladaKey}` : null, load: () => loadHomeRatings(peladas), reload });
+  const last = useBlock({ uid, scope: 'home-last', load: loadHomeLastGame, reload });
   const account = useBlock<{ purge_after: string | null }>({
     uid,
     scope: 'account',
@@ -95,19 +97,6 @@ export default function Home() {
   // Relógio do servidor só de resposta confirmada agora (nunca de cache): base de qualquer afirmação de prazo.
   const fresh = central.status === 'loaded' && !central.stale;
   const offset = fresh ? (central.data?.offset_ms ?? 0) : 0;
-
-  // Migração única: quem escolhia a pelada só neste aparelho passa a tê-la guardada no servidor.
-  useEffect(() => {
-    if (!uid || !fresh || !central.data || central.data.primary_pelada_id) return;
-    (async () => {
-      const local = await AsyncStorage.getItem(LEGACY_PELADA_KEY(uid)).catch(() => null);
-      if (!local) return;
-      await AsyncStorage.removeItem(LEGACY_PELADA_KEY(uid)).catch(() => {});
-      if (!central.data!.peladas.some((p) => p.id === local)) return;
-      const { error } = await supabase.rpc('set_primary_pelada', { p_pelada: local });
-      if (!error) setReload((n) => n + 1);
-    })().catch(() => {});
-  }, [uid, fresh, central.data]);
 
   // Convite recebido antes do login: continua de onde parou (uma vez por sessão do app).
   useFocusEffect(
@@ -127,6 +116,22 @@ export default function Home() {
       };
     }, [go]),
   );
+
+  // Saudação (REV-053/093): sorteada ao entrar na tela, sem repetir a anterior (guardada no aparelho); atualizar dados
+  // não sorteia de novo — só voltar à aba.
+  useEffect(() => {
+    if (!focused || !uid) return;
+    let alive = true;
+    (async () => {
+      const prevRaw = await AsyncStorage.getItem(GREETING_KEY(uid)).catch(() => null);
+      const next = pickGreetingIndex(prevRaw === null || Number.isNaN(Number(prevRaw)) ? null : Number(prevRaw));
+      if (alive) setGreetIdx(next);
+      await AsyncStorage.setItem(GREETING_KEY(uid), String(next)).catch(() => {});
+    })();
+    return () => {
+      alive = false;
+    };
+  }, [focused, uid]);
 
   // Ao voltar para o app: relê (no máximo a cada 20 s). Leitura apenas.
   useEffect(() => {
@@ -187,7 +192,7 @@ export default function Home() {
     setAwaiting(true);
     setReload((n) => n + 1);
   }
-  const tracked = [central, career, ...(pid ? [rating, last] : [])];
+  const tracked = [central, career, last, ...(peladas.length ? [ratings] : [])];
   const anyBusy = tracked.some((b) => b.refreshing || b.status === 'loading');
   useEffect(() => {
     if (!awaiting) return;
@@ -205,32 +210,37 @@ export default function Home() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [awaiting, anyBusy]);
 
-  // ---- Troca da pelada ativa (E02): atômica e confirmada pelo servidor -----------------------------------------------
   const offline = tracked.some((b) => b.status === 'offline_cached' || b.status === 'offline_uncached');
-  const selectPelada = useCallback(
-    async (id: string) => {
-      if (offline) throw new Error('Sem conexão. Para trocar de pelada é preciso estar online.');
-      const { error } = await supabase.rpc('set_primary_pelada', { p_pelada: id });
-      if (error) throw new Error(friendly(error.message));
-      setOverride({ uid, id, atSync: central.syncedAt });
-      setReload((n) => n + 1);
-    },
-    [uid, offline, central.syncedAt],
-  );
 
   // ---- Blocos derivados -----------------------------------------------------------------------------------------
   const lay = useMemo(() => (layoutBlock.status === 'loaded' || layoutBlock.status === 'offline_cached' ? normalizeLayout(layoutBlock.data) : normalizeLayout(null)), [layoutBlock.status, layoutBlock.data]);
+  const visibleSet = new Set(visibleSportBlocks(lay));
   const me = central.data?.me;
   const centralTrusted = fresh;
   const careerData = career.data?.visible ? career.data : null;
-  const cp = careerData?.peladas.find((p) => p.pelada_id === pid) ?? null;
+
+  // Card (REV-055/079/080): o de maior OVR entre as peladas; sem OVR elegível, a pelada de referência com o estado
+  // "Aguardando avaliação" (nunca um valor inventado).
+  const candidates = peladas.map((p) => {
+    const cp = careerData?.peladas.find((x) => x.pelada_id === p.id) ?? null;
+    const card = cp?.seasons.find((s) => s.card)?.card ?? null;
+    const r = ratings.data?.[p.id] ?? null;
+    const ovr = officialOvr(r?.rating ?? null, card);
+    return { pelada_id: p.id, eligible: ovr !== null, ovr, matches: cp?.totals.matches_played ?? 0, last_played_at: r?.lastPlayedAt ?? null };
+  });
+  const best = pickCard(candidates);
+  const refId = referencePelada(careerData?.peladas ?? [], central.data?.primary_pelada_id ?? null)?.pelada_id ?? peladas[0]?.id ?? null;
+  const cardPid = best?.pelada_id ?? refId;
+  const pelada = peladas.find((p) => p.id === cardPid) ?? null;
+  const cp = careerData?.peladas.find((p) => p.pelada_id === cardPid) ?? null;
   const cardSeason = cp?.seasons.find((s) => s.card) ?? null;
   const season = cp?.seasons[0] ?? null;
   const position = pelada ? (pelada.position_code ?? pelada.position) : null;
-  const headerOvr = officialOvr(rating.data, cardSeason?.card ?? null);
+  const cardRating = cardPid ? (ratings.data?.[cardPid]?.rating ?? null) : null;
 
+  // Pendências: todas as peladas (não há pelada ativa).
   const votes = (central.data?.pending.votes ?? []).filter((v) => voteState(v.closes_at, offset) !== 'closed');
-  const urgent = centralTrusted ? ofPelada(votes, pid).filter((v) => voteState(v.closes_at, offset) === 'urgent') : [];
+  const urgent = centralTrusted ? votes.filter((v) => voteState(v.closes_at, offset) === 'urgent') : [];
   const urgentIds = new Set(urgent.map((v) => v.match_id));
   const openVote = (v: VoteItem) => go({ pathname: v.v2 ? '/partida/[id]/votar' : '/partida/[id]', params: { id: v.match_id } });
 
@@ -240,11 +250,11 @@ export default function Home() {
       .map((v) => ({
         key: `v${v.match_id}`,
         rank: 1,
-        title: v.pelada_id === pid ? `Votação aberta: ${voteLine(v)}` : `Votação aberta em ${v.pelada_name}`,
-        detail: `${centralTrusted ? leftLabel(v.closes_at, offset) : 'Prazo a confirmar'}${v.v2 && v.total ? ` · você avaliou ${v.rated} de ${v.total}` : ''}`,
+        title: `Votação aberta: ${voteLine(v)}`,
+        detail: `${v.pelada_name} · ${centralTrusted ? leftLabel(v.closes_at, offset) : 'Prazo a confirmar'}${v.v2 && v.total ? ` · você avaliou ${v.rated} de ${v.total}` : ''}`,
         action: v.v2 && v.started ? 'Continuar' : 'Votar',
         tone: 'blue' as const,
-        onPress: () => openVote(v), // abre a votação sem trocar a pelada ativa (E15-04)
+        onPress: () => openVote(v),
       })),
     ...(pendingInvite
       ? [
@@ -259,10 +269,10 @@ export default function Home() {
           },
         ]
       : []),
-    ...ofPelada(central.data?.pending.positions ?? [], pid).map((p) => ({
+    ...(central.data?.pending.positions ?? []).map((p) => ({
       key: `p${p.membership_id}`,
       rank: 3,
-      title: 'Escolha sua posição nesta pelada',
+      title: `Escolha sua posição em ${p.pelada_name}`,
       action: 'Escolher',
       tone: 'gold' as const,
       onPress: () => go({ pathname: '/jogador/[id]', params: { id: p.membership_id } }),
@@ -283,7 +293,7 @@ export default function Home() {
   ];
   const att = splitAttention(attention);
 
-  const rounds = ofPelada(central.data?.next_rounds ?? [], pid);
+  const nextGame = pickNextRound(central.data?.next_rounds ?? []);
   const stale = central.stale;
   const sync = syncedLabel(central.syncedAt, Date.now());
 
@@ -294,25 +304,28 @@ export default function Home() {
   const steps = central.data ? guideSteps(central.data, (h) => go(h)) : [];
   const showGuide = !!central.data && !central.data.guide.dismissed && steps.some((s) => !s.done);
 
-  // ---- Renderização dos blocos E04–E06 ---------------------------------------------------------------------------
+  // ---- Blocos esportivos (REV-056 a REV-058) ------------------------------------------------------------------------
   function renderBlock(id: BlockId) {
-    if (!pid) return null;
     if (id === 'next_round') {
-      if (rounds.length === 0) return null;
       return (
         <View key={id} style={{ gap: 4 }}>
-          <BlockTitle>Próxima Rodada</BlockTitle>
-          <NextRoundCard
-            round={rounds[0]}
-            crestPath={peladas.find((x) => x.id === rounds[0].pelada_id)?.crest_path}
-            more={rounds.length - 1}
-            stale={!centralTrusted}
-            onPress={() =>
-              rounds[0].composition_id
-                ? go({ pathname: '/pelada/[id]/composicao/[cid]', params: { id: rounds[0].pelada_id, cid: rounds[0].composition_id } })
-                : go({ pathname: '/pelada/[id]/escalacoes', params: { id: rounds[0].pelada_id } })
-            }
-          />
+          <BlockTitle>Próximo Jogo</BlockTitle>
+          {nextGame ? (
+            <NextGameCard
+              round={nextGame}
+              crestPath={peladas.find((x) => x.id === nextGame.pelada_id)?.crest_path}
+              stale={!centralTrusted}
+              onPress={() =>
+                nextGame.match_id
+                  ? go({ pathname: '/partida/[id]', params: { id: nextGame.match_id } })
+                  : nextGame.composition_id
+                    ? go({ pathname: '/pelada/[id]/composicao/[cid]', params: { id: nextGame.pelada_id, cid: nextGame.composition_id } })
+                    : go({ pathname: '/pelada/[id]/escalacoes', params: { id: nextGame.pelada_id } })
+              }
+            />
+          ) : (
+            <Text2>Nenhum jogo marcado</Text2>
+          )}
         </View>
       );
     }
@@ -320,14 +333,19 @@ export default function Home() {
       return (
         <View key={id} style={{ gap: 4 }}>
           <BlockTitle>Último Jogo</BlockTitle>
-          {last.status === 'loading' && <Skeleton height={176} />}
+          {last.status === 'loading' && <Skeleton height={150} />}
           {(last.status === 'error' || last.status === 'access_denied') && <InlineError text={last.error ?? 'Não foi possível carregar o último jogo.'} onRetry={() => setReload((n) => n + 1)} />}
           {last.status === 'offline_uncached' && <InlineError text="Sem conexão e sem dados salvos do último jogo." onRetry={() => setReload((n) => n + 1)} />}
           {last.status === 'session_expired' && <InlineError text="Sua sessão expirou. Entre de novo." />}
-          {last.status === 'empty_confirmed' && <Text2>Você ainda não disputou nenhuma partida publicada nesta pelada.</Text2>}
+          {last.status === 'empty_confirmed' && <Text2>Você ainda não tem partidas</Text2>}
           {last.data && (last.status === 'loaded' || last.status === 'offline_cached') && (
             <>
-              <LastGameCard game={last.data} stale={last.stale} onPress={() => go({ pathname: '/partida/[id]', params: { id: last.data!.match_id } })} />
+              <HomeLastGameCard
+                game={last.data}
+                stale={last.stale}
+                onPress={() => go({ pathname: '/partida/[id]', params: { id: last.data!.match_id } })}
+                onSelection={() => go({ pathname: '/partida/[id]/selecao', params: { id: last.data!.match_id } })}
+              />
               {last.error && <InlineError text={last.error} onRetry={() => setReload((n) => n + 1)} />}
             </>
           )}
@@ -335,20 +353,33 @@ export default function Home() {
       );
     }
     if (id === 'career_summary') {
-      if (career.status === 'loading') return <Skeleton key={id} height={120} />;
-      if (!cp || cp.totals.matches_played <= 0) return null;
+      if (career.status === 'loading') return <Skeleton key={id} height={96} />;
+      if (career.status === 'error') return <InlineError key={id} text="Não foi possível carregar a sua carreira agora." onRetry={() => setReload((n) => n + 1)} />;
+      // REV-058/075: quatro indicadores somados de todas as peladas; sem dados, zero (nunca valor inventado).
+      const t = careerData?.totals;
+      const items = [
+        { value: t?.matches_played ?? 0, label: 'Jogos' },
+        { value: t?.goals ?? 0, label: 'Gols' },
+        { value: t?.assists ?? 0, label: 'Assistências' },
+        { value: t?.wins ?? 0, label: 'Vitórias' },
+      ];
       return (
         <View key={id} style={{ gap: 4 }}>
           <BlockTitle>Resumo da Carreira</BlockTitle>
-          <CareerSummaryCard position={position} totals={cp.totals} stale={career.stale} onPress={() => go('/carreira')} />
+          <Pressable
+            onPress={() => go('/carreira')}
+            accessibilityRole="button"
+            accessibilityLabel={`Resumo da carreira. ${items.map((s) => `${s.label}: ${s.value}`).join('. ')}. Abrir Minha Carreira.`}
+            style={({ pressed }) => ({ backgroundColor: colors.white, borderRadius: 16, borderWidth: 1, borderColor: colors.line, padding: 16, opacity: pressed ? 0.9 : 1 })}>
+            <StatStrip items={items} />
+          </Pressable>
         </View>
       );
     }
     return null;
   }
 
-  const ratingLoading = !!mid && rating.status === 'loading';
-  const heroLoading = career.status === 'loading' || ratingLoading;
+  const heroLoading = career.status === 'loading' || (peladas.length > 0 && ratings.status === 'loading');
 
   return (
     <ScrollView
@@ -361,15 +392,11 @@ export default function Home() {
       }}
       refreshControl={<RefreshControl refreshing={awaiting} onRefresh={startRefresh} tintColor={colors.blue} colors={[colors.blue]} />}>
       <View style={{ width: '100%', maxWidth: L.maxWidth, paddingHorizontal: L.gutter, gap: L.gap }}>
-        <CentralHeader
-          name={me?.display_name ?? null}
-          avatarPath={me?.avatar_path}
-          position={pelada ? position : null}
-          ovr={headerOvr}
-          unread={unread.data === true}
-          onProfile={() => go('/perfil')}
-          onBell={() => go('/notificacoes')}
-        />
+        {me || central.status !== 'loading' ? (
+          <GreetingHeader text={greetingText(greetIdx, me?.display_name)} unread={unread.data === true} onBell={() => go('/notificacoes')} />
+        ) : (
+          <Skeleton height={48} />
+        )}
 
         {/* Um aviso geral por vez (E11/E16-43): offline, ou desatualizado; a última sincronização só se for real. */}
         {offline && central.data ? (
@@ -381,18 +408,17 @@ export default function Home() {
         ) : null}
 
         {central.status === 'loading' && (
-          <View style={{ gap: L.gap }} accessibilityLabel="Carregando a sua Central" accessibilityLiveRegion="polite">
-            <Skeleton height={80} />
+          <View style={{ gap: L.gap }} accessibilityLabel="Carregando o seu Início" accessibilityLiveRegion="polite">
             <Skeleton height={156} />
             <Skeleton height={110} />
           </View>
         )}
-        {central.status === 'error' && <InlineError text={central.error ?? 'Não foi possível carregar a sua Central.'} onRetry={() => setReload((n) => n + 1)} />}
+        {central.status === 'error' && <InlineError text={central.error ?? 'Não foi possível carregar o seu Início.'} onRetry={() => setReload((n) => n + 1)} />}
         {central.status === 'offline_uncached' && (
-          <InlineError text="Sem conexão e sem dados salvos neste aparelho. Conecte-se para ver a sua Central." onRetry={() => setReload((n) => n + 1)} />
+          <InlineError text="Sem conexão e sem dados salvos neste aparelho. Conecte-se para ver o seu Início." onRetry={() => setReload((n) => n + 1)} />
         )}
         {central.status === 'session_expired' && <InlineError text="Sua sessão expirou. Entre de novo para continuar." />}
-        {central.status === 'access_denied' && <InlineError text="Você não tem acesso a esta Central." />}
+        {central.status === 'access_denied' && <InlineError text="Você não tem acesso a esta tela." />}
 
         {purgeAfter && (
           <Pressable onPress={() => go('/conta')} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}>
@@ -418,15 +444,8 @@ export default function Home() {
           </>
         )}
 
-        {central.data && pelada && (
+        {central.data && peladas.length > 0 && (
           <>
-            <PeladaSelector
-              peladas={peladas}
-              activeId={pid}
-              onSelect={selectPelada}
-              disabledReason={offline ? 'Sem conexão. Para trocar de pelada é preciso estar online.' : null}
-            />
-
             {urgent.map((v) => (
               <UrgentVote key={v.match_id} vote={v} offset={offset} onPress={() => openVote(v)} />
             ))}
@@ -435,7 +454,7 @@ export default function Home() {
               <InlineError text="Não foi possível carregar a sua carreira agora." onRetry={() => setReload((n) => n + 1)} />
             ) : heroLoading ? (
               <Skeleton height={156} />
-            ) : (
+            ) : pelada ? (
               <CardEvolution
                 data={{
                   name: me?.display_name ?? '',
@@ -447,15 +466,15 @@ export default function Home() {
                   seasonName: (cardSeason ?? season)?.name ?? null,
                   seasonStart: (cardSeason ?? season)?.starts_on ?? null,
                 }}
-                rating={rating.data}
+                rating={ratings.data?.[pelada.id] ? { rating: cardRating?.rating ?? null, delta: cardRating?.delta ?? null } : null}
                 loading={false}
-                unavailable={rating.status === 'error' || (rating.status === 'loaded' && rating.stale && !rating.data)}
-                stale={rating.stale || career.stale}
-                onCareer={() => go('/carreira')}
+                unavailable={ratings.status === 'error' || (ratings.status === 'loaded' && ratings.stale && !ratings.data)}
+                stale={ratings.stale || career.stale}
+                onCareer={() => go({ pathname: '/carreira', params: { pelada: pelada.id } })}
               />
-            )}
+            ) : null}
 
-            {visibleSportBlocks(lay).map(renderBlock)}
+            {SPORT_ORDER.filter((b) => visibleSet.has(b)).map(renderBlock)}
 
             <AttentionBlock primary={att.primary} secondary={att.secondary} rest={att.rest} total={att.total} stale={!centralTrusted} />
 

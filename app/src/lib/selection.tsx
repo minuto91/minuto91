@@ -102,7 +102,7 @@ function Photo({ p, size }: { p: FieldPlayer; size: number }) {
 }
 
 /** O campo com os jogadores. width define a escala inteira (altura = 1,5 × largura). */
-export function SelectionField({ players, width }: { players: FieldPlayer[]; width: number }) {
+export function SelectionField({ players, width, onPlayerPress }: { players: FieldPlayer[]; width: number; onPlayerPress?: (key: string) => void }) {
   const h = Math.round(width * 1.5);
   const k = width / 358;
   const marker = Math.max(34, Math.round(50 * k));
@@ -121,10 +121,9 @@ export function SelectionField({ players, width }: { players: FieldPlayer[]; wid
         if (!spot) return null;
         const [x, y] = spot;
         const border = p.teamColor ?? '#FFFFFF';
-        return (
-          <View
-            key={p.key}
-            style={{ position: 'absolute', left: `${x}%`, top: `${y}%`, width: boxW, marginLeft: -boxW / 2, marginTop: -marker / 2, alignItems: 'center', gap: 3 }}>
+        const slotStyle = { position: 'absolute' as const, left: `${x}%` as `${number}%`, top: `${y}%` as `${number}%`, width: boxW, marginLeft: -boxW / 2, marginTop: -marker / 2, alignItems: 'center' as const, gap: 3 };
+        const body = (
+          <>
             {p.name ? (
               <View
                 style={{
@@ -159,6 +158,16 @@ export function SelectionField({ players, width }: { players: FieldPlayer[]; wid
                 </Text>
               )}
             </View>
+          </>
+        );
+        // REV-100/114: tocar no jogador abre o Card (a tela decide); sem onPlayerPress o campo é só imagem.
+        return onPlayerPress && p.name ? (
+          <Pressable key={p.key} accessibilityRole="button" accessibilityLabel={`Abrir o Card de ${p.name}`} onPress={() => onPlayerPress(p.key)} style={slotStyle}>
+            {body}
+          </Pressable>
+        ) : (
+          <View key={p.key} style={slotStyle}>
+            {body}
           </View>
         );
       })}

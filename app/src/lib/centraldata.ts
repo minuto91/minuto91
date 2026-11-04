@@ -208,3 +208,51 @@ export async function loadRating(membershipId: string): Promise<Loaded<PeladaRat
   const same = ((h.data ?? []) as (HistoryRow & { formula_version?: number })[]).filter((x) => (x.formula_version ?? 2) === (rating?.formula_version ?? 2));
   return { data: { rating, delta: rating?.eligible ? ovrDelta(rating.ovr, same) : null } };
 }
+
+// ---------------------------------------------------------------------------------------------------------------
+// V10.0 — Início agregado (REV-051 a REV-095): todas as peladas do jogador, sem "pelada ativa".
+// ---------------------------------------------------------------------------------------------------------------
+export type HomeLastGame = {
+  match_id: string;
+  played_at: string;
+  pelada_id: string;
+  pelada_name: string;
+  team_a_name: string;
+  team_b_name: string;
+  team_a_score: number | null;
+  team_b_score: number | null;
+  /** played = entrou em campo; listed = relacionado sem entrada confirmada; none = não participou. */
+  participation: 'played' | 'listed' | 'none';
+  my_team: 'A' | 'B' | null;
+  position: string | null;
+  goals: number | null;
+  assists: number | null;
+  red_cards: number | null;
+  hard_saves: number | null;
+  final_rating: number | null;
+  has_valid_rating: boolean;
+  rating_session_status: string | null;
+  legacy_finalized: boolean;
+};
+
+/** REV-057/067: partida oficial concluída mais recente entre todas as peladas (get_my_home_last_game, 082). */
+export async function loadHomeLastGame(): Promise<Loaded<HomeLastGame>> {
+  const { data, error } = await supabase.rpc('get_my_home_last_game');
+  if (error) throw error;
+  const game = (data as { game: HomeLastGame | null } | null)?.game ?? null;
+  return game ? { data: game } : { data: null, empty: true };
+}
+
+export type HomeRatings = Record<string, { rating: PeladaRating; lastPlayedAt: string | null }>;
+
+/** OVR oficial (e variação) de cada pelada, mais a data do último jogo dela — insumos do desempate do Card (REV-080). */
+export async function loadHomeRatings(peladas: Pelada[]): Promise<Loaded<HomeRatings>> {
+  if (peladas.length === 0) return { data: {}, empty: true };
+  const rows = await Promise.all(
+    peladas.map(async (p) => {
+      const [r, g] = await Promise.all([loadRating(p.membership_id), loadLastGame(p.id)]);
+      return [p.id, { rating: r.data as PeladaRating, lastPlayedAt: g.data?.played_at ?? null }] as const;
+    }),
+  );
+  return { data: Object.fromEntries(rows) };
+}
