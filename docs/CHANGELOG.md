@@ -2,6 +2,19 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
+## V10.0 — Execução das REV-051 a REV-148 (04/11/2026) — implementada localmente; nada aplicado em banco remoto
+
+Detalhes, matriz e pendências: `docs/V10.0_IMPLEMENTACAO.md`; versões: `docs/HISTORICO_VERSOES.md`; adiados: `docs/PENDENCIAS_FUTURAS.md`.
+
+- Versão central (`version.ts` + `app.json`, build separado) e "V10.0" discreto no login.
+- Início agregado (sem pelada ativa): saudação, Card de maior OVR, Próximo Jogo, Último Jogo (todas as peladas), Resumo da Carreira.
+- Seleção da Rodada: tela, histórico e versões (Vigente/Substituída/Invalidada). Carreira em página contínua, Meus Troféus.
+- Súmula: placar primeiro, um registro por gol (autor/gol contra/assistência), bolas por time, convidados recolhidos, nomes e cores da pelada.
+- Votação: mínimo de 7 votos por jogador avaliado; prazo em barra deslizante. Termos 1.3 (declaração de 18+ do admin).
+- Segunda posição removida (cálculo da Seleção ajustado). "Meu histórico de votos" movido para o Perfil.
+- Migrações 075–082. Testes: app 105+ passando, `tsc`/`eslint` sem erros, SQL local conforme `V10.0_RESULTADO_TESTES.txt`.
+- Pendências: 4 saudações, formação 4-4-2/posições (REV-118), datas dos troféus, selo PREMIUM no beta, REV-134/135 adiadas. Não testado em aparelho.
+
 ## V9.1 — Revitalização visual e simplificação do app (01/11/2026) — só app, sem migração
 
 Detalhes: `docs/V9.1_IMPLEMENTACAO.md`.

@@ -170,6 +170,10 @@ v_n := (select count(*) from private.rating_vote_results where session_id=v_s);
 perform set_config('role','authenticated',true);
 perform pg_temp.as_user(2);
 perform pg_temp.assert((public.get_my_rating_vote_history(v_m)->>'read_only')::boolean, 'histórico só leitura depois do encerramento');
+-- V10.0 (080, REV-148): o Perfil lista só as partidas em que EU votei; (082, REV-057) o Último Jogo olha todas as peladas.
+perform pg_temp.assert(exists(select 1 from jsonb_array_elements(public.get_my_vote_histories()) x where (x->>'match_id')::uuid=v_m), 'REV-148: lista a partida em que votei');
+perform pg_temp.assert(public.get_my_home_last_game()->'game'->>'match_id' is not null
+ and public.get_my_home_last_game()->'game'->>'participation' in ('played','listed','none'), 'REV-057: Último Jogo agregado devolve uma partida oficial concluída');
 perform pg_temp.expect_error(format('select public.cast_rating_vote(%L,%L,9)',v_s,pg_temp.mem(v_a,3)),'VOTING_CLOSED');
 
 -- ===== 7) Anular a partida publicada =====

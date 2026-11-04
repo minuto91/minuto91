@@ -30,7 +30,7 @@ create function pg_temp.sheet(p_pelada uuid, p_from int, p_to int) returns jsonb
     from generate_series(p_from,p_to) n $$;
 
 do $test$
-declare v_a uuid; v_b uuid; v_tok text; v_tok2 text; i int; v_m uuid; v_m2 uuid; r jsonb; v_n int; v_c uuid; v_c2 uuid;
+declare v_137 uuid; v_a uuid; v_b uuid; v_tok text; v_tok2 text; i int; v_m uuid; v_m2 uuid; r jsonb; v_n int; v_c uuid; v_c2 uuid;
  v_req uuid := gen_random_uuid(); v_p uuid; v_claim uuid; v_def uuid; v_season uuid; v_id uuid; v_id2 uuid; v_today date := (now() at time zone 'America/Sao_Paulo')::date;
 begin
 insert into auth.users (id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
@@ -53,6 +53,13 @@ perform pg_temp.assert((select location='Arena Central' and default_team_a_color
 perform pg_temp.assert((select voting_duration_minutes=120 and cards_tracking from public.pelada_settings where pelada_id=v_a), 'configurações gravadas');
 perform pg_temp.expect_error(format('select public.create_pelada_wizard(%L::jsonb, %L)', '{"name":"X","position":"GOL","voting_duration_minutes":90}', gen_random_uuid()),
  'INVALID_VOTING_DURATION');
+-- V10.0 (079, REV-137): a partida nasce com os nomes e as cores cadastrados na criação da pelada (não "Time A/B").
+v_137 := public.create_match(v_a, now() - interval '3 hours');
+perform pg_temp.assert((select team_a_name='Azul' and team_b_name='Branco' and team_a_color='azul' and team_b_color='branco'
+ from public.matches where id=v_137), 'REV-137: nomes e cores cadastrados na partida nova');
+perform public.update_match_draft(v_137, now() - interval '3 hours', null, null);
+perform pg_temp.assert((select team_a_name='Azul' and team_b_name='Branco' from public.matches where id=v_137), 'REV-137: nome padrão preservado ao salvar sem nomes');
+perform public.discard_match_draft(v_137);
 
 v_tok := public.create_pelada_invite(v_a);
 for i in 2..14 loop perform pg_temp.as_user(i);

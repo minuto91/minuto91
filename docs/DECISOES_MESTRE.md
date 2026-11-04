@@ -102,3 +102,16 @@ Decisões do fundador em 01/11/2026 (conversa de avaliação do projeto). Detalh
 | BETA-01 | RLS ligada nas 12 tabelas `private` que não tinham (defesa em profundidade) | **implementada** (M069, Fase 2 da preparação do beta) |
 | OPS-01 | Numeração: V8.9 renumerada para 070–074 depois da 069 (RLS); próxima migração livre = **075** | registrado |
 
+
+## V10.0 — decisões do fundador de 04/11/2026 (REV-051 a REV-148)
+
+| ID | Decisão | Status | Observação |
+|---|---|---|---|
+| V10-01 | REV-147: remover a segunda posição e reajustar o cálculo da Seleção da Rodada (só posição principal) | implementada | Migração 075; colunas antigas preservadas, sem promoção automática |
+| V10-02 | REV-148: "Ver meu histórico" sai da Votação e vai para Meu Perfil, sem perda de segurança | implementada | Migração 080; tela de histórico por partida inalterada |
+| V10-03 | REV-134/135: código curto e link público de convite ficam para o futuro | adiada | `docs/PENDENCIAS_FUTURAS.md` |
+| V10-04 | REV-140: sem "Confirmar +18" na súmula; a declaração do convidado fica nos Termos do admin | implementada | Termos 1.3, cláusula 4.7 (migração 077); validar com advogado |
+| V10-05 | REV-051/124: Início sem pelada ativa; sem Card geral; Card = maior OVR; Carreira em página contínua | implementada | — |
+| V10-06 | REV-053: sem foto de perfil no primeiro bloco do Início | implementada | Faltam 4 frases de saudação |
+| V10-07 | REV-097 a 106: tela, mensagens exatas e versões da Seleção da Rodada | implementada (REV-118 bloqueada) | Migração 081 |
+| V10-08 | REV-136: mínimo de 7 votos por jogador avaliado (era 3) | implementada | Migração 076; só votações publicadas daqui em diante |

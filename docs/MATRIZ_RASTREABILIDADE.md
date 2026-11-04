@@ -100,3 +100,9 @@ Testes: SQL = `supabase/tests_editor/NNN_*.sql` (PGlite, `cd supabase/local_db; 
 | Motor V7.7 (050–052, `local_db/rating/*`) | nenhuma linha alterada nesta entrega; `git diff` vazio; testes do motor em `CHANGELOG.md` |
 | Decisões V7.7 / REV V8.0 | nenhum arquivo SQL/TS alterado nesta entrega; suite completa de base em `CHANGELOG.md` |
 | Documentos antigos | `docs/v77`, `docs/rev80`, `relatorio_*` intactos |
+
+## V10.0 (REV-001 a REV-148)
+
+REV-001 a REV-050: **apenas verificadas** nesta execução (sem reimplementação; testes automatizados passando — ver
+`docs/V10.0_IMPLEMENTACAO.md` §3). REV-051 a REV-148: **escopo de implementação**; situação individual, evidência e
+limitações em `docs/V10.0_IMPLEMENTACAO.md` §4. Migrações 075–082 e testes: §2 e §6 do mesmo documento.
