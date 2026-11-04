@@ -48,7 +48,7 @@ export const shadow = {
 export const SECTORS = [
   { value: 'goalkeeper', label: 'Goleiro', legacy: 'Goleiro', short: 'GOL' },
   { value: 'defender', label: 'Defesa', legacy: 'Defensor', short: 'DEF?' },
-  { value: 'midfielder', label: 'Meio-campo', legacy: 'Meio-campista', short: 'MEI?' },
+  { value: 'midfielder', label: 'Meio-campo', legacy: 'Meio-campo', short: 'MEI?' },
   { value: 'attacker', label: 'Ataque', legacy: 'Atacante', short: 'ATA?' },
 ] as const;
 export type Sector = (typeof SECTORS)[number]['value'];

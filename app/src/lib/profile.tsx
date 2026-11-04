@@ -137,7 +137,7 @@ function Stat({ value, label }: { value: number | string; label: string }) {
   );
 }
 
-export function TotalsGrid({ totals, selections }: { totals: Totals; selections?: number }) {
+export function TotalsGrid({ totals, selections, avgRating }: { totals: Totals; selections?: number; avgRating?: string }) {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap' }}>
       <Stat value={totals.matches_played} label="Jogos" />
@@ -147,6 +147,8 @@ export function TotalsGrid({ totals, selections }: { totals: Totals; selections?
       <Stat value={totals.goals} label="Gols" />
       <Stat value={totals.assists} label="Assist." />
       <Stat value={totals.craque_awards} label="Craque" />
+      {/* REV-131: a média de notas é um indicador da mesma grade, ao lado de Craque. */}
+      {avgRating !== undefined && <Stat value={avgRating} label="Média de notas" />}
       {selections !== undefined && <Stat value={selections} label="Seleção" />}
     </View>
   );

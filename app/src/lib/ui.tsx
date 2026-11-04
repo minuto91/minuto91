@@ -253,10 +253,13 @@ export function Chips<T extends string>({
   options,
   value,
   onChange,
+  small = false,
 }: {
   options: readonly { value: T; label: string }[];
   value: T | null;
   onChange: (v: T) => void;
+  /** V10.0 (REV-131): botões menores (filtro de temporada). */
+  small?: boolean;
 }) {
   return (
     <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -271,9 +274,9 @@ export function Chips<T extends string>({
             hitSlop={4}
             style={({ pressed }) => ({
               // V9: pílula compacta de 36 px; o hitSlop leva a área de toque a 44 px.
-              height: 36,
+              height: small ? 30 : 36,
               justifyContent: 'center',
-              paddingHorizontal: 14,
+              paddingHorizontal: small ? 11 : 14,
               borderRadius: radius.pill,
               borderWidth: 1,
               borderColor: on ? colors.blue : colors.line,
@@ -281,7 +284,7 @@ export function Chips<T extends string>({
               ...press(pressed),
               ...smooth,
             })}>
-            <Text style={{ color: on ? colors.white : colors.body, fontWeight: '600', fontSize: 14 }}>{o.label}</Text>
+            <Text style={{ color: on ? colors.white : colors.body, fontWeight: '600', fontSize: small ? 13 : 14 }}>{o.label}</Text>
           </Pressable>
         );
       })}

@@ -98,6 +98,7 @@ function Gate() {
         <Stack.Screen name="conta" options={{ title: 'Minha conta' }} />
         <Stack.Screen name="notificacoes" options={{ title: 'Notificações' }} />
         <Stack.Screen name="historico-votos" options={{ title: 'Histórico de votos' }} />
+        <Stack.Screen name="meus-trofeus" options={{ title: 'Meus Troféus' }} />
         <Stack.Screen name="personalizar-central" options={{ title: 'Personalizar Central' }} />
         <Stack.Screen name="termos" options={{ title: 'Termos de Uso' }} />
         <Stack.Screen name="privacidade" options={{ title: 'Política de Privacidade' }} />

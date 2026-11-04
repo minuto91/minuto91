@@ -1,45 +1,41 @@
-import { useFocusEffect, useRouter } from 'expo-router';
-import { useCallback, useEffect, useState } from 'react';
-import { View } from 'react-native';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Pressable, View } from 'react-native';
 import { Text } from '../../lib/text';
 
 import { PlayerCard } from '../../lib/arts';
 import { Avatar } from '../../lib/avatar';
 import { CareerSummary, latestCard, loadCareerSummary, markGuide, referencePelada, SummaryPelada } from '../../lib/careerv2';
+import { avgLabel, orderPeladas, recentTrophies, visiblePosition, yearOptions } from '../../lib/careerlogic';
 import { friendly } from '../../lib/errors';
 import { EvolutionChart, useEvolution } from '../../lib/evolution';
-import { fmtRating } from '../../lib/match';
-import { type Career, CareerByPelada, loadPlayer, TotalsGrid } from '../../lib/profile';
+import { TotalsGrid } from '../../lib/profile';
 import { useAuth } from '../../lib/session';
 import { useSticky } from '../../lib/sticky';
 import { supabase } from '../../lib/supabase';
 import { colors, positionLabel } from '../../lib/theme';
 import { MatchHistory } from '../../lib/history';
-import { MyAwardsList } from '../../lib/myawards';
-import { scopedTitles, SeasonTitle, showMyAwards, showOrigin } from '../../lib/v87logic';
-import { TrophyRoom } from '../../lib/trophies';
+import { SeasonTitle } from '../../lib/v87logic';
+import { TROPHIES, TrophyArt, type TrophyType } from '../../lib/trophies';
 import { Button, Card, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
 
 type Me = { display_name: string; avatar_path: string | null; dominant_foot: string | null };
 
-// Minha Carreira (V4.4): a trajetória do jogador num lugar só — foto, nome, posição, pé, Card oficial, estatísticas,
-// evolução, Sala de Troféus, álbum e histórico de partidas. "Geral" soma só contadores (jogos, gols, assistências,
-// troféus) de todas as peladas; o Card e o overall aparecem sempre com a pelada e a temporada a que pertencem.
-// Evolução: escolha uma pelada e uma temporada (mesmos dados oficiais do Card, 033). O perfil (editar) continua em Meu
-// perfil; a privacidade fica em Minha conta.
+// Minha Carreira (V10.0, REV-123/124): UMA página contínua, sem escolha entre "Geral" e pelada. Com uma pelada mostra a
+// carreira completa direto; com várias, cada pelada tem o seu bloco identificado (Card oficial, Estatísticas e Evolução),
+// a de origem (vinda do Início) primeiro. Troféus e Álbum valem para a pessoa toda. Nada de "Evolução geral": a evolução
+// é sempre por pelada e temporada. O perfil continua em Meu perfil; a privacidade, em Minha conta.
 export default function Carreira() {
   const { session } = useAuth();
   const router = useRouter();
+  const { pelada: originParam } = useLocalSearchParams<{ pelada?: string }>();
   const uid = session?.user.id ?? '';
   const [me, setMe] = useState<Me | null>(null);
   const [career, setCareer] = useState<CareerSummary | null>(null);
-  const [byPelada, setByPelada] = useState<Career | null>(null);
   const [titles, setTitles] = useState<SeasonTitle[] | null>(null);
   const [primary, setPrimary] = useState<string | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
-  const [scope, setScope] = useSticky<string>('carreira:scope', ''); // '' = pelada de referência, 'all' = geral (só números), ou pelada_id (REV-035: lembrado)
-  const [season, setSeason] = useSticky<string | null>('carreira:season', null);
 
   useFocusEffect(
     useCallback(() => {
@@ -48,16 +44,14 @@ export default function Carreira() {
       void reload;
       (async () => {
         try {
-          const [c, { data: p }, { data: st }, mine] = await Promise.all([
+          const [c, { data: p }, { data: st }] = await Promise.all([
             loadCareerSummary(uid),
             supabase.rpc('get_my_profile'),
             supabase.from('user_app_state').select('primary_pelada_id').maybeSingle(),
-            loadPlayer(uid).catch(() => null),
           ]);
           if (!alive) return;
           setCareer(c);
-          setByPelada(mine?.career ?? null);
-          // AD01: Meus Prêmios. Falha aqui não derruba a carreira: o bloco simplesmente não aparece.
+          // Meus Troféus: falha aqui não derruba a carreira; a seção usa só os contadores.
           const t = await supabase.rpc('get_player_season_titles', { p_user: uid });
           if (alive) setTitles(t.error || !(t.data as { visible?: boolean } | null)?.visible ? null : ((t.data as { items: SeasonTitle[] }).items ?? []));
           setMe(p as Me);
@@ -78,6 +72,8 @@ export default function Carreira() {
     markGuide('career').catch(() => {});
   }, []);
 
+  const peladas = useMemo(() => (career && career.visible ? orderPeladas(career.peladas, originParam || null) : []), [career, originParam]);
+
   if (!career || !me) {
     return (
       <Screen>
@@ -89,14 +85,10 @@ export default function Carreira() {
   if (!career.visible) return <Screen><Sub>Carreira indisponível.</Sub></Screen>;
 
   const ref = referencePelada(career.peladas, primary);
-  const selected: SummaryPelada | null = scope === 'all' ? null : (career.peladas.find((p) => p.pelada_id === scope) ?? ref);
-  const cardPelada = selected;
-  const latest = cardPelada ? latestCard(cardPelada) : null;
-  const seasonRow = selected ? (selected.seasons.find((s) => s.season_id === season) ?? selected.seasons[0] ?? null) : null;
-  const totals = selected ? (seasonRow && season ? seasonRow : selected.totals) : career.totals;
-  // A posição é sempre de uma pelada: a escolhida ou, no Geral, a de referência (nunca o pé dominante).
-  const posPelada = selected ?? ref;
-  const position = posPelada ? (posPelada.position_code ?? posPelada.position) : null;
+  const headPelada = peladas.find((p) => p.status === 'active') ?? ref;
+  const position = headPelada ? (headPelada.position_code ?? headPelada.position) : null;
+  const trophies = recentTrophies(titles, career.trophies as Record<string, number | undefined>, TROPHIES);
+  const many = peladas.length > 1;
 
   return (
     <Screen>
@@ -104,131 +96,112 @@ export default function Carreira() {
         <Avatar path={me.avatar_path} name={me.display_name} size={72} />
         <View style={{ flex: 1, gap: 2 }}>
           <Title>{me.display_name}</Title>
-          <Sub>
-            {position ? positionLabel(position) : 'Posição não informada'}
-          </Sub>
+          <Sub>{position ? visiblePosition(positionLabel(position)) : 'Posição não informada'}</Sub>
         </View>
       </View>
 
-      {career.peladas.length > 1 && (
-        <Chips
-          options={[
-            { value: 'all', label: 'Geral' },
-            // REV-047: pelada que a pessoa deixou continua na carreira, identificada como encerrada.
-            ...career.peladas.map((p) => ({ value: p.pelada_id, label: p.status === 'active' ? p.name : `${p.name} (encerrada)` })),
-          ]}
-          value={selected?.pelada_id ?? 'all'}
-          onChange={(v) => {
-            setScope(v);
-            setSeason(null);
-          }}
-        />
-      )}
+      {peladas.map((p) => (
+        <PeladaCareer key={p.pelada_id} p={p} me={me} many={many} />
+      ))}
 
-      {cardPelada && <Text style={section}>Card oficial</Text>}
-      {latest && cardPelada ? (
-        <View style={{ alignItems: 'center', gap: 6 }}>
-          <PlayerCard
-            card={{ ...latest.card, id: `${cardPelada.membership_id}-${latest.season.season_id}` }}
-            playerName={me.display_name}
-            photoPath={me.avatar_path}
-            peladaName={cardPelada.name}
-            crestPath={cardPelada.crest_path}
-            seasonName={latest.season.name}
-            seasonStart={latest.season.starts_on}
-          />
-          <Button
-            title="Abrir o Card completo"
-            kind="secondary"
-            onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: cardPelada.membership_id } })}
-          />
-        </View>
-      ) : cardPelada ? (
-        <Sub>O Card aparece depois da primeira partida finalizada em {cardPelada.name}.</Sub>
-      ) : null}
-
-      <Text style={section}>Estatísticas</Text>
-      <Card>
-        <Sub>
-          {selected
-            ? season && seasonRow
-              ? `${selected.name} · ${seasonRow.name}`
-              : `${selected.name} · ${selected.hidden_seasons > 0 ? 'temporadas disponíveis' : 'todas as temporadas'}`
-            : career.partial
-              ? 'Geral · todas as peladas (temporadas disponíveis)'
-              : 'Geral · todas as peladas'}
-        </Sub>
-        {selected && selected.seasons.length > 0 && (
-          <Chips
-            options={[{ value: '', label: 'Todas' }, ...selected.seasons.map((s) => ({ value: s.season_id, label: s.name }))]}
-            value={season ?? ''}
-            onChange={(v) => setSeason(v || null)}
-          />
-        )}
-        <TotalsGrid totals={totals} />
-        {selected && season && seasonRow && (
-          <Sub>Média de nota na temporada: {seasonRow.avg_final_rating !== null ? fmtRating(Number(seasonRow.avg_final_rating)) : '–'}</Sub>
-        )}
-        {career.partial && !selected && (
-          <Sub>Temporadas antigas do Basic ficam de fora.</Sub>
-        )}
-      </Card>
-
-      {!selected && byPelada?.visible && byPelada.peladas.length > 0 && (
-        <>
-          <Text style={section}>Por pelada e temporada</Text>
-          <CareerByPelada career={byPelada} />
-        </>
-      )}
-
-      <Text style={section}>Evolução</Text>
-      {selected ? (
-        selected.seasons.length > 0 ? (
-          <Evolution membershipId={selected.membership_id} seasonId={season ?? selected.seasons[0].season_id} />
-        ) : (
-          <Sub>Sem partidas finalizadas nas temporadas disponíveis.</Sub>
-        )
+      {/* REV-126: seção compacta com até três troféus; o acervo completo fica na página "Meus Troféus". */}
+      <Text style={section}>Meus Troféus</Text>
+      {trophies.length === 0 ? (
+        <Sub>Você ainda não tem troféus.</Sub>
       ) : (
-        <Sub>A evolução é por pelada e temporada. Escolha uma pelada acima{career.peladas.length > 1 ? '' : ' (ou abra o Card)'}.</Sub>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-around', gap: 8 }}>
+          {trophies.map((t) => (
+            <View key={t.key} style={{ flex: 1, alignItems: 'center', gap: 4, maxWidth: 120 }} accessibilityLabel={TROPHIES.find((x) => x.type === t.type)?.label ?? t.label}>
+              <TrophyArt type={t.type as TrophyType} size={72} />
+              <Text style={{ fontSize: 12, color: colors.muted, textAlign: 'center' }} numberOfLines={2}>
+                {TROPHIES.find((x) => x.type === t.type)?.label ?? t.label}
+              </Text>
+            </View>
+          ))}
+        </View>
       )}
-      {!selected && career.peladas.length === 1 && (
-        <Button title={`Ver evolução em ${career.peladas[0].name}`} kind="secondary" onPress={() => setScope(career.peladas[0].pelada_id)} />
-      )}
-
-      <Text style={section}>Sala de Troféus</Text>
-      <TrophyRoom userId={uid} counts={career.trophies} partial={career.partial} shareName={me.display_name} />
-
-      {showMyAwards(scopedTitles(titles, selected?.pelada_id)) && (
-        <>
-          <Text style={section}>Meus Prêmios</Text>
-          <MyAwardsList items={scopedTitles(titles, selected?.pelada_id)} withOrigin={showOrigin(titles ?? [])} />
-        </>
-      )}
+      <View style={{ alignItems: 'flex-end' }}>
+        <Button title="Sala de Troféus" kind="secondary" size="sm" block={false} onPress={() => router.push('/meus-trofeus')} />
+      </View>
 
       <Text style={section}>Álbum</Text>
       <Button title="Abrir meu álbum" kind="secondary" onPress={() => router.push('/album')} />
 
-      {/* REV-020: as artes individuais da retrospectiva também ficam acessíveis daqui. */}
-      {career.peladas
-        .filter((p) => p.status === 'active' && (!selected || p.pelada_id === selected.pelada_id))
-        .map((p) => (
-          <Button
-            key={p.membership_id}
-            title={career.peladas.length > 1 ? `Retrospectiva · ${p.name}` : 'Retrospectiva'}
-            kind="ghost"
-            onPress={() => router.push({ pathname: '/pelada/[id]/retrospectiva', params: { id: p.pelada_id } })}
-          />
-        ))}
-
       <Text style={section}>Últimas partidas</Text>
-      <MatchHistory peladaId={selected?.pelada_id ?? null} showPelada={!selected && career.peladas.length > 1} limit={3} />
-      <Button
-        title="Ver histórico completo"
-        kind="ghost"
-        onPress={() => router.push({ pathname: '/historico', params: selected ? { pelada: selected.pelada_id } : {} })}
-      />
+      <MatchHistory peladaId={null} showPelada={many} limit={3} />
+      <Button title="Ver histórico completo" kind="ghost" onPress={() => router.push({ pathname: '/historico', params: {} })} />
     </Screen>
   );
+}
+
+// Bloco de uma pelada: Card oficial (o próprio Card abre o Card completo), Estatísticas com filtro por ano e Evolução.
+function PeladaCareer({ p, me, many }: { p: SummaryPelada; me: Me; many: boolean }) {
+  const router = useRouter();
+  const [season, setSeason] = useSticky<string | null>(`carreira:season:${p.pelada_id}`, null);
+  const latest = latestCard(p);
+  const seasonRow = p.seasons.find((s) => s.season_id === season) ?? null;
+  const totals = seasonRow ?? p.totals;
+  const avg = seasonRow ? seasonRow.avg_final_rating : null;
+  const position = p.position_code ?? p.position;
+  const evoSeason = seasonRow?.season_id ?? p.seasons[0]?.season_id ?? null;
+  const openCard = () => router.push({ pathname: '/jogador/[id]', params: { id: p.membership_id } });
+  return (
+    <View style={{ gap: 10 }}>
+      {many && (
+        <>
+          <Text style={section}>{p.status === 'active' ? p.name : `${p.name} (encerrada)`}</Text>
+          <Sub>{visiblePosition(positionLabel(position))}</Sub>
+        </>
+      )}
+
+      <Text style={sub}>Card oficial</Text>
+      {latest ? (
+        <Pressable onPress={openCard} accessibilityRole="button" accessibilityLabel={`Abrir o Card completo, ${p.name}`} style={{ alignItems: 'center' }}>
+          <PlayerCard
+            card={{ ...latest.card, id: `${p.membership_id}-${latest.season.season_id}` }}
+            playerName={me.display_name}
+            photoPath={me.avatar_path}
+            peladaName={p.name}
+            crestPath={p.crest_path}
+            seasonName={latest.season.name}
+            seasonStart={latest.season.starts_on}
+          />
+        </Pressable>
+      ) : (
+        <Sub>Seu Card oficial será desbloqueado após 5 partidas oficiais.</Sub>
+      )}
+
+      <Text style={sub}>Estatísticas</Text>
+      <Card>
+        {p.seasons.length > 0 && (
+          <Chips
+            small
+            options={[{ value: '', label: 'Geral' }, ...yearOptions(p.seasons)]}
+            value={season ?? ''}
+            onChange={(v) => setSeason(v || null)}
+          />
+        )}
+        {/* REV-131: média de notas como indicador da grade; a fórmula e os valores são os de sempre. */}
+        <TotalsGrid totals={totals} avgRating={avgLabel(season ? avg : (seasonAvg(p)))} />
+      </Card>
+
+      <Text style={sub}>Evolução</Text>
+      {evoSeason ? <Evolution membershipId={p.membership_id} seasonId={evoSeason} /> : <Sub>Sem partidas finalizadas nas temporadas disponíveis.</Sub>}
+    </View>
+  );
+}
+
+// Média da pelada em "Geral": média das temporadas ponderada pelas notas válidas (a mesma média oficial, só reunida).
+function seasonAvg(p: SummaryPelada): number | null {
+  let w = 0;
+  let s = 0;
+  for (const x of p.seasons) {
+    if (x.avg_final_rating !== null && x.valid_ratings > 0) {
+      w += x.valid_ratings;
+      s += Number(x.avg_final_rating) * x.valid_ratings;
+    }
+  }
+  return w > 0 ? s / w : null;
 }
 
 function Evolution({ membershipId, seasonId }: { membershipId: string; seasonId: string }) {
@@ -239,3 +212,4 @@ function Evolution({ membershipId, seasonId }: { membershipId: string; seasonId:
 }
 
 const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.ink, marginTop: 8 };
+const sub = { fontSize: 16, lineHeight: 22, fontWeight: '700' as const, color: colors.ink, marginTop: 4 };

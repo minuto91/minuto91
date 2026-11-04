@@ -96,7 +96,7 @@ export const GROUP_LABEL: Record<string, string> = {
   DEF: 'Defensores (posição antiga)',
   VOL: 'Volantes',
   MEI: 'Meias',
-  MEIO: 'Meio-campistas (posição antiga)',
+  MEIO: 'Meio-campo (posição antiga)',
   ATA: 'Atacantes',
   none: 'Sem posição',
 };
