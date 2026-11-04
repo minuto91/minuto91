@@ -117,3 +117,5 @@ Decisões do fundador em 01/11/2026 (conversa de avaliação do projeto). Detalh
 | V10-08 | REV-136: mínimo de 7 votos por jogador avaliado (era 3) | implementada | Migração 076; só votações publicadas daqui em diante |
 | V10-09 | REV-138: servidor recusa publicar gol sem autor | implementada | Migração 083 |
 | V10-10 | REV-142: selo PREMIUM em todas no beta; REV-141: 3 passos (2h/4h/6h); REV-126: títulos de temporada primeiro | implementada | — |
+| V10-11 | REV-118: Seleção em 4-3-3 ou 4-4-2, vagas por sigla, desempate por gols e depois 4-3-3; cadastro sem sigla fora | implementada | Migração 084 |
+| V10-12 | REV-053: cinco saudações aprovadas | implementada | `homelogic.ts` |

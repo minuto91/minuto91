@@ -6,7 +6,6 @@ import { Text } from '../../../lib/text';
 import { AnnulledBadge, AnnulMatch, MatchStatusTimeline, RestoreMatch } from '../../../lib/annul';
 import { CancelledInfo, ScheduleActions } from '../../../lib/cancelmatch';
 import {
-  FORMATION,
   PostGameArt,
   PostGameArtData,
   ResultArt,
@@ -40,6 +39,7 @@ import { HardSaves } from '../../../lib/ratingadmin';
 import { RatingVotePanel } from '../../../lib/ratingvote';
 import { ReportLink } from '../../../lib/report';
 import { FieldPlayer, SelectionField, TeamColorPicker, TeamLegend, teamHex } from '../../../lib/selection';
+import { arrange, type FormationName, isFormation, type Sector } from '../../../lib/selectionlayout';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, positionLabel } from '../../../lib/theme';
@@ -55,7 +55,7 @@ type Session = {
 };
 type Result = { membership_id: string; final_rating: number | null; has_valid_rating: boolean };
 type Award = { membership_id: string; award_type: string; is_shared: boolean };
-type SelectionPlayer = { membership_id: string; slot_position: string; rank_order: number };
+type SelectionPlayer = { membership_id: string; slot_position: string; rank_order: number; position_code: string | null };
 
 export default function Partida() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -78,6 +78,7 @@ export default function Partida() {
   const [crestPath, setCrestPath] = useState<string | null>(null);
   const [myPhoto, setMyPhoto] = useState<string | null>(null);
   const [selection, setSelection] = useState<SelectionPlayer[] | null>(null);
+  const [selFormation, setSelFormation] = useState<FormationName>('4-3-3');
   // V4.6 (049): cor de cada time nesta partida (escolhida na súmula); sem cor = borda neutra.
   const [teamColors, setTeamColors] = useState<{ A: string | null; B: string | null }>({ A: null, B: null });
   // Escalação depois do jogo (grátis, V4.2): os dois times da súmula oficial.
@@ -156,13 +157,14 @@ export default function Partida() {
             .select('membership_id, final_rating, has_valid_rating')
             .eq('match_id', id),
           supabase.from('awards').select('membership_id, award_type, is_shared').eq('match_id', id).eq('status', 'active'),
-          supabase.from('round_selections').select('id').eq('match_id', id).eq('status', 'published').maybeSingle(),
+          supabase.from('round_selections').select('id, formation').eq('match_id', id).eq('status', 'published').maybeSingle(),
         ]);
         if (sel) {
           const { data: sp } = await supabase
             .from('round_selection_players')
-            .select('membership_id, slot_position, rank_order')
+            .select('membership_id, slot_position, rank_order, position_code')
             .eq('selection_id', sel.id);
+          setSelFormation(isFormation(sel.formation) ? sel.formation : '4-3-3');
           setSelection((sp ?? []) as SelectionPlayer[]);
         } else setSelection(null);
         setResults((rs ?? []) as Result[]);
@@ -269,14 +271,15 @@ export default function Partida() {
       : null;
   // Seleção 4-3-3 sem adaptação: cada linha pega os melhores daquela posição; o que faltar fica vago. Foto e sigla vêm
   // da escalação oficial da partida; a borda é a cor do time em que o jogador jogou nesta partida.
-  const fieldPlayers: FieldPlayer[] = FORMATION.flatMap((line) => {
-    const inLine = (selection ?? [])
-      .filter((x) => x.slot_position === line.position)
-      .sort((a, b) => a.rank_order - b.rank_order);
-    return Array.from({ length: line.count }, (_, i): FieldPlayer => {
-      const x = inLine[i];
-      const pos = line.position as FieldPlayer['position'];
-      if (!x) return { key: `${line.position}-${i}`, position: pos, name: null };
+  // V10.0 (REV-118): 4-3-3 ou 4-4-2, como o servidor escolheu; a sigla só decide o lado do campo.
+  const slots = arrange(
+    (selection ?? []).map((x) => ({ ...x, sector: x.slot_position as Sector, code: x.position_code, rank: x.rank_order })),
+    selFormation,
+  );
+  const fieldPlayers: FieldPlayer[] = slots.map(({ sector, row: x }, i): FieldPlayer => {
+    {
+      const pos = sector as FieldPlayer['position'];
+      if (!x) return { key: `${sector}-${i}`, position: pos, name: null };
       const lp = lineup?.players.find((l) => l.key === x.membership_id);
       const team = players.find((p) => p.membership_id === x.membership_id)?.team ?? lp?.team ?? null;
       return {
@@ -287,7 +290,7 @@ export default function Partida() {
         photoPath: lp?.avatar_path ?? null,
         teamColor: team ? teamColors[team] : null,
       };
-    });
+    }
   });
   const teamsLegend = [
     { name: match.team_a_name, color: teamColors.A },
@@ -440,7 +443,7 @@ export default function Partida() {
         <Card>
           <Body>Seleção da Rodada</Body>
           <View style={{ alignItems: 'center', gap: 10, marginTop: 4 }}>
-            <SelectionField players={fieldPlayers} width={Math.min(320, screenW - 74)} />
+            <SelectionField players={fieldPlayers} width={Math.min(320, screenW - 74)} formation={selFormation} />
             <TeamLegend teams={teamsLegend} />
           </View>
         </Card>
@@ -452,7 +455,7 @@ export default function Partida() {
       )}
       {selection && ranked.length > 0 && (
         <SharePanel label="Compartilhar Seleção da Rodada" fileName="minuto91-selecao" title="Seleção da Rodada">
-          <SelectionArt peladaName={peladaName} crestPath={crestPath} date={date} matchLabel={scoreLine(match)} players={fieldPlayers} teams={teamsLegend} />
+          <SelectionArt peladaName={peladaName} crestPath={crestPath} date={date} matchLabel={scoreLine(match)} players={fieldPlayers} teams={teamsLegend} formation={selFormation} />
         </SharePanel>
       )}
 

@@ -74,9 +74,14 @@ export function individualStats(g: { goals?: number | null; assists?: number | n
 }
 
 // ---------- Saudação (REV-053 / REV-093 / REV-094) ----------
-// A primeira é a frase aprovada. As outras quatro variações aprovadas NÃO estão no repositório: enquanto não forem
-// informadas, o sorteio só tem esta frase (ver docs/PENDENCIAS_FUTURAS.md). Acrescentar frases aqui basta.
-export const GREETINGS: readonly string[] = ['Vamos pra mais um jogo, {nome}!'];
+// As cinco frases aprovadas pelo fundador (04/11/2026).
+export const GREETINGS: readonly string[] = [
+  'Vamos pra mais um jogo, {nome}!',
+  'Bora pro jogo, {nome}!',
+  'Bora fazer história, {nome}!',
+  'Bola rolando, {nome}!',
+  'Hoje é dia de gol, {nome}!',
+];
 const NO_NAME = (s: string) => s.replace(/,?\s*\{nome\}/, '').replace(/\s+!/, '!');
 
 /** Nome seguro para exibir: nunca null/undefined, e-mail ou id (REV-094). */

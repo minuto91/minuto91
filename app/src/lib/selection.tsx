@@ -62,6 +62,22 @@ const SPOTS: Record<FieldPlayer['position'], [number, number][]> = {
   goalkeeper: [[50, 85]],
 };
 
+// 4-4-2 (REV-118): dois atacantes e quatro no meio; defesa e goleiro como no 4-3-3.
+const SPOTS_442: Record<FieldPlayer['position'], [number, number][]> = {
+  attacker: [
+    [32, 16],
+    [68, 16],
+  ],
+  midfielder: [
+    [13, 44],
+    [38, 48],
+    [62, 48],
+    [87, 44],
+  ],
+  defender: SPOTS.defender,
+  goalkeeper: SPOTS.goalkeeper,
+};
+
 function Pitch({ w, h }: { w: number; h: number }) {
   const line = { stroke: '#FFFFFF', strokeOpacity: 0.85, strokeWidth: 0.55, fill: 'none' };
   return (
@@ -102,7 +118,18 @@ function Photo({ p, size }: { p: FieldPlayer; size: number }) {
 }
 
 /** O campo com os jogadores. width define a escala inteira (altura = 1,5 × largura). */
-export function SelectionField({ players, width, onPlayerPress }: { players: FieldPlayer[]; width: number; onPlayerPress?: (key: string) => void }) {
+export function SelectionField({
+  players,
+  width,
+  onPlayerPress,
+  formation = '4-3-3',
+}: {
+  players: FieldPlayer[];
+  width: number;
+  onPlayerPress?: (key: string) => void;
+  formation?: string;
+}) {
+  const spots = formation === '4-4-2' ? SPOTS_442 : SPOTS;
   const h = Math.round(width * 1.5);
   const k = width / 358;
   const marker = Math.max(34, Math.round(50 * k));
@@ -117,7 +144,7 @@ export function SelectionField({ players, width, onPlayerPress }: { players: Fie
       {players.map((p) => {
         const i = used[p.position] ?? 0;
         used[p.position] = i + 1;
-        const spot = SPOTS[p.position][i];
+        const spot = spots[p.position][i];
         if (!spot) return null;
         const [x, y] = spot;
         const border = p.teamColor ?? '#FFFFFF';

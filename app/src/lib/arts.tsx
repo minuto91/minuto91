@@ -284,6 +284,7 @@ export function SelectionArt({
   matchLabel,
   players,
   teams,
+  formation,
 }: {
   peladaName: string;
   crestPath?: string | null;
@@ -291,6 +292,7 @@ export function SelectionArt({
   matchLabel: string;
   players: FieldPlayer[];
   teams: { name: string; color: string | null }[];
+  formation?: string;
 }) {
   const post = useArtFormat() === 'post';
   return (
@@ -298,7 +300,7 @@ export function SelectionArt({
       <Header title={peladaName} subtitle={`${matchLabel} · ${date}`} crestPath={post ? undefined : crestPath} />
       <Text style={[s.goldLabel, { textAlign: 'center', color: colors.blue, fontSize: 18 }]}>Seleção da Rodada</Text>
       <View style={{ alignItems: 'center' }}>
-        <SelectionField players={players} width={post ? 144 : 220} />
+        <SelectionField players={players} width={post ? 144 : 220} formation={formation} />
       </View>
       {/* No 4:5 não sobra altura para a legenda (a cor continua na borda de cada jogador). */}
       {!post && <TeamLegend teams={teams} />}

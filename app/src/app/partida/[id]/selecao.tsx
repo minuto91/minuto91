@@ -12,23 +12,17 @@ import { type Career, loadPlayer } from '../../../lib/profile';
 import type { Card as CardData } from '../../../lib/career';
 import { PlayerCard } from '../../../lib/playercard';
 import { FieldPlayer, SelectionField, teamHex } from '../../../lib/selection';
+import { arrange, type FormationName, isFormation, type Sector } from '../../../lib/selectionlayout';
 import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors } from '../../../lib/theme';
 import { Body, Button, Card, EmptyState, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
 type Sel = { id: string; match_id: string; status: 'published' | 'superseded' | 'invalidated'; version: number; formation: string };
-type SelPlayer = { selection_id: string; membership_id: string; slot_position: FieldPlayer['position']; rank_order: number };
+type SelPlayer = { selection_id: string; membership_id: string; slot_position: FieldPlayer['position']; rank_order: number; position_code: string | null };
 type LineupPlayer = { team: 'A' | 'B'; membership_id: string | null; avatar_path: string | null };
 
 const STATE_LABEL = { published: 'Vigente', superseded: 'Substituída', invalidated: 'Invalidada' } as const;
-// Linhas do campo (REV-118: 4-3-3 oficial desta versão do algoritmo).
-const LINES: { position: FieldPlayer['position']; count: number }[] = [
-  { position: 'attacker', count: 3 },
-  { position: 'midfielder', count: 3 },
-  { position: 'defender', count: 4 },
-  { position: 'goalkeeper', count: 1 },
-];
 
 export default function SelecaoDaRodada() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -70,7 +64,7 @@ export default function SelecaoDaRodada() {
         const matchIds = [...new Set([m.id, ...list.map((s) => s.match_id)])];
         const [{ data: mm }, { data: pp }] = await Promise.all([
           supabase.from('matches').select('id, pelada_id, played_at, status, team_a_name, team_b_name, team_a_score:public_team_a_score, team_b_score:public_team_b_score, sheet_version').in('id', matchIds),
-          list.length ? supabase.from('round_selection_players').select('selection_id, membership_id, slot_position, rank_order').in('selection_id', list.map((s) => s.id)) : Promise.resolve({ data: [] }),
+          list.length ? supabase.from('round_selection_players').select('selection_id, membership_id, slot_position, rank_order, position_code').in('selection_id', list.map((s) => s.id)) : Promise.resolve({ data: [] }),
         ]);
         if (!alive) return;
         const { data: pn } = await supabase.from('peladas').select('name').eq('id', m.pelada_id).maybeSingle();
@@ -117,17 +111,20 @@ export default function SelecaoDaRodada() {
 
   const nameOf = useCallback((mid: string) => members.find((m) => m.id === mid)?.player_name ?? 'Jogador', [members]);
 
+  const formationOf = (selId: string): FormationName => {
+    const f = sels.find((s) => s.id === selId)?.formation;
+    return isFormation(f) ? f : '4-3-3';
+  };
+
   function fieldFor(selId: string, rich: boolean): FieldPlayer[] {
-    const mine = players.filter((p) => p.selection_id === selId);
-    return LINES.flatMap((line) => {
-      const inLine = mine.filter((x) => x.slot_position === line.position).sort((a, b) => a.rank_order - b.rank_order);
-      return Array.from({ length: line.count }, (_, i): FieldPlayer => {
-        const x = inLine[i];
-        if (!x) return { key: `${line.position}-${i}`, position: line.position, name: null };
+    const mine = players.filter((p) => p.selection_id === selId).map((p) => ({ ...p, sector: p.slot_position as Sector, code: p.position_code, rank: p.rank_order }));
+    return arrange(mine, formationOf(selId)).map(({ sector, row: x }, i): FieldPlayer => {
+      {
+        if (!x) return { key: `${sector}-${i}`, position: sector, name: null };
         const lp = rich ? lineup.find((l) => l.membership_id === x.membership_id) : undefined;
         // REV-119/120: só foto (ou iniciais) e nome; sem sigla, OVR, nota ou gols.
-        return { key: x.membership_id, position: line.position, name: nameOf(x.membership_id), posLabel: null, photoPath: lp?.avatar_path ?? null, teamColor: lp ? colorsAB[lp.team] : null };
-      });
+        return { key: x.membership_id, position: sector, name: nameOf(x.membership_id), posLabel: null, photoPath: lp?.avatar_path ?? null, teamColor: lp ? colorsAB[lp.team] : null };
+      }
     });
   }
 
@@ -197,7 +194,7 @@ export default function SelecaoDaRodada() {
           </View>
           <Text style={{ textAlign: 'center', color: colors.muted, fontWeight: '700' }}>{viewing.formation}</Text>
           <View style={{ alignItems: 'center' }}>
-            <SelectionField players={fieldFor(viewing.id, true)} width={fieldW} onPlayerPress={(key) => { setCard({ status: 'loading' }); setOpen(key); }} />
+            <SelectionField players={fieldFor(viewing.id, true)} width={fieldW} formation={viewing.formation} onPlayerPress={(key) => { setCard({ status: 'loading' }); setOpen(key); }} />
           </View>
           {viewing.match_id !== id || viewing.status !== 'published' ? (
             <Button
@@ -225,7 +222,7 @@ export default function SelecaoDaRodada() {
               <Pressable key={s.id} accessibilityRole="button" accessibilityLabel={`Ver a Seleção de ${hm ? fmtDate(hm.played_at) : ''}, ${STATE_LABEL[s.status]}`} onPress={() => setViewId(s.id)}>
                 <Card>
                   <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                    <SelectionField players={fieldFor(s.id, false)} width={72} />
+                    <SelectionField players={fieldFor(s.id, false)} width={72} formation={s.formation} />
                     <View style={{ flex: 1, gap: 2 }}>
                       <Text style={{ color: colors.ink, fontWeight: '700' }}>{hm ? `Rodada de ${fmtDate(hm.played_at)}` : 'Rodada'}</Text>
                       {hm && <Sub>{`${hm.team_a_name} x ${hm.team_b_name}`}</Sub>}

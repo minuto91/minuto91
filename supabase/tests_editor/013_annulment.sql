@@ -64,6 +64,10 @@ for k in 1..3 loop
   insert into public.match_player_results(pelada_id,match_id,membership_id,numeric_rating_count,peer_rating,
    objective_rating,final_rating,has_valid_rating,goals,assists,red_cards,match_result,position_snapshot,formula_version)
   select v_pid,v_id,pg_temp.mem(v_pid,i),6,6,5,6,true,0,0,0,'loss',pos[i],1 from generate_series(2,11) i;
+  -- V10.0 (084): a Seleção usa a sigla da posição na partida (1 GOL, 2 ZAG, LD, LE, VOL, 2 MEI, 3 do ataque).
+  insert into public.match_participants(pelada_id,match_id,membership_id,team,primary_position,position_code)
+  select v_pid,v_id,pg_temp.mem(v_pid,i),case when i % 2 = 0 then 'A' else 'B' end,pos[i],
+   (array['CA','GOL','ZAG','ZAG','LD','LE','VOL','MEI','MEI','PD','PE'])[i] from generate_series(1,11) i;
   insert into public.awards(pelada_id,match_id,season_id,membership_id,award_type,votes_count)
   select v_pid,v_id,season_id,m1,'match_craque',6 from public.matches where id=v_id;
  end if;

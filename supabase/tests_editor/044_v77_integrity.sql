@@ -52,7 +52,7 @@ create function pg_temp.restore(p_match uuid, p_req uuid default gen_random_uuid
     public.preview_match_restoration(p_match)->>'preview_token',p_req) $$;
 
 do $test$
-declare v_a uuid; v_tok text; i int; v_m uuid; v_m2 uuid; v_s uuid; v_s2 uuid; r jsonb; v_n int; v_ids uuid[]; v_close timestamptz;
+declare v_y uuid; v_a uuid; v_tok text; i int; v_m uuid; v_m2 uuid; v_s uuid; v_s2 uuid; r jsonb; v_n int; v_ids uuid[]; v_close timestamptz;
  v_req uuid; v_x uuid; v_d uuid; v_tok_d text; v_sel uuid; v_ev jsonb; v_awards_before int; v_sus uuid;
 begin
 insert into auth.users (id,instance_id,aud,role,email,encrypted_password,email_confirmed_at,created_at,updated_at)
@@ -342,10 +342,10 @@ execute 'reset role';
 -- S1: 11 notas válidas, todos cabem nas vagas 1-4-3-3 pela posição principal (o 12 é atacante).
 insert into public.matches(pelada_id,season_id,played_at,status,team_a_score,team_b_score,finalized_at)
 values(v_a,private.season_for_date(v_a,private.pelada_today(v_a)),now()-interval '1 hour','finalized',1,0,now()) returning id into v_x;
-insert into public.match_participants(pelada_id,match_id,membership_id,team,primary_position)
-select v_a, v_x, pg_temp.mem(v_a,n), case when n % 2 = 0 then 'A' else 'B' end, p
-from (values (1,'goalkeeper'),(2,'defender'),(4,'defender'),(8,'defender'),(11,'defender'),(5,'midfielder'),(6,'midfielder'),
- (9,'midfielder'),(12,'attacker'),(3,'attacker'),(7,'attacker')) t(n,p);
+insert into public.match_participants(pelada_id,match_id,membership_id,team,primary_position,position_code)
+select v_a, v_x, pg_temp.mem(v_a,n), case when n % 2 = 0 then 'A' else 'B' end, p, c
+from (values (1,'goalkeeper','GOL'),(2,'defender','ZAG'),(4,'defender','ZAG'),(8,'defender','LD'),(11,'defender','LE'),(5,'midfielder','MEI'),(6,'midfielder','MEI'),
+ (9,'midfielder','VOL'),(12,'attacker','ATA'),(3,'attacker','CA'),(7,'attacker','PD')) t(n,p,c);
 insert into public.match_player_results(pelada_id,match_id,membership_id,numeric_rating_count,peer_rating,objective_rating,final_rating,
  has_valid_rating,goals,assists,red_cards,match_result,position_snapshot,formula_version)
 select v_a, v_x, pg_temp.mem(v_a,n), 0, f, 5, f, true, 0, 0, 0, 'win', p, 2
@@ -356,11 +356,13 @@ select id into v_sel from public.round_selections where match_id=v_x and status=
 perform pg_temp.assert(v_sel is not null and (select count(*) from public.round_selection_players where selection_id=v_sel)=11, 'Seleção com 11');
 perform pg_temp.assert((select slot_position from public.round_selection_players where selection_id=v_sel and membership_id=pg_temp.mem(v_a,12))='attacker',
  'posição principal ocupa a vaga');
-perform pg_temp.assert((select algorithm_version from public.round_selections where id=v_sel)=2, 'algoritmo v2');
+perform pg_temp.assert((select algorithm_version=3 and formation='4-3-3' from public.round_selections where id=v_sel), 'algoritmo v3, 4-3-3 quando o 3º atacante vale mais');
+perform pg_temp.assert((select slot_class='ATT' and position_code='CA' from public.round_selection_players where selection_id=v_sel and membership_id=pg_temp.mem(v_a,3)), 'ataque aceita CA; guarda a sigla');
+perform pg_temp.assert((select slot_class='LD' from public.round_selection_players where selection_id=v_sel and membership_id=pg_temp.mem(v_a,8)), 'LD na lateral direita');
 -- S2: sem goleiro de posição o gol não é fechado por ninguém (sem posição secundária): não publica.
 delete from public.round_selections where match_id=v_x;
 delete from public.match_player_results where match_id=v_x and membership_id=pg_temp.mem(v_a,1);
-insert into public.match_participants(pelada_id,match_id,membership_id,team,primary_position) values(v_a,v_x,pg_temp.mem(v_a,10),'A','attacker');
+insert into public.match_participants(pelada_id,match_id,membership_id,team,primary_position,position_code) values(v_a,v_x,pg_temp.mem(v_a,10),'A','attacker','PE');
 insert into public.match_player_results(pelada_id,match_id,membership_id,numeric_rating_count,peer_rating,objective_rating,final_rating,
  has_valid_rating,goals,assists,red_cards,match_result,position_snapshot,formula_version)
 values(v_a,v_x,pg_temp.mem(v_a,10),0,4,5,4,true,0,0,0,'win','attacker',2);
@@ -396,6 +398,35 @@ perform private.compute_round_selection(v_x);
 perform pg_temp.assert((select count(*) from public.round_selections where match_id=v_x and status='published')=0
  and (select count(*) from public.round_selections where match_id=v_x and status='invalidated')=1
  and (select count(*) from public.round_selections where match_id=v_x)=2, 'invalidada e histórico preservado');
+-- V10.0 (084, REV-118): 4-4-2 quando o 2º volante vale mais que o 3º atacante; desempate por gols; depois 4-3-3.
+insert into public.matches(pelada_id,season_id,played_at,status,team_a_score,team_b_score,finalized_at)
+values(v_a,private.season_for_date(v_a,private.pelada_today(v_a)),now()-interval '30 minutes','finalized',1,0,now()) returning id into v_y;
+insert into public.match_participants(pelada_id,match_id,membership_id,team,primary_position,position_code)
+select v_a, v_y, pg_temp.mem(v_a,n), case when n % 2 = 0 then 'A' else 'B' end, p, c
+from (values (1,'goalkeeper','GOL'),(2,'defender','ZAG'),(4,'defender','ZAG'),(8,'defender','LD'),(11,'defender','LE'),(5,'midfielder','MEI'),(6,'midfielder','MEI'),
+ (9,'midfielder','VOL'),(12,'midfielder','VOL'),(3,'attacker','CA'),(7,'attacker','PD'),(10,'attacker','PE')) t(n,p,c);
+insert into public.match_player_results(pelada_id,match_id,membership_id,numeric_rating_count,peer_rating,objective_rating,final_rating,
+ has_valid_rating,goals,assists,red_cards,match_result,position_snapshot,formula_version)
+select v_a, v_y, pg_temp.mem(v_a,n), 0, f, 5, f, true, g, 0, 0, 'win', p, 2
+from (values (1,'goalkeeper',7.0,0),(2,'defender',7.0,0),(4,'defender',7.0,0),(8,'defender',7.0,0),(11,'defender',7.0,0),(5,'midfielder',6.0,0),
+ (6,'midfielder',6.0,0),(9,'midfielder',8.0,0),(12,'midfielder',7.9,0),(3,'attacker',6.0,0),(7,'attacker',5.0,0),(10,'attacker',4.0,0)) t(n,p,f,g);
+perform private.compute_round_selection(v_y);
+perform pg_temp.assert((select formation='4-4-2' from public.round_selections where match_id=v_y and status='published'), '4-4-2: o 2º volante (7,9) vale mais que o 3º atacante (4,0)');
+perform pg_temp.assert((select count(*)=11 from public.round_selection_players p join public.round_selections s on s.id=p.selection_id where s.match_id=v_y and s.status='published')
+ and (select slot_class='VOL' from public.round_selection_players p join public.round_selections s on s.id=p.selection_id where s.match_id=v_y and p.membership_id=pg_temp.mem(v_a,12)), '4-4-2 com 2 VOL e 2 ATT');
+-- notas iguais (4,0 = 4,0) e gols iguais: 4-3-3; com mais gols no 2º volante: 4-4-2.
+update public.match_player_results set final_rating=4.0, peer_rating=4.0 where match_id=v_y and membership_id=pg_temp.mem(v_a,12);
+perform private.compute_round_selection(v_y);
+perform pg_temp.assert((select formation='4-3-3' from public.round_selections where match_id=v_y and status='published'), 'notas e gols iguais: 4-3-3');
+update public.match_player_results set goals=2 where match_id=v_y and membership_id=pg_temp.mem(v_a,12);
+perform private.compute_round_selection(v_y);
+perform pg_temp.assert((select formation='4-4-2' from public.round_selections where match_id=v_y and status='published'), 'notas iguais: mais gols no 2º volante vence');
+perform pg_temp.assert((select count(*)=3 from public.round_selections where match_id=v_y), 'versões preservadas nas trocas de formação');
+-- Cadastro antigo (sem sigla) fica de fora.
+update public.match_participants set position_code=null where match_id=v_y and membership_id=pg_temp.mem(v_a,5);
+perform private.compute_round_selection(v_y);
+perform pg_temp.assert(not exists(select 1 from public.round_selection_players p join public.round_selections s on s.id=p.selection_id
+ where s.match_id=v_y and s.status='published' and p.membership_id=pg_temp.mem(v_a,5)), 'sem sigla: fora da Seleção');
 perform set_config('role','authenticated',true);
 perform set_config('role','authenticated',true);
 

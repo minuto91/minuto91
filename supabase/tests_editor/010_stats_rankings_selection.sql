@@ -171,10 +171,20 @@ perform pg_temp.assert((select expires_at is not null from public.highlights whe
 -- ===== Seleção da Rodada (partida 6) =====
 -- Defensores com nota: 3, 6, 7 -> uma vaga de defensor fica vazia (sem adaptar).
 -- Atacantes: 1 (8,0), 10 (7,5; 6 notas), 11 (7,5; 5 notas; V 7,5) entram; 12 (7,5; 5 notas; V 7,0) fica fora.
-select id into v_sel from public.round_selections where match_id=v_x[6];
+-- V10.0 (084): a Seleção usa a sigla; como estes cadastros têm só o setor, a sigla do setor é dada aqui (defensor=ZAG, meio=MEI, atacante=ATA)
+-- e a Seleção é recalculada. Vagas por sigla: 2 ZAG (sem LD/LE) e 2 MEI (sem VOL) deixam mais vagas vazias.
+execute 'reset role';
+insert into public.match_participants(pelada_id,match_id,membership_id,team,primary_position)
+select r.pelada_id, r.match_id, r.membership_id, 'A', r.position_snapshot from public.match_player_results r
+ where r.match_id=v_x[6] and not exists(select 1 from public.match_participants p where p.match_id=r.match_id and p.membership_id=r.membership_id);
+update public.match_participants set position_code = case primary_position when 'goalkeeper' then 'GOL' when 'defender' then 'ZAG'
+ when 'midfielder' then 'MEI' else 'ATA' end where position_code is null and membership_id is not null;
+perform private.compute_round_selection(v_x[6]);
+perform set_config('role','authenticated',true);
+select id into v_sel from public.round_selections where match_id=v_x[6] and status='published';
 perform pg_temp.assert(v_sel is not null,'Seleção publicada com 11 elegíveis');
-perform pg_temp.assert((select count(*)=10 from public.round_selection_players where selection_id=v_sel),'10 escalados');
-perform pg_temp.assert((select count(*)=3 from public.round_selection_players where selection_id=v_sel and slot_position='defender'),'vaga de defensor vazia');
+perform pg_temp.assert((select count(*)=8 from public.round_selection_players where selection_id=v_sel),'8 escalados (4-3-3): '||(select string_agg(slot_position||'/'||coalesce(slot_class,'-'),',') from public.round_selection_players where selection_id=v_sel));
+perform pg_temp.assert((select count(*)=2 from public.round_selection_players where selection_id=v_sel and slot_position='defender'),'só 2 ZAG: vagas de lateral vazias');
 perform pg_temp.assert((select bool_and(slot_position=official_position and not is_adapted) from public.round_selection_players where selection_id=v_sel),'sem adaptação');
 perform pg_temp.assert((select array_agg(membership_id order by rank_order) from public.round_selection_players
   where selection_id=v_sel and slot_position='attacker') = array[pg_temp.mem(v_pid,1),pg_temp.mem(v_pid,10),pg_temp.mem(v_pid,11)],'desempate dos atacantes');
