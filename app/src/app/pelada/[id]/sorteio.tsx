@@ -48,7 +48,6 @@ export default function Sorteio() {
   const [search, setSearch] = useState('');
   const [guestName, setGuestName] = useState('');
   const [guestPos, setGuestPos] = useState<string | null>(null);
-  const [guestAdult, setGuestAdult] = useState(false);
   const [nameA, setNameA] = useState('');
   const [nameB, setNameB] = useState('');
   const [swapPick, setSwapPick] = useState<string | null>(null);
@@ -314,21 +313,19 @@ export default function Sorteio() {
         <Input placeholder="Nome do convidado" value={guestName} onChangeText={setGuestName} maxLength={80} autoCapitalize="words" />
         <Sub>Posição (opcional)</Sub>
         <PositionPicker value={guestPos} onChange={(p) => setGuestPos(guestPos === p ? null : p)} />
-        <Toggle label="Declaro que o convidado tem 18 anos ou mais" value={guestAdult} onChange={setGuestAdult} />
         <Button
           title="Adicionar convidado"
           kind="secondary"
           loading={busy === 'guest'}
-          disabled={!guestName.trim() || !guestAdult}
+          disabled={!guestName.trim()}
           onPress={async () => {
             const p = await syncMembers();
             if (!p) return;
-            const d = await run('guest', () => supabase.rpc('add_draw_guest', { p_prep: p.id, p_expected: p.version, p_guest: null, p_name: guestName.trim(), p_position: guestPos, p_adult_declared: guestAdult }));
+            const d = await run('guest', () => supabase.rpc('add_draw_guest', { p_prep: p.id, p_expected: p.version, p_guest: null, p_name: guestName.trim(), p_position: guestPos, p_adult_declared: true }));
             if (d) {
               applyPrep(d as Preparation);
               setGuestName('');
               setGuestPos(null);
-              setGuestAdult(false);
             }
           }}
         />

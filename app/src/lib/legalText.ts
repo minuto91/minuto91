@@ -57,7 +57,7 @@ export const TERMS: string[] = [
  "7.6. O compartilhamento de cartas deverá respeitar a privacidade e os direitos de imagem dos participantes.",
  "8. Premiações, rankings e Seleção da Rodada",
  "8.1. O aplicativo poderá atribuir premiações como Craque da Partida, Bola Murcha e Rei do Mês. A Bola Murcha é recurso Premium, vem ligada por padrão e pode ser desligada pelo administrador da pelada.",
- "8.2. A Seleção da Rodada é formada automaticamente em 4-3-3, com pelo menos 11 jogadores com nota oficial válida, incluindo goleiro. A posição secundária confirmada pela administração vale tanto quanto a principal; a escolha considera a melhor combinação de jogadores e posições, e a administração não altera a seleção.",
+ "8.2. A Seleção da Rodada é formada automaticamente em 4-3-3, com pelo menos 11 jogadores com nota oficial válida, incluindo goleiro. A escolha considera a melhor combinação de jogadores pela posição principal de cada um, e a administração não altera a seleção.",
  "8.3. Os resultados serão gerados a partir dos dados oficiais registrados no aplicativo.",
  "8.4. Premiações e rankings possuem caráter recreativo e não constituem reconhecimento profissional.",
  "8.5. Os usuários não poderão manipular registros ou votações para obter vantagens indevidas.",

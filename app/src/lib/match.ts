@@ -127,6 +127,7 @@ export async function loadSheet(matchId: string) {
     });
   }
   const extras = emptyExtras();
+  const ownCulprits: string[] = []; // V10.0 (REV-138): jogador adversário responsável por cada gol contra
   for (const e of events ?? []) {
     const player = e.participant_id ? byId.get(e.participant_id) : undefined;
     if (e.event_type === 'goal' && player) player.goals += e.quantity;
@@ -135,13 +136,16 @@ export async function loadSheet(matchId: string) {
     else if (e.event_type === 'yellow_card' && player) player.yellows = (player.yellows ?? 0) + e.quantity;
     else if (e.event_type === 'second_yellow' && player) player.secondYellow = 1;
     else if (e.event_type === 'unattributed_goal') extras.unattributed[e.team as Team] += e.quantity;
-    else if (e.event_type === 'own_goal') extras.ownGoals[e.team as Team] += e.quantity;
+    else if (e.event_type === 'own_goal') {
+      extras.ownGoals[e.team as Team] += e.quantity;
+      if (player) for (let i = 0; i < e.quantity; i++) ownCulprits.push(player.key);
+    }
   }
-  return { players: [...byId.values()], extras };
+  return { players: [...byId.values()], extras, ownCulprits };
 }
 
 // Formato esperado por save_match_sheet / correct_match_sheet.
-export function sheetPayload(players: SheetPlayer[], extras: TeamExtras) {
+export function sheetPayload(players: SheetPlayer[], extras: TeamExtras, culprits: string[] = []) {
   const participants = players.map((p) =>
     p.membership_id
       ? { membership_id: p.membership_id, team: p.team }
@@ -155,6 +159,14 @@ export function sheetPayload(players: SheetPlayer[], extras: TeamExtras) {
     if (p.reds) events.push({ ...who, type: 'red_card', quantity: p.reds });
     if (p.yellows) events.push({ ...who, type: 'yellow_card', quantity: p.yellows });
     if (p.secondYellow) events.push({ ...who, type: 'second_yellow', quantity: 1 });
+  }
+  // Gol contra com o adversário responsável (o servidor credita o gol ao time beneficiado).
+  const byKey = new Map(players.map((p) => [p.key, p]));
+  const counts = new Map<string, number>();
+  for (const k of culprits) counts.set(k, (counts.get(k) ?? 0) + 1);
+  for (const [k, qty] of counts) {
+    const p = byKey.get(k);
+    if (p) events.push({ ...(p.membership_id ? { membership_id: p.membership_id } : { guest_id: p.guest_id }), type: 'own_goal', quantity: qty });
   }
   for (const t of ['A', 'B'] as Team[]) {
     if (extras.unattributed[t]) events.push({ type: 'unattributed_goal', team: t, quantity: extras.unattributed[t] });

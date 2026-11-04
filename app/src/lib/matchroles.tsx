@@ -1,4 +1,4 @@
-// REV-010 goleiro temporário, REV-011 posição secundária confirmada NA partida, REV-013 defesas difíceis informadas.
+// REV-010 goleiro temporário, REV-013 defesas difíceis informadas (V10.0, REV-147: sem posição secundária).
 // Nada aqui muda a posição oficial, a carta ou o OVR: o servidor guarda tudo vinculado à partida.
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
@@ -6,13 +6,11 @@ import { View } from 'react-native';
 import { friendly } from './errors';
 import { supabase } from './supabase';
 import { Text } from './text';
-import { colors, positionLabel, type } from './theme';
-import { Toggle } from './toggle';
+import { colors, type } from './theme';
 import { Button, Card, ErrorText, Stepper, Sub } from './ui';
 
 export type RolePlayer = { participant_id: string; membership_id: string | null; team: 'A' | 'B'; position: string; name: string };
-type Part = { id: string; temp_goalkeeper: boolean; secondary_position: string | null; primary_position: string };
-type Mem = { id: string; secondary_position: string | null; secondary_status: string | null };
+type Part = { id: string; temp_goalkeeper: boolean; primary_position: string };
 type Claim = { id: string; participant_id: string; membership_id: string; claimed_saves: number; status: string; official_saves: number | null };
 
 const isGk = (p: string) => p === 'GOL' || p === 'goalkeeper';
@@ -27,7 +25,6 @@ export function MatchRoles({
   teamNames: { A: string; B: string };
 }) {
   const [parts, setParts] = useState<Record<string, Part>>({});
-  const [mems, setMems] = useState<Record<string, Mem>>({});
   const [claims, setClaims] = useState<Claim[]>([]);
   const [saves, setSaves] = useState(0);
   const [review, setReview] = useState<Record<string, number>>({});
@@ -39,15 +36,12 @@ export function MatchRoles({
     let alive = true;
     (async () => {
       void reload;
-      const ids = players.map((p) => p.membership_id).filter((x): x is string => !!x);
-      const [{ data: ps }, { data: ms }, { data: cs }] = await Promise.all([
-        supabase.from('match_participants').select('id, temp_goalkeeper, secondary_position, primary_position').eq('match_id', matchId),
-        ids.length ? supabase.from('pelada_memberships').select('id, secondary_position, secondary_status').in('id', ids) : Promise.resolve({ data: [] }),
+      const [{ data: ps }, { data: cs }] = await Promise.all([
+        supabase.from('match_participants').select('id, temp_goalkeeper, primary_position').eq('match_id', matchId),
         supabase.from('match_keeper_save_claims').select('id, participant_id, membership_id, claimed_saves, status, official_saves').eq('match_id', matchId),
       ]);
       if (!alive) return;
       setParts(Object.fromEntries(((ps ?? []) as Part[]).map((p) => [p.id, p])));
-      setMems(Object.fromEntries(((ms ?? []) as Mem[]).map((m) => [m.id, m])));
       setClaims((cs ?? []) as Claim[]);
     })();
     return () => {
@@ -69,11 +63,10 @@ export function MatchRoles({
   const iAmKeeper = !!me && (isGk(me.position) || !!parts[me.participant_id]?.temp_goalkeeper);
   const myClaim = me ? claims.find((c) => c.participant_id === me.participant_id) : undefined;
   const teamsWithoutGk = (['A', 'B'] as const).filter((t) => !players.some((p) => p.team === t && isGk(p.position)));
-  const secondaryCandidates = players.filter((p) => p.membership_id && mems[p.membership_id]?.secondary_status === 'confirmed');
   const pendingClaims = claims.filter((c) => c.status === 'pending');
   const nameOf = (pid: string) => players.find((p) => p.participant_id === pid)?.name ?? 'Goleiro';
 
-  const showStaff = staff && (teamsWithoutGk.length > 0 || secondaryCandidates.length > 0 || pendingClaims.length > 0);
+  const showStaff = staff && (teamsWithoutGk.length > 0 || pendingClaims.length > 0);
   if (!showStaff && !iAmKeeper) return null;
 
   return (
@@ -139,24 +132,6 @@ export function MatchRoles({
           );
         })}
 
-      {staff && secondaryCandidates.length > 0 && (
-        <View style={{ gap: 2, marginTop: 12 }}>
-          <Text style={type.cardTitle}>Atuou na posição secundária?</Text>
-          {secondaryCandidates.map((p) => {
-            const m = mems[p.membership_id!];
-            const on = !!parts[p.participant_id]?.secondary_position;
-            return (
-              <Toggle
-                key={p.participant_id}
-                label={`${p.name} · ${positionLabel(m.secondary_position)}`}
-                value={on}
-                disabled={busy}
-                onChange={(v) => run('set_match_secondary_played', { p_match: matchId, p_membership: p.membership_id, p_played: v })}
-              />
-            );
-          })}
-        </View>
-      )}
       <ErrorText>{msg}</ErrorText>
       {msg === null && busy ? <Text style={{ color: colors.muted }}>Salvando...</Text> : null}
     </Card>

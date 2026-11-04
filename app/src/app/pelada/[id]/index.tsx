@@ -12,7 +12,6 @@ import { Icon, IconName } from '../../../lib/icons';
 import { fmtDate, fmtTime, Match, MATCH_COLUMNS, scoreLine, STATUS_LABEL } from '../../../lib/match';
 import { AdminPending } from '../../../lib/pending';
 import { PositionRequests } from '../../../lib/ratingadmin';
-import { SecondaryRequests } from '../../../lib/secondary';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
@@ -263,7 +262,6 @@ export default function CentralDaRodada() {
       {isAdmin && loaded && (
         <>
           <PositionRequests peladaId={id} isAdmin={isAdmin} />
-          <SecondaryRequests peladaId={id} isAdmin={isAdmin} />
         </>
       )}
 

@@ -86,7 +86,6 @@ const MAP: Record<string, string> = {
   SHEET_DIVERGENT: 'A súmula ainda não bate com a votação publicada. Corrija a súmula antes.',
   CORRECTION_CHANGES_ELECTORATE: 'Depois da publicação, a correção não pode mudar quem jogou nem os times.',
   EXTENSION_ALREADY_USED: 'A prorrogação desta votação já foi usada.',
-  SECONDARY_EQUALS_PRIMARY: 'A posição secundária precisa ser diferente da principal.',
   // V5: avaliação dos jogadores, posição, cartões e defesas
   MATCH_NOT_OFFICIAL: 'A partida ainda não é oficial.',
   VOTING_ALREADY_OPENED: 'A votação desta partida já foi aberta.',

@@ -9,7 +9,6 @@ import { clearDraft, draftKey, loadDraft, saveDraft } from '../../../lib/drafts'
 import { SheetReview } from '../../../lib/sheetreview';
 import { friendly } from '../../../lib/errors';
 import {
-  emptyExtras,
   fmtDate,
   Guest,
   loadGuests,
@@ -20,22 +19,27 @@ import {
   Member,
   sheetPayload,
   SheetPlayer,
-  sheetScore,
   Team,
   TeamExtras,
 } from '../../../lib/match';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, Position, positionLabel } from '../../../lib/theme';
-import { TeamColorPicker } from '../../../lib/selection';
+import { teamHex, TeamColorPicker } from '../../../lib/selection';
+import { Ball } from '../../../lib/ball';
+import { Collapsible } from '../../../lib/collapsible';
+import {
+  filledLost,
+  goalProblems,
+  GoalRec,
+  goalsFromSheet,
+  goalsToSheet,
+  resizeGoals,
+  scoreOf,
+} from '../../../lib/goals';
 import { requestId } from '../../../lib/ids';
 import { idempotent, REVIEW_CODE } from '../../../lib/v85';
 import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
-
-const TEAMS = [
-  { value: 'A', label: 'Time A' },
-  { value: 'B', label: 'Time B' },
-] as const;
 
 const DURATIONS = [
   { value: '120', label: '2 horas' },
@@ -57,11 +61,12 @@ export default function Sumula() {
   const [members, setMembers] = useState<Member[]>([]);
   const [guests, setGuests] = useState<Guest[]>([]);
   const [players, setPlayers] = useState<SheetPlayer[]>([]);
-  const [extras, setExtras] = useState<TeamExtras>(emptyExtras());
+  // REV-138: o placar é a quantidade de gols; cada gol tem autor (ou gol contra) e assistência opcional.
+  const [goals, setGoals] = useState<GoalRec[]>([]);
+  const [colorsAB, setColorsAB] = useState<{ A: string | null; B: string | null }>({ A: null, B: null });
   const [reason, setReason] = useState('');
   const [duration, setDuration] = useState<'120' | '240' | '360'>('240');
   const [guestName, setGuestName] = useState('');
-  const [guestAdult, setGuestAdult] = useState(false);
   const [guestPos, setGuestPos] = useState<Position | null>('MEI');
   const [busy, setBusy] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
@@ -75,7 +80,8 @@ export default function Sumula() {
   // REV-041: revisão antes de publicar/corrigir; REV-044: rascunho local das mudanças ainda não salvas.
   const [review, setReview] = useState<'publish' | 'correct' | null>(null);
   const [original, setOriginal] = useState<SheetPlayer[] | null>(null);
-  const [localDraft, setLocalDraft] = useState<{ players: SheetPlayer[]; extras: TeamExtras } | null>(null);
+  const [originalGoals, setOriginalGoals] = useState('[]');
+  const [localDraft, setLocalDraft] = useState<{ players: SheetPlayer[]; goals: GoalRec[] } | null>(null);
   const dKey = session ? draftKey(session.user.id, `sumula:${id}`) : null;
   // V8.5: versão do rascunho no servidor (salvamento sem sobrescrita obsoleta), escalação prevista e
   // confirmação coletiva de quem jogou (Etapas 2, 14, 21) e revisão do servidor (Etapa 15).
@@ -93,14 +99,16 @@ export default function Sumula() {
         const m = await loadMatch(id);
         if (!alive) return;
         if (!m) return setMsg('Partida não encontrada.');
-        const [ms, gs, sheet, { data: st }, { data: ent }] = await Promise.all([
+        const [ms, gs, sheet, { data: st }, { data: ent }, { data: cols }] = await Promise.all([
           loadMembers(m.pelada_id),
           loadGuests(m.pelada_id),
           loadSheet(id),
           supabase.from('pelada_settings').select('voting_duration_minutes').eq('pelada_id', m.pelada_id).maybeSingle(),
           supabase.rpc('get_pelada_entitlement', { p_pelada: m.pelada_id }),
+          supabase.from('matches').select('team_a_color, team_b_color').eq('id', id).maybeSingle(),
         ]);
         if (!alive) return;
+        setColorsAB({ A: cols?.team_a_color ?? null, B: cols?.team_b_color ?? null });
         // Prazo padrão escolhido nas configurações da pelada.
         if (st) setDuration(String(st.voting_duration_minutes) as '120' | '240' | '360');
         setPremium(!!(ent as { is_premium?: boolean } | null)?.is_premium);
@@ -118,12 +126,16 @@ export default function Sumula() {
         }
         setMembers(ms);
         setGuests(gs);
+        const teamByKey = new Map(sheet.players.map((p) => [p.key, p.team]));
+        const loaded = goalsFromSheet(sheet.players, sheet.extras, sheet.ownCulprits, (k) => teamByKey.get(k));
         setPlayers(sheet.players);
-        setExtras(sheet.extras);
+        setGoals(loaded);
         setOriginal(sheet.players);
+        setOriginalGoals(JSON.stringify(loaded.map(({ id: _id, ...g }) => g)));
         if (dKey) {
-          const d = await loadDraft<{ players: SheetPlayer[]; extras: TeamExtras }>(dKey);
-          if (alive && d && JSON.stringify(d.players) !== JSON.stringify(sheet.players)) setLocalDraft(d);
+          const d = await loadDraft<{ players: SheetPlayer[]; goals?: GoalRec[] }>(dKey);
+          const same = d && JSON.stringify(d.players) === JSON.stringify(sheet.players) && JSON.stringify(d.goals ?? []) === JSON.stringify(loaded);
+          if (alive && d && d.goals && !same) setLocalDraft({ players: d.players, goals: d.goals });
         }
       } catch (e) {
         if (alive) setMsg(friendly((e as Error).message));
@@ -135,17 +147,26 @@ export default function Sumula() {
   }, [id, reload, dKey]);
 
   // Grava o rascunho local a cada mudança (só no aparelho; nunca publica nada).
+  const goalsKey = JSON.stringify(goals.map(({ id: _id, ...g }) => g));
   useEffect(() => {
     if (!dKey || !original || localDraft) return;
-    if (JSON.stringify(players) === JSON.stringify(original)) return;
-    const t = setTimeout(() => saveDraft(dKey, { players, extras }), 500);
+    if (JSON.stringify(players) === JSON.stringify(original) && goalsKey === originalGoals) return;
+    const t = setTimeout(() => saveDraft(dKey, { players, goals }), 500);
     return () => clearTimeout(t);
-  }, [dKey, players, extras, original, localDraft]);
+  }, [dKey, players, goals, goalsKey, originalGoals, original, localDraft]);
 
   const isDraft = match?.status === 'draft';
   const isCorrection = match?.status === 'voting_open';
   const editable = isDraft || isCorrection;
-  const score = sheetScore(players, extras);
+  const score = scoreOf(goals);
+  // Gols e assistências por jogador saem dos registros de gol (REV-138); o resto da súmula (cartões, times) vem de `players`.
+  const sheet = useMemo(() => {
+    const g = goalsToSheet(goals);
+    const ps = players.map((p) => ({ ...p, goals: g.goalsBy[p.key] ?? 0, assists: g.assistsBy[p.key] ?? 0 }));
+    const ex: TeamExtras = { unattributed: g.unattributed, ownGoals: g.ownLoose };
+    return { players: ps, extras: ex, culprits: g.culprits };
+  }, [goals, players]);
+  const problems = goalProblems(goals);
   const memberById = useMemo(() => new Map(members.map((m) => [m.id, m])), [members]);
   const guestById = useMemo(() => new Map(guests.map((g) => [g.id, g])), [guests]);
   const nameOf = (p: SheetPlayer) =>
@@ -156,7 +177,38 @@ export default function Sumula() {
 
   const update = (key: string, patch: Partial<SheetPlayer>) =>
     setPlayers((ps) => ps.map((p) => (p.key === key ? { ...p, ...patch } : p)));
-  const remove = (key: string) => setPlayers((ps) => ps.filter((p) => p.key !== key));
+  // Quem sai da súmula também sai dos gols que citavam essa pessoa (o registro do gol continua, sem autor).
+  const remove = (key: string) => {
+    setPlayers((ps) => ps.filter((p) => p.key !== key));
+    setGoals((gs) =>
+      gs.map((g) => ({
+        ...g,
+        author: g.author === key ? null : g.author,
+        assist: g.assist === key ? null : g.assist,
+        culprit: g.culprit === key ? null : g.culprit,
+      })),
+    );
+  };
+  const changeGoal = (id: string, patch: Partial<GoalRec>) => setGoals((gs) => gs.map((g) => (g.id === id ? { ...g, ...patch } : g)));
+  // Trocar o time de um jogador desfaz as ligações dele com gols do time antigo.
+  const changeTeam = (key: string, team: Team) => {
+    update(key, { team });
+    setGoals((gs) =>
+      gs.map((g) => ({
+        ...g,
+        author: g.author === key && g.team !== team ? null : g.author,
+        assist: g.assist === key && g.team !== team ? null : g.assist,
+        culprit: g.culprit === key && g.team === team ? null : g.culprit,
+      })),
+    );
+  };
+  function changeScore(team: Team, n: number) {
+    const v = Math.max(0, Math.min(30, n));
+    const lost = filledLost(goals, team, v);
+    const apply = () => setGoals((gs) => resizeGoals(gs, team, v));
+    if (lost > 0) confirm('Diminuir o placar?', `${lost === 1 ? '1 gol preenchido será removido' : `${lost} gols preenchidos serão removidos`}.`, 'Diminuir', apply);
+    else apply();
+  }
   const addMember = (m: Member, team: Team) =>
     setPlayers((ps) => [
       ...ps,
@@ -169,8 +221,6 @@ export default function Sumula() {
       { key: `g:${g.id}`, guest_id: g.id, team, position: guestPos, goals: 0, assists: 0, reds: 0 },
     ]);
   };
-  const setExtra = (kind: keyof TeamExtras, team: Team, v: number) =>
-    setExtras((e) => ({ ...e, [kind]: { ...e[kind], [team]: v } }));
 
   // ok = false quando o servidor recusou (a mensagem já aparece na tela).
   async function call<T = unknown>(fn: string, args: Record<string, unknown>): Promise<{ ok: boolean; data: T }> {
@@ -183,7 +233,8 @@ export default function Sumula() {
   }
 
   async function novoConvidado() {
-    if (!guestAdult) return setMsg('Confirme que o convidado tem 18 anos ou mais.');
+    // REV-140: a maioridade do convidado é declarada pelo administrador/assistente no aceite dos Termos (cláusula 4.7);
+    // aqui o app apenas registra essa declaração (p_adult_declared) por convidado, sem pedir confirmação na súmula.
     const { ok, data: gid } = await call<string>('create_guest', {
       p_pelada: match!.pelada_id,
       p_name: guestName,
@@ -193,7 +244,6 @@ export default function Sumula() {
     const g = { id: gid, display_name: guestName.trim() };
     setGuests((gs) => [...gs, g]);
     setGuestName('');
-    setGuestAdult(false);
     addGuest(g, 'A');
   }
 
@@ -259,7 +309,7 @@ export default function Sumula() {
     setServerReview(data as { blocking: string[]; warnings: { code: string; count?: number }[] });
   }
   const asArgs = () => {
-    const { participants, events } = sheetPayload(players, extras);
+    const { participants, events } = sheetPayload(sheet.players, sheet.extras, sheet.culprits);
     return { p_participants: participants, p_events: events };
   };
 
@@ -267,11 +317,14 @@ export default function Sumula() {
     if ((await salvarRascunho()).ok) {
       if (dKey) await clearDraft(dKey);
       setOriginal(players);
+      setOriginalGoals(goalsKey);
       notify('Súmula salva');
     }
   }
 
   async function publicar() {
+    // REV-138: nenhum gol sem autor; o servidor também bloqueia (get_match_sheet_review).
+    if (problems.length) return setMsg(problems[0]);
     if (!(await salvarRascunho()).ok) return;
     const { data: rv } = await supabase.rpc('get_match_sheet_review', { p_match: id });
     const blocking = ((rv as { blocking?: string[] } | null)?.blocking ?? []) as string[];
@@ -296,6 +349,7 @@ export default function Sumula() {
   }
 
   async function corrigir() {
+    if (problems.length) return setMsg(problems[0]);
     const { ok, data: r } = await call<{ sheet_version: number; eligible_voters_changed: boolean }>('correct_match_sheet', {
       p_match: id,
       ...asArgs(),
@@ -328,6 +382,11 @@ export default function Sumula() {
     );
   }
 
+  const teamOpts = [
+    { value: 'A', label: match.team_a_name },
+    { value: 'B', label: match.team_b_name },
+  ] as const;
+  const bench = { A: teamHex(colorsAB.A) ?? colors.blue, B: teamHex(colorsAB.B) ?? colors.gold };
   const me = members.find((m) => m.user_id === session?.user.id);
   if (!editable || !(me?.role === 'admin' || me?.role === 'assistant')) {
     return (
@@ -355,7 +414,7 @@ export default function Sumula() {
                     {x.guest ? ' (convidado)' : ''}
                     {!x.eligible ? ' · não faz mais parte' : ''}
                   </Text>
-                  <Chips options={TEAMS} value={st.team} onChange={(team) => setPresent((p) => ({ ...p, [x.pid]: { ...st, team } }))} />
+                  <Chips options={teamOpts} value={st.team} onChange={(team) => setPresent((p) => ({ ...p, [x.pid]: { ...st, team } }))} />
                 </View>
                 {x.guest && st.on && !x.position && (
                   <>
@@ -391,7 +450,7 @@ export default function Sumula() {
         <DraftBanner
           onResume={() => {
             setPlayers(localDraft.players);
-            setExtras(localDraft.extras);
+            setGoals(localDraft.goals);
             setLocalDraft(null);
           }}
           onDiscard={async () => {
@@ -411,14 +470,55 @@ export default function Sumula() {
         </Card>
       )}
       <Card>
-        <TeamColorPicker matchId={id} teamA={match.team_a_name} teamB={match.team_b_name} />
+        <TeamColorPicker matchId={id} teamA={match.team_a_name} teamB={match.team_b_name} onSaved={setColorsAB} />
       </Card>
       <Card>
-        <Text style={{ fontSize: 22, fontWeight: '800', color: colors.ink, textAlign: 'center' }}>
-          {match.team_a_name} {score.A} x {score.B} {match.team_b_name}
-        </Text>
-        <Sub>O placar sai dos gols lançados abaixo.</Sub>
+        <Body>Placar</Body>
+        <View style={{ flexDirection: 'row', gap: 16, justifyContent: 'space-between' }}>
+          {(['A', 'B'] as Team[]).map((t) => (
+            <View key={t} style={{ flex: 1, alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontWeight: '700', color: colors.ink }} numberOfLines={1}>
+                {t === 'A' ? match.team_a_name : match.team_b_name}
+              </Text>
+              <Stepper label="Gols" value={score[t]} onChange={(v) => changeScore(t, v)} min={0} max={30} />
+            </View>
+          ))}
+        </View>
       </Card>
+
+      {goals.map((g, i) => {
+        const mine = sheet.players.filter((p) => p.team === g.team);
+        const rivals = sheet.players.filter((p) => p.team !== g.team);
+        const opts = (list: SheetPlayer[]) => list.map((p) => ({ value: p.key, label: nameOf(p) }));
+        return (
+          <Card key={g.id}>
+            <Body>{'Gol ' + (i + 1) + ' · ' + (g.team === 'A' ? match.team_a_name : match.team_b_name)}</Body>
+            <Sub>Quem fez</Sub>
+            <Chips
+              options={[...opts(mine), { value: 'OWN', label: 'Gol contra' }]}
+              value={g.own ? 'OWN' : g.author}
+              onChange={(v) =>
+                changeGoal(g.id, v === 'OWN' ? { own: true, author: null, assist: null } : { own: false, author: v, culprit: null, assist: g.assist === v ? null : g.assist })
+              }
+            />
+            {g.own ? (
+              <>
+                <Sub>Jogador adversário responsável</Sub>
+                <Chips options={opts(rivals)} value={g.culprit} onChange={(v) => changeGoal(g.id, { culprit: v })} />
+              </>
+            ) : (
+              <>
+                <Sub>Assistência (opcional)</Sub>
+                <Chips
+                  options={[...opts(mine.filter((p) => p.key !== g.author)), { value: 'NONE', label: 'Sem assistência' }]}
+                  value={g.assist ?? 'NONE'}
+                  onChange={(v) => changeGoal(g.id, { assist: v === 'NONE' ? null : v })}
+                />
+              </>
+            )}
+          </Card>
+        );
+      })}
 
       {(['A', 'B'] as Team[]).map((t) => (
         <View key={t} style={{ gap: 8 }}>
@@ -444,10 +544,8 @@ export default function Sumula() {
                   </Pressable>
                 </View>
                 <Sub>{positionLabel(p.position)}</Sub>
-                <Chips options={TEAMS} value={p.team} onChange={(v) => update(p.key, { team: v })} />
+                <Chips options={teamOpts} value={p.team} onChange={(v) => changeTeam(p.key, v)} />
                 <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12, marginTop: 4 }}>
-                  <Stepper label="Gols" value={p.goals} onChange={(v) => update(p.key, { goals: v })} />
-                  <Stepper label="Assist." value={p.assists} onChange={(v) => update(p.key, { assists: v })} />
                   <Stepper label="Amarelo" value={p.yellows ?? 0} max={1} onChange={(v) => update(p.key, { yellows: v })} />
                   {/* V5: expulsão por segundo amarelo = uma penalidade de vermelho (não lance os dois amarelos). */}
                   <Stepper label="2º amarelo" value={p.secondYellow ?? 0} max={1} onChange={(v) => update(p.key, { secondYellow: v })} />
@@ -455,33 +553,30 @@ export default function Sumula() {
                 </View>
               </Card>
             ))}
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 12 }}>
-            <Stepper label="Gol sem autor" value={extras.unattributed[t]} onChange={(v) => setExtra('unattributed', t, v)} />
-            <Stepper label="Gol contra a favor" value={extras.ownGoals[t]} onChange={(v) => setExtra('ownGoals', t, v)} />
-          </View>
         </View>
       ))}
 
       <Text style={{ fontWeight: '800', color: colors.ink, marginTop: 12 }}>Adicionar quem jogou</Text>
       {benchMembers.length === 0 && <Sub>Todos os jogadores da pelada já estão na súmula.</Sub>}
       {benchMembers.map((m) => (
-        <BenchRow key={m.id} name={m.player_name} sub={positionLabel(memberPosition(m))} onAdd={(t) => addMember(m, t)} />
+        <BenchRow key={m.id} name={m.player_name} sub={positionLabel(memberPosition(m))} onAdd={(t) => addMember(m, t)} hex={bench} names={[match.team_a_name, match.team_b_name]} />
       ))}
 
-      <Text style={{ fontWeight: '800', color: colors.ink, marginTop: 12 }}>Convidados</Text>
-      <Sub>Posição do convidado ao adicionar:</Sub>
-      <PositionPicker value={guestPos} onChange={setGuestPos} />
-      {benchGuests.map((g) => (
-        <BenchRow key={g.id} name={g.display_name} sub="Convidado" onAdd={(t) => addGuest(g, t)} />
-      ))}
-      <Input autoCapitalize="words" placeholder="nome do novo convidado" value={guestName} onChangeText={setGuestName} />
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 10 }}>
-        <Switch value={guestAdult} onValueChange={setGuestAdult} trackColor={{ true: colors.blue }} />
-        <Text style={{ flex: 1, color: colors.ink }}>Declaro que o convidado tem 18 anos ou mais.</Text>
-      </View>
-      <Button title="Adicionar convidado" kind="secondary" onPress={novoConvidado} disabled={guestName.trim().length < 1} loading={busy} />
+      {/* REV-140: recolhida a cada abertura da súmula; recolher não apaga nada. */}
+      <Collapsible title="Incluir Convidados">
+        <View style={{ gap: 8, paddingBottom: 8 }}>
+          <Sub>Posição do convidado ao adicionar:</Sub>
+          <PositionPicker value={guestPos} onChange={setGuestPos} />
+          {benchGuests.map((g) => (
+            <BenchRow key={g.id} name={g.display_name} sub="Convidado" onAdd={(t) => addGuest(g, t)} hex={bench} names={[match.team_a_name, match.team_b_name]} />
+          ))}
+          <Input autoCapitalize="words" placeholder="nome do novo convidado" value={guestName} onChangeText={setGuestName} />
+          <Button title="Adicionar convidado" kind="secondary" onPress={novoConvidado} disabled={guestName.trim().length < 1} loading={busy} />
+        </View>
+      </Collapsible>
 
       <View style={{ height: 12 }} />
+      {problems.length > 0 && <Sub>{problems[0] + (problems.length > 1 ? ` (+${problems.length - 1})` : '')}</Sub>}
       <ErrorText>{msg}</ErrorText>
       {isDraft ? (
         <>
@@ -506,7 +601,7 @@ export default function Sumula() {
             </>
           )}
           {review === 'publish' ? (
-            <SheetReview teamA={match.team_a_name} teamB={match.team_b_name} score={score} players={players} before={null} nameOf={nameOf}
+            <SheetReview teamA={match.team_a_name} teamB={match.team_b_name} score={score} players={sheet.players} before={null} nameOf={nameOf}
               correction={false} busy={busy} onConfirm={publicar} onBack={() => setReview(null)} />
           ) : (
             <Button title="Revisar e publicar" onPress={() => setReview('publish')} loading={busy} />
@@ -517,7 +612,7 @@ export default function Sumula() {
         <>
           <Input autoCapitalize="sentences" placeholder="motivo da correção (obrigatório)" value={reason} onChangeText={setReason} />
           {review === 'correct' ? (
-            <SheetReview teamA={match.team_a_name} teamB={match.team_b_name} score={score} players={players} before={original} nameOf={nameOf}
+            <SheetReview teamA={match.team_a_name} teamB={match.team_b_name} score={score} players={sheet.players} before={original} nameOf={nameOf}
               correction busy={busy} onConfirm={corrigir} onBack={() => setReview(null)} />
           ) : (
             <Button title="Revisar correção" onPress={() => setReview('correct')} loading={busy} disabled={reason.trim().length < 3} />
@@ -528,7 +623,7 @@ export default function Sumula() {
   );
 }
 
-function BenchRow({ name, sub, onAdd }: { name: string; sub: string; onAdd: (t: Team) => void }) {
+function BenchRow({ name, sub, onAdd, hex, names }: { name: string; sub: string; onAdd: (t: Team) => void; hex: { A: string; B: string }; names: [string, string] }) {
   return (
     <Card>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -542,9 +637,9 @@ function BenchRow({ name, sub, onAdd }: { name: string; sub: string; onAdd: (t: 
               key={t}
               onPress={() => onAdd(t)}
               accessibilityRole="button"
-              accessibilityLabel={`Adicionar ${name} ao time ${t}`}
-              style={{ minHeight: 44, minWidth: 48, alignItems: 'center', justifyContent: 'center', paddingVertical: 8, paddingHorizontal: 12, borderRadius: 8, borderWidth: 1, borderColor: colors.blue }}>
-              <Text style={{ color: colors.blue, fontWeight: '700' }}>+ {t}</Text>
+              accessibilityLabel={`Escalar ${name} no time ${t === 'A' ? names[0] : names[1]}`}
+              style={{ minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center' }}>
+              <Ball color={hex[t]} />
             </Pressable>
           ))}
         </View>
