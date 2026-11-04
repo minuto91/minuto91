@@ -150,7 +150,7 @@ export function Button({
   title: string;
   onPress: () => void;
   /** primary: ação principal; secondary: contorno claro; ghost: discreto, só texto; danger: destrutivo. */
-  kind?: 'primary' | 'secondary' | 'ghost' | 'danger';
+  kind?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'gold';
   /** md 40 px (padrão), sm 32 px (área de toque ampliada por hitSlop). */
   size?: 'md' | 'sm';
   /** Largura toda: padrão só na ação principal (primary); os demais são compactos. Passe block={false} para compactar um primary. */
@@ -158,8 +158,9 @@ export function Button({
   disabled?: boolean;
   loading?: boolean;
 }) {
-  const bg = kind === 'primary' ? colors.blue : kind === 'secondary' ? colors.white : kind === 'danger' ? colors.dangerSoft : 'transparent';
-  const fg = kind === 'primary' ? colors.white : kind === 'danger' ? colors.danger : kind === 'secondary' ? colors.ink : colors.blue;
+  // gold (V10.0, REV-133): dourado chapado da marca, sem gradiente nem sombra; texto escuro para manter o contraste.
+  const bg = kind === 'primary' ? colors.blue : kind === 'gold' ? colors.gold : kind === 'secondary' ? colors.white : kind === 'danger' ? colors.dangerSoft : 'transparent';
+  const fg = kind === 'primary' ? colors.white : kind === 'gold' ? colors.ink : kind === 'danger' ? colors.danger : kind === 'secondary' ? colors.ink : colors.blue;
   const border = kind === 'secondary' ? colors.line : 'transparent';
   return (
     <Pressable

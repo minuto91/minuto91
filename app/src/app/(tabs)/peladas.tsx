@@ -26,6 +26,8 @@ const ROLE = (r: string) => (r === 'admin' ? 'Administrador' : r === 'assistant'
 export default function Peladas() {
   const router = useRouter();
   const [peladas, setPeladas] = useState<Pelada[] | null>(null);
+  // REV-142: PREMIUM dourado só nas peladas com acesso Premium ativo no servidor (assinatura ou teste válido).
+  const [premium, setPremium] = useState<Record<string, boolean>>({});
   const [err, setErr] = useState<string | null>(null);
   const [reload, setReload] = useState(0);
 
@@ -38,7 +40,15 @@ export default function Peladas() {
         if (!alive) return;
         if (error || !data) return setErr('Não foi possível carregar as suas peladas. Verifique a internet e tente de novo.');
         setErr(null);
-        setPeladas((data as { peladas: Pelada[] }).peladas);
+        const list = (data as { peladas: Pelada[] }).peladas;
+        setPeladas(list);
+        const ents = await Promise.all(
+          list.map(async (p) => {
+            const { data: e, error: ee } = await supabase.rpc('get_pelada_entitlement', { p_pelada: p.id });
+            return [p.id, !ee && !!(e as { is_premium?: boolean } | null)?.is_premium] as const;
+          }),
+        );
+        if (alive) setPremium(Object.fromEntries(ents));
       })();
       return () => {
         alive = false;
@@ -68,9 +78,16 @@ export default function Peladas() {
             style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 }}>
             <Crest path={p.crest_path} name={p.name} size={44} />
             <View style={{ flex: 1, gap: 2 }}>
-              <Text style={type.cardTitle} numberOfLines={1}>
-                {p.name}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Text style={[type.cardTitle, { flexShrink: 1 }]} numberOfLines={1}>
+                  {p.name}
+                </Text>
+                {premium[p.id] && (
+                  <Text accessibilityLabel="Pelada Premium" style={{ fontSize: 10, fontWeight: '800', letterSpacing: 0.8, color: colors.darkGold, borderWidth: 1, borderColor: colors.gold, borderRadius: 6, paddingHorizontal: 5, paddingVertical: 1 }}>
+                    PREMIUM
+                  </Text>
+                )}
+              </View>
               <Sub>
                 {ROLE(p.role)} · {positionLabel(p.position_code ?? p.position)}
                 {p.drafts > 0 ? ` · ${p.drafts === 1 ? '1 súmula em rascunho' : `${p.drafts} súmulas em rascunho`}` : ''}
@@ -82,7 +99,7 @@ export default function Peladas() {
       ))}
       {peladas && peladas.length > 0 && (
         <View style={{ gap: 8, marginTop: 4 }}>
-          <Button title="Criar pelada" kind="secondary" onPress={() => router.push('/criar-pelada')} />
+          <Button title="Criar Pelada" kind="gold" block onPress={() => router.push('/criar-pelada')} />
           <Button title="Entrar com convite" kind="ghost" onPress={() => router.push('/entrar')} />
         </View>
       )}

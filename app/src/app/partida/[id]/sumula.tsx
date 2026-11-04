@@ -29,6 +29,7 @@ import { teamHex, TeamColorPicker } from '../../../lib/selection';
 import { Ball } from '../../../lib/ball';
 import { MatchRoles } from '../../../lib/matchroles';
 import { Collapsible } from '../../../lib/collapsible';
+import { StepSlider } from '../../../lib/stepslider';
 import {
   filledLost,
   goalProblems,
@@ -607,7 +608,7 @@ export default function Sumula() {
             />
           )}
           {closeMode === 'duration' || !premium ? (
-            <Chips options={DURATIONS} value={duration} onChange={setDuration} />
+            <StepSlider label="Prazo da votação" options={DURATIONS} value={duration} onChange={setDuration} />
           ) : (
             <>
               <Stepper label="Encerra em (horas)" value={fixedHours} onChange={setFixedHours} min={1} max={24} />

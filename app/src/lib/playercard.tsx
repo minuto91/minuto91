@@ -130,7 +130,10 @@ const PANEL_FROM = 70; // onde o painel escuro começa a aparecer
 const PANEL_SOLID = 95; // daqui para baixo o painel é sólido
 const ROW_L = 16;
 const ROW_R = 84;
-const ROW_TOP = 108;
+// V10.0 (REV-127): nome, atributos, divisórias e ano sobem juntos CARD_LIFT unidades do desenho (100 x 144); só a posição vertical
+// muda: dimensões, fontes, cores e proporções relativas ficam como estavam.
+const CARD_LIFT = 2;
+const ROW_TOP = 108 - CARD_LIFT;
 const ROW_BOTTOM = 120.5;
 
 // V4.3: a sigla oficial (GOL, ZAG, LD...) quando a posição atual é do setor do Card; senão, o setor do Card
@@ -408,7 +411,7 @@ export function PlayerCard({
       <Text
         style={{
           position: 'absolute',
-          top: px(95),
+          top: px(95 - CARD_LIFT),
           left: px(10),
           right: px(10),
           textAlign: 'center',
@@ -439,7 +442,7 @@ export function PlayerCard({
         <Text
           style={{
             position: 'absolute',
-            top: px(123.2),
+            top: px(123.2 - CARD_LIFT),
             left: px(30),
             right: px(30),
             textAlign: 'center',

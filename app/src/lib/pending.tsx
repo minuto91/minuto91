@@ -14,7 +14,7 @@ import { colors } from './theme';
 type Voting = { id: string; match_id: string; closes_at: string; eligible_voter_count: number; voted: number; expired: boolean };
 type Item = { key: string; title: string; detail: string; action: string; urgent?: boolean; onPress?: () => void };
 
-const MIN_VOTERS = 3; // votação válida precisa de pelo menos 3 votos (Doc 02)
+const MIN_VOTERS = 7; // V10.0 (REV-136): cada jogador avaliado precisa receber pelo menos 7 votos (antes: 3)
 
 export function AdminPending({
   peladaId,
@@ -104,8 +104,8 @@ export function AdminPending({
   if (withAccount < MIN_VOTERS + 1) {
     items.push({
       key: 'invite',
-      title: 'Poucos jogadores com conta',
-      detail: `${withAccount} com conta no app. A votação precisa de pelo menos ${MIN_VOTERS} votos para valer.`,
+      title: 'Poucos jogadores no elenco',
+      detail: `${withAccount} com conta no app. Cada jogador avaliado precisa de pelo menos ${MIN_VOTERS} votos para a nota valer.`,
       action: 'Convidar jogadores',
       onPress: onInvite,
     });
@@ -124,10 +124,10 @@ export function AdminPending({
   if (!items.length) return null;
   return (
     <View
-      accessibilityLabel={`Pendências da pelada: ${items.length}`}
+      accessibilityLabel={`Pendências: ${items.length}`}
       style={{ borderRadius: 12, borderWidth: 1.5, borderColor: colors.blue, backgroundColor: colors.white, padding: 14, gap: 10 }}>
       <Text style={{ fontSize: 12, fontWeight: '800', letterSpacing: 1, color: colors.blue }}>
-        PENDÊNCIAS DA PELADA ({items.length})
+        PENDÊNCIAS ({items.length})
       </Text>
       {items.map((it, i) => (
         <Pressable

@@ -14,6 +14,7 @@ import { Text } from '../../../lib/text';
 import { colors, type } from '../../../lib/theme';
 import { Toggle } from '../../../lib/toggle';
 import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../lib/ui';
+import { StepSlider } from '../../../lib/stepslider';
 
 const DURATIONS = [
   { value: '120', label: '2 horas' },
@@ -305,7 +306,7 @@ export default function Configuracoes() {
       {section === 'votacao' && (
         <>
           <Body>Prazo</Body>
-          <Chips options={DURATIONS} value={duration} onChange={setDuration} />
+          <StepSlider label="Prazo da votação" options={DURATIONS} value={duration} onChange={setDuration} />
           <Toggle label="Bola Murcha" premium={!premium} disabled={!premium} value={premium && bolaMurcha} onChange={setBolaMurcha} />
           <Body>Avaliações obrigatórias</Body>
           <Chips options={MINIMUM} value={minMode} onChange={setMinMode} />
