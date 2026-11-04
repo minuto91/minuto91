@@ -27,6 +27,7 @@ import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, Position, positionLabel } from '../../../lib/theme';
 import { teamHex, TeamColorPicker } from '../../../lib/selection';
 import { Ball } from '../../../lib/ball';
+import { MatchRoles } from '../../../lib/matchroles';
 import { Collapsible } from '../../../lib/collapsible';
 import {
   filledLost,
@@ -171,6 +172,15 @@ export default function Sumula() {
   const guestById = useMemo(() => new Map(guests.map((g) => [g.id, g])), [guests]);
   const nameOf = (p: SheetPlayer) =>
     p.membership_id ? (memberById.get(p.membership_id)?.player_name ?? 'Jogador') : (guestById.get(p.guest_id!)?.display_name ?? 'Convidado');
+  // REV-146: o goleiro temporário é definido aqui, no fluxo da súmula, só entre quem já está gravado nela.
+  const keeperPlayers = useMemo(
+    () =>
+      players
+        .filter((p) => p.participant_id)
+        .map((p) => ({ participant_id: p.participant_id!, membership_id: p.membership_id ?? null, team: p.team, position: p.position, name: nameOf(p) })),
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [players, members, guests],
+  );
   const inSheet = new Set(players.map((p) => p.key));
   const benchMembers = members.filter((m) => m.status === 'active' && !inSheet.has(`m:${m.id}`));
   const benchGuests = guests.filter((g) => !inSheet.has(`g:${g.id}`));
@@ -555,6 +565,10 @@ export default function Sumula() {
             ))}
         </View>
       ))}
+
+      {isDraft && confirmed && keeperPlayers.length > 0 && (
+        <MatchRoles mode="sheet" matchId={id} staff myMembershipId={null} players={keeperPlayers} teamNames={{ A: match.team_a_name, B: match.team_b_name }} />
+      )}
 
       <Text style={{ fontWeight: '800', color: colors.ink, marginTop: 12 }}>Adicionar quem jogou</Text>
       {benchMembers.length === 0 && <Sub>Todos os jogadores da pelada já estão na súmula.</Sub>}

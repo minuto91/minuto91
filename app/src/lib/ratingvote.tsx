@@ -226,9 +226,6 @@ export function RatingVotePanel({ matchId, onChanged }: { matchId: string; onCha
           {v.reopened ? ' · reabertura excepcional' : ''}
         </Sub>
       )}
-      {v.is_voter && v.session_id && (v.state === 'published' || (v.rated ?? 0) > 0) && (
-        <Button title="Ver meu histórico de votos" kind="ghost" onPress={() => router.push({ pathname: '/partida/[id]/meus-votos', params: { id: matchId } })} />
-      )}
       {v.state === 'open' && v.is_voter && (
         <Button
           title={v.phase === 'review' ? 'Revisar' : (v.rated ?? 0) > 0 ? 'Continuar' : 'Avaliar'}

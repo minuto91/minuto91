@@ -23,8 +23,8 @@ type Highlight = { match_id: string; membership_id: string; highlight_type: stri
 type MyVote = { matchId: string; closesAt: string };
 
 const HIGHLIGHT_LABEL: Record<string, string> = {
+  // REV-145: sem o destaque "Garçom da rodada" aqui (dados de assistências, rankings e prêmios seguem intactos).
   craque: 'Craque da Partida',
-  garcom_round: 'Garçom da rodada',
   bola_murcha: 'Bola Murcha',
 };
 const WEEKDAY = ['domingo', 'segunda', 'terça', 'quarta', 'quinta', 'sexta', 'sábado'];
@@ -50,6 +50,7 @@ export default function CentralDaRodada() {
   const [matches, setMatches] = useState<Match[]>([]);
   const [highlights, setHighlights] = useState<Highlight[]>([]);
   const [myVotes, setMyVotes] = useState<MyVote[]>([]);
+  const [myTeam, setMyTeam] = useState<'A' | 'B' | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
@@ -110,7 +111,15 @@ export default function CentralDaRodada() {
             .filter((v) => eligible.has(v.id) && !voted.has(v.id))
             .map((v) => ({ matchId: v.match_id as string, closesAt: v.closes_at as string }));
         }
+        // REV-144: time em que eu atuei no último jogo (negrito); sem participação, nenhum time em destaque.
+        const lf = ((xs ?? []) as Match[]).find((m) => m.status === 'finalized');
+        let team: 'A' | 'B' | null = null;
+        if (lf && mine) {
+          const { data: pp } = await supabase.from('match_participants').select('team').eq('match_id', lf.id).eq('membership_id', mine.id).maybeSingle();
+          team = (pp?.team as 'A' | 'B' | undefined) ?? null;
+        }
         if (!alive) return;
+        setMyTeam(team);
         setPelada(p ?? null);
         setPremium(!!(ent as { is_premium?: boolean } | null)?.is_premium);
         setFinance(!!(fin as { can_access?: boolean } | null)?.can_access);
@@ -227,8 +236,8 @@ export default function CentralDaRodada() {
             accessibilityLabel="Configurações da pelada"
             hitSlop={8}
             onPress={() => router.push({ pathname: '/pelada/[id]/configuracoes', params: { id } })}
-            style={{ padding: 6 }}>
-            <Icon name="config" size={24} color={colors.muted} />
+            style={{ padding: 6, borderRadius: 10, backgroundColor: colors.blueSoft, borderWidth: 1, borderColor: colors.blue }}>
+            <Icon name="config" size={24} color={colors.blue} />
           </Pressable>
         )}
       </View>
@@ -291,10 +300,11 @@ export default function CentralDaRodada() {
               b={lastFinal.team_b_name}
               scoreA={lastFinal.team_a_score}
               scoreB={lastFinal.team_b_score}
-              mine={null}
+              mine={myTeam}
+              compact
               top={
                 <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: '#9DB8E8' }} numberOfLines={1}>
-                  ÚLTIMA RODADA · {fmtDate(lastFinal.played_at).toUpperCase()}
+                  ÚLTIMO JOGO · {fmtDate(lastFinal.played_at).toUpperCase()}
                 </Text>
               }
             />

@@ -16,8 +16,10 @@ type Claim = { id: string; participant_id: string; membership_id: string; claime
 const isGk = (p: string) => p === 'GOL' || p === 'goalkeeper';
 
 export function MatchRoles({
-  matchId, players, staff, myMembershipId, teamNames,
+  matchId, players, staff, myMembershipId, teamNames, mode = 'details',
 }: {
+  /** REV-146: o goleiro temporário só é indicado no fluxo da súmula ('sheet'); os detalhes da partida não o mostram. */
+  mode?: 'details' | 'sheet';
   matchId: string;
   players: RolePlayer[];
   staff: boolean;
@@ -66,12 +68,13 @@ export function MatchRoles({
   const pendingClaims = claims.filter((c) => c.status === 'pending');
   const nameOf = (pid: string) => players.find((p) => p.participant_id === pid)?.name ?? 'Goleiro';
 
-  const showStaff = staff && (teamsWithoutGk.length > 0 || pendingClaims.length > 0);
-  if (!showStaff && !iAmKeeper) return null;
+  const sheet = mode === 'sheet';
+  const showStaff = staff && (sheet ? teamsWithoutGk.length > 0 : pendingClaims.length > 0);
+  if (!showStaff && (sheet || !iAmKeeper)) return null;
 
   return (
     <Card>
-      {iAmKeeper && (
+      {!sheet && iAmKeeper && (
         <View style={{ gap: 8 }}>
           <Text style={type.cardTitle}>Defesas difíceis</Text>
           {myClaim && myClaim.status !== 'pending' ? (
@@ -86,7 +89,7 @@ export function MatchRoles({
         </View>
       )}
 
-      {staff && pendingClaims.length > 0 && (
+      {!sheet && staff && pendingClaims.length > 0 && (
         <View style={{ gap: 8, marginTop: iAmKeeper ? 12 : 0 }}>
           <Text style={type.cardTitle}>Defesas para revisar</Text>
           {pendingClaims.map((c) => (
@@ -106,7 +109,7 @@ export function MatchRoles({
         </View>
       )}
 
-      {staff &&
+      {sheet && staff &&
         teamsWithoutGk.map((t) => {
           const current = players.find((p) => p.team === t && parts[p.participant_id]?.temp_goalkeeper);
           return (

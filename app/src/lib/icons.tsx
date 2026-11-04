@@ -63,15 +63,8 @@ export function Icon({ name, size = 24, color = colors.blue }: { name: IconName;
           <Path d="M16 5.2a3 3 0 0 1 0 5.6M18 14.4c1.6.7 2.6 2.2 3 4.6" {...p} />
         </>
       )}
-      {name === 'config' && (
-        <>
-          <Circle cx={12} cy={12} r={3} {...p} />
-          <Path
-            d="M12 2.8v2.4M12 18.8v2.4M2.8 12h2.4M18.8 12h2.4M5.5 5.5l1.7 1.7M16.8 16.8l1.7 1.7M5.5 18.5l1.7-1.7M16.8 7.2l1.7-1.7"
-            {...p}
-          />
-        </>
-      )}
+      {/* REV-143: três linhas horizontais (menu); antes era um desenho parecido com um sol. */}
+      {name === 'config' && <Path d="M4 6.5h16M4 12h16M4 17.5h16" {...p} strokeWidth={2.4} />}
       {name === 'convite' && (
         <>
           <Circle cx={10} cy={8} r={3.2} {...p} />

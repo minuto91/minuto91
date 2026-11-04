@@ -77,6 +77,7 @@ export default function Perfil() {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
         <Button title="Minha conta" kind="secondary" size="sm" onPress={() => router.push('/conta')} />
         <Button title="Personalizar Central" kind="secondary" size="sm" onPress={() => router.push('/personalizar-central')} />
+        <Button title="Meu histórico de votos" kind="secondary" size="sm" onPress={() => router.push('/historico-votos')} />
       </View>
       <Chips options={TABS} value={tab} onChange={setTab} />
       <ErrorText>{msg}</ErrorText>

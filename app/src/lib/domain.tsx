@@ -55,6 +55,7 @@ export function MatchScore({
   mine,
   top,
   light,
+  compact,
 }: {
   a: string;
   b: string;
@@ -64,6 +65,8 @@ export function MatchScore({
   top?: ReactNode;
   /** Versão clara (confronto ainda sem placar), para não pesar ao lado do último jogo. */
   light?: boolean;
+  /** REV-144: números do placar menores (hierarquia equilibrada com os nomes dos times). */
+  compact?: boolean;
 }) {
   const fg = light ? colors.deepBlue : colors.white;
   const dim = light ? colors.muted : '#C9D6EE';
@@ -85,7 +88,7 @@ export function MatchScore({
       {top}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         {side(a, mine === 'A', 'right')}
-        <Text style={{ fontSize: scored ? 34 : 15, lineHeight: scored ? 40 : 20, fontWeight: '900', color: fg, fontVariant: ['tabular-nums'] }}>
+        <Text style={{ fontSize: scored ? (compact ? 26 : 34) : 15, lineHeight: scored ? (compact ? 32 : 40) : 20, fontWeight: '900', color: fg, fontVariant: ['tabular-nums'] }}>
           {scored ? `${scoreA}–${scoreB}` : '×'}
         </Text>
         {side(b, mine === 'B', 'left')}
