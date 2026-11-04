@@ -33,6 +33,7 @@ import { StatStrip } from '../../lib/domain';
 import { refreshOutcome, syncedLabel } from '../../lib/loadstate';
 import { GreetingHeader, HomeLastGameCard, NextGameCard } from '../../lib/homeui';
 import { greetingText, pickCard, pickGreetingIndex, pickNextRound } from '../../lib/homelogic';
+import { notify } from '../../lib/dialog';
 import { haptic } from '../../lib/motion';
 import { useGo } from '../../lib/nav';
 import { PushPrompt } from '../../lib/push';
@@ -315,13 +316,21 @@ export default function Home() {
               round={nextGame}
               crestPath={peladas.find((x) => x.id === nextGame.pelada_id)?.crest_path}
               stale={!centralTrusted}
-              onPress={() =>
-                nextGame.match_id
-                  ? go({ pathname: '/partida/[id]', params: { id: nextGame.match_id } })
-                  : nextGame.composition_id
-                    ? go({ pathname: '/pelada/[id]/composicao/[cid]', params: { id: nextGame.pelada_id, cid: nextGame.composition_id } })
-                    : go({ pathname: '/pelada/[id]/escalacoes', params: { id: nextGame.pelada_id } })
-              }
+              onPress={async () => {
+                // REV-096: se a partida foi cancelada ou removida, avisa e atualiza em vez de abrir.
+                if (nextGame.match_id) {
+                  const { data: mm } = await supabase.from('matches').select('status').eq('id', nextGame.match_id).maybeSingle();
+                  if (!mm || mm.status === 'cancelled' || mm.status === 'annulled') {
+                    notify('Partida indisponível', 'Esta partida foi cancelada ou removida. Os dados foram atualizados.');
+                    setReload((n) => n + 1);
+                    return;
+                  }
+                }
+                if (nextGame.match_id) go({ pathname: '/partida/[id]', params: { id: nextGame.match_id } });
+                else if (nextGame.composition_id)
+                  go({ pathname: '/pelada/[id]/composicao/[cid]', params: { id: nextGame.pelada_id, cid: nextGame.composition_id } });
+                else go({ pathname: '/pelada/[id]/escalacoes', params: { id: nextGame.pelada_id } });
+              }}
             />
           ) : (
             <Text2>Nenhum jogo marcado</Text2>

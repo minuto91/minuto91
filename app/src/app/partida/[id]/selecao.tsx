@@ -34,6 +34,7 @@ export default function SelecaoDaRodada() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const { width: screenW } = useWindowDimensions();
   const [match, setMatch] = useState<Match | null>(null);
+  const [peladaName, setPeladaName] = useState('');
   const [members, setMembers] = useState<Member[]>([]);
   const [sels, setSels] = useState<Sel[]>([]);
   const [matches, setMatches] = useState<Record<string, Match>>({});
@@ -72,6 +73,9 @@ export default function SelecaoDaRodada() {
           list.length ? supabase.from('round_selection_players').select('selection_id, membership_id, slot_position, rank_order').in('selection_id', list.map((s) => s.id)) : Promise.resolve({ data: [] }),
         ]);
         if (!alive) return;
+        const { data: pn } = await supabase.from('peladas').select('name').eq('id', m.pelada_id).maybeSingle();
+        if (!alive) return;
+        setPeladaName(pn?.name ?? '');
         setMatch(m);
         setMembers(ms);
         setSels(list);
@@ -182,7 +186,7 @@ export default function SelecaoDaRodada() {
   return (
     <Screen>
       <Title>Seleção da Rodada</Title>
-      {match && <Sub>{`${fmtDate(match.played_at)} · ${match.team_a_name} x ${match.team_b_name}`}</Sub>}
+      {match && <Sub>{`${peladaName ? peladaName + ' · ' : ''}${fmtDate(match.played_at)} · ${match.team_a_name} x ${match.team_b_name}`}</Sub>}
       {err && <ErrorText>{err}</ErrorText>}
 
       {viewing && vm ? (

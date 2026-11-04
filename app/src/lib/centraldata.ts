@@ -219,6 +219,8 @@ export type HomeLastGame = {
   pelada_name: string;
   team_a_name: string;
   team_b_name: string;
+  team_a_color?: string | null;
+  team_b_color?: string | null;
   team_a_score: number | null;
   team_b_score: number | null;
   /** played = entrou em campo; listed = relacionado sem entrada confirmada; none = não participou. */

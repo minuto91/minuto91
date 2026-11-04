@@ -10,6 +10,7 @@ import { hair } from './domain';
 import { Crest } from './crest';
 import { individualStats, resultLabel } from './homelogic';
 import { fmtDate } from './match';
+import { teamHex } from './selection';
 import { Text } from './text';
 import { colors, type } from './theme';
 import { Button } from './ui';
@@ -94,9 +95,14 @@ export function HomeLastGameCard({ game, stale, onPress, onSelection }: { game: 
   const result = resultLabel(game.my_team, game.team_a_score, game.team_b_score);
   const stats = game.participation === 'played' ? individualStats(game) : [];
   const note = game.participation === 'played' && rating.kind === 'rated' ? fmtRating(rating.value) : null;
-  const side = (name: string, mine: boolean, align: 'left' | 'right') => (
+  // REV-062: cada time usa a sua cor cadastrada (o do jogador em negrito); cor clara demais para o fundo branco cai no tom padrão.
+  const tint = (color: string | null | undefined, fallback: string) => {
+    const hex = teamHex(color);
+    return hex && hex.toUpperCase() !== '#FFFFFF' && hex.toUpperCase() !== '#F5C518' ? hex : fallback;
+  };
+  const side = (name: string, mine: boolean, align: 'left' | 'right', color?: string | null) => (
     <View style={{ flex: 1, minWidth: 0, alignItems: align === 'right' ? 'flex-end' : 'flex-start' }}>
-      <Text style={{ fontSize: 16, lineHeight: 21, fontWeight: mine ? '800' : '400', color: mine ? colors.blue : colors.muted, textAlign: align }} numberOfLines={2}>
+      <Text style={{ fontSize: 16, lineHeight: 21, fontWeight: mine ? '800' : '400', color: tint(color, mine ? colors.blue : colors.muted), textAlign: align }} numberOfLines={2}>
         {name}
       </Text>
     </View>
@@ -114,11 +120,11 @@ export function HomeLastGameCard({ game, stale, onPress, onSelection }: { game: 
           {`${fmtDate(game.played_at).toUpperCase()} · ${game.pelada_name.toUpperCase()}${stale ? ' · PODE ESTAR DESATUALIZADO' : ''}`}
         </Text>
         <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-          {side(game.team_a_name, game.my_team === 'A', 'right')}
+          {side(game.team_a_name, game.my_team === 'A', 'right', game.team_a_color)}
           <Text style={{ fontSize: scored ? 28 : 15, lineHeight: scored ? 34 : 20, fontWeight: '900', color: colors.ink, fontVariant: ['tabular-nums'] }}>
             {scored ? `${game.team_a_score}–${game.team_b_score}` : '×'}
           </Text>
-          {side(game.team_b_name, game.my_team === 'B', 'left')}
+          {side(game.team_b_name, game.my_team === 'B', 'left', game.team_b_color)}
         </View>
         {result ? <Text style={{ textAlign: 'center', fontSize: 12, fontWeight: '800', letterSpacing: 1, color: result === 'VITÓRIA' ? '#0B6B3A' : result === 'DERROTA' ? '#9A3412' : colors.muted }}>{result}</Text> : null}
         {status ? <Text style={type.caption}>{status}</Text> : null}

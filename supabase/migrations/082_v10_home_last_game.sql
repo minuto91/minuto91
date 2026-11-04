@@ -32,7 +32,7 @@ begin
  v_legacy := exists(select 1 from public.voting_sessions where match_id = v_m.id and status = 'finalized');
  return jsonb_build_object('game', jsonb_build_object(
   'match_id', v_m.id, 'played_at', v_m.played_at, 'pelada_id', v_m.pelada_id, 'pelada_name', v_pel,
-  'team_a_name', v_m.team_a_name, 'team_b_name', v_m.team_b_name,
+  'team_a_name', v_m.team_a_name, 'team_b_name', v_m.team_b_name, 'team_a_color', v_m.team_a_color, 'team_b_color', v_m.team_b_color,
   'team_a_score', v_m.team_a_score, 'team_b_score', v_m.team_b_score,
   'participation', v_how,
   'my_team', case when v_how = 'played' then v_part.team end,
