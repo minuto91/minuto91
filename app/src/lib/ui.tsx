@@ -3,7 +3,7 @@ import { ActivityIndicator, Animated, FlatList, Platform, Pressable, ScrollView,
 import { Text, TextInput } from './text';
 
 import { useReducedMotion } from './motion';
-import { colors, layout, POSITIONS, Position, radius, Sector, shadow, type } from './theme';
+import { colors, layout, POSITIONS, Position, radius, Sector, SECTORS, shadow, type } from './theme';
 
 export function Screen({ children }: { children: ReactNode }) {
   return (
@@ -215,12 +215,24 @@ export function PositionPicker({
   onChange: (p: Position) => void;
   sector?: Sector | null;
 }) {
-  // REV-005: grade compacta de siglas (4 colunas), sem grupos por setor; o nome completo aparece abaixo.
+  // V10.0: a pessoa escolhe o SETOR e depois a POSIÇÃO (sigla); com `sector` fixo (troca dentro do setor) só a posição.
+  // Grade compacta de siglas (4 colunas); o nome completo aparece abaixo.
   const current = POSITIONS.find((p) => p.value === value);
+  const [picked, setPicked] = useState<Sector | null>(null);
+  const shownSector = sector ?? picked ?? current?.sector ?? null;
+  const askSector = !sector;
   return (
     <View style={{ gap: 6 }}>
+      {askSector && (
+        <>
+          <Text style={type.meta}>Setor</Text>
+          <Chips options={SECTORS.map((s) => ({ value: s.value, label: s.label }))} value={shownSector} onChange={(v) => setPicked(v)} />
+          <Text style={type.meta}>Posição</Text>
+        </>
+      )}
+      {askSector && !shownSector && <Text style={type.meta}>Escolha o setor para ver as posições.</Text>}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', marginHorizontal: -4 }}>
-        {POSITIONS.filter((p) => !sector || p.sector === sector).map((p) => {
+        {POSITIONS.filter((p) => (askSector ? !!shownSector && p.sector === shownSector : !sector || p.sector === sector)).map((p) => {
           const on = value === p.value;
           return (
             <View key={p.value} style={{ width: '25%', padding: 4 }}>

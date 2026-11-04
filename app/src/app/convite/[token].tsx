@@ -72,7 +72,7 @@ export default function Convite() {
 
   async function entrar() {
     const needsPosition = preview?.needs_position !== false;
-    if (needsPosition && !pos) return setMsg('Escolha sua posição.');
+    if (needsPosition && !pos) return setMsg('Escolha o setor e a posição.');
     setBusy(true);
     setMsg(null);
     const { data: membership, error } = await supabase.rpc('join_pelada', { p_invite_token: token, p_position: needsPosition ? pos : null });
