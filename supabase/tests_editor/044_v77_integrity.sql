@@ -366,6 +366,32 @@ perform pg_temp.assert(not exists(select 1 from public.round_selections where ma
 delete from public.match_player_results where match_id=v_x and membership_id=pg_temp.mem(v_a,7);
 perform private.compute_round_selection(v_x);
 perform pg_temp.assert(not exists(select 1 from public.round_selections where match_id=v_x), 'menos de 11: sem Seleção');
+-- V10.0 (081, REV-101/105/106): versões da Seleção. Volta o goleiro e o 7: 12 notas, vigente v1 (o 10, nota 4, fica de fora).
+insert into public.match_player_results(pelada_id,match_id,membership_id,numeric_rating_count,peer_rating,objective_rating,final_rating,
+ has_valid_rating,goals,assists,red_cards,match_result,position_snapshot,formula_version)
+values(v_a,v_x,pg_temp.mem(v_a,1),0,7,5,7,true,0,0,0,'win','goalkeeper',2),(v_a,v_x,pg_temp.mem(v_a,7),0,5,5,5,true,0,0,0,'win','attacker',2);
+perform private.compute_round_selection(v_x);
+perform pg_temp.assert((select count(*) from public.round_selections where match_id=v_x)=1 and
+ (select version=1 and status='published' from public.round_selections where match_id=v_x), 'v1 vigente');
+perform private.compute_round_selection(v_x);
+perform pg_temp.assert((select count(*) from public.round_selections where match_id=v_x)=1, 'recalcular igual não cria versão');
+-- Mudança que troca alguém: o 10 passa a ter a melhor nota do ataque e tira o 7.
+update public.match_player_results set final_rating=9, peer_rating=9 where match_id=v_x and membership_id=pg_temp.mem(v_a,10);
+perform private.compute_round_selection(v_x);
+perform pg_temp.assert((select count(*) from public.round_selections where match_id=v_x)=2
+ and (select count(*) from public.round_selections where match_id=v_x and status='published' and version=2)=1
+ and (select count(*) from public.round_selections where match_id=v_x and status='superseded' and version=1)=1, 'v2 vigente, v1 substituída');
+perform pg_temp.assert((select count(*) from public.round_selection_players p join public.round_selections s on s.id=p.selection_id
+ where s.match_id=v_x and s.version=1)=11, 'versão antiga preservada com os 11');
+perform pg_temp.assert((select count(*) from public.round_selection_players p join public.round_selections s on s.id=p.selection_id
+ where s.match_id=v_x and s.status='published' and p.membership_id=pg_temp.mem(v_a,7))=0, 'v2 sem o 7');
+-- Deixa de haver 11 notas válidas: a vigente é invalidada, nada é apagado.
+delete from public.match_player_results where match_id=v_x and membership_id=pg_temp.mem(v_a,7);
+delete from public.match_player_results where match_id=v_x and membership_id=pg_temp.mem(v_a,3);
+perform private.compute_round_selection(v_x);
+perform pg_temp.assert((select count(*) from public.round_selections where match_id=v_x and status='published')=0
+ and (select count(*) from public.round_selections where match_id=v_x and status='invalidated')=1
+ and (select count(*) from public.round_selections where match_id=v_x)=2, 'invalidada e histórico preservado');
 perform set_config('role','authenticated',true);
 perform set_config('role','authenticated',true);
 
