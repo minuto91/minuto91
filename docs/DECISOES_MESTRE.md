@@ -115,3 +115,5 @@ Decisões do fundador em 01/11/2026 (conversa de avaliação do projeto). Detalh
 | V10-06 | REV-053: sem foto de perfil no primeiro bloco do Início | implementada | Faltam 4 frases de saudação |
 | V10-07 | REV-097 a 106: tela, mensagens exatas e versões da Seleção da Rodada | implementada (REV-118 bloqueada) | Migração 081 |
 | V10-08 | REV-136: mínimo de 7 votos por jogador avaliado (era 3) | implementada | Migração 076; só votações publicadas daqui em diante |
+| V10-09 | REV-138: servidor recusa publicar gol sem autor | implementada | Migração 083 |
+| V10-10 | REV-142: selo PREMIUM em todas no beta; REV-141: 3 passos (2h/4h/6h); REV-126: títulos de temporada primeiro | implementada | — |

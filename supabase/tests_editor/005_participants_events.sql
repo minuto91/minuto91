@@ -144,11 +144,12 @@ perform pg_temp.assert((select count(*)=0 from public.match_events where match_i
 perform pg_temp.expect_error(format($q$insert into public.match_events(pelada_id,match_id,team,event_type,quantity) values(%L,%L,'A','unattributed_goal',5)$q$,v_pid,v_x),'permission denied');
 perform pg_temp.expect_error(format($q$update public.match_participants set team='A' where match_id=%L$q$,v_x),'permission denied');
 execute 'reset role';
+delete from public.match_events where match_id=v_x and event_type='unattributed_goal'; -- V10.0 (083): publicar exige autor em todo gol
 update public.matches set status='voting_open' where id=v_x;
 perform set_config('role','authenticated',true);
 perform pg_temp.as_user(3);
 perform pg_temp.assert((select count(*)=4 from public.match_participants where match_id=v_x),'jogador vê súmula publicada');
-perform pg_temp.assert((select count(*)=6 from public.match_events where match_id=v_x),'jogador vê eventos publicados');
+perform pg_temp.assert((select count(*)=5 from public.match_events where match_id=v_x),'jogador vê eventos publicados');
 perform pg_temp.as_user(4);
 perform pg_temp.assert((select count(*)=0 from public.match_participants where match_id=v_x),'não membro não vê');
 perform pg_temp.as_user(1);

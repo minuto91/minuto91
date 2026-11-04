@@ -142,6 +142,9 @@ perform pg_temp.as_user(1);
 perform public.discard_match_draft(v_x);
 
 -- ===== publicar =====
+perform pg_temp.expect_error(format('select public.publish_match(%L)',v_m),'GOAL_AUTHOR_REQUIRED'); -- V10.0 (083)
+delete from public.match_events where match_id=v_m and event_type='unattributed_goal';
+update public.matches set team_a_score=team_a_score where id=v_m;
 r := public.publish_match(v_m);
 perform pg_temp.assert((select status from public.matches where id=v_m) <> 'draft', 'publicada');
 perform pg_temp.expect_error(format('select public.adjust_match_planned(%L,null,%L,%L)',v_m,
