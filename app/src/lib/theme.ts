@@ -1,14 +1,14 @@
 import type { TextStyle } from 'react-native';
 
 // Brand Book v2.1 + revitalização visual (V9): paleta slate (equivalente à do Tailwind) com o azul e o dourado da marca.
-// Tela em slate-50, superfícies (cartões) brancas, texto em slate-900 e secundário em slate-500.
+// V10.1: tela em branco (decisão do fundador), superfícies secundárias em slate-100, texto em slate-900 e secundário em slate-500.
 export const colors = {
   blue: '#1255C6',
   blueSoft: '#EAF1FD', // azul-50: fundo de item ativo e de botão secundário
   deepBlue: '#103675',
   gold: '#D4A63D', // apenas detalhe, nunca texto sobre branco
   darkGold: '#8A6414', // texto e ícones
-  screen: '#F8FAFC', // slate-50: fundo das telas
+  screen: '#FFFFFF', // V10.1: fundo das telas em branco (antes slate-50 #F8FAFC)
   bg: '#F1F5F9', // slate-100: superfícies secundárias e esqueletos
   ink: '#0F172A', // slate-900
   body: '#334155', // slate-700
@@ -20,7 +20,7 @@ export const colors = {
 };
 
 // V9 — escala de texto (Tailwind): título 24 bold, seção 18 semibold, cartão 16 semibold, texto 15, legenda 13, meta 12.
-export const type: Record<'title' | 'section' | 'cardTitle' | 'body' | 'bodySm' | 'caption' | 'meta' | 'number', TextStyle> = {
+export const type: Record<'title' | 'section' | 'cardTitle' | 'body' | 'bodySm' | 'caption' | 'meta' | 'number' | 'button' | 'buttonSm' | 'tabLabel', TextStyle> = {
   title: { fontSize: 24, lineHeight: 30, fontWeight: '700', color: '#0F172A', letterSpacing: -0.4 },
   section: { fontSize: 18, lineHeight: 24, fontWeight: '700', color: '#0F172A', letterSpacing: -0.2 },
   cardTitle: { fontSize: 16, lineHeight: 22, fontWeight: '600', color: '#0F172A' },
@@ -29,6 +29,10 @@ export const type: Record<'title' | 'section' | 'cardTitle' | 'body' | 'bodySm' 
   caption: { fontSize: 13, lineHeight: 19, fontWeight: '400', color: '#64748B' },
   meta: { fontSize: 12, lineHeight: 16, fontWeight: '500', color: '#64748B' },
   number: { fontSize: 30, lineHeight: 36, fontWeight: '800', color: '#0F172A', fontVariant: ['tabular-nums'] },
+  // V10.1 (Figma "Texto/Botão", "Texto/Botão pequeno", "Texto/Rótulo de aba"): sem cor, quem usa define.
+  button: { fontSize: 14, lineHeight: 20, fontWeight: '600' },
+  buttonSm: { fontSize: 13, lineHeight: 18, fontWeight: '600' },
+  tabLabel: { fontSize: 11, lineHeight: 14, fontWeight: '600' },
 };
 
 /** Raios (Tailwind): sm 8 (rounded-lg), md 10, card 12 (rounded-xl), lg 16 (rounded-2xl), pill 999 (rounded-full). */
