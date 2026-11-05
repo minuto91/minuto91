@@ -28,6 +28,16 @@
       ],
       "port": 8092,
       "autoPort": false
+    },
+    {
+      "name": "app-web-8123",
+      "runtimeExecutable": "cmd",
+      "runtimeArgs": [
+        "/c",
+        "cd app && npx expo start --web --port 8123"
+      ],
+      "port": 8123,
+      "autoPort": false
     }
   ]
 }
