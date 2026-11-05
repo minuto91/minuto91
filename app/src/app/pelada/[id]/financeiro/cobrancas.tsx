@@ -13,6 +13,7 @@ import { Page, usePaged } from '../../../../lib/paging';
 import { supabase } from '../../../../lib/supabase';
 import { useSticky } from '../../../../lib/sticky';
 import { colors } from '../../../../lib/theme';
+import { Icon } from '../../../../lib/icons';
 import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, ListScreen, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
 
 const STATUS = [
@@ -286,8 +287,9 @@ export default function Cobrancas() {
       <Chips options={STATUS} value={status} onChange={(v) => setStatus(v)} />
       <Chips options={PERIOD} value={period} onChange={(v) => setPeriod(v)} />
       {person && (
-        <Pressable accessibilityRole="button" onPress={() => setPerson(null)} style={{ minHeight: 40, justifyContent: 'center' }}>
-          <Text style={{ color: colors.blue, fontWeight: '700' }}>Só {person.name} · mostrar todos ✕</Text>
+        <Pressable accessibilityRole="button" onPress={() => setPerson(null)} style={{ minHeight: 40, flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+          <Text style={{ color: colors.blue, fontWeight: '700' }}>Só {person.name} · mostrar todos</Text>
+          <Icon name="fechar" size={16} color={colors.blue} />
         </Pressable>
       )}
       <ErrorText>{panel ? list.error : (msg ?? list.error)}</ErrorText>

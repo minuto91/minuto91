@@ -42,6 +42,7 @@ import { supabase } from '../../lib/supabase';
 import { onHomeTabRepress } from '../../lib/tabevents';
 import { Text } from '../../lib/text';
 import { colors, layout as L, type } from '../../lib/theme';
+import { Icon } from '../../lib/icons';
 import { Button, Card, EmptyState } from '../../lib/ui';
 import { type BlockId, normalizeLayout, splitAttention, visibleSportBlocks } from '../../lib/v84logic';
 
@@ -505,9 +506,11 @@ export default function Home() {
                     disabled={s.done}
                     onPress={s.go}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
-                    <Text2 style={{ width: 20, color: s.done ? colors.blue : colors.muted }}>{s.done ? '✓' : '○'}</Text2>
+                    <View style={{ width: 20 }}>
+                      <Icon name={s.done ? 'selecionado' : 'pendente'} size={18} color={s.done ? colors.blue : colors.muted} />
+                    </View>
                     <Text2 style={{ flex: 1, color: s.done ? colors.muted : colors.ink, textDecorationLine: s.done ? 'line-through' : 'none' }}>{s.label}</Text2>
-                    {!s.done && <Text2 style={{ color: colors.blue }}>›</Text2>}
+                    {!s.done && <Icon name="chevron" size={18} color={colors.blue} />}
                   </Pressable>
                 ))}
               </Card>

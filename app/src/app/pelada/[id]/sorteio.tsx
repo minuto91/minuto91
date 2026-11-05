@@ -15,6 +15,7 @@ import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors, memberPosition, positionLabel, positionRank } from '../../../lib/theme';
 import { Toggle } from '../../../lib/toggle';
+import { Icon } from '../../../lib/icons';
 import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 import {
   countLabel,
@@ -342,7 +343,14 @@ export default function Sorteio() {
         }}
       />
       {selectionDirty && <Sub>Seleção alterada: será aplicada ao gerar a prévia.</Sub>}
-      {gkWarning && <Sub>⚠ {gkWarning}</Sub>}
+      {gkWarning && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icon name="alerta" size={18} color={colors.darkGold} />
+          <View style={{ flex: 1 }}>
+            <Sub>{gkWarning}</Sub>
+          </View>
+        </View>
+      )}
       {prep.problems.length > 0 && <ErrorText>Há participante que não pode mais jogar (em vermelho). Remova-o para continuar.</ErrorText>}
       <ErrorText>{msg}</ErrorText>
       <Button title={preview ? 'Sortear de novo' : 'Sortear'} onPress={gerar} loading={busy === 'preview' || busy === 'members'} disabled={selected.size + guests.length < 2} />

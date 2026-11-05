@@ -1,12 +1,12 @@
 // V10.0 — blocos do Início do jogador (REV-051 a REV-095): cabeçalho com saudação e sino, Próximo Jogo e Último Jogo.
 // Só apresentação: os valores (placar, nota, OVR) vêm prontos do servidor e nada é calculado aqui.
 import { Pressable, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
 import { matchRating } from './centrallogic';
 import type { HomeLastGame, NextRoundItem } from './centraldata';
 import { box } from './central';
 import { hair } from './domain';
+import { Icon } from './icons';
 import { Crest } from './crest';
 import { individualStats, resultLabel } from './homelogic';
 import { fmtDate } from './match';
@@ -17,15 +17,6 @@ import { Button } from './ui';
 
 const fmtRating = (v: number) => v.toFixed(1).replace('.', ',');
 
-function Bell({ color }: { color: string }) {
-  const p = { stroke: color, strokeWidth: 1.9, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-  return (
-    <Svg width={24} height={24} viewBox="0 0 24 24">
-      <Path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" {...p} />
-      <Path d="M10 20.5a2.2 2.2 0 0 0 4 0" {...p} />
-    </Svg>
-  );
-}
 
 /** REV-053/054: saudação esportiva e sino com indicador de não lidas (ponto dourado). Sem foto de perfil neste bloco. */
 export function GreetingHeader({ text, unread, onBell }: { text: string; unread: boolean; onBell: () => void }) {
@@ -39,7 +30,7 @@ export function GreetingHeader({ text, unread, onBell }: { text: string; unread:
         accessibilityRole="button"
         accessibilityLabel={unread ? 'Notificações, há avisos novos' : 'Notificações'}
         style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? colors.bg : 'transparent' })}>
-        <Bell color={colors.blue} />
+        <Icon name="sino" size={24} color={colors.blue} strokeWidth={1.9} />
         {unread && (
           <View
             accessibilityElementsHidden

@@ -13,6 +13,7 @@ import type { LastGameRow, NextRoundItem, Pelada, PeladaRating } from './central
 import { deltaA11y, deltaText, leftLabel, matchRating, type MatchRating } from './centrallogic';
 import { Crest } from './crest';
 import { hair, StatStrip, VotePendingRow } from './domain';
+import { Icon } from './icons';
 import { fmtDate } from './match';
 import { haptic, useReducedMotion } from './motion';
 import { CARD_RATIO, PlayerCard } from './playercard';
@@ -248,7 +249,7 @@ export function PeladaSelector({
                 </Text>
                 <Text style={type.meta}>{roleNote(p.role)}</Text>
               </View>
-              {busy === p.id ? <ActivityIndicator color={colors.blue} /> : on ? <Text style={{ color: colors.blue, fontSize: 20, fontWeight: '800' }}>✓</Text> : null}
+              {busy === p.id ? <ActivityIndicator color={colors.blue} /> : on ? <Icon name="selecionado" size={22} color={colors.blue} /> : null}
             </Pressable>
           );
         })}

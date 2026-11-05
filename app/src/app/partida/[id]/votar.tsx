@@ -15,6 +15,7 @@ import { fmtScore, RatingSlider, RatingTarget, RatingVote, useServerCountdown } 
 import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors, positionLabel } from '../../../lib/theme';
+import { Icon } from '../../../lib/icons';
 import { Body, Button, Card, Chips, ErrorText, Loading, Screen, Sub, Title } from '../../../lib/ui';
 
 const START = 7;
@@ -292,10 +293,10 @@ function Resenha({ v, onSaved }: { v: RatingVote; onSaved: (r: RatingVote) => vo
                 borderColor: on ? colors.blue : colors.line,
                 backgroundColor: on ? colors.blue : colors.white,
               }}>
-              <Text style={{ color: on ? colors.white : colors.ink, fontWeight: '600' }}>
-                {on ? '✓ ' : ''}
-                {t.name}
-              </Text>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                {on ? <Icon name="selecionado" size={16} color={colors.white} /> : null}
+                <Text style={{ color: on ? colors.white : colors.ink, fontWeight: '600' }}>{t.name}</Text>
+              </View>
             </Pressable>
           );
         })}

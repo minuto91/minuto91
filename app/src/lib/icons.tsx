@@ -17,10 +17,21 @@ export type IconName =
   | 'escalacao'
   | 'sorteio'
   | 'temporadas'
-  | 'financeiro';
+  | 'financeiro'
+  // V10.1: abas, aviso e estados (substituem ✓ ○ ⚠ ✕ e › em texto)
+  | 'inicio'
+  | 'peladas'
+  | 'carreira'
+  | 'perfil'
+  | 'sino'
+  | 'chevron'
+  | 'selecionado'
+  | 'pendente'
+  | 'alerta'
+  | 'fechar';
 
-export function Icon({ name, size = 24, color = colors.blue }: { name: IconName; size?: number; color?: string }) {
-  const p = { stroke: color, strokeWidth: 1.8, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
+export function Icon({ name, size = 24, color = colors.blue, strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
+  const p = { stroke: color, strokeWidth, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
   return (
     <Svg width={size} height={size} viewBox="0 0 24 24">
       {name === 'elenco' && (
@@ -107,6 +118,36 @@ export function Icon({ name, size = 24, color = colors.blue }: { name: IconName;
           <Path d="M3 10h18M16 15h2" {...p} />
         </>
       )}
+      {name === 'inicio' && <Path d="M3 11 L12 4 L21 11 V20 H14 V14 H10 V20 H3 Z" {...p} />}
+      {name === 'peladas' && (
+        <>
+          <Circle cx={12} cy={12} r={9} {...p} />
+          <Path d="M12 7.5 L16 10.5 L14.5 15 H9.5 L8 10.5 Z" {...p} />
+        </>
+      )}
+      {name === 'carreira' && <Path d="M5 20 V13 M10 20 V9 M15 20 V12 M20 20 V5" {...p} />}
+      {name === 'perfil' && (
+        <>
+          <Circle cx={12} cy={8} r={4} {...p} />
+          <Path d="M4.5 20.5 C5.5 16.5 8.5 14.5 12 14.5 C15.5 14.5 18.5 16.5 19.5 20.5" {...p} />
+        </>
+      )}
+      {name === 'sino' && (
+        <>
+          <Path d="M6 16V11a6 6 0 1 1 12 0v5l1.5 2h-15z" {...p} />
+          <Path d="M10 20.5a2 2 0 0 0 4 0" {...p} />
+        </>
+      )}
+      {name === 'chevron' && <Path d="M9 6l6 6-6 6" {...p} />}
+      {name === 'selecionado' && <Path d="M5 12.5l4.5 4.5L19 7.5" {...p} strokeWidth={2.2} />}
+      {name === 'pendente' && <Circle cx={12} cy={12} r={8} {...p} />}
+      {name === 'alerta' && (
+        <>
+          <Path d="M12 4l9 16H3z" {...p} />
+          <Path d="M12 10v4M12 17.4v.1" {...p} />
+        </>
+      )}
+      {name === 'fechar' && <Path d="M6 6l12 12M18 6L6 18" {...p} strokeWidth={2} />}
     </Svg>
   );
 }
