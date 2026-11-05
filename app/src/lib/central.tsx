@@ -743,8 +743,9 @@ export function Notice({ tone, children }: { tone: 'warn' | 'info'; children: Re
     <View
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
-      style={{ borderRadius: radius.md, backgroundColor: tone === 'warn' ? '#FFF6E0' : colors.bg, paddingHorizontal: 14, paddingVertical: 10 }}>
-      <Text style={{ fontSize: 13, lineHeight: 18, color: tone === 'warn' ? colors.darkGold : colors.deepBlue, fontWeight: '600' }}>{children}</Text>
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: radius.md, backgroundColor: tone === 'warn' ? '#FFF6E0' : colors.bg, paddingHorizontal: 14, paddingVertical: 10 }}>
+      {tone === 'warn' ? <Icon name="alerta" size={18} color={colors.darkGold} /> : null}
+      <Text style={{ flex: 1, fontSize: 13, lineHeight: 18, color: tone === 'warn' ? colors.darkGold : colors.deepBlue, fontWeight: '600' }}>{children}</Text>
     </View>
   );
 }

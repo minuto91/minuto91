@@ -2,6 +2,7 @@ import { ReactNode, useEffect, useState } from 'react';
 import { ActivityIndicator, Animated, FlatList, Platform, Pressable, ScrollView, StyleSheet, TextInputProps, View } from 'react-native';
 import { Text, TextInput } from './text';
 
+import { Icon, type IconName } from './icons';
 import { useReducedMotion } from './motion';
 import { colors, layout, POSITIONS, Position, radius, Sector, SECTORS, shadow, type } from './theme';
 
@@ -97,7 +98,7 @@ export function EmptyState({ title, hint, children }: { title: string; hint?: st
   return (
     <View style={{ alignItems: 'center', gap: 4, paddingVertical: 24, paddingHorizontal: 12 }}>
       <View style={{ width: 40, height: 40, borderRadius: radius.pill, backgroundColor: colors.bg, alignItems: 'center', justifyContent: 'center', marginBottom: 8 }}>
-        <View style={{ width: 16, height: 16, borderRadius: radius.pill, borderWidth: 2, borderColor: colors.muted }} />
+        <Icon name="pendente" size={22} color={colors.muted} />
       </View>
       <Text style={[type.cardTitle, { textAlign: 'center' }]}>{title}</Text>
       {hint ? <Text style={[type.caption, { textAlign: 'center' }]}>{hint}</Text> : null}
@@ -184,7 +185,7 @@ export function Button({
         ...press(pressed),
         ...smooth,
       })}>
-      {loading ? <ActivityIndicator color={fg} size="small" /> : <Text style={{ color: fg, fontSize: size === 'sm' ? 13 : 14, fontWeight: '600' }}>{title}</Text>}
+      {loading ? <ActivityIndicator color={fg} size="small" /> : <Text style={[size === 'sm' ? type.buttonSm : type.button, { color: fg }]}>{title}</Text>}
     </Pressable>
   );
 }
@@ -202,6 +203,95 @@ export function Input(props: TextInputProps) {
 
 export function Card({ children }: { children: ReactNode }) {
   return <View style={styles.card}>{children}</View>;
+}
+
+/** V10.1: linha fina de separação (colors.line), usada no lugar de molduras de card. */
+export const Divider = () => <View style={{ height: 1, backgroundColor: colors.line, alignSelf: 'stretch' }} />;
+
+/**
+ * V10.1: linha de lista (Figma "Linha de lista"): ícone opcional, título, subtítulo, valor à direita e seta.
+ * Substitui os Group/Row locais das telas. Alvo de toque de pelo menos 44 px. `danger` pinta o título de vermelho.
+ */
+export function ListRow({
+  title,
+  subtitle,
+  icon,
+  onPress,
+  danger,
+  trailing,
+  chevron = true,
+  hint,
+}: {
+  title: string;
+  subtitle?: string;
+  icon?: IconName;
+  onPress?: () => void;
+  danger?: boolean;
+  trailing?: ReactNode;
+  /** Seta à direita (padrão: só quando há onPress e a linha não é de perigo). */
+  chevron?: boolean;
+  hint?: string;
+}) {
+  const showChevron = chevron && !!onPress && !danger;
+  const content = (
+    <>
+      {icon ? <Icon name={icon} size={22} /> : null}
+      <View style={{ flex: 1, paddingVertical: 8, gap: 2 }}>
+        <Text style={[danger ? type.body : type.cardTitle, danger ? { color: colors.danger, fontWeight: '500' } : null]}>{title}</Text>
+        {subtitle ? (
+          <Text style={type.caption} numberOfLines={1}>
+            {subtitle}
+          </Text>
+        ) : null}
+      </View>
+      {trailing}
+      {showChevron ? <Icon name="chevron" size={20} color={colors.muted} /> : null}
+    </>
+  );
+  const base = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 12, minHeight: 56, paddingHorizontal: 4 };
+  if (!onPress) return <View style={base}>{content}</View>;
+  return (
+    <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityHint={hint ?? subtitle} onPress={onPress} style={({ pressed }) => [base, { opacity: pressed ? 0.6 : 1 }]}>
+      {content}
+    </Pressable>
+  );
+}
+
+/** V10.1: grupo de linhas com título de seção opcional e divisores finos entre os itens (sem moldura). */
+export function ListGroup({ title, children }: { title?: string; children: ReactNode }) {
+  const items = (Array.isArray(children) ? children : [children]).flat().filter(Boolean) as ReactNode[];
+  return (
+    <View style={{ gap: 4 }}>
+      {title ? (
+        <Text style={type.section} accessibilityRole="header">
+          {title}
+        </Text>
+      ) : null}
+      <View>
+        {items.map((c, i) => (
+          <View key={i}>
+            {i > 0 ? <Divider /> : null}
+            {c}
+          </View>
+        ))}
+      </View>
+    </View>
+  );
+}
+
+/** V10.1: número em destaque com rótulo (Figma "Número destaque"). `tone` troca a cor do número. */
+export function Stat({ value, label, tone = 'ink' }: { value: string | number; label: string; tone?: 'ink' | 'blue' | 'danger' | 'gold' }) {
+  const color = tone === 'blue' ? colors.blue : tone === 'danger' ? colors.danger : tone === 'gold' ? colors.darkGold : colors.ink;
+  return (
+    <View style={{ flex: 1, minWidth: 0, gap: 2 }} accessible accessibilityLabel={`${label}: ${value}`}>
+      <Text style={[type.number, { color }]} numberOfLines={1} adjustsFontSizeToFit>
+        {value}
+      </Text>
+      <Text style={type.meta} numberOfLines={2}>
+        {label}
+      </Text>
+    </View>
+  );
 }
 
 // As dez posições oficiais, agrupadas por setor. `sector` limita a escolha a um setor (atualização de um
