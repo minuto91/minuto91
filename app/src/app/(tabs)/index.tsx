@@ -31,7 +31,7 @@ import { leftLabel, nextVoteBoundary, voteState } from '../../lib/centrallogic';
 import { type CareerSummary, loadCareerSummary, markGuide, referencePelada } from '../../lib/careerv2';
 import { StatStrip } from '../../lib/domain';
 import { refreshOutcome, syncedLabel } from '../../lib/loadstate';
-import { GreetingHeader, HomeLastGameCard, NextGameCard } from '../../lib/homeui';
+import { flat, GreetingHeader, HomeLastGameCard, NextGameCard } from '../../lib/homeui';
 import { greetingText, pickCard, pickGreetingIndex, pickNextRound } from '../../lib/homelogic';
 import { notify } from '../../lib/dialog';
 import { haptic } from '../../lib/motion';
@@ -380,7 +380,7 @@ export default function Home() {
             onPress={() => go('/carreira')}
             accessibilityRole="button"
             accessibilityLabel={`Resumo da carreira. ${items.map((s) => `${s.label}: ${s.value}`).join('. ')}. Abrir Minha Carreira.`}
-            style={({ pressed }) => ({ backgroundColor: colors.white, borderRadius: 16, borderWidth: 1, borderColor: colors.line, padding: 16, opacity: pressed ? 0.9 : 1 })}>
+            style={({ pressed }) => ({ ...flat, opacity: pressed ? 0.7 : 1 })}>
             <StatStrip items={items} />
           </Pressable>
         </View>

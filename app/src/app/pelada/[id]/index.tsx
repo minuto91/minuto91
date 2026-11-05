@@ -15,7 +15,7 @@ import { PositionRequests } from '../../../lib/ratingadmin';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { Body, Button, ErrorText, Screen, Sub } from '../../../lib/ui';
+import { Body, Button, ErrorText, ListGroup, ListRow, Screen, Sub } from '../../../lib/ui';
 import { MatchScore } from '../../../lib/domain';
 
 type Member = { id: string; user_id: string | null; player_name: string; role: string; preferred_position: string; position_code?: string | null };
@@ -396,8 +396,10 @@ export default function CentralDaRodada() {
       <Group title="Desempenho" items={desempenho} premium={premium} />
       {gestao.length > 0 && <Group title="Gestão" items={gestao} premium={premium} />}
       <Text style={section}>Pelada</Text>
-      <Row title="Pelada Premium" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
-      <Row title="Sair da pelada" danger onPress={sair} />
+      <ListGroup>
+        <ListRow title="Pelada Premium" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
+        <ListRow title="Sair da pelada" danger onPress={sair} />
+      </ListGroup>
       {me && (
         <View style={{ marginTop: 6 }}>
           <ReportLink peladaId={id} targetType="pelada" targetId={id} label="Denunciar nome ou imagem da pelada" />
@@ -425,53 +427,21 @@ type GroupItem = { icon: IconName; label: string; sub: string; premium?: boolean
 
 function Group({ title, items, premium }: { title: string; items: GroupItem[]; premium: boolean }) {
   return (
-    <View style={{ gap: 8, marginTop: 10 }}>
-      <Text style={{ fontSize: 19, lineHeight: 25, fontWeight: '700', color: colors.ink }} accessibilityRole="header">
-        {title}
-      </Text>
-      <View>
-        {items.map((a, n) => (
-          <Pressable
+    <View style={{ marginTop: 10 }}>
+      <ListGroup title={title}>
+        {items.map((a) => (
+          <ListRow
             key={a.label}
-            accessibilityRole="button"
+            icon={a.icon}
+            title={a.label}
+            subtitle={a.sub}
             accessibilityLabel={a.premium && !premium ? `${a.label}, recurso da Pelada Premium` : a.label}
-            accessibilityHint={a.sub}
             onPress={a.onPress}
-            style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-              minHeight: 60,
-              paddingHorizontal: 4,
-              borderTopWidth: n ? 1 : 0,
-              borderTopColor: '#E6EBF3',
-              opacity: pressed ? 0.6 : 1,
-            })}>
-            <Icon name={a.icon} size={22} />
-            <View style={{ flex: 1, paddingVertical: 8 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.ink }}>{a.label}</Text>
-              <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
-                {a.sub}
-              </Text>
-            </View>
-            {a.premium && !premium && <Text style={{ fontSize: 12, fontWeight: '700', color: colors.blue }}>Premium</Text>}
-            <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text>
-          </Pressable>
+            trailing={a.premium && !premium ? <Text style={{ fontSize: 12, fontWeight: '700', color: colors.blue }}>Premium</Text> : undefined}
+          />
         ))}
-      </View>
+      </ListGroup>
     </View>
-  );
-}
-
-function Row({ title, onPress, danger }: { title: string; onPress: () => void; danger?: boolean }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}>
-      <Text style={{ flex: 1, fontSize: 15, color: danger ? colors.danger : colors.ink, fontWeight: '500' }}>{title}</Text>
-      {!danger && <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>}
-    </Pressable>
   );
 }
 

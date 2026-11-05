@@ -15,7 +15,7 @@ import {
 } from '../../lib/profile';
 import { useAuth } from '../../lib/session';
 import { positionLabel } from '../../lib/theme';
-import { Button, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
+import { Chips, ErrorText, ListGroup, ListRow, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
 
 const TABS = [
   { value: 'conquistas', label: 'Conquistas' },
@@ -74,11 +74,11 @@ export default function Perfil() {
           {mainPosition ? <Sub>{positionLabel(mainPosition)}</Sub> : null}
         </View>
       </View>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-        <Button title="Minha conta" kind="secondary" size="sm" onPress={() => router.push('/conta')} />
-        <Button title="Personalizar Central" kind="secondary" size="sm" onPress={() => router.push('/personalizar-central')} />
-        <Button title="Meu histórico de votos" kind="secondary" size="sm" onPress={() => router.push('/historico-votos')} />
-      </View>
+      <ListGroup>
+        <ListRow icon="jogadores" title="Minha conta" subtitle="Dados, privacidade e documentos" onPress={() => router.push('/conta')} />
+        <ListRow icon="config" title="Personalizar Central" subtitle="Escolha os blocos do Início" onPress={() => router.push('/personalizar-central')} />
+        <ListRow icon="rankings" title="Meu histórico de votos" subtitle="Partidas em que você votou" onPress={() => router.push('/historico-votos')} />
+      </ListGroup>
       <Chips options={TABS} value={tab} onChange={setTab} />
       <ErrorText>{msg}</ErrorText>
 

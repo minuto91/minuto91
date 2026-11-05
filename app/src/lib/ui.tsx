@@ -221,6 +221,7 @@ export function ListRow({
   trailing,
   chevron = true,
   hint,
+  accessibilityLabel,
 }: {
   title: string;
   subtitle?: string;
@@ -231,6 +232,7 @@ export function ListRow({
   /** Seta à direita (padrão: só quando há onPress e a linha não é de perigo). */
   chevron?: boolean;
   hint?: string;
+  accessibilityLabel?: string;
 }) {
   const showChevron = chevron && !!onPress && !danger;
   const content = (
@@ -251,7 +253,7 @@ export function ListRow({
   const base = { flexDirection: 'row' as const, alignItems: 'center' as const, gap: 12, minHeight: 56, paddingHorizontal: 4 };
   if (!onPress) return <View style={base}>{content}</View>;
   return (
-    <Pressable accessibilityRole="button" accessibilityLabel={title} accessibilityHint={hint ?? subtitle} onPress={onPress} style={({ pressed }) => [base, { opacity: pressed ? 0.6 : 1 }]}>
+    <Pressable accessibilityRole="button" accessibilityLabel={accessibilityLabel ?? title} accessibilityHint={hint ?? subtitle} onPress={onPress} style={({ pressed }) => [base, { opacity: pressed ? 0.6 : 1 }]}>
       {content}
     </Pressable>
   );

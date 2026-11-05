@@ -4,7 +4,6 @@ import { Pressable, View } from 'react-native';
 
 import { matchRating } from './centrallogic';
 import type { HomeLastGame, NextRoundItem } from './centraldata';
-import { box } from './central';
 import { hair } from './domain';
 import { Icon } from './icons';
 import { Crest } from './crest';
@@ -14,6 +13,9 @@ import { teamHex } from './selection';
 import { Text } from './text';
 import { colors, type } from './theme';
 import { Button } from './ui';
+
+/** V10.1: bloco do Início sem moldura de card: conteúdo solto sobre o fundo, separado do próximo por uma linha fina. */
+export const flat = { gap: 10, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.line } as const;
 
 const fmtRating = (v: number) => v.toFixed(1).replace('.', ',');
 
@@ -54,7 +56,7 @@ export function NextGameCard({ round, crestPath, stale, onPress }: { round: Next
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Próximo jogo na pelada ${round.pelada_name}: ${round.team_name} contra ${round.opponent_name}. ${[day, time, round.location].filter(Boolean).join(', ')}. Ver partida.`}
-      style={({ pressed }) => ({ ...box, flexDirection: 'row', gap: 14, alignItems: 'center', opacity: pressed ? 0.9 : 1 })}>
+      style={({ pressed }) => ({ ...flat, flexDirection: 'row', gap: 14, alignItems: 'center', opacity: pressed ? 0.7 : 1 })}>
       <Crest path={crestPath} name={round.pelada_name} size={56} />
       <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
         <Text style={type.meta} numberOfLines={1}>{round.pelada_name}</Text>
@@ -101,7 +103,7 @@ export function HomeLastGameCard({ game, stale, onPress, onSelection }: { game: 
   const status =
     game.participation === 'listed' ? 'Você estava relacionado, mas sem entrada confirmada em campo.' : game.participation === 'none' ? 'Você não participou desta partida.' : null;
   return (
-    <View style={{ ...box }}>
+    <View style={{ ...flat }}>
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
