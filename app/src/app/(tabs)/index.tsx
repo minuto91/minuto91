@@ -369,7 +369,7 @@ export default function Home() {
       const items = [
         { value: t?.matches_played ?? 0, label: 'Jogos' },
         { value: t?.goals ?? 0, label: 'Gols' },
-        { value: t?.assists ?? 0, label: 'Assistências' },
+        { value: t?.assists ?? 0, label: 'Assist.' },
         { value: t?.wins ?? 0, label: 'Vitórias' },
       ];
       return (

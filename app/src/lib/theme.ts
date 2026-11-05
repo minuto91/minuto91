@@ -59,7 +59,7 @@ export const POSITIONS = [
   { value: 'LD', label: 'Lateral-Direito', sector: 'defender' },
   { value: 'LE', label: 'Lateral-Esquerdo', sector: 'defender' },
   { value: 'VOL', label: 'Volante', sector: 'midfielder' },
-  { value: 'MEI', label: 'Meio-Campo', sector: 'midfielder' },
+  { value: 'MEI', label: 'Meio-campo', sector: 'midfielder' },
   { value: 'CA', label: 'Centroavante', sector: 'attacker' },
   { value: 'PD', label: 'Ponta-Direita', sector: 'attacker' },
   { value: 'PE', label: 'Ponta-Esquerda', sector: 'attacker' },

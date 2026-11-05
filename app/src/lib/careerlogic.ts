@@ -48,11 +48,12 @@ export function recentTrophies(
 }
 
 /** Ordem dos blocos de peladas na página: a pelada de origem (vinda do Início) primeiro; as demais em ordem estável. */
-export function orderPeladas<T extends { pelada_id: string; name: string; status: string }>(list: T[], firstId: string | null | undefined): T[] {
+export function orderPeladas<T extends { pelada_id: string; name: string; status: string; totals?: { matches_played: number } }>(list: T[], firstId: string | null | undefined): T[] {
   return [...list].sort(
     (a, b) =>
       Number(b.pelada_id === firstId) - Number(a.pelada_id === firstId) ||
       Number(b.status === 'active') - Number(a.status === 'active') ||
+      (b.totals?.matches_played ?? 0) - (a.totals?.matches_played ?? 0) ||
       a.name.localeCompare(b.name),
   );
 }
