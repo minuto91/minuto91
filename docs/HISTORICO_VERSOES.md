@@ -5,7 +5,7 @@ Onde não há detalhe, está escrito **histórico não detalhado**. Nada foi inf
 
 **Identificação no código:** `app/src/lib/version.ts` (`APP_VERSION`, `APP_VERSION_LABEL`, `BUILD_NUMBER`) e `app/app.json`
 (`version`, `ios.buildNumber`, `android.versionCode`). O teste `app/tests/version.test.ts` falha se os dois divergirem.
-**Versão funcional** (ex.: V10.0 = `10.0.0`) é diferente do **número de build** das lojas (`BUILD_NUMBER`, hoje 1).
+**Versão funcional** (ex.: V10.0 = `10.0.0`) é diferente do **número de build** das lojas (`BUILD_NUMBER`, hoje 2).
 
 | Versão | Data comprovada | Fonte | Resumo comprovado |
 |---|---|---|---|
@@ -24,6 +24,7 @@ Onde não há detalhe, está escrito **histórico não detalhado**. Nada foi inf
 | V8.9 | 29/10 e 01/11/2026 | `CHANGELOG.md`, `V8.9_IMPLEMENTACAO.md` | Oficialização do motor V7.7 (DEF/LET-REF/APR/RES/DIS) |
 | V9.1 | 01/11/2026 | `CHANGELOG.md`, `V9.1_IMPLEMENTACAO.md` | Revitalização visual e simplificação (só app) |
 | **V10.0** | 04/11/2026 | `docs/V10.0_IMPLEMENTACAO.md` | Execução das REV-051 a REV-148 (ver registro) |
+| **V10.1** (parte 1) | 06/11/2026 | `docs/V10.1_RELATORIO_FINAL.md` | Redesign visual (só apresentação): fundo branco, ícones unificados, listas e blocos no lugar de cards, logo no login; **não validada em aparelho** |
 
 Versões V4.x, V6.x e V8.x intermediárias não listadas (V4.2…V4.5 individualmente, V8.5) existem apenas como relatórios
 próprios: **histórico não detalhado** neste quadro.
