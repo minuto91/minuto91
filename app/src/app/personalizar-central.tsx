@@ -15,7 +15,7 @@ import { useAuth } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { Text } from '../lib/text';
 import { colors, type } from '../lib/theme';
-import { Button, Card, ErrorText, LoadingBlock, Screen, Sub, Title } from '../lib/ui';
+import { Button, ErrorText, LoadingBlock, Screen, Sub, Title } from '../lib/ui';
 import { type BlockId, type Layout, moveBlock, normalizeLayout, sameLayout, toggleHidden } from '../lib/v84logic';
 
 const LABEL: Record<BlockId, { title: string; hint: string }> = {
@@ -109,7 +109,7 @@ export default function PersonalizarCentral() {
         </Text>
       )}
 
-      <Card>
+      <View>
         {draft.order.map((id, i) => {
           const hidden = draft.hidden.includes(id);
           return (
@@ -135,7 +135,7 @@ export default function PersonalizarCentral() {
             </View>
           );
         })}
-      </Card>
+      </View>
 
       <Sub>Sempre visíveis: seu cabeçalho, a escolha da pelada, votações perto do fim, o Card e “Precisa de atenção”.</Sub>
 
