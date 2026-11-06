@@ -13,7 +13,7 @@ import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors, type } from '../../../lib/theme';
 import { Toggle } from '../../../lib/toggle';
-import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Chips, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 import { StepSlider } from '../../../lib/stepslider';
 
 const DURATIONS = [
@@ -216,7 +216,7 @@ export default function Configuracoes() {
         <>
           <Input autoCapitalize="sentences" placeholder="Local" value={ident.location} maxLength={120} onChangeText={(location) => setIdent({ ...ident, location })} />
           <Button title="Salvar local" kind="secondary" loading={busy} onPress={() => run('update_pelada_identity', { p_pelada: id, p: { location: ident.location } })} />
-          <Card>
+          <Block>
             <Body>Escudo</Body>
             <Sub>Prefira PNG com fundo transparente.</Sub>
             {draft ? (
@@ -246,7 +246,7 @@ export default function Configuracoes() {
                 </View>
               </View>
             )}
-          </Card>
+          </Block>
         </>
       )}
 

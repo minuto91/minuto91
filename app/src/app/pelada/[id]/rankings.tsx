@@ -10,7 +10,7 @@ import { fmtRating, loadMembers, Member } from '../../../lib/match';
 import { supabase } from '../../../lib/supabase';
 import { useSticky } from '../../../lib/sticky';
 import { colors } from '../../../lib/theme';
-import { Body, Button, Card, Chips, EmptyState, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Chips, EmptyState, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 import { RankingRow } from '../../../lib/domain';
 
 // Em destaque: Artilharia, Assistências e Overall. As demais classificações oficiais continuam em "Mais".
@@ -241,7 +241,7 @@ export default function Rankings() {
       )}
 
       {month.length > 0 && (
-        <Card>
+        <Block>
           <Body>Prêmios de {fmtMonth(month[0].period_month)}</Body>
           {['monthly_king', 'top_scorer', 'monthly_garcom', 'most_improved'].map((t) => {
             const who = month.filter((a) => a.award_type === t).map((a) => nameOf(a.membership_id));
@@ -251,11 +251,11 @@ export default function Rankings() {
               </Sub>
             ) : null;
           })}
-        </Card>
+        </Block>
       )}
 
       {records && (
-        <Card>
+        <Block>
           <Body>Recordes da temporada</Body>
           <Sub>
             Maior goleada:{' '}
@@ -266,7 +266,7 @@ export default function Rankings() {
           <Sub>Mais vitórias seguidas: {holders(records.best_win_streak)}</Sub>
           <Sub>Mais jogos sem perder: {holders(records.best_unbeaten_streak)}</Sub>
           <Sub>Mais notas 8+ seguidas: {holders(records.best_high_rating_streak)}</Sub>
-        </Card>
+        </Block>
       )}
     </Screen>
   );

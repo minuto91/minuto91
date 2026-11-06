@@ -15,7 +15,7 @@ import {
   PlayerProfile,
 } from '../../lib/profile';
 import { footLabel } from '../../lib/theme';
-import { Card, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
+import { Block, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
 
 const TABS = [
   { value: 'carreira', label: 'Carreira' },
@@ -64,9 +64,9 @@ export default function Atleta() {
     return (
       <Screen>
         <Title>{displayName}</Title>
-        <Card>
+        <Block>
           <Sub>Perfil privado.</Sub>
-        </Card>
+        </Block>
       </Screen>
     );
   }

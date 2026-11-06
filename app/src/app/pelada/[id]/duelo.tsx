@@ -11,7 +11,7 @@ import { friendly } from '../../../lib/errors';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, positionLabel } from '../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
 type Member = { id: string; user_id: string | null; player_name: string; preferred_position: string; position_code?: string | null; avatar_path: string | null };
 
@@ -95,11 +95,11 @@ export default function Duelo() {
     return (
       <Screen>
         <Title>Duelo de Jogadores</Title>
-        <Card>
+        <Block>
           <Body>Compare dois jogadores lado a lado: Card, atributos, gols, assistências, nota média e Craques.</Body>
           <Sub>Recurso da Pelada Premium. O administrador assina uma vez e vale para todos da pelada.</Sub>
           <Button title="Conhecer a Pelada Premium" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
-        </Card>
+        </Block>
       </Screen>
     );
   }
@@ -112,9 +112,9 @@ export default function Duelo() {
 
       {current ? (
         <>
-          <Card>
+          <Block>
             <DuelView duel={current} />
-          </Card>
+          </Block>
           <SharePanel label="Compartilhar o Duelo" fileName="minuto91-duelo" title="Duelo de Jogadores">
             <DuelArt duel={current} peladaName={pelada?.name ?? ''} crestPath={pelada?.crest_path} />
           </SharePanel>
