@@ -16,6 +16,12 @@ export const colors = {
   white: '#FFFFFF',
   danger: '#B42318',
   dangerSoft: '#FEF3F2',
+  dangerLine: '#F3C7C2', // borda de bloco de erro
+  success: '#0B6B3A', // V10.1: resultado positivo (vitória, subiu)
+  successSoft: '#E7F5EC',
+  caution: '#9A3412', // V10.1: resultado negativo (derrota, caiu)
+  cautionSoft: '#FDEEE6',
+  noticeWarn: '#FFF6E0', // fundo do aviso de atenção
   line: '#E2E8F0', // slate-200
 };
 

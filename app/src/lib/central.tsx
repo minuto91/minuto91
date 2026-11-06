@@ -425,8 +425,8 @@ export function officialOvr(rating: PeladaRating | null, card: Omit<CardData, 'i
 
 export function OvrDelta({ delta }: { delta: number }) {
   const up = delta > 0;
-  const fg = up ? '#0B6B3A' : '#9A3412';
-  const bg = up ? '#E7F5EC' : '#FDEEE6';
+  const fg = up ? colors.success : colors.caution;
+  const bg = up ? colors.successSoft : colors.cautionSoft;
   return (
     <View
       accessibilityLabel={`Card ${deltaA11y(delta)}`}
@@ -726,7 +726,7 @@ export function BlockTitle({ children, right }: { children: string; right?: Reac
 /** Erro localizado de um bloco (E16-10/11): só aquele bloco, com "tentar de novo". */
 export function InlineError({ text, onRetry }: { text: string; onRetry?: () => void }) {
   return (
-    <View style={{ ...box, flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: '#F3C7C2', shadowOpacity: 0, elevation: 0 }} accessibilityLiveRegion="polite">
+    <View style={{ ...box, flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: colors.dangerLine, shadowOpacity: 0, elevation: 0 }} accessibilityLiveRegion="polite">
       <Text style={{ ...type.caption, flex: 1, color: colors.danger }}>{text}</Text>
       {onRetry && (
         <Pressable onPress={onRetry} accessibilityRole="button" hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}>
@@ -743,7 +743,7 @@ export function Notice({ tone, children }: { tone: 'warn' | 'info'; children: Re
     <View
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
-      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: radius.md, backgroundColor: tone === 'warn' ? '#FFF6E0' : colors.bg, paddingHorizontal: 14, paddingVertical: 10 }}>
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: radius.md, backgroundColor: tone === 'warn' ? colors.noticeWarn : colors.bg, paddingHorizontal: 14, paddingVertical: 10 }}>
       {tone === 'warn' ? <Icon name="alerta" size={18} color={colors.darkGold} /> : null}
       <Text style={{ flex: 1, fontSize: 13, lineHeight: 18, color: tone === 'warn' ? colors.darkGold : colors.deepBlue, fontWeight: '600' }}>{children}</Text>
     </View>

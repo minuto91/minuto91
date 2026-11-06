@@ -119,7 +119,7 @@ export function HomeLastGameCard({ game, stale, onPress, onSelection }: { game: 
           </Text>
           {side(game.team_b_name, game.my_team === 'B', 'left', game.team_b_color)}
         </View>
-        {result ? <Text style={{ textAlign: 'center', fontSize: 12, fontWeight: '800', letterSpacing: 1, color: result === 'VITÓRIA' ? '#0B6B3A' : result === 'DERROTA' ? '#9A3412' : colors.muted }}>{result}</Text> : null}
+        {result ? <Text style={{ textAlign: 'center', fontSize: 12, fontWeight: '800', letterSpacing: 1, color: result === 'VITÓRIA' ? colors.success : result === 'DERROTA' ? colors.caution : colors.muted }}>{result}</Text> : null}
         {status ? <Text style={type.caption}>{status}</Text> : null}
         {(stats.length > 0 || note) && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, borderTopWidth: 1, borderTopColor: hair, paddingTop: 10 }}>

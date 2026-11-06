@@ -6,7 +6,7 @@ import { Pressable, View } from 'react-native';
 import { Text } from './text';
 import { colors, radius } from './theme';
 
-export const hair = '#E6EBF3';
+export const hair = colors.line;
 
 // ---------------------------------------------------------------------------------------------------------------
 // StatStrip: números lado a lado separados por filetes verticais (sem cartão).
