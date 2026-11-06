@@ -28,7 +28,9 @@ export type IconName =
   | 'selecionado'
   | 'pendente'
   | 'alerta'
-  | 'fechar';
+  | 'fechar'
+  | 'subir'
+  | 'descer';
 
 export function Icon({ name, size = 24, color = colors.blue, strokeWidth = 1.8 }: { name: IconName; size?: number; color?: string; strokeWidth?: number }) {
   const p = { stroke: color, strokeWidth, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
@@ -147,6 +149,8 @@ export function Icon({ name, size = 24, color = colors.blue, strokeWidth = 1.8 }
           <Path d="M12 10v4M12 17.4v.1" {...p} />
         </>
       )}
+      {name === 'subir' && <Path d="M6 15l6-6 6 6" {...p} strokeWidth={2} />}
+      {name === 'descer' && <Path d="M6 9l6 6 6-6" {...p} strokeWidth={2} />}
       {name === 'fechar' && <Path d="M6 6l12 12M18 6L6 18" {...p} strokeWidth={2} />}
     </Svg>
   );

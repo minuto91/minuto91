@@ -13,7 +13,7 @@ import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors } from '../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Chips, ErrorText, Input, LoadingBlock, Screen, Sub, Title, LinkLabel } from '../../../lib/ui';
 import { createGate, MATCH_PENDING, MATCH_STATUS, NEXT_ACTION } from '../../../lib/v85';
 
 type Item = {
@@ -128,7 +128,7 @@ export default function Partidas() {
       ) : (
         items.map((x) => (
           <Pressable key={x.id} accessibilityRole="button" onPress={() => open(x)}>
-            <Card>
+            <Block>
               <Body>
                 {x.team_a_score != null && x.status !== 'annulled' && x.status !== 'cancelled'
                   ? `${x.team_a_name} ${x.team_a_score} x ${x.team_b_score} ${x.team_b_name}`
@@ -141,10 +141,10 @@ export default function Partidas() {
               {x.pending && (
                 <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginTop: 4 }}>
                   <Text style={{ color: colors.darkGold, fontSize: 13, fontWeight: '600' }}>{MATCH_PENDING[x.pending] ?? x.pending}</Text>
-                  {x.next_action && x.next_action !== 'VIEW' && <Text style={{ color: colors.blue, fontSize: 13, fontWeight: '700' }}>{NEXT_ACTION[x.next_action]} ›</Text>}
+                  {x.next_action && x.next_action !== 'VIEW' && <LinkLabel style={{ color: colors.blue, fontSize: 13, fontWeight: '700' }}>{NEXT_ACTION[x.next_action]}</LinkLabel>}
                 </View>
               )}
-            </Card>
+            </Block>
           </Pressable>
         ))
       )}

@@ -232,7 +232,7 @@ export default function Escalacoes() {
       const choice = t === 'A' ? fEdit.fa : fEdit.fb;
       const name = t === 'A' ? l.team_a_name : l.team_b_name;
       return (
-        <Card key={t}>
+        <Block key={t}>
           <Body>{name}</Body>
           {n === FORMATION_SIZE ? (
             <Chips options={FORMATION_OPTIONS} value={choice} onChange={(v) => escolherFormacao(t, v)} />
@@ -249,7 +249,7 @@ export default function Escalacoes() {
               onPressPlayer={tocar}
             />
           )}
-        </Card>
+        </Block>
       );
     };
     return (
@@ -293,7 +293,7 @@ export default function Escalacoes() {
 
       {lineups?.length === 0 && comps.length === 0 && !editing && <EmptyState title="Nenhuma escalação" />}
       {lineups?.map((l) => (
-        <Card key={l.id}>
+        <Block key={l.id}>
           <Body>{l.label}</Body>
           <Sub>
             {l.source === 'draw' ? 'Do sorteio' : 'Montada à mão'}
@@ -330,7 +330,7 @@ export default function Escalacoes() {
               <Button title="Cancelar escalação" kind="secondary" onPress={() => cancelar(l)} loading={busy === `cancelar-${l.id}`} />
             </>
           )}
-        </Card>
+        </Block>
       ))}
 
       {isStaff && !premium && (

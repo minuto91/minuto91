@@ -14,7 +14,7 @@ import { supabase } from '../../../../lib/supabase';
 import { useSticky } from '../../../../lib/sticky';
 import { colors } from '../../../../lib/theme';
 import { Icon } from '../../../../lib/icons';
-import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, ListScreen, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
+import { Block, Body, Button, Chips, EmptyState, ErrorText, Input, ListScreen, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
 
 const STATUS = [
   { value: 'open', label: 'Em aberto' },
@@ -326,7 +326,7 @@ export default function Cobrancas() {
         const here = panel?.charge === c.id ? panel : null;
         const openCharge = c.status === 'pending' || c.status === 'partial';
         return (
-          <Card>
+          <Block>
             <View style={{ flexDirection: 'row', gap: 8, alignItems: 'flex-start' }}>
               <View style={{ flex: 1, gap: 2 }}>
                 <Pressable
@@ -426,7 +426,7 @@ export default function Cobrancas() {
                 <Button title="Voltar" kind="secondary" onPress={() => setPanel(null)} />
               </View>
             )}
-          </Card>
+          </Block>
         );
       }}
     />

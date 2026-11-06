@@ -5,6 +5,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, Switch, View } from 'react-native';
 
+import { Icon } from '../lib/icons';
 import { Notice } from '../lib/central';
 import { loadLayout, useBlock } from '../lib/centraldata';
 import { confirm } from '../lib/dialog';
@@ -129,8 +130,8 @@ export default function PersonalizarCentral() {
                 />
               </View>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <MoveButton label={`Subir ${LABEL[id].title}`} glyph="↑" disabled={i === 0} onPress={() => setEdit({ ...draft, order: moveBlock(draft.order, id, -1) })} />
-                <MoveButton label={`Descer ${LABEL[id].title}`} glyph="↓" disabled={i === draft.order.length - 1} onPress={() => setEdit({ ...draft, order: moveBlock(draft.order, id, 1) })} />
+                <MoveButton label={`Subir ${LABEL[id].title}`} glyph="subir" disabled={i === 0} onPress={() => setEdit({ ...draft, order: moveBlock(draft.order, id, -1) })} />
+                <MoveButton label={`Descer ${LABEL[id].title}`} glyph="descer" disabled={i === draft.order.length - 1} onPress={() => setEdit({ ...draft, order: moveBlock(draft.order, id, 1) })} />
               </View>
             </View>
           );
@@ -146,7 +147,7 @@ export default function PersonalizarCentral() {
   );
 }
 
-function MoveButton({ label, glyph, disabled, onPress }: { label: string; glyph: string; disabled: boolean; onPress: () => void }) {
+function MoveButton({ label, glyph, disabled, onPress }: { label: string; glyph: 'subir' | 'descer'; disabled: boolean; onPress: () => void }) {
   return (
     <Pressable
       onPress={() => {
@@ -158,7 +159,7 @@ function MoveButton({ label, glyph, disabled, onPress }: { label: string; glyph:
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       style={{ minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.white, opacity: disabled ? 0.35 : 1 }}>
-      <Text style={{ fontSize: 18, fontWeight: '800', color: colors.blue }}>{glyph}</Text>
+      <Icon name={glyph} size={22} color={colors.blue} />
     </Pressable>
   );
 }

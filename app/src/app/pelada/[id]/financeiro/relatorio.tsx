@@ -11,6 +11,7 @@ import { ExportTotal, exportProblems } from '../../../../lib/exportCheck';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
 import { Block, Body, Button, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
+import { Icon } from '../../../../lib/icons';
 
 type Report = {
   month: string;
@@ -182,7 +183,7 @@ export default function Relatorio() {
               onPress={() => setMonth(monthShift(month, 1))}
               disabled={month >= monthShift(today, 0)}
               style={{ minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'flex-end', opacity: month >= monthShift(today, 0) ? 0.3 : 1 }}>
-              <Text style={{ color: colors.blue, fontSize: 22, fontWeight: '800' }}>›</Text>
+              <Icon name="chevron" size={20} color={colors.blue} />
             </Pressable>
           </View>
           {!report && !msg && <LoadingBlock />}

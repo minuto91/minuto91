@@ -10,7 +10,7 @@ import { DateField, Field, People, Person, PersonPicker } from '../../../../lib/
 import { centsToInput, fmtDay, formatBRL, monthShift, parseBRL } from '../../../../lib/money';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../../lib/ui';
+import { Block, Body, Button, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../../lib/ui';
 
 type Monthly = People['monthly'][number];
 const STATUS_LABEL = { active: 'Ativo', suspended: 'Suspenso', ended: 'Encerrado' } as const;
@@ -154,7 +154,7 @@ export default function Mensalistas() {
       {people && all.length === 0 && <EmptyState title="Nenhum mensalista" />}
       {all.length > 0 && list.length === 0 && <EmptyState title="Ninguém com esse filtro" />}
       {list.map((m) => (
-        <Card key={m.id}>
+        <Block key={m.id}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <View style={{ flex: 1 }}>
               <Body>{m.person_name}</Body>
@@ -200,7 +200,7 @@ export default function Mensalistas() {
               </View>
             </View>
           )}
-        </Card>
+        </Block>
       ))}
     </Screen>
   );

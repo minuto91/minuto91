@@ -5,6 +5,8 @@ import { Pressable, View } from 'react-native';
 
 import { Text } from './text';
 import { colors, radius } from './theme';
+import { Icon } from './icons';
+import { LinkLabel } from './ui';
 
 export const hair = colors.line;
 
@@ -167,7 +169,7 @@ export function VotePendingRow({
           </Text>
         ) : null}
       </View>
-      <Text style={{ fontSize: 14, fontWeight: '700', color: colors.blue }}>{action} ›</Text>
+      <LinkLabel style={{ fontSize: 14, fontWeight: '700', color: colors.blue }}>{action}</LinkLabel>
     </Pressable>
   );
 }
@@ -239,7 +241,7 @@ export function RankingRow({
         <Text style={{ color: colors.deepBlue, fontWeight: '800', fontSize: 18, fontVariant: ['tabular-nums'] }}>{value}</Text>
         {unit ? <Text style={{ color: colors.muted, fontSize: 12 }}>{unit}</Text> : null}
       </View>
-      <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+      <Icon name="chevron" size={20} color={colors.muted} />
     </Pressable>
   );
 }

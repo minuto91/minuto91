@@ -67,7 +67,7 @@ export function NextGameCard({ round, crestPath, stale, onPress }: { round: Next
         <Text style={type.meta} numberOfLines={2}>{[day, time, round.location].filter(Boolean).join(' · ')}</Text>
         {stale ? <Text style={type.meta}>Informação anterior: confirme na partida.</Text> : null}
       </View>
-      <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+      <Icon name="chevron" size={20} color={colors.muted} />
     </Pressable>
   );
 }

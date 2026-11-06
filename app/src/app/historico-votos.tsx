@@ -10,7 +10,7 @@ import { fmtDate } from '../lib/match';
 import { supabase } from '../lib/supabase';
 import { Text } from '../lib/text';
 import { colors } from '../lib/theme';
-import { Card, EmptyState, ErrorText, LoadingBlock, Screen, Sub, Title } from '../lib/ui';
+import { Block, EmptyState, ErrorText, LoadingBlock, Screen, Sub, Title } from '../lib/ui';
 
 type Row = { match_id: string; played_at: string; pelada_id: string; pelada_name: string; team_a_name: string; team_b_name: string };
 
@@ -52,10 +52,10 @@ export default function HistoricoVotos() {
           key={r.match_id}
           accessibilityRole="button"
           onPress={() => router.push({ pathname: '/partida/[id]/meus-votos', params: { id: r.match_id } })}>
-          <Card>
+          <Block>
             <Text style={{ color: colors.ink, fontWeight: '700' }}>{r.pelada_name}</Text>
             <Sub>{`${fmtDate(r.played_at)} · ${r.team_a_name} x ${r.team_b_name}`}</Sub>
-          </Card>
+          </Block>
         </Pressable>
       ))}
     </Screen>

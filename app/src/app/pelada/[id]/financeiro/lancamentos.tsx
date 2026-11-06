@@ -22,7 +22,8 @@ import {
 import { Page, usePaged } from '../../../../lib/paging';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Button, Card, Chips, EmptyState, ErrorText, Input, ListScreen, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
+import { Block, Button, Chips, EmptyState, ErrorText, Input, ListScreen, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
+import { Icon } from '../../../../lib/icons';
 
 type Movement = {
   source: 'payment' | 'entry';
@@ -201,7 +202,7 @@ export default function Lancamentos() {
           onPress={() => setMonth(monthShift(month, 1))}
           disabled={month >= monthShift(today, 0)}
           style={{ minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'flex-end', opacity: month >= monthShift(today, 0) ? 0.3 : 1 }}>
-          <Text style={{ color: colors.blue, fontSize: 22, fontWeight: '800' }}>›</Text>
+          <Icon name="chevron" size={20} color={colors.blue} />
         </Pressable>
       </View>
       <Chips options={DIRECTIONS} value={direction} onChange={(v) => setDirection(v)} />
@@ -235,7 +236,7 @@ export default function Lancamentos() {
       onEndReached={list.loadMore}
       footer={list.hasMore && !list.loadingMore ? <Button title="Carregar mais" kind="secondary" onPress={list.loadMore} /> : null}
       renderItem={(r) => (
-        <Card>
+        <Block>
           <View style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
             <View style={{ flex: 1 }}>
               <Text style={{ color: colors.ink, fontWeight: '600' }}>{r.description}</Text>
@@ -294,7 +295,7 @@ export default function Lancamentos() {
               <Button title="Voltar" kind="secondary" onPress={() => setCancelling(null)} />
             </View>
           )}
-        </Card>
+        </Block>
       )}
     />
   );

@@ -10,6 +10,7 @@ import { Text } from './text';
 import { fmtDate, fmtTime, Match, scoreLine } from './match';
 import { supabase } from './supabase';
 import { colors } from './theme';
+import { LinkLabel } from './ui';
 
 type Voting = { id: string; match_id: string; closes_at: string; eligible_voter_count: number; voted: number; expired: boolean };
 type Item = { key: string; title: string; detail: string; action: string; urgent?: boolean; onPress?: () => void };
@@ -139,7 +140,11 @@ export function AdminPending({
           style={{ gap: 2, paddingTop: i ? 10 : 0, borderTopWidth: i ? 1 : 0, borderTopColor: colors.line }}>
           <Text style={{ fontWeight: '700', color: it.urgent ? colors.danger : colors.ink }}>{it.title}</Text>
           <Text style={{ color: colors.muted, fontSize: 13 }}>{it.detail}</Text>
-          <Text style={{ color: it.onPress ? colors.blue : colors.muted, fontWeight: '700', fontSize: 13 }}>{it.action}{it.onPress ? ' ›' : ''}</Text>
+          {it.onPress ? (
+            <LinkLabel style={{ color: colors.blue, fontWeight: '700', fontSize: 13 }}>{it.action}</LinkLabel>
+          ) : (
+            <Text style={{ color: colors.muted, fontWeight: '700', fontSize: 13 }}>{it.action}</Text>
+          )}
         </Pressable>
       ))}
     </View>

@@ -8,7 +8,7 @@ import { Stat } from '../../../../lib/financeui';
 import { fmtDay, formatBRL, monthLabel } from '../../../../lib/money';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Block, Body, Button, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
+import { Block, Body, Button, ErrorText, LinkLabel, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
 
 type Access = {
   can_access: boolean;
@@ -216,7 +216,7 @@ export default function Financeiro() {
                   backgroundColor: colors.bg,
                   opacity: pressed ? 0.7 : 1,
                 })}>
-                <Text style={{ color: colors.ink, fontWeight: '700' }}>{t} ›</Text>
+                <LinkLabel style={{ color: colors.ink, fontWeight: '700' }}>{t}</LinkLabel>
               </Pressable>
             ))}
           </View>

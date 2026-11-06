@@ -1,5 +1,5 @@
 import { ReactNode, useEffect, useState } from 'react';
-import { ActivityIndicator, Animated, FlatList, Platform, Pressable, ScrollView, StyleSheet, TextInputProps, View } from 'react-native';
+import { ActivityIndicator, Animated, FlatList, Platform, Pressable, ScrollView, StyleSheet, TextInputProps, type TextStyle, View } from 'react-native';
 import { Text, TextInput } from './text';
 
 import { Icon, type IconName } from './icons';
@@ -208,6 +208,17 @@ export function Card({ children }: { children: ReactNode }) {
 /** V10.1: bloco de conteúdo sem moldura de card, separado do seguinte por uma linha fina (substitui Card em seções de tela). */
 export function Block({ children }: { children: ReactNode }) {
   return <View style={{ gap: 8, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.line }}>{children}</View>;
+}
+
+/** V10.1: texto de ação com seta (ícone) no fim, no lugar do "›" em texto. A cor da seta acompanha a do texto. */
+export function LinkLabel({ children, style }: { children: ReactNode; style?: TextStyle | TextStyle[] }) {
+  const flat = StyleSheet.flatten(style) ?? {};
+  return (
+    <View style={{ flexDirection: 'row', alignItems: 'center', gap: 2 }}>
+      <Text style={[{ flexShrink: 1 }, style]}>{children}</Text>
+      <Icon name="chevron" size={16} color={String(flat.color ?? colors.blue)} />
+    </View>
+  );
 }
 
 /** V10.1: linha fina de separação (colors.line), usada no lugar de molduras de card. */

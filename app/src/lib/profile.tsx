@@ -12,6 +12,7 @@ import { fmtRating } from './match';
 import { supabase } from './supabase';
 import { colors, positionLabel } from './theme';
 import { Body, Card, EmptyState, Sub } from './ui';
+import { Icon } from './icons';
 
 export type Visibility = 'private' | 'peladas' | 'public';
 
@@ -292,7 +293,7 @@ export function PeladasList({ peladas, isMe }: { peladas: ProfilePelada[]; isMe:
                 {p.status === 'left' ? 'Saiu da pelada · histórico guardado' : `${roleName(p.role)} · ${positionLabel(p.position)}`}
               </Sub>
             </View>
-            {isMe && p.status === 'active' && <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>}
+            {isMe && p.status === 'active' && <Icon name="chevron" size={20} color={colors.muted} />}
           </View>
         );
         return isMe && p.status === 'active' ? (

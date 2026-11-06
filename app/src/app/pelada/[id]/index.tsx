@@ -15,7 +15,7 @@ import { PositionRequests } from '../../../lib/ratingadmin';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { Body, Button, ErrorText, ListGroup, ListRow, Screen, Sub } from '../../../lib/ui';
+import { Body, Button, ErrorText, ListGroup, ListRow, Screen, Sub, LinkLabel } from '../../../lib/ui';
 import { MatchScore } from '../../../lib/domain';
 
 type Member = { id: string; user_id: string | null; player_name: string; role: string; preferred_position: string; position_code?: string | null };
@@ -258,7 +258,7 @@ export default function CentralDaRodada() {
                 </Body>
               )}
               <Sub>Votação até {fmtDate(v.closesAt)}, {fmtTime(v.closesAt)}</Sub>
-              <Text style={{ color: colors.blue, fontWeight: '700' }}>Votar ›</Text>
+              <LinkLabel style={{ color: colors.blue, fontWeight: '700' }}>Votar</LinkLabel>
             </View>
           </Pressable>
         );
@@ -325,7 +325,7 @@ export default function CentralDaRodada() {
                 </View>
               ))}
             {lastHighlights.length === 0 && <Sub>Sem Craque apurado nesta rodada.</Sub>}
-            <Text style={{ color: colors.blue, fontWeight: '700', marginTop: 2 }}>Ver partida e compartilhar ›</Text>
+            <LinkLabel style={{ color: colors.blue, fontWeight: '700', marginTop: 2 }}>Ver partida e compartilhar</LinkLabel>
           </View>
         </Pressable>
       )}
@@ -358,7 +358,7 @@ export default function CentralDaRodada() {
           accessibilityRole="button"
           onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: me.id } })}
           style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.gold }}>
-          <Text style={{ color: colors.darkGold, fontWeight: '600', fontSize: 14 }}>Atualize sua posição: agora são dez posições oficiais ›</Text>
+          <LinkLabel style={{ color: colors.darkGold, fontWeight: '600', fontSize: 14 }}>Atualize sua posição: agora são dez posições oficiais</LinkLabel>
         </Pressable>
       )}
 
@@ -384,11 +384,11 @@ export default function CentralDaRodada() {
                   {fmtDate(x.played_at)} · {STATUS_LABEL[x.status] ?? x.status}
                 </Text>
               </View>
-              <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+              <Icon name="chevron" size={20} color={colors.muted} />
             </Pressable>
           ))}
           <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/pelada/[id]/partidas', params: { id } })}>
-            <Text style={{ color: colors.blue, fontWeight: '700', paddingVertical: 8 }}>Ver todas as partidas ›</Text>
+            <LinkLabel style={{ color: colors.blue, fontWeight: '700', paddingVertical: 8 }}>Ver todas as partidas</LinkLabel>
           </Pressable>
         </View>
       )}

@@ -15,6 +15,7 @@ import { colors, type } from '../../../lib/theme';
 import { Toggle } from '../../../lib/toggle';
 import { Block, Body, Button, Chips, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 import { StepSlider } from '../../../lib/stepslider';
+import { Icon } from '../../../lib/icons';
 
 const DURATIONS = [
   { value: '120', label: '2 horas' },
@@ -206,7 +207,7 @@ export default function Configuracoes() {
               style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.line }}>
               <Text style={[type.body, { flex: 1 }]}>{s.label}</Text>
               {s.key === 'plano' && <Text style={{ color: premium ? colors.darkGold : colors.muted, fontWeight: '700', marginRight: 8 }}>{premium ? 'Premium' : 'Basic'}</Text>}
-              <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+              <Icon name="chevron" size={20} color={colors.muted} />
             </Pressable>
           ))}
         </View>

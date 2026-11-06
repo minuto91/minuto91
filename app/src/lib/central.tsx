@@ -14,6 +14,7 @@ import { deltaA11y, deltaText, leftLabel, matchRating, type MatchRating } from '
 import { Crest } from './crest';
 import { hair, StatStrip, VotePendingRow } from './domain';
 import { Icon } from './icons';
+import { LinkLabel } from './ui';
 import { fmtDate } from './match';
 import { haptic, useReducedMotion } from './motion';
 import { CARD_RATIO, PlayerCard } from './playercard';
@@ -555,7 +556,7 @@ export function NextRoundCard({ round, crestPath, more, stale, onPress }: { roun
           {more > 0 ? ` · +${more} ${more === 1 ? 'rodada' : 'rodadas'}` : ''}
         </Text>
         {stale ? <Text style={type.meta}>Informação anterior: confirme na rodada.</Text> : null}
-        <Text style={{ ...link, fontSize: 14 }}>Ver rodada ›</Text>
+        <LinkLabel style={{ ...link, fontSize: 14 }}>Ver rodada</LinkLabel>
       </View>
     </Pressable>
   );
@@ -665,7 +666,7 @@ export function MyPeladasBlock({
 }) {
   return (
     <View style={{ gap: 4 }}>
-      <BlockTitle right={seeAll ? <Pressable onPress={onSeeAll} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ ...link, fontSize: 14 }}>Ver todas ›</Text></Pressable> : undefined}>
+      <BlockTitle right={seeAll ? <Pressable onPress={onSeeAll} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}><LinkLabel style={{ ...link, fontSize: 14 }}>Ver todas</LinkLabel></Pressable> : undefined}>
         Minhas Peladas
       </BlockTitle>
       <View style={{ ...box, paddingVertical: 4, gap: 0 }}>
@@ -683,7 +684,7 @@ export function MyPeladasBlock({
               </Text>
               <Text style={type.meta}>{roleNote(p.role)}</Text>
             </View>
-            <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text>
+            <Icon name="chevron" size={20} color={colors.muted} />
           </Pressable>
         ))}
       </View>
