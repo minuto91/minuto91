@@ -2,13 +2,13 @@
 
 Somente trabalho efetivamente feito. Versões anteriores: `docs/v77/` (V7.7) e `docs/rev80/RELATORIO_REV80.md` (V8.0).
 
-## V10.1 — Redesign visual e de experiência (em andamento, 05–06/11/2026) — só apresentação; nada em banco, regra ou permissão
+## V10.1 — Redesign visual e de experiência (05–06/11/2026) — só apresentação; nada em banco, regra ou permissão
 
-Detalhes: `docs/V10.1_IMPLEMENTACAO.md`. Referência: Figma "Minuto 91 · V10.1 Redesign".
+Detalhes: `docs/V10.1_IMPLEMENTACAO.md` e `docs/V10.1_RELATORIO_FINAL.md`. Referência: Figma "Minuto 91 · V10.1 Redesign". **Aguarda validação do fundador no iPhone.**
 
-- Fundo das telas em branco; estilos de texto de botão e aba; ícones unificados (abas, sino, estados) no lugar de `✓ ○ ⚠ ✕ ›`.
-- Componentes `ListRow`, `ListGroup`, `Divider`, `Block` e `Stat`; aviso offline com ícone.
-- Blocos sem moldura de card em Início, Peladas, Pelada, Perfil, Minha conta, Carreira, Partida, Súmula, Votação, Financeiro, Relatórios, Premium, Sorteio, Escalações e Card do jogador.
+- Fundo das telas em branco; estilos de texto de botão e aba; ícones unificados; tokens semânticos (sucesso, atenção, aviso).
+- Componentes `ListRow`, `ListGroup`, `Divider`, `Block`, `Stat`, `LinkLabel`; aviso offline com ícone; placar claro sem faixa azul.
+- Blocos sem moldura de card na maior parte das telas; título repetido removido (cabeçalho nativo fica); setas em texto viraram ícones.
 - Login com a logo (imagem provisória) no lugar do texto "Minuto 91"; "carta" → "Card" na permissão de fotos; versão 10.1.0 (build 2).
 - Card, troféus, figurinhas, artes de compartilhar e campo da Seleção não foram alterados.
 
