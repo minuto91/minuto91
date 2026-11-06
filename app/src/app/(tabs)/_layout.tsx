@@ -3,34 +3,9 @@
 // "/perfil"; "/peladas" é nova): links diretos, avisos e o botão voltar seguem funcionando. Telas de dentro (pelada,
 // partida, card...) abrem por cima das abas, na pilha principal.
 import { Tabs } from 'expo-router/js-tabs';
-import Svg, { Circle, Path } from 'react-native-svg';
-
+import { Icon } from '../../lib/icons';
 import { emitHomeTabRepress } from '../../lib/tabevents';
 import { colors } from '../../lib/theme';
-
-type TabIcon = 'inicio' | 'peladas' | 'carreira' | 'perfil';
-
-function Icon({ name, color }: { name: TabIcon; color: string }) {
-  const p = { stroke: color, strokeWidth: 1.9, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-  return (
-    <Svg width={22} height={22} viewBox="0 0 24 24">
-      {name === 'inicio' && <Path d="M3 11 L12 4 L21 11 V20 H14 V14 H10 V20 H3 Z" {...p} />}
-      {name === 'peladas' && (
-        <>
-          <Circle cx={12} cy={12} r={9} {...p} />
-          <Path d="M12 7.5 L16 10.5 L14.5 15 H9.5 L8 10.5 Z" {...p} />
-        </>
-      )}
-      {name === 'carreira' && <Path d="M5 20 V13 M10 20 V9 M15 20 V12 M20 20 V5" {...p} />}
-      {name === 'perfil' && (
-        <>
-          <Circle cx={12} cy={8} r={4} {...p} />
-          <Path d="M4.5 20.5 C5.5 16.5 8.5 14.5 12 14.5 C15.5 14.5 18.5 16.5 19.5 20.5" {...p} />
-        </>
-      )}
-    </Svg>
-  );
-}
 
 export default function TabsLayout() {
   return (
@@ -51,21 +26,21 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         // Central 2.0: cabeçalho próprio (foto, saudação, "Central do Jogador" e avisos), com a área segura do topo.
-        options={{ title: 'Início', headerShown: false, tabBarIcon: ({ color }) => <Icon name="inicio" color={String(color)} /> }}
+        options={{ title: 'Início', headerShown: false, tabBarIcon: ({ color }) => <Icon name="inicio" size={22} color={String(color)} strokeWidth={1.9} /> }}
         // E09: toque na aba já ativa — a tela decide (topo da página ou atualização de leitura).
         listeners={{ tabPress: () => emitHomeTabRepress() }}
       />
       <Tabs.Screen
         name="peladas"
-        options={{ title: 'Peladas', headerTitle: 'Minhas peladas', tabBarIcon: ({ color }) => <Icon name="peladas" color={String(color)} /> }}
+        options={{ title: 'Peladas', headerTitle: 'Minhas peladas', tabBarIcon: ({ color }) => <Icon name="peladas" size={22} color={String(color)} strokeWidth={1.9} /> }}
       />
       <Tabs.Screen
         name="carreira"
-        options={{ title: 'Carreira', headerTitle: 'Minha Carreira', tabBarIcon: ({ color }) => <Icon name="carreira" color={String(color)} /> }}
+        options={{ title: 'Carreira', headerTitle: 'Minha Carreira', tabBarIcon: ({ color }) => <Icon name="carreira" size={22} color={String(color)} strokeWidth={1.9} /> }}
       />
       <Tabs.Screen
         name="perfil"
-        options={{ title: 'Perfil', headerTitle: 'Meu perfil', tabBarIcon: ({ color }) => <Icon name="perfil" color={String(color)} /> }}
+        options={{ title: 'Perfil', headerTitle: 'Meu perfil', tabBarIcon: ({ color }) => <Icon name="perfil" size={22} color={String(color)} strokeWidth={1.9} /> }}
       />
     </Tabs>
   );

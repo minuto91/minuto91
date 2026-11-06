@@ -10,7 +10,7 @@ import { supabase } from '../lib/supabase';
 import { Text } from '../lib/text';
 import { colors } from '../lib/theme';
 import { TrophyRoom } from '../lib/trophies';
-import { ErrorText, LoadingBlock, Screen, Sub, Title } from '../lib/ui';
+import { ErrorText, LoadingBlock, Screen, Sub } from '../lib/ui';
 import { scopedTitles, SeasonTitle, showMyAwards, showOrigin } from '../lib/v87logic';
 
 export default function MeusTrofeus() {
@@ -56,7 +56,6 @@ export default function MeusTrofeus() {
   const items = scopedTitles(titles, null);
   return (
     <Screen>
-      <Title>Meus Troféus</Title>
       <TrophyRoom userId={uid} counts={career.trophies} partial={career.partial} shareName={name} />
       {showMyAwards(items) && (
         <>

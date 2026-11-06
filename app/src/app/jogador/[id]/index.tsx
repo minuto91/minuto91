@@ -26,7 +26,7 @@ import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, footLabel, memberPosition, needsPositionUpdate, Position, positionLabel, positionSector } from '../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, LoadingBlock, PositionPicker, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Card, Chips, ErrorText, LoadingBlock, PositionPicker, Screen, Sub, Title } from '../../../lib/ui';
 
 type Membership = {
   id: string;
@@ -234,7 +234,7 @@ export default function Carta() {
       )}
 
       {stats && member.status !== 'retired' && (
-        <Card>
+        <Block>
           <Body>Números da temporada</Body>
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             <Stat label="Partidas" value={String(stats.matches_played)} />
@@ -265,29 +265,29 @@ export default function Carta() {
             {plural(stats.current_unbeaten_streak, 'jogo sem perder', 'jogos sem perder')}. Recorde:{' '}
             {plural(stats.best_win_streak, 'vitória seguida', 'vitórias seguidas')}.
           </Sub>
-        </Card>
+        </Block>
       )}
 
       {card && member.status !== 'retired' && (
-        <Card>
+        <Block>
           <Body>Evolução na temporada</Body>
           {evo.error ? <Sub>{evo.error}</Sub> : evo.data ? <EvolutionChart evolution={evo.data} /> : <LoadingBlock />}
-        </Card>
+        </Block>
       )}
 
       {Object.keys(awards).length > 0 && (
-        <Card>
+        <Block>
           <Body>Prêmios na temporada</Body>
           {Object.entries(awards).map(([k, n]) => (
             <Sub key={k}>
               {AWARD_LABEL[k] ?? k}: {n}
             </Sub>
           ))}
-        </Card>
+        </Block>
       )}
 
       {isMe && member.status === 'active' && (
-        <Card>
+        <Block>
           <Body>Minha posição nesta pelada</Body>
           {legacy ? (
             <Text style={{ color: colors.darkGold, fontWeight: '600' }}>
@@ -310,7 +310,7 @@ export default function Carta() {
             <Button title={`Mudar para ${positionLabel(newPos)}`} onPress={salvarPosicao} loading={posBusy} />
           )}
           {posOk && <Text style={{ color: colors.ink, fontWeight: '600' }}>{posOk}</Text>}
-        </Card>
+        </Block>
       )}
 
       {member.user_id && member.status !== 'retired' && (isMe || globalVisible) && (

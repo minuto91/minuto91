@@ -17,7 +17,7 @@ import { colors, positionLabel } from '../../lib/theme';
 import { MatchHistory } from '../../lib/history';
 import { SeasonTitle } from '../../lib/v87logic';
 import { TROPHIES, TrophyArt, type TrophyType } from '../../lib/trophies';
-import { Button, Card, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
+import { Button, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../lib/ui';
 
 type Me = { display_name: string; avatar_path: string | null; dominant_foot: string | null };
 
@@ -172,7 +172,7 @@ function PeladaCareer({ p, me, many }: { p: SummaryPelada; me: Me; many: boolean
       )}
 
       <Text style={sub}>Estatísticas</Text>
-      <Card>
+      <View style={{ gap: 12 }}>
         {p.seasons.length > 0 && (
           <Chips
             small
@@ -183,7 +183,7 @@ function PeladaCareer({ p, me, many }: { p: SummaryPelada; me: Me; many: boolean
         )}
         {/* REV-131: média de notas como indicador da grade; a fórmula e os valores são os de sempre. */}
         <TotalsGrid totals={totals} avgRating={avgLabel(season ? avg : (seasonAvg(p)))} />
-      </Card>
+      </View>
 
       <Text style={sub}>Evolução</Text>
       {evoSeason ? <Evolution membershipId={p.membership_id} seasonId={evoSeason} /> : <Sub>Sem partidas finalizadas nas temporadas disponíveis.</Sub>}

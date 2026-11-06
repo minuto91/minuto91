@@ -6,7 +6,7 @@ import { HOME } from '../lib/theme';
 
 import { friendly } from '../lib/errors';
 import { supabase } from '../lib/supabase';
-import { Body, Button, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
+import { Body, Button, ErrorText, Input, Screen, Sub } from '../lib/ui';
 
 // A17: o link do e-mail "Esqueci minha senha" abre esta tela. O Supabase manda a sessão de recuperação
 // no fragmento (#access_token=...&type=recovery) ou um código (?code=..., fluxo PKCE); link vencido ou
@@ -74,7 +74,6 @@ export default function RedefinirSenha() {
 
   return (
     <Screen>
-      <Title>Nova senha</Title>
       {phase === 'checking' && <Sub>Conferindo o link...</Sub>}
       {phase === 'invalid' && (
         <>

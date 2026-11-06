@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { ATTRIBUTES_V3_KEEPER, ATTRIBUTES_V3_LINE, TIER } from '../lib/career';
 import { markGuide } from '../lib/careerv2';
 import { TROPHIES, TrophyArt } from '../lib/trophies';
-import { Body, Button, Card, Screen, Sub, Title } from '../lib/ui';
+import { Block, Body, Button, Screen, Sub } from '../lib/ui';
 
 // Guia inicial (V4.4), passo "Entender Cards e premiações": uma tela curta, sem formulário. Abrir conta como visto.
 // Só descreve o que o app já faz (as fórmulas oficiais não mudam e não são detalhadas aqui).
@@ -16,8 +16,7 @@ export default function GuiaCards() {
   }, []);
   return (
     <Screen>
-      <Title>Cards e premiações</Title>
-      <Card>
+      <Block>
         <Body>Seu Card</Body>
         <Sub>
           Cada pelada tem o seu Card, por temporada. O overall vem dos números oficiais das partidas e das notas que os colegas dão
@@ -35,8 +34,8 @@ export default function GuiaCards() {
         <Sub>
           Categorias: {TIER.bronze.label}, {TIER.prata.label} e {TIER.ouro.label}. Nas primeiras partidas o Card aparece como provisório.
         </Sub>
-      </Card>
-      <Card>
+      </Block>
+      <Block>
         <Body>Sala de Troféus</Body>
         <Sub>As três premiações oficiais, com quantas vezes você ganhou cada uma e quando:</Sub>
         <View style={{ flexDirection: 'row', justifyContent: 'space-around' }}>
@@ -47,11 +46,11 @@ export default function GuiaCards() {
             </View>
           ))}
         </View>
-      </Card>
-      <Card>
+      </Block>
+      <Block>
         <Body>Álbum de Figurinhas</Body>
         <Sub>Marcos que você acumula jogando, em todas as peladas.</Sub>
-      </Card>
+      </Block>
       <Button title="Ver Minha Carreira" onPress={() => router.replace('/carreira')} />
     </Screen>
   );

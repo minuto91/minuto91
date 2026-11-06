@@ -103,7 +103,7 @@ export default function Album() {
           <Text style={type.number}>{done}</Text>
           <Text style={type.caption}>de {total} figurinhas conquistadas</Text>
         </View>
-        <View style={{ height: 8, borderRadius: 4, backgroundColor: '#E6EBF3', overflow: 'hidden' }} accessibilityLabel={`${done} de ${total}`}>
+        <View style={{ height: 8, borderRadius: 4, backgroundColor: colors.line, overflow: 'hidden' }} accessibilityLabel={`${done} de ${total}`}>
           <View style={{ height: 8, width: `${total ? (done / total) * 100 : 0}%`, backgroundColor: colors.blue }} />
         </View>
         <Sub>Conquistadas jogando, nunca compradas. Toque numa figurinha para ver o requisito.</Sub>

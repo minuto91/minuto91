@@ -15,7 +15,7 @@ import { PositionRequests } from '../../../lib/ratingadmin';
 import { ReportLink } from '../../../lib/report';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { Body, Button, ErrorText, Screen, Sub } from '../../../lib/ui';
+import { Body, Button, ErrorText, ListGroup, ListRow, Screen, Sub, LinkLabel } from '../../../lib/ui';
 import { MatchScore } from '../../../lib/domain';
 
 type Member = { id: string; user_id: string | null; player_name: string; role: string; preferred_position: string; position_code?: string | null };
@@ -258,7 +258,7 @@ export default function CentralDaRodada() {
                 </Body>
               )}
               <Sub>Votação até {fmtDate(v.closesAt)}, {fmtTime(v.closesAt)}</Sub>
-              <Text style={{ color: colors.blue, fontWeight: '700' }}>Votar ›</Text>
+              <LinkLabel style={{ color: colors.blue, fontWeight: '700' }}>Votar</LinkLabel>
             </View>
           </Pressable>
         );
@@ -303,7 +303,7 @@ export default function CentralDaRodada() {
               mine={myTeam}
               compact
               top={
-                <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: '#9DB8E8' }} numberOfLines={1}>
+                <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: colors.muted }} numberOfLines={1}>
                   ÚLTIMO JOGO · {fmtDate(lastFinal.played_at).toUpperCase()}
                 </Text>
               }
@@ -325,7 +325,7 @@ export default function CentralDaRodada() {
                 </View>
               ))}
             {lastHighlights.length === 0 && <Sub>Sem Craque apurado nesta rodada.</Sub>}
-            <Text style={{ color: colors.blue, fontWeight: '700', marginTop: 2 }}>Ver partida e compartilhar ›</Text>
+            <LinkLabel style={{ color: colors.blue, fontWeight: '700', marginTop: 2 }}>Ver partida e compartilhar</LinkLabel>
           </View>
         </Pressable>
       )}
@@ -358,7 +358,7 @@ export default function CentralDaRodada() {
           accessibilityRole="button"
           onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: me.id } })}
           style={{ minHeight: 44, justifyContent: 'center', paddingHorizontal: 12, borderRadius: 10, borderWidth: 1, borderColor: colors.gold }}>
-          <Text style={{ color: colors.darkGold, fontWeight: '600', fontSize: 14 }}>Atualize sua posição: agora são dez posições oficiais ›</Text>
+          <LinkLabel style={{ color: colors.darkGold, fontWeight: '600', fontSize: 14 }}>Atualize sua posição: agora são dez posições oficiais</LinkLabel>
         </Pressable>
       )}
 
@@ -384,11 +384,11 @@ export default function CentralDaRodada() {
                   {fmtDate(x.played_at)} · {STATUS_LABEL[x.status] ?? x.status}
                 </Text>
               </View>
-              <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+              <Icon name="chevron" size={20} color={colors.muted} />
             </Pressable>
           ))}
           <Pressable accessibilityRole="button" onPress={() => router.push({ pathname: '/pelada/[id]/partidas', params: { id } })}>
-            <Text style={{ color: colors.blue, fontWeight: '700', paddingVertical: 8 }}>Ver todas as partidas ›</Text>
+            <LinkLabel style={{ color: colors.blue, fontWeight: '700', paddingVertical: 8 }}>Ver todas as partidas</LinkLabel>
           </Pressable>
         </View>
       )}
@@ -396,8 +396,10 @@ export default function CentralDaRodada() {
       <Group title="Desempenho" items={desempenho} premium={premium} />
       {gestao.length > 0 && <Group title="Gestão" items={gestao} premium={premium} />}
       <Text style={section}>Pelada</Text>
-      <Row title="Pelada Premium" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
-      <Row title="Sair da pelada" danger onPress={sair} />
+      <ListGroup>
+        <ListRow title="Pelada Premium" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
+        <ListRow title="Sair da pelada" danger onPress={sair} />
+      </ListGroup>
       {me && (
         <View style={{ marginTop: 6 }}>
           <ReportLink peladaId={id} targetType="pelada" targetId={id} label="Denunciar nome ou imagem da pelada" />
@@ -425,53 +427,21 @@ type GroupItem = { icon: IconName; label: string; sub: string; premium?: boolean
 
 function Group({ title, items, premium }: { title: string; items: GroupItem[]; premium: boolean }) {
   return (
-    <View style={{ gap: 8, marginTop: 10 }}>
-      <Text style={{ fontSize: 19, lineHeight: 25, fontWeight: '700', color: colors.ink }} accessibilityRole="header">
-        {title}
-      </Text>
-      <View>
-        {items.map((a, n) => (
-          <Pressable
+    <View style={{ marginTop: 10 }}>
+      <ListGroup title={title}>
+        {items.map((a) => (
+          <ListRow
             key={a.label}
-            accessibilityRole="button"
+            icon={a.icon}
+            title={a.label}
+            subtitle={a.sub}
             accessibilityLabel={a.premium && !premium ? `${a.label}, recurso da Pelada Premium` : a.label}
-            accessibilityHint={a.sub}
             onPress={a.onPress}
-            style={({ pressed }) => ({
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 12,
-              minHeight: 60,
-              paddingHorizontal: 4,
-              borderTopWidth: n ? 1 : 0,
-              borderTopColor: '#E6EBF3',
-              opacity: pressed ? 0.6 : 1,
-            })}>
-            <Icon name={a.icon} size={22} />
-            <View style={{ flex: 1, paddingVertical: 8 }}>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: colors.ink }}>{a.label}</Text>
-              <Text style={{ fontSize: 13, color: colors.muted }} numberOfLines={1}>
-                {a.sub}
-              </Text>
-            </View>
-            {a.premium && !premium && <Text style={{ fontSize: 12, fontWeight: '700', color: colors.blue }}>Premium</Text>}
-            <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text>
-          </Pressable>
+            trailing={a.premium && !premium ? <Text style={{ fontSize: 12, fontWeight: '700', color: colors.blue }}>Premium</Text> : undefined}
+          />
         ))}
-      </View>
+      </ListGroup>
     </View>
-  );
-}
-
-function Row({ title, onPress, danger }: { title: string; onPress: () => void; danger?: boolean }) {
-  return (
-    <Pressable
-      accessibilityRole="button"
-      onPress={onPress}
-      style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.line }}>
-      <Text style={{ flex: 1, fontSize: 15, color: danger ? colors.danger : colors.ink, fontWeight: '500' }}>{title}</Text>
-      {!danger && <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>}
-    </Pressable>
   );
 }
 

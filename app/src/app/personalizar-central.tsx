@@ -5,6 +5,7 @@
 import { useMemo, useState } from 'react';
 import { Pressable, Switch, View } from 'react-native';
 
+import { Icon } from '../lib/icons';
 import { Notice } from '../lib/central';
 import { loadLayout, useBlock } from '../lib/centraldata';
 import { confirm } from '../lib/dialog';
@@ -15,7 +16,7 @@ import { useAuth } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { Text } from '../lib/text';
 import { colors, type } from '../lib/theme';
-import { Button, Card, ErrorText, LoadingBlock, Screen, Sub, Title } from '../lib/ui';
+import { Button, ErrorText, LoadingBlock, Screen, Sub } from '../lib/ui';
 import { type BlockId, type Layout, moveBlock, normalizeLayout, sameLayout, toggleHidden } from '../lib/v84logic';
 
 const LABEL: Record<BlockId, { title: string; hint: string }> = {
@@ -90,7 +91,6 @@ export default function PersonalizarCentral() {
   if (!draft || !server) {
     return (
       <Screen>
-        <Title>Personalizar Central</Title>
         <ErrorText>{block.status === 'offline_uncached' ? 'Sem conexão. Conecte-se para personalizar a Central.' : (block.error ?? 'Não foi possível carregar a sua personalização.')}</ErrorText>
         <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />
       </Screen>
@@ -99,7 +99,6 @@ export default function PersonalizarCentral() {
 
   return (
     <Screen>
-      <Title>Personalizar Central</Title>
       <Sub>Escolha a ordem e o que aparece na sua tela inicial. Vale para todos os seus aparelhos.</Sub>
       {offline || block.stale ? <Notice tone="warn">Sem conexão ou sem confirmação do servidor: não é possível salvar agora.</Notice> : null}
       <ErrorText>{msg}</ErrorText>
@@ -109,7 +108,7 @@ export default function PersonalizarCentral() {
         </Text>
       )}
 
-      <Card>
+      <View>
         {draft.order.map((id, i) => {
           const hidden = draft.hidden.includes(id);
           return (
@@ -129,13 +128,13 @@ export default function PersonalizarCentral() {
                 />
               </View>
               <View style={{ flexDirection: 'row', gap: 8 }}>
-                <MoveButton label={`Subir ${LABEL[id].title}`} glyph="↑" disabled={i === 0} onPress={() => setEdit({ ...draft, order: moveBlock(draft.order, id, -1) })} />
-                <MoveButton label={`Descer ${LABEL[id].title}`} glyph="↓" disabled={i === draft.order.length - 1} onPress={() => setEdit({ ...draft, order: moveBlock(draft.order, id, 1) })} />
+                <MoveButton label={`Subir ${LABEL[id].title}`} glyph="subir" disabled={i === 0} onPress={() => setEdit({ ...draft, order: moveBlock(draft.order, id, -1) })} />
+                <MoveButton label={`Descer ${LABEL[id].title}`} glyph="descer" disabled={i === draft.order.length - 1} onPress={() => setEdit({ ...draft, order: moveBlock(draft.order, id, 1) })} />
               </View>
             </View>
           );
         })}
-      </Card>
+      </View>
 
       <Sub>Sempre visíveis: seu cabeçalho, a escolha da pelada, votações perto do fim, o Card e “Precisa de atenção”.</Sub>
 
@@ -146,7 +145,7 @@ export default function PersonalizarCentral() {
   );
 }
 
-function MoveButton({ label, glyph, disabled, onPress }: { label: string; glyph: string; disabled: boolean; onPress: () => void }) {
+function MoveButton({ label, glyph, disabled, onPress }: { label: string; glyph: 'subir' | 'descer'; disabled: boolean; onPress: () => void }) {
   return (
     <Pressable
       onPress={() => {
@@ -158,7 +157,7 @@ function MoveButton({ label, glyph, disabled, onPress }: { label: string; glyph:
       accessibilityLabel={label}
       accessibilityState={{ disabled }}
       style={{ minHeight: 44, minWidth: 44, alignItems: 'center', justifyContent: 'center', borderRadius: 12, borderWidth: 1, borderColor: colors.line, backgroundColor: colors.white, opacity: disabled ? 0.35 : 1 }}>
-      <Text style={{ fontSize: 18, fontWeight: '800', color: colors.blue }}>{glyph}</Text>
+      <Icon name={glyph} size={22} color={colors.blue} />
     </Pressable>
   );
 }

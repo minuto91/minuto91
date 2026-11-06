@@ -11,7 +11,7 @@ import { FormationField, LineupArt, LineupBoard, LineupPlayer, positionCounts } 
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, positionLabel, positionShort } from '../../../lib/theme';
-import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Card, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 import type { Composition } from '../../../lib/v85';
 
 type Lineup = {
@@ -232,7 +232,7 @@ export default function Escalacoes() {
       const choice = t === 'A' ? fEdit.fa : fEdit.fb;
       const name = t === 'A' ? l.team_a_name : l.team_b_name;
       return (
-        <Card key={t}>
+        <Block key={t}>
           <Body>{name}</Body>
           {n === FORMATION_SIZE ? (
             <Chips options={FORMATION_OPTIONS} value={choice} onChange={(v) => escolherFormacao(t, v)} />
@@ -249,7 +249,7 @@ export default function Escalacoes() {
               onPressPlayer={tocar}
             />
           )}
-        </Card>
+        </Block>
       );
     };
     return (
@@ -273,7 +273,6 @@ export default function Escalacoes() {
 
   return (
     <Screen>
-      <Title>Escalações</Title>
       <Sub>Times antes do jogo.</Sub>
       {comps.map((c) => (
         <Pressable key={c.id} onPress={() => router.push({ pathname: '/pelada/[id]/composicao/[cid]', params: { id, cid: c.id } })} accessibilityRole="button">
@@ -293,7 +292,7 @@ export default function Escalacoes() {
 
       {lineups?.length === 0 && comps.length === 0 && !editing && <EmptyState title="Nenhuma escalação" />}
       {lineups?.map((l) => (
-        <Card key={l.id}>
+        <Block key={l.id}>
           <Body>{l.label}</Body>
           <Sub>
             {l.source === 'draw' ? 'Do sorteio' : 'Montada à mão'}
@@ -330,15 +329,15 @@ export default function Escalacoes() {
               <Button title="Cancelar escalação" kind="secondary" onPress={() => cancelar(l)} loading={busy === `cancelar-${l.id}`} />
             </>
           )}
-        </Card>
+        </Block>
       ))}
 
       {isStaff && !premium && (
-        <Card>
+        <Block>
           <Body>Escalação antes do jogo e sorteio automático</Body>
           <Sub>Recurso Premium (R$ 29,90/mês por pelada).</Sub>
           <Button title="Conhecer a Pelada Premium" kind="secondary" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
-        </Card>
+        </Block>
       )}
 
       {isStaff && premium && !editing && (
@@ -349,7 +348,7 @@ export default function Escalacoes() {
       )}
 
       {editing && (
-        <Card>
+        <Block>
           <Body>Nova escalação</Body>
           <Input placeholder="nome (ex.: Quinta 21/10)" value={label} onChangeText={setLabel} maxLength={60} autoCapitalize="sentences" />
           <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -384,7 +383,7 @@ export default function Escalacoes() {
           <Pressable onPress={() => setEditing(false)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'center' }}>
             <Text style={{ color: colors.muted }}>Cancelar</Text>
           </Pressable>
-        </Card>
+        </Block>
       )}
     </Screen>
   );

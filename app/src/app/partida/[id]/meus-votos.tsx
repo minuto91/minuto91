@@ -10,7 +10,7 @@ import { fmtDate, fmtRating, fmtTime } from '../../../lib/match';
 import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors } from '../../../lib/theme';
-import { Card, ErrorText, Loading, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, ErrorText, Loading, Screen, Sub } from '../../../lib/ui';
 
 type Version = {
   kind: 'rating' | 'craque' | 'bola_murcha';
@@ -47,14 +47,13 @@ export default function MeusVotos() {
   const versions = [...data.versions].reverse(); // mais recente primeiro
   return (
     <Screen>
-      <Title>Meus votos</Title>
       <Sub>
         Só você vê esta lista. {data.read_only ? 'A votação terminou: só leitura.' : 'Você pode mudar até o fim do prazo; vale a última versão.'}
       </Sub>
       {versions.length === 0 ? (
         <Sub>Você ainda não registrou nada nesta votação.</Sub>
       ) : (
-        <Card>
+        <Block>
           {versions.map((x, i) => (
             <View
               key={`${x.at}-${i}`}
@@ -70,7 +69,7 @@ export default function MeusVotos() {
               </Sub>
             </View>
           ))}
-        </Card>
+        </Block>
       )}
     </Screen>
   );

@@ -15,7 +15,8 @@ import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors, memberPosition, positionLabel, positionRank } from '../../../lib/theme';
 import { Toggle } from '../../../lib/toggle';
-import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
+import { Icon } from '../../../lib/icons';
+import { Block, Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 import {
   countLabel,
   createGate,
@@ -308,7 +309,7 @@ export default function Sorteio() {
         </View>
       ))}
 
-      <Card>
+      <Block>
         <Body>Adicionar convidado</Body>
         <Input placeholder="Nome do convidado" value={guestName} onChangeText={setGuestName} maxLength={80} autoCapitalize="words" />
         <Sub>Posição (opcional)</Sub>
@@ -329,7 +330,7 @@ export default function Sorteio() {
             }
           }}
         />
-      </Card>
+      </Block>
 
       <Toggle
         label="Capitães (um por time, ficam fixos no sorteio)"
@@ -342,7 +343,14 @@ export default function Sorteio() {
         }}
       />
       {selectionDirty && <Sub>Seleção alterada: será aplicada ao gerar a prévia.</Sub>}
-      {gkWarning && <Sub>⚠ {gkWarning}</Sub>}
+      {gkWarning && (
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+          <Icon name="alerta" size={18} color={colors.darkGold} />
+          <View style={{ flex: 1 }}>
+            <Sub>{gkWarning}</Sub>
+          </View>
+        </View>
+      )}
       {prep.problems.length > 0 && <ErrorText>Há participante que não pode mais jogar (em vermelho). Remova-o para continuar.</ErrorText>}
       <ErrorText>{msg}</ErrorText>
       <Button title={preview ? 'Sortear de novo' : 'Sortear'} onPress={gerar} loading={busy === 'preview' || busy === 'members'} disabled={selected.size + guests.length < 2} />

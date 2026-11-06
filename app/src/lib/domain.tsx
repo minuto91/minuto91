@@ -5,8 +5,10 @@ import { Pressable, View } from 'react-native';
 
 import { Text } from './text';
 import { colors, radius } from './theme';
+import { Icon } from './icons';
+import { LinkLabel } from './ui';
 
-export const hair = '#E6EBF3';
+export const hair = colors.line;
 
 // ---------------------------------------------------------------------------------------------------------------
 // StatStrip: números lado a lado separados por filetes verticais (sem cartão).
@@ -45,7 +47,7 @@ export function StatStrip({ items, size = 'md' }: { items: StatItem[]; size?: 's
 }
 
 // ---------------------------------------------------------------------------------------------------------------
-// MatchScore: placar editorial em faixa azul-escura. O time do jogador ganha peso e o marcador "você".
+// MatchScore (V10.1): placar claro e sem moldura (antes faixa azul-escura). O time do jogador ganha peso e cor azul.
 // ---------------------------------------------------------------------------------------------------------------
 export function MatchScore({
   a,
@@ -68,8 +70,8 @@ export function MatchScore({
   /** REV-144: números do placar menores (hierarquia equilibrada com os nomes dos times). */
   compact?: boolean;
 }) {
-  const fg = light ? colors.deepBlue : colors.white;
-  const dim = light ? colors.muted : '#C9D6EE';
+  const fg = colors.blue;
+  const dim = colors.muted;
   const side = (name: string, me: boolean, align: 'left' | 'right') => (
     <View style={{ flex: 1, minWidth: 0, alignItems: align === 'right' ? 'flex-end' : 'flex-start', gap: 2 }}>
       <Text
@@ -82,13 +84,13 @@ export function MatchScore({
   const scored = scoreA !== null && scoreB !== null;
   return (
     <View
-      style={{ backgroundColor: light ? colors.bg : colors.deepBlue, borderRadius: radius.card, paddingHorizontal: 16, paddingVertical: 14, gap: 10 }}
+      style={light ? { backgroundColor: colors.bg, borderRadius: radius.card, paddingHorizontal: 16, paddingVertical: 14, gap: 10 } : { gap: 8, paddingBottom: 4 }}
       accessible
       accessibilityLabel={scored ? `${a} ${scoreA} a ${scoreB} ${b}` : `${a} contra ${b}`}>
       {top}
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         {side(a, mine === 'A', 'right')}
-        <Text style={{ fontSize: scored ? (compact ? 26 : 34) : 15, lineHeight: scored ? (compact ? 32 : 40) : 20, fontWeight: '900', color: fg, fontVariant: ['tabular-nums'] }}>
+        <Text style={{ fontSize: scored ? (compact ? 26 : 34) : 15, lineHeight: scored ? (compact ? 32 : 40) : 20, fontWeight: '900', color: colors.ink, fontVariant: ['tabular-nums'] }}>
           {scored ? `${scoreA}–${scoreB}` : '×'}
         </Text>
         {side(b, mine === 'B', 'left')}
@@ -167,7 +169,7 @@ export function VotePendingRow({
           </Text>
         ) : null}
       </View>
-      <Text style={{ fontSize: 14, fontWeight: '700', color: colors.blue }}>{action} ›</Text>
+      <LinkLabel style={{ fontSize: 14, fontWeight: '700', color: colors.blue }}>{action}</LinkLabel>
     </Pressable>
   );
 }
@@ -239,7 +241,7 @@ export function RankingRow({
         <Text style={{ color: colors.deepBlue, fontWeight: '800', fontSize: 18, fontVariant: ['tabular-nums'] }}>{value}</Text>
         {unit ? <Text style={{ color: colors.muted, fontSize: 12 }}>{unit}</Text> : null}
       </View>
-      <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+      <Icon name="chevron" size={20} color={colors.muted} />
     </Pressable>
   );
 }

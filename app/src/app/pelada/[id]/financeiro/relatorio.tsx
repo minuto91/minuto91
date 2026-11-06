@@ -10,7 +10,8 @@ import { csvRow, fmtDay, formatBRL, methodLabel, monthLabel, monthShift } from '
 import { ExportTotal, exportProblems } from '../../../../lib/exportCheck';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
+import { Block, Body, Button, Chips, ErrorText, LoadingBlock, Screen, Sub } from '../../../../lib/ui';
+import { Icon } from '../../../../lib/icons';
 
 type Report = {
   month: string;
@@ -166,7 +167,6 @@ export default function Relatorio() {
 
   return (
     <Screen>
-      <Title>Relatórios</Title>
       <Chips options={TABS} value={tab} onChange={(v) => setTab(v as 'mes' | 'historico')} />
       <ErrorText>{msg}</ErrorText>
       {tab === 'mes' && (
@@ -182,7 +182,7 @@ export default function Relatorio() {
               onPress={() => setMonth(monthShift(month, 1))}
               disabled={month >= monthShift(today, 0)}
               style={{ minWidth: 44, minHeight: 44, justifyContent: 'center', alignItems: 'flex-end', opacity: month >= monthShift(today, 0) ? 0.3 : 1 }}>
-              <Text style={{ color: colors.blue, fontSize: 22, fontWeight: '800' }}>›</Text>
+              <Icon name="chevron" size={20} color={colors.blue} />
             </Pressable>
           </View>
           {!report && !msg && <LoadingBlock />}
@@ -194,21 +194,21 @@ export default function Relatorio() {
                 <Stat label="Resultado do mês" cents={report.result_cents} tone={report.result_cents < 0 ? 'danger' : 'blue'} />
                 <Stat label="Em aberto (vencem no mês)" cents={report.open_cents} tone="gold" />
               </View>
-              <Card>
+              <Block>
                 <Body>Origem das receitas</Body>
                 {incomeCats.length === 0 && <Sub>Nenhuma receita no mês.</Sub>}
                 {incomeCats.map((c) => (
                   <Bar key={c.category} label={c.category} cents={c.amount_cents} total={report.income_cents} color={colors.blue} />
                 ))}
-              </Card>
-              <Card>
+              </Block>
+              <Block>
                 <Body>Distribuição das despesas</Body>
                 {expenseCats.length === 0 && <Sub>Nenhuma despesa no mês.</Sub>}
                 {expenseCats.map((c) => (
                   <Bar key={c.category} label={c.category} cents={c.amount_cents} total={report.expense_cents} color={colors.gold} />
                 ))}
-              </Card>
-              <Card>
+              </Block>
+              <Block>
                 <Body>Por jogador</Body>
                 <Sub>Devido e pago no mês; em aberto no total.</Sub>
                 {report.by_person.length === 0 && <Sub>Nada no mês.</Sub>}
@@ -221,15 +221,15 @@ export default function Relatorio() {
                     </Text>
                   </View>
                 ))}
-              </Card>
+              </Block>
               {(report.pending_income_cents || report.pending_expense_cents || report.reversed_cents) ? (
-                <Card>
+                <Block>
                   <Body>Fora do resultado</Body>
                   <Sub>Pendências e estornos não entram nas receitas, nas despesas nem no saldo.</Sub>
                   {!!report.pending_income_cents && <Sub>Receitas a receber no mês: {formatBRL(report.pending_income_cents)}</Sub>}
                   {!!report.pending_expense_cents && <Sub>Despesas a pagar no mês: {formatBRL(report.pending_expense_cents)}</Sub>}
                   {!!report.reversed_cents && <Sub>Pagamentos estornados: {formatBRL(report.reversed_cents)}</Sub>}
-                </Card>
+                </Block>
               ) : null}
               <Button
                 title={report.movements_count !== undefined ? `Exportar as ${report.movements_count} movimentações do mês (CSV)` : 'Exportar movimentações do mês (CSV)'}

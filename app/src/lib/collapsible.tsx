@@ -1,6 +1,7 @@
 import { ReactNode, useState } from 'react';
 import { Pressable, View } from 'react-native';
 
+import { Icon } from './icons';
 import { Text } from './text';
 import { colors, type } from './theme';
 
@@ -17,7 +18,9 @@ export function Collapsible({ title, children, initiallyOpen = false, right }: {
         style={{ minHeight: 48, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
         <Text style={[type.cardTitle, { flex: 1 }]}>{title}</Text>
         {right ? <Text style={type.caption}>{right}</Text> : null}
-        <Text style={{ color: colors.muted, fontSize: 16, transform: [{ rotate: open ? '90deg' : '0deg' }] }}>›</Text>
+        <View style={{ transform: [{ rotate: open ? '90deg' : '0deg' }] }}>
+          <Icon name="chevron" size={18} color={colors.muted} />
+        </View>
       </Pressable>
       {open && <View style={{ gap: 12, paddingBottom: 12 }}>{children}</View>}
     </View>

@@ -81,13 +81,13 @@ const GoogleG = () => (
   </Svg>
 );
 
-/** "Minuto 91" + slogan, centralizados. */
+/** V10.1: logo (imagem provisória até o arquivo oficial chegar) + slogan, centralizados. */
 export function LoginBrand() {
   return (
-    <View style={{ alignItems: 'center' }}>
-      <Text accessibilityRole="header" style={{ fontSize: 40, lineHeight: 48, fontWeight: '800', color: '#FFFFFF', letterSpacing: -1 }} adjustsFontSizeToFit numberOfLines={1}>
-        Minuto <Text style={{ color: L.gold }}>91</Text>
-      </Text>
+    <View style={{ alignItems: 'center', gap: 10 }}>
+      <View accessible accessibilityRole="header" accessibilityLabel="Minuto 91">
+        <Image source={require('../../assets/images/logo-minuto91-provisoria.png')} style={{ width: 96, height: 86 }} contentFit="contain" accessibilityIgnoresInvertColors />
+      </View>
       <Text style={{ fontSize: 15, color: L.soft, fontWeight: '400', textAlign: 'center' }} adjustsFontSizeToFit numberOfLines={1}>
         O jogo acaba. A resenha começa.
       </Text>

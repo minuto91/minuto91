@@ -31,7 +31,7 @@ import { leftLabel, nextVoteBoundary, voteState } from '../../lib/centrallogic';
 import { type CareerSummary, loadCareerSummary, markGuide, referencePelada } from '../../lib/careerv2';
 import { StatStrip } from '../../lib/domain';
 import { refreshOutcome, syncedLabel } from '../../lib/loadstate';
-import { GreetingHeader, HomeLastGameCard, NextGameCard } from '../../lib/homeui';
+import { flat, GreetingHeader, HomeLastGameCard, NextGameCard } from '../../lib/homeui';
 import { greetingText, pickCard, pickGreetingIndex, pickNextRound } from '../../lib/homelogic';
 import { notify } from '../../lib/dialog';
 import { haptic } from '../../lib/motion';
@@ -42,6 +42,7 @@ import { supabase } from '../../lib/supabase';
 import { onHomeTabRepress } from '../../lib/tabevents';
 import { Text } from '../../lib/text';
 import { colors, layout as L, type } from '../../lib/theme';
+import { Icon } from '../../lib/icons';
 import { Button, Card, EmptyState } from '../../lib/ui';
 import { type BlockId, normalizeLayout, splitAttention, visibleSportBlocks } from '../../lib/v84logic';
 
@@ -379,7 +380,7 @@ export default function Home() {
             onPress={() => go('/carreira')}
             accessibilityRole="button"
             accessibilityLabel={`Resumo da carreira. ${items.map((s) => `${s.label}: ${s.value}`).join('. ')}. Abrir Minha Carreira.`}
-            style={({ pressed }) => ({ backgroundColor: colors.white, borderRadius: 16, borderWidth: 1, borderColor: colors.line, padding: 16, opacity: pressed ? 0.9 : 1 })}>
+            style={({ pressed }) => ({ ...flat, opacity: pressed ? 0.7 : 1 })}>
             <StatStrip items={items} />
           </Pressable>
         </View>
@@ -505,9 +506,11 @@ export default function Home() {
                     disabled={s.done}
                     onPress={s.go}
                     style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 44 }}>
-                    <Text2 style={{ width: 20, color: s.done ? colors.blue : colors.muted }}>{s.done ? '✓' : '○'}</Text2>
+                    <View style={{ width: 20 }}>
+                      <Icon name={s.done ? 'selecionado' : 'pendente'} size={18} color={s.done ? colors.blue : colors.muted} />
+                    </View>
                     <Text2 style={{ flex: 1, color: s.done ? colors.muted : colors.ink, textDecorationLine: s.done ? 'line-through' : 'none' }}>{s.label}</Text2>
-                    {!s.done && <Text2 style={{ color: colors.blue }}>›</Text2>}
+                    {!s.done && <Icon name="chevron" size={18} color={colors.blue} />}
                   </Pressable>
                 ))}
               </Card>

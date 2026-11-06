@@ -12,7 +12,7 @@ import { NotificationSettings } from '../lib/push';
 import { signOut, useAuth } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, FEET, type Foot } from '../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, Screen, Sub, Title } from '../lib/ui';
+import { Block, Body, Button, Card, Chips, ErrorText, Input, ListGroup, ListRow, Screen, Sub, Title } from '../lib/ui';
 
 type Blocked = { user_id: string; name: string };
 
@@ -190,14 +190,13 @@ export default function Conta() {
 
   return (
     <Screen>
-      <Title>Minha conta</Title>
       <ErrorText>{msg}</ErrorText>
       {ok && <Text style={{ color: colors.ink, fontWeight: '600' }}>{ok}</Text>}
 
       {me && (
         <>
           <Text style={section}>Meu perfil</Text>
-          <Card>
+          <Block>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
               <Avatar path={me.avatar_path} name={me.display_name} size={64} />
               <View style={{ flex: 1, gap: 8 }}>
@@ -218,38 +217,38 @@ export default function Conta() {
               loading={busy === 'perfil'}
               disabled={(name.trim() === me.display_name && foot === me.dominant_foot) || !name.trim() || !!busy}
             />
-          </Card>
+          </Block>
         </>
       )}
       <Button title="Sair da conta" kind="secondary" onPress={signOut} />
 
       <Text style={section}>Notificações</Text>
-      <Card>
+      <Block>
         <NotificationSettings />
-      </Card>
+      </Block>
 
       <Text style={section}>Privacidade</Text>
       {saved && (
         <>
-          <Card>
+          <Block>
             <Body>Quem vê meu perfil</Body>
             <Sub>Pé dominante, suas peladas e conquistas. Agora: {visLabel(saved.profile)}.</Sub>
             <Chips options={VISIBILITY} value={profileVis} onChange={setProfileVis} />
             <Sub>{VISIBILITY.find((x) => x.value === profileVis)?.hint}</Sub>
-          </Card>
-          <Card>
+          </Block>
+          <Block>
             <Body>Quem vê minha carreira</Body>
             <Sub>Totais e histórico de todas as peladas. Agora: {visLabel(saved.career)}.</Sub>
             <Chips options={VISIBILITY} value={careerVis} onChange={setCareerVis} />
             <Sub>{VISIBILITY.find((x) => x.value === careerVis)?.hint}</Sub>
-          </Card>
+          </Block>
           <Button
             title="Salvar privacidade"
             onPress={salvarPrivacidade}
             loading={busy === 'privacidade'}
             disabled={(profileVis === saved.profile && careerVis === saved.career) || !!busy}
           />
-          <Card>
+          <Block>
             <Sub>
               Dentro de cada pelada, seu nome, foto, Card e estatísticas continuam visíveis para os colegas: a súmula, a votação e
               os rankings precisam deles. Quem você bloqueia (ou quem bloqueou você) não vê seu perfil nem sua carreira.
@@ -258,27 +257,29 @@ export default function Conta() {
               Uma foto já aberta por alguém pode continuar na tela dele por até 15 minutos. Imagens que você compartilhou fora do
               app (Cards e artes) não podem ser apagadas ou recuperadas pelo Minuto 91 depois do envio.
             </Sub>
-          </Card>
+          </Block>
         </>
       )}
-      <Card>
+      <Block>
         <Body>Jogadores bloqueados</Body>
         <Sub>Quem você bloqueia não aparece com foto e perfil para você.</Sub>
         {blocked.length === 0 && <Sub>Ninguém bloqueado.</Sub>}
         {blocked.map((b) => (
           <Button key={b.user_id} title={`Desbloquear ${b.name}`} kind="secondary" onPress={() => desbloquear(b.user_id)} />
         ))}
-      </Card>
+      </Block>
       {/* A18: documentos oficiais sempre acessíveis depois do aceite. */}
-      <Card>
+      <Block>
         <Body>Documentos</Body>
-        <Button title="Termos de Uso" kind="secondary" onPress={() => router.push('/termos')} />
-        <Button title="Política de Privacidade" kind="secondary" onPress={() => router.push('/privacidade')} />
+        <ListGroup>
+          <ListRow title="Termos de Uso" onPress={() => router.push('/termos')} />
+          <ListRow title="Política de Privacidade" onPress={() => router.push('/privacidade')} />
+        </ListGroup>
         <Sub>Versões aceitas: Termos {LEGAL_VERSIONS.terms}, Política {LEGAL_VERSIONS.privacy}.</Sub>
-      </Card>
+      </Block>
 
       <Text style={section}>Trocar de conta</Text>
-      <Card>
+      <Block>
         <Body>Levar meu histórico para outra conta</Body>
         <Sub>
           Gere um código aqui e use na conta nova (por exemplo, se trocar o jeito de entrar). O código vale 30 dias, funciona
@@ -294,17 +295,17 @@ export default function Conta() {
         ) : (
           <Button title="Gerar código de transferência" kind="secondary" onPress={gerarCodigo} loading={busy === 'gerar'} />
         )}
-      </Card>
+      </Block>
 
-      <Card>
+      <Block>
         <Body>Recebi um código</Body>
         <Sub>Funciona numa conta que ainda não está em nenhuma pelada.</Sub>
         <Input autoCapitalize="characters" placeholder="XXXX-XXXX-XXXX-XXXX" value={redeem} onChangeText={setRedeem} />
         <Button title="Usar código" onPress={usarCodigo} loading={busy === 'usar'} disabled={redeem.trim().length < 16} />
-      </Card>
+      </Block>
 
       <Text style={section}>Excluir conta</Text>
-      <Card>
+      <Block>
         <Body>Excluir minha conta</Body>
         <Sub>
           Você vira &ldquo;Aposentado&rdquo; nas peladas na hora: sai das votações, a administração passa para outra pessoa e seu
@@ -319,7 +320,7 @@ export default function Conta() {
           loading={busy === 'excluir'}
           disabled={confirm.trim().toUpperCase() !== 'EXCLUIR'}
         />
-      </Card>
+      </Block>
     </Screen>
   );
 }

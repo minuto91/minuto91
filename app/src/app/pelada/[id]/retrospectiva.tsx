@@ -14,7 +14,7 @@ import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors, type } from '../../../lib/theme';
 import { CATEGORY_TYPE, SEASON_AWARD_LABEL, sharedLabel, statText } from '../../../lib/v87logic';
-import { Button, Chips, EmptyState, ErrorText, Screen, Section, Sub, Title } from '../../../lib/ui';
+import { Button, Chips, EmptyState, ErrorText, Screen, Section, Sub } from '../../../lib/ui';
 
 // REV-019 / REV-026: retrospectiva oficial da temporada, Premium, só depois do fim do calendário E da consolidação
 // (súmulas e votações resolvidas). A versão vem do servidor (nova versão se uma correção mudar os dados).
@@ -85,7 +85,6 @@ export default function Retrospectiva() {
 
   return (
     <Screen>
-      <Title>Retrospectiva</Title>
       {seasons.length > 1 && (
         <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={(v) => { setMsg(null); setCons(null); setPage(0); setSeasonId(v); }} />
       )}

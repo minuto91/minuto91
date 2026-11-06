@@ -2,7 +2,7 @@ import { View } from 'react-native';
 
 import { Text } from './text';
 import { colors, type } from './theme';
-import { Button, Chips, EmptyState, ErrorText, Screen, Section, Sub, Title } from './ui';
+import { Button, Chips, EmptyState, ErrorText, Screen, Section, Sub } from './ui';
 import { candidateReason, CraqueCandidate, CraqueStatus, remaining, statusTitle } from './v86logic';
 
 // Parte visual do Craque da Temporada (sem rede): usada pela tela real e pela vitrine dev-v86.
@@ -40,7 +40,6 @@ export function CraqueView({ state, seasons, seasonId, onSeason, busy, msg, now,
 
   return (
     <Screen>
-      <Title>Craque da Temporada</Title>
       {seasons.length > 1 && <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={(v) => onSeason(v)} />}
       <ErrorText>{msg}</ErrorText>
       {!state ? (

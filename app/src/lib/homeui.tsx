@@ -1,12 +1,11 @@
 // V10.0 — blocos do Início do jogador (REV-051 a REV-095): cabeçalho com saudação e sino, Próximo Jogo e Último Jogo.
 // Só apresentação: os valores (placar, nota, OVR) vêm prontos do servidor e nada é calculado aqui.
 import { Pressable, View } from 'react-native';
-import Svg, { Path } from 'react-native-svg';
 
 import { matchRating } from './centrallogic';
 import type { HomeLastGame, NextRoundItem } from './centraldata';
-import { box } from './central';
 import { hair } from './domain';
+import { Icon } from './icons';
 import { Crest } from './crest';
 import { individualStats, resultLabel } from './homelogic';
 import { fmtDate } from './match';
@@ -15,17 +14,11 @@ import { Text } from './text';
 import { colors, type } from './theme';
 import { Button } from './ui';
 
+/** V10.1: bloco do Início sem moldura de card: conteúdo solto sobre o fundo, separado do próximo por uma linha fina. */
+export const flat = { gap: 10, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.line } as const;
+
 const fmtRating = (v: number) => v.toFixed(1).replace('.', ',');
 
-function Bell({ color }: { color: string }) {
-  const p = { stroke: color, strokeWidth: 1.9, fill: 'none', strokeLinecap: 'round' as const, strokeLinejoin: 'round' as const };
-  return (
-    <Svg width={24} height={24} viewBox="0 0 24 24">
-      <Path d="M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15z" {...p} />
-      <Path d="M10 20.5a2.2 2.2 0 0 0 4 0" {...p} />
-    </Svg>
-  );
-}
 
 /** REV-053/054: saudação esportiva e sino com indicador de não lidas (ponto dourado). Sem foto de perfil neste bloco. */
 export function GreetingHeader({ text, unread, onBell }: { text: string; unread: boolean; onBell: () => void }) {
@@ -39,7 +32,7 @@ export function GreetingHeader({ text, unread, onBell }: { text: string; unread:
         accessibilityRole="button"
         accessibilityLabel={unread ? 'Notificações, há avisos novos' : 'Notificações'}
         style={({ pressed }) => ({ width: 48, height: 48, borderRadius: 24, alignItems: 'center', justifyContent: 'center', backgroundColor: pressed ? colors.bg : 'transparent' })}>
-        <Bell color={colors.blue} />
+        <Icon name="sino" size={24} color={colors.blue} strokeWidth={1.9} />
         {unread && (
           <View
             accessibilityElementsHidden
@@ -63,7 +56,7 @@ export function NextGameCard({ round, crestPath, stale, onPress }: { round: Next
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={`Próximo jogo na pelada ${round.pelada_name}: ${round.team_name} contra ${round.opponent_name}. ${[day, time, round.location].filter(Boolean).join(', ')}. Ver partida.`}
-      style={({ pressed }) => ({ ...box, flexDirection: 'row', gap: 14, alignItems: 'center', opacity: pressed ? 0.9 : 1 })}>
+      style={({ pressed }) => ({ ...flat, flexDirection: 'row', gap: 14, alignItems: 'center', opacity: pressed ? 0.7 : 1 })}>
       <Crest path={crestPath} name={round.pelada_name} size={56} />
       <View style={{ flex: 1, minWidth: 0, gap: 3 }}>
         <Text style={type.meta} numberOfLines={1}>{round.pelada_name}</Text>
@@ -74,7 +67,7 @@ export function NextGameCard({ round, crestPath, stale, onPress }: { round: Next
         <Text style={type.meta} numberOfLines={2}>{[day, time, round.location].filter(Boolean).join(' · ')}</Text>
         {stale ? <Text style={type.meta}>Informação anterior: confirme na partida.</Text> : null}
       </View>
-      <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+      <Icon name="chevron" size={20} color={colors.muted} />
     </Pressable>
   );
 }
@@ -110,7 +103,7 @@ export function HomeLastGameCard({ game, stale, onPress, onSelection }: { game: 
   const status =
     game.participation === 'listed' ? 'Você estava relacionado, mas sem entrada confirmada em campo.' : game.participation === 'none' ? 'Você não participou desta partida.' : null;
   return (
-    <View style={{ ...box }}>
+    <View style={{ ...flat }}>
       <Pressable
         onPress={onPress}
         accessibilityRole="button"
@@ -126,7 +119,7 @@ export function HomeLastGameCard({ game, stale, onPress, onSelection }: { game: 
           </Text>
           {side(game.team_b_name, game.my_team === 'B', 'left', game.team_b_color)}
         </View>
-        {result ? <Text style={{ textAlign: 'center', fontSize: 12, fontWeight: '800', letterSpacing: 1, color: result === 'VITÓRIA' ? '#0B6B3A' : result === 'DERROTA' ? '#9A3412' : colors.muted }}>{result}</Text> : null}
+        {result ? <Text style={{ textAlign: 'center', fontSize: 12, fontWeight: '800', letterSpacing: 1, color: result === 'VITÓRIA' ? colors.success : result === 'DERROTA' ? colors.caution : colors.muted }}>{result}</Text> : null}
         {status ? <Text style={type.caption}>{status}</Text> : null}
         {(stats.length > 0 || note) && (
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, borderTopWidth: 1, borderTopColor: hair, paddingTop: 10 }}>

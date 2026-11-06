@@ -13,6 +13,8 @@ import type { LastGameRow, NextRoundItem, Pelada, PeladaRating } from './central
 import { deltaA11y, deltaText, leftLabel, matchRating, type MatchRating } from './centrallogic';
 import { Crest } from './crest';
 import { hair, StatStrip, VotePendingRow } from './domain';
+import { Icon } from './icons';
+import { LinkLabel } from './ui';
 import { fmtDate } from './match';
 import { haptic, useReducedMotion } from './motion';
 import { CARD_RATIO, PlayerCard } from './playercard';
@@ -248,7 +250,7 @@ export function PeladaSelector({
                 </Text>
                 <Text style={type.meta}>{roleNote(p.role)}</Text>
               </View>
-              {busy === p.id ? <ActivityIndicator color={colors.blue} /> : on ? <Text style={{ color: colors.blue, fontSize: 20, fontWeight: '800' }}>✓</Text> : null}
+              {busy === p.id ? <ActivityIndicator color={colors.blue} /> : on ? <Icon name="selecionado" size={22} color={colors.blue} /> : null}
             </Pressable>
           );
         })}
@@ -424,8 +426,8 @@ export function officialOvr(rating: PeladaRating | null, card: Omit<CardData, 'i
 
 export function OvrDelta({ delta }: { delta: number }) {
   const up = delta > 0;
-  const fg = up ? '#0B6B3A' : '#9A3412';
-  const bg = up ? '#E7F5EC' : '#FDEEE6';
+  const fg = up ? colors.success : colors.caution;
+  const bg = up ? colors.successSoft : colors.cautionSoft;
   return (
     <View
       accessibilityLabel={`Card ${deltaA11y(delta)}`}
@@ -554,7 +556,7 @@ export function NextRoundCard({ round, crestPath, more, stale, onPress }: { roun
           {more > 0 ? ` · +${more} ${more === 1 ? 'rodada' : 'rodadas'}` : ''}
         </Text>
         {stale ? <Text style={type.meta}>Informação anterior: confirme na rodada.</Text> : null}
-        <Text style={{ ...link, fontSize: 14 }}>Ver rodada ›</Text>
+        <LinkLabel style={{ ...link, fontSize: 14 }}>Ver rodada</LinkLabel>
       </View>
     </Pressable>
   );
@@ -664,7 +666,7 @@ export function MyPeladasBlock({
 }) {
   return (
     <View style={{ gap: 4 }}>
-      <BlockTitle right={seeAll ? <Pressable onPress={onSeeAll} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}><Text style={{ ...link, fontSize: 14 }}>Ver todas ›</Text></Pressable> : undefined}>
+      <BlockTitle right={seeAll ? <Pressable onPress={onSeeAll} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center' }}><LinkLabel style={{ ...link, fontSize: 14 }}>Ver todas</LinkLabel></Pressable> : undefined}>
         Minhas Peladas
       </BlockTitle>
       <View style={{ ...box, paddingVertical: 4, gap: 0 }}>
@@ -682,7 +684,7 @@ export function MyPeladasBlock({
               </Text>
               <Text style={type.meta}>{roleNote(p.role)}</Text>
             </View>
-            <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text>
+            <Icon name="chevron" size={20} color={colors.muted} />
           </Pressable>
         ))}
       </View>
@@ -725,7 +727,7 @@ export function BlockTitle({ children, right }: { children: string; right?: Reac
 /** Erro localizado de um bloco (E16-10/11): só aquele bloco, com "tentar de novo". */
 export function InlineError({ text, onRetry }: { text: string; onRetry?: () => void }) {
   return (
-    <View style={{ ...box, flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: '#F3C7C2', shadowOpacity: 0, elevation: 0 }} accessibilityLiveRegion="polite">
+    <View style={{ ...box, flexDirection: 'row', alignItems: 'center', gap: 12, borderColor: colors.dangerLine, shadowOpacity: 0, elevation: 0 }} accessibilityLiveRegion="polite">
       <Text style={{ ...type.caption, flex: 1, color: colors.danger }}>{text}</Text>
       {onRetry && (
         <Pressable onPress={onRetry} accessibilityRole="button" hitSlop={8} style={{ minHeight: 44, justifyContent: 'center' }}>
@@ -742,8 +744,9 @@ export function Notice({ tone, children }: { tone: 'warn' | 'info'; children: Re
     <View
       accessibilityRole="alert"
       accessibilityLiveRegion="polite"
-      style={{ borderRadius: radius.md, backgroundColor: tone === 'warn' ? '#FFF6E0' : colors.bg, paddingHorizontal: 14, paddingVertical: 10 }}>
-      <Text style={{ fontSize: 13, lineHeight: 18, color: tone === 'warn' ? colors.darkGold : colors.deepBlue, fontWeight: '600' }}>{children}</Text>
+      style={{ flexDirection: 'row', alignItems: 'center', gap: 10, borderRadius: radius.md, backgroundColor: tone === 'warn' ? colors.noticeWarn : colors.bg, paddingHorizontal: 14, paddingVertical: 10 }}>
+      {tone === 'warn' ? <Icon name="alerta" size={18} color={colors.darkGold} /> : null}
+      <Text style={{ flex: 1, fontSize: 13, lineHeight: 18, color: tone === 'warn' ? colors.darkGold : colors.deepBlue, fontWeight: '600' }}>{children}</Text>
     </View>
   );
 }

@@ -16,7 +16,8 @@ import { arrange, type FormationName, isFormation, type Sector } from '../../../
 import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors } from '../../../lib/theme';
-import { Body, Button, Card, EmptyState, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, EmptyState, ErrorText, LoadingBlock, Screen, Sub } from '../../../lib/ui';
+import { Icon } from '../../../lib/icons';
 
 type Sel = { id: string; match_id: string; status: 'published' | 'superseded' | 'invalidated'; version: number; formation: string };
 type SelPlayer = { selection_id: string; membership_id: string; slot_position: FieldPlayer['position']; rank_order: number; position_code: string | null };
@@ -182,7 +183,6 @@ export default function SelecaoDaRodada() {
 
   return (
     <Screen>
-      <Title>Seleção da Rodada</Title>
       {match && <Sub>{`${peladaName ? peladaName + ' · ' : ''}${fmtDate(match.played_at)} · ${match.team_a_name} x ${match.team_b_name}`}</Sub>}
       {err && <ErrorText>{err}</ErrorText>}
 
@@ -231,7 +231,7 @@ export default function SelecaoDaRodada() {
                         {s.version > 1 || s.status !== 'published' ? ` · versão ${s.version}` : ''}
                       </Text>
                     </View>
-                    <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+                    <Icon name="chevron" size={20} color={colors.muted} />
                   </View>
                 </Card>
               </Pressable>

@@ -13,8 +13,9 @@ import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors, type } from '../../../lib/theme';
 import { Toggle } from '../../../lib/toggle';
-import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Chips, ErrorText, Input, LoadingBlock, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 import { StepSlider } from '../../../lib/stepslider';
+import { Icon } from '../../../lib/icons';
 
 const DURATIONS = [
   { value: '120', label: '2 horas' },
@@ -183,7 +184,6 @@ export default function Configuracoes() {
   if (!isAdmin) {
     return (
       <Screen>
-        <Title>Configurações</Title>
         <Sub>Só o administrador altera as configurações.</Sub>
       </Screen>
     );
@@ -206,7 +206,7 @@ export default function Configuracoes() {
               style={{ minHeight: 52, flexDirection: 'row', alignItems: 'center', borderBottomWidth: 1, borderBottomColor: colors.line }}>
               <Text style={[type.body, { flex: 1 }]}>{s.label}</Text>
               {s.key === 'plano' && <Text style={{ color: premium ? colors.darkGold : colors.muted, fontWeight: '700', marginRight: 8 }}>{premium ? 'Premium' : 'Basic'}</Text>}
-              <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+              <Icon name="chevron" size={20} color={colors.muted} />
             </Pressable>
           ))}
         </View>
@@ -216,7 +216,7 @@ export default function Configuracoes() {
         <>
           <Input autoCapitalize="sentences" placeholder="Local" value={ident.location} maxLength={120} onChangeText={(location) => setIdent({ ...ident, location })} />
           <Button title="Salvar local" kind="secondary" loading={busy} onPress={() => run('update_pelada_identity', { p_pelada: id, p: { location: ident.location } })} />
-          <Card>
+          <Block>
             <Body>Escudo</Body>
             <Sub>Prefira PNG com fundo transparente.</Sub>
             {draft ? (
@@ -246,7 +246,7 @@ export default function Configuracoes() {
                 </View>
               </View>
             )}
-          </Card>
+          </Block>
         </>
       )}
 

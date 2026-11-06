@@ -41,7 +41,7 @@ import {
 } from '../../../lib/goals';
 import { requestId } from '../../../lib/ids';
 import { idempotent, REVIEW_CODE } from '../../../lib/v85';
-import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 
 const DURATIONS = [
   { value: '120', label: '2 horas' },
@@ -411,7 +411,7 @@ export default function Sumula() {
     <Screen>
       <Title>{isCorrection ? 'Corrigir súmula' : 'Súmula'}</Title>
       {isDraft && !confirmed && (
-        <Card>
+        <Block>
           <Body>Quem jogou?</Body>
           <Sub>Escalação prevista não é presença. Desmarque quem não entrou em campo; quem não entrou não conta. Para incluir substitutos, confirme e adicione na súmula.</Sub>
           {planned.map((x) => {
@@ -437,10 +437,10 @@ export default function Sumula() {
             );
           })}
           <Button title="Confirmar quem jogou" onPress={confirmarParticipacao} loading={busy} />
-        </Card>
+        </Block>
       )}
       {serverReview && (
-        <Card>
+        <Block>
           <Body>Revisão</Body>
           {serverReview.blocking.map((b) => (
             <Text key={b} style={{ color: colors.danger }}>
@@ -454,7 +454,7 @@ export default function Sumula() {
             </Text>
           ))}
           {!serverReview.blocking.length && !serverReview.warnings.length && <Sub>Tudo certo para publicar.</Sub>}
-        </Card>
+        </Block>
       )}
       {isDraft && confirmed && <Button title="Revisar antes de publicar" kind="ghost" onPress={revisarNoServidor} />}
       {localDraft && (
@@ -473,17 +473,17 @@ export default function Sumula() {
       <Sub>{fmtDate(match.played_at)}</Sub>
       {isDraft && <Chips options={DAYS} value={null} onChange={mudarData} />}
       {isDraft && premium && (
-        <Card>
+        <Block>
           <Body>Nomes dos times</Body>
           <Input autoCapitalize="words" placeholder="Time A" value={teamA} onChangeText={setTeamA} maxLength={40} />
           <Input autoCapitalize="words" placeholder="Time B" value={teamB} onChangeText={setTeamB} maxLength={40} />
           <Button title="Salvar nomes" kind="secondary" onPress={salvarNomes} loading={busy} disabled={teamA === match.team_a_name && teamB === match.team_b_name} />
-        </Card>
+        </Block>
       )}
-      <Card>
+      <Block>
         <TeamColorPicker matchId={id} teamA={match.team_a_name} teamB={match.team_b_name} onSaved={setColorsAB} />
-      </Card>
-      <Card>
+      </Block>
+      <Block>
         <Body>Placar</Body>
         <View style={{ flexDirection: 'row', gap: 16, justifyContent: 'space-between' }}>
           {(['A', 'B'] as Team[]).map((t) => (
@@ -495,7 +495,7 @@ export default function Sumula() {
             </View>
           ))}
         </View>
-      </Card>
+      </Block>
 
       {goals.map((g, i) => {
         const mine = sheet.players.filter((p) => p.team === g.team);

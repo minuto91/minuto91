@@ -2,6 +2,6 @@
 // (o teste tests/version.test.ts confere que os dois concordam).
 // APP_VERSION_LABEL: versão funcional mostrada ao usuário. BUILD_NUMBER: número de build das lojas
 // (iOS buildNumber / Android versionCode), independente da versão funcional.
-export const APP_VERSION = '10.0.0';
-export const APP_VERSION_LABEL = 'V10.0';
-export const BUILD_NUMBER = 1;
+export const APP_VERSION = '10.1.0';
+export const APP_VERSION_LABEL = 'V10.1';
+export const BUILD_NUMBER = 2;

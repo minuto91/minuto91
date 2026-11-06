@@ -7,7 +7,7 @@ import { confirm, notify } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import { SeasonLifecycle } from '../../../lib/seasonlifecycle';
 import { supabase } from '../../../lib/supabase';
-import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Chips, ErrorText, Input, LoadingBlock, Screen, Sub } from '../../../lib/ui';
 
 // A19: temporadas da pelada. Todos veem a lista (nome e período não são histórico); personalizar é do
 // administrador com Pelada Premium (customize_season, migração 006). A regra de produto: com temporada em
@@ -98,12 +98,11 @@ export default function Temporadas() {
 
   return (
     <Screen>
-      <Title>Temporadas</Title>
       <ErrorText>{msg}</ErrorText>
       {msg && !seasons && <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />}
       {!seasons && !msg && <LoadingBlock />}
       {seasons?.map((s) => (
-        <Card key={s.id}>
+        <Block key={s.id}>
           <Body>
             {s.name}
             {s.id === current?.id ? ' · em andamento' : s.starts_on > today ? ' · planejada' : ' · encerrada'}
@@ -119,14 +118,14 @@ export default function Temporadas() {
             />
           )}
           <SeasonLifecycle seasonId={s.id} isAdmin={isAdmin} onChanged={() => setReload((n) => n + 1)} />
-        </Card>
+        </Block>
       ))}
 
       {seasons && isAdmin && !premium && (
         <Sub>No Basic a temporada é o ano civil. Temporada personalizada é Premium.</Sub>
       )}
       {seasons && isAdmin && premium && (
-        <Card>
+        <Block>
           <Body>Personalizar temporada</Body>
           <Sub>Escolha o que acontece com a temporada em andamento. Nada é apagado.</Sub>
           <Chips options={MODES} value={mode} onChange={setMode} />
@@ -136,7 +135,7 @@ export default function Temporadas() {
           )}
           <Input placeholder="fim DD/MM/AAAA" value={end} onChangeText={setEnd} keyboardType="numbers-and-punctuation" />
           <Button title="Salvar temporada" onPress={salvar} loading={busy} />
-        </Card>
+        </Block>
       )}
     </Screen>
   );

@@ -43,7 +43,7 @@ import { arrange, type FormationName, isFormation, type Sector } from '../../../
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, positionLabel } from '../../../lib/theme';
-import { Body, Button, Card, ErrorText, LoadingBlock, Screen, Sub } from '../../../lib/ui';
+import { Block, Body, Button, ErrorText, LoadingBlock, Screen, Sub } from '../../../lib/ui';
 import { MatchScore } from '../../../lib/domain';
 
 type Session = {
@@ -311,7 +311,7 @@ export default function Partida() {
         scoreB={match.team_b_score}
         mine={(players.find((p) => p.membership_id && p.membership_id === me?.id)?.team as 'A' | 'B' | undefined) ?? null}
         top={
-          <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.4, color: '#9DB8E8' }} numberOfLines={2}>
+          <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.4, color: colors.muted }} numberOfLines={2}>
             {fmtDate(match.played_at).toUpperCase()} · {(STATUS_LABEL[match.status] ?? match.status).toUpperCase()}
             {match.sheet_version > 1 && !annulled ? ` · SÚMULA V${match.sheet_version}` : ''}
           </Text>
@@ -366,7 +366,7 @@ export default function Partida() {
       )}
 
       {open && (
-        <Card>
+        <Block>
           <Body>
             {expired
               ? 'O prazo da votação acabou.'
@@ -391,12 +391,12 @@ export default function Partida() {
               onPress={() => router.push({ pathname: '/partida/[id]/sumula', params: { id } })}
             />
           )}
-        </Card>
+        </Block>
       )}
 
       {match.status === 'finalized' && (
         <Collapsible title="Avaliações" initiallyOpen>
-        <Card>
+        <Block>
           {/* V6.1: desde a V5 a súmula publicada finaliza sem a cédula antiga; a avaliação fica no painel acima. */}
           {!voting && <Sub>Resultado oficial. Contam gols, assistências e presença.</Sub>}
           {voting && voting.is_valid === false && (
@@ -424,7 +424,7 @@ export default function Partida() {
                   {nameOf(r.membership_id)} — Avaliação insuficiente
                 </Text>
               ))}
-        </Card>
+        </Block>
         </Collapsible>
       )}
 
@@ -440,18 +440,18 @@ export default function Partida() {
       )}
 
       {selection && (
-        <Card>
+        <Block>
           <Body>Seleção da Rodada</Body>
           <View style={{ alignItems: 'center', gap: 10, marginTop: 4 }}>
             <SelectionField players={fieldPlayers} width={Math.min(320, screenW - 74)} formation={selFormation} />
             <TeamLegend teams={teamsLegend} />
           </View>
-        </Card>
+        </Block>
       )}
       {selection && isStaff && match.status === 'finalized' && (
-        <Card>
+        <Block>
           <TeamColorPicker matchId={match.id} teamA={match.team_a_name} teamB={match.team_b_name} onSaved={setTeamColors} />
-        </Card>
+        </Block>
       )}
       {selection && ranked.length > 0 && (
         <SharePanel label="Compartilhar Seleção da Rodada" fileName="minuto91-selecao" title="Seleção da Rodada">
@@ -461,9 +461,9 @@ export default function Partida() {
 
       {lineup && lineup.players.length > 0 && (
         <Collapsible title="Escalação">
-          <Card>
+          <Block>
             <LineupBoard teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} formations={lineup.formations} score={match.status === 'finalized' ? finalScore : null} />
-          </Card>
+          </Block>
           <SharePanel label="Compartilhar escalação" fileName="minuto91-escalacao" title="Escalação da partida">
             <LineupArt peladaName={peladaName} crestPath={crestPath} subtitle={date} teamA={lineup.team_a_name} teamB={lineup.team_b_name} players={lineup.players} formations={lineup.formations} score={match.status === 'finalized' ? finalScore : null} />
           </SharePanel>
@@ -473,11 +473,11 @@ export default function Partida() {
       {match.status === 'finalized' && isAdmin && <AnnulMatch matchId={id} onDone={load} />}
 
       {annulled && (
-        <Card>
+        <Block>
           <AnnulledBadge />
           <Sub>Anulada: não conta para nada.</Sub>
           <MatchStatusTimeline matchId={id} admin={isAdmin} refreshKey={statusKey} />
-        </Card>
+        </Block>
       )}
       {!annulled && match.status === 'finalized' && (
         <MatchStatusTimeline matchId={id} admin={isAdmin} refreshKey={statusKey} />

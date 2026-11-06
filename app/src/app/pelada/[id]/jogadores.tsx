@@ -11,7 +11,8 @@ import { disambiguators, matchesName, showSearch } from '../../../lib/search';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, positionLabel } from '../../../lib/theme';
-import { Body, Button, Card, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Icon } from '../../../lib/icons';
 
 type Member = {
   id: string;
@@ -105,7 +106,7 @@ export default function Jogadores() {
       {members === null && !msg && <LoadingBlock />}
       {showSearch(members?.length ?? 0) && <Input placeholder="Buscar jogador" value={q} onChangeText={setQ} />}
       {(members ?? []).filter((m) => matchesName(m.player_name, q)).map((m) => (
-        <Card key={m.id}>
+        <Block key={m.id}>
           <Pressable
             accessibilityRole="button"
             onPress={() => router.push({ pathname: '/jogador/[id]', params: { id: m.id } })}
@@ -122,7 +123,7 @@ export default function Jogadores() {
                 {m.id === successor ? ' · sucessor indicado' : ''}
               </Sub>
             </View>
-            <Text style={{ color: colors.muted, fontSize: 18 }}>›</Text>
+            <Icon name="chevron" size={20} color={colors.muted} />
           </Pressable>
           {isAdmin && m.billing_class === 'pending' && (
             <BillingPrompt membershipId={m.id} name={m.player_name} defaultCents={defaultCents} onDone={() => setReload((n) => n + 1)} />
@@ -151,7 +152,7 @@ export default function Jogadores() {
                 <Text style={{ color: colors.blue, fontWeight: '600', marginTop: 4 }}>Gerenciar</Text>
               </Pressable>
             ))}
-        </Card>
+        </Block>
       ))}
     </Screen>
   );

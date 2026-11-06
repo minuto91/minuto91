@@ -8,7 +8,8 @@ import { Crest } from '../../lib/crest';
 import { supabase } from '../../lib/supabase';
 import { Text } from '../../lib/text';
 import { colors, positionLabel, type } from '../../lib/theme';
-import { Button, Card, EmptyState, ErrorText, Loading, Screen, Sub } from '../../lib/ui';
+import { Icon } from '../../lib/icons';
+import { Button, Divider, EmptyState, ErrorText, Loading, Screen, Sub } from '../../lib/ui';
 
 type Pelada = {
   id: string;
@@ -62,20 +63,19 @@ export default function Peladas() {
       {err && <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />}
       {!peladas && !err && <Loading />}
       {peladas && peladas.length === 0 && (
-        <Card>
-          <EmptyState title="Você ainda não está em nenhuma pelada" hint="Crie a pelada da sua turma ou entre com o convite que recebeu.">
-            <Button title="Criar pelada" onPress={() => router.push('/criar-pelada')} />
-            <Button title="Entrar com convite" kind="secondary" onPress={() => router.push('/entrar')} />
-          </EmptyState>
-        </Card>
+        <EmptyState title="Você ainda não está em nenhuma pelada" hint="Crie a pelada da sua turma ou entre com o convite que recebeu.">
+          <Button title="Criar pelada" onPress={() => router.push('/criar-pelada')} />
+          <Button title="Entrar com convite" kind="secondary" onPress={() => router.push('/entrar')} />
+        </EmptyState>
       )}
-      {(peladas ?? []).map((p) => (
-        <Card key={p.id}>
+      {(peladas ?? []).map((p, i) => (
+        <View key={p.id}>
+          {i > 0 ? <Divider /> : null}
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Abrir ${p.name}`}
             onPress={() => router.push({ pathname: '/pelada/[id]', params: { id: p.id } })}
-            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 48 }}>
+            style={{ flexDirection: 'row', alignItems: 'center', gap: 12, minHeight: 64, paddingVertical: 8 }}>
             <Crest path={p.crest_path} name={p.name} size={44} />
             <View style={{ flex: 1, gap: 2 }}>
               <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
@@ -93,14 +93,14 @@ export default function Peladas() {
                 {p.drafts > 0 ? ` · ${p.drafts === 1 ? '1 súmula em rascunho' : `${p.drafts} súmulas em rascunho`}` : ''}
               </Sub>
             </View>
-            <Text style={{ color: colors.muted, fontSize: 20 }}>›</Text>
+            <Icon name="chevron" size={20} color={colors.muted} />
           </Pressable>
-        </Card>
+        </View>
       ))}
       {peladas && peladas.length > 0 && (
         <View style={{ gap: 8, marginTop: 4 }}>
           <Button title="Criar Pelada" kind="gold" block onPress={() => router.push('/criar-pelada')} />
-          <Button title="Entrar com convite" kind="ghost" onPress={() => router.push('/entrar')} />
+          <Button title="Entrar com convite" kind="ghost" block onPress={() => router.push('/entrar')} />
         </View>
       )}
     </Screen>
