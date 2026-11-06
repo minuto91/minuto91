@@ -11,7 +11,7 @@ import { FormationField, LineupArt, LineupBoard, LineupPlayer, positionCounts } 
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { colors, memberPosition, positionLabel, positionShort } from '../../../lib/theme';
-import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Card, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 import type { Composition } from '../../../lib/v85';
 
 type Lineup = {
@@ -334,11 +334,11 @@ export default function Escalacoes() {
       ))}
 
       {isStaff && !premium && (
-        <Card>
+        <Block>
           <Body>Escalação antes do jogo e sorteio automático</Body>
           <Sub>Recurso Premium (R$ 29,90/mês por pelada).</Sub>
           <Button title="Conhecer a Pelada Premium" kind="secondary" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
-        </Card>
+        </Block>
       )}
 
       {isStaff && premium && !editing && (
@@ -349,7 +349,7 @@ export default function Escalacoes() {
       )}
 
       {editing && (
-        <Card>
+        <Block>
           <Body>Nova escalação</Body>
           <Input placeholder="nome (ex.: Quinta 21/10)" value={label} onChangeText={setLabel} maxLength={60} autoCapitalize="sentences" />
           <View style={{ flexDirection: 'row', gap: 8 }}>
@@ -384,7 +384,7 @@ export default function Escalacoes() {
           <Pressable onPress={() => setEditing(false)} accessibilityRole="button" style={{ minHeight: 44, justifyContent: 'center', alignSelf: 'center' }}>
             <Text style={{ color: colors.muted }}>Cancelar</Text>
           </Pressable>
-        </Card>
+        </Block>
       )}
     </Screen>
   );

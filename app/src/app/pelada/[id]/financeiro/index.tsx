@@ -8,7 +8,7 @@ import { Stat } from '../../../../lib/financeui';
 import { fmtDay, formatBRL, monthLabel } from '../../../../lib/money';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Body, Button, Card, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
+import { Block, Body, Button, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
 
 type Access = {
   can_access: boolean;
@@ -122,7 +122,7 @@ export default function Financeiro() {
     return (
       <Screen>
         <Title>Financeiro</Title>
-        <Card>
+        <Block>
           <Body>Recurso da Pelada Premium</Body>
           <Sub>
             {access.has_records
@@ -130,7 +130,7 @@ export default function Financeiro() {
               : 'Controle mensalistas, avulsos, receitas, despesas e o saldo do caixa da pelada. O app não faz cobranças nem pagamentos: é um livro-caixa.'}
           </Sub>
           <Button title="Conhecer a Pelada Premium" onPress={() => router.push({ pathname: '/pelada/[id]/premium', params: { id } })} />
-        </Card>
+        </Block>
       </Screen>
     );
   }
@@ -157,7 +157,7 @@ export default function Financeiro() {
             <Stat label="Despesas pendentes" cents={ov.pending_expense_cents} tone={ov.pending_expense_cents > 0 ? 'danger' : 'ink'} />
           </View>
           {((ov.overdue_count ?? 0) > 0 || (ov.partial_count ?? 0) > 0) && (
-            <Card>
+            <Block>
               <Body>Pendências</Body>
               <View style={{ flexDirection: 'row', gap: 8, flexWrap: 'wrap' }}>
                 {(ov.overdue_count ?? 0) > 0 && (
@@ -172,9 +172,9 @@ export default function Financeiro() {
                 )}
               </View>
               <Sub>Toque para registrar o pagamento direto na lista.</Sub>
-            </Card>
+            </Block>
           )}
-          <Card>
+          <Block>
             <Body>Mensalistas</Body>
             <Sub>
               {ov.monthly_active} {ov.monthly_active === 1 ? 'ativo' : 'ativos'} · {ov.monthly_active - ov.monthly_late} em dia ·{' '}
@@ -190,7 +190,7 @@ export default function Financeiro() {
                 loading={busy === 'gerar'}
               />
             )}
-          </Card>
+          </Block>
 
           <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
             {(
@@ -250,7 +250,7 @@ export default function Financeiro() {
       )}
 
       {access.is_admin && (
-        <Card>
+        <Block>
           <Body>Quem acessa o Financeiro</Body>
           <Sub>Assistentes só com sua autorização. Jogadores não veem valores.</Sub>
           {(access.assistants ?? []).length === 0 && <Sub>Nenhum assistente na pelada.</Sub>}
@@ -266,7 +266,7 @@ export default function Financeiro() {
               />
             </View>
           ))}
-        </Card>
+        </Block>
       )}
       <Sub>O Minuto 91 não faz cobranças nem pagamentos. Os valores são registrados à mão por quem cuida do caixa.</Sub>
     </Screen>

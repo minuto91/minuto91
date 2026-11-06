@@ -7,7 +7,7 @@ import { friendly } from '../../../lib/errors';
 import { loadPremiumPackage, openManageSubscription, priceLabel, restorePurchases, storeAvailable, subscribePelada } from '../../../lib/purchases';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { Body, Button, Card, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
 
 type Entitlement = {
   is_premium: boolean;
@@ -155,7 +155,7 @@ export default function PeladaPremium() {
   return (
     <Screen>
       <Title>Pelada Premium</Title>
-      <Card>
+      <Block>
         {ent.source === 'beta' && <Body>Pelada Premium liberada: estamos no beta, sem cobrança.</Body>}
         {ent.source === 'trial' && ent.trial_ends_at && <Body>Teste grátis até {fmtDay(ent.trial_ends_at)}.</Body>}
         {ent.source === 'subscription' && ent.premium_until && (
@@ -166,15 +166,15 @@ export default function PeladaPremium() {
         )}
         {!ent.is_premium && <Body>Esta pelada está no plano Básico (grátis).</Body>}
         <Sub>R$ 29,90/mês por pelada. Só o administrador contrata; vale para todos dela.</Sub>
-      </Card>
+      </Block>
 
-      <Card>
+      <Block>
         <Body>Básico (grátis)</Body>
         {FREE.map((f) => (
           <Sub key={f}>• {f}</Sub>
         ))}
-      </Card>
-      <Card>
+      </Block>
+      <Block>
         <Body>Pelada Premium: para todos da pelada</Body>
         {PREMIUM_ALL.map((f) => (
           <Sub key={f}>• {f}</Sub>
@@ -183,7 +183,7 @@ export default function PeladaPremium() {
         {PREMIUM_ADMIN.map((f) => (
           <Sub key={f}>• {f}</Sub>
         ))}
-      </Card>
+      </Block>
 
       <ErrorText>{msg}</ErrorText>
       {ent.is_admin && ent.trial_available && !ent.is_premium && (
@@ -196,7 +196,7 @@ export default function PeladaPremium() {
 
       {canBuy &&
         (storeAvailable ? (
-          <Card>
+          <Block>
             <Body>Assinar a Pelada Premium</Body>
             <Sub>
               {pkg ? priceLabel(pkg) : 'Preço indisponível na loja agora'}, cobrado pela sua conta da{' '}
@@ -205,16 +205,16 @@ export default function PeladaPremium() {
             </Sub>
             <Button title="Assinar" onPress={assinar} loading={storeBusy === 'assinar'} disabled={!pkg || !!storeBusy} />
             <Button title="Restaurar compras" kind="secondary" onPress={restaurar} loading={storeBusy === 'restaurar'} disabled={!!storeBusy} />
-          </Card>
+          </Block>
         ) : (
           <Sub>A assinatura é feita no app instalado pela App Store ou Google Play.</Sub>
         ))}
 
       {ent.is_admin && ent.source === 'subscription' && storeAvailable && (
-        <Card>
+        <Block>
           <Button title="Gerenciar assinatura na loja" kind="secondary" onPress={gerenciar} />
           <Sub>Cancelar não apaga nada: a Pelada Premium vale até o fim do período pago e depois a pelada volta ao Básico.</Sub>
-        </Card>
+        </Block>
       )}
       {!ent.is_admin && !ent.is_premium && <Sub>Só o administrador da pelada pode assinar a Pelada Premium.</Sub>}
     </Screen>

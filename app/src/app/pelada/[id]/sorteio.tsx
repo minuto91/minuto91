@@ -16,7 +16,7 @@ import { Text } from '../../../lib/text';
 import { colors, memberPosition, positionLabel, positionRank } from '../../../lib/theme';
 import { Toggle } from '../../../lib/toggle';
 import { Icon } from '../../../lib/icons';
-import { Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Card, Chips, ErrorText, Input, LoadingBlock, PositionPicker, Screen, Stepper, Sub, Title } from '../../../lib/ui';
 import {
   countLabel,
   createGate,
@@ -309,7 +309,7 @@ export default function Sorteio() {
         </View>
       ))}
 
-      <Card>
+      <Block>
         <Body>Adicionar convidado</Body>
         <Input placeholder="Nome do convidado" value={guestName} onChangeText={setGuestName} maxLength={80} autoCapitalize="words" />
         <Sub>Posição (opcional)</Sub>
@@ -330,7 +330,7 @@ export default function Sorteio() {
             }
           }}
         />
-      </Card>
+      </Block>
 
       <Toggle
         label="Capitães (um por time, ficam fixos no sorteio)"
