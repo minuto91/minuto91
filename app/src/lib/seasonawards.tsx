@@ -7,7 +7,7 @@ import { Avatar } from './avatar';
 import { Text } from './text';
 import { colors, type } from './theme';
 import { TrophyArt } from './trophies';
-import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, Screen, Section, Sub, Title } from './ui';
+import { Body, Button, Card, Chips, EmptyState, ErrorText, Input, Screen, Section, Sub } from './ui';
 import {
   CATEGORY_TYPE, categoryStatusText, CategoryStatus, exceptionParamsError, SEASON_AWARD_LABEL, SeasonCategory, sharedLabel, statText,
 } from './v87logic';
@@ -42,7 +42,6 @@ export function AwardsView({ state, seasons, seasonId, onSeason, busy, msg, onGr
 }) {
   return (
     <Screen>
-      <Title>Prêmios da temporada</Title>
       {seasons.length > 1 && <Chips options={seasons.map((s) => ({ value: s.id, label: s.name }))} value={seasonId} onChange={(v) => onSeason(v)} />}
       <ErrorText>{msg}</ErrorText>
       {!state ? (
