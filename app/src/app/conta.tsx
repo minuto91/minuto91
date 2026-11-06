@@ -1,5 +1,5 @@
 import { useRouter } from 'expo-router';
-import { type ReactNode, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Share, View } from 'react-native';
 import { Text } from '../lib/text';
 
@@ -12,7 +12,7 @@ import { NotificationSettings } from '../lib/push';
 import { signOut, useAuth } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { colors, FEET, type Foot } from '../lib/theme';
-import { Body, Button, Card, Chips, ErrorText, Input, ListGroup, ListRow, Screen, Sub, Title } from '../lib/ui';
+import { Block, Body, Button, Card, Chips, ErrorText, Input, ListGroup, ListRow, Screen, Sub, Title } from '../lib/ui';
 
 type Blocked = { user_id: string; name: string };
 
@@ -324,11 +324,6 @@ export default function Conta() {
       </Block>
     </Screen>
   );
-}
-
-/** V10.1: bloco da conta sem moldura de card; separado do seguinte por uma linha fina. */
-function Block({ children }: { children: ReactNode }) {
-  return <View style={{ gap: 8, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.line }}>{children}</View>;
 }
 
 const section = { fontSize: 19, lineHeight: 25, fontWeight: '700' as const, color: colors.ink, marginTop: 10 };

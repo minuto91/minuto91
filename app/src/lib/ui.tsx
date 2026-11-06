@@ -205,6 +205,11 @@ export function Card({ children }: { children: ReactNode }) {
   return <View style={styles.card}>{children}</View>;
 }
 
+/** V10.1: bloco de conteúdo sem moldura de card, separado do seguinte por uma linha fina (substitui Card em seções de tela). */
+export function Block({ children }: { children: ReactNode }) {
+  return <View style={{ gap: 8, paddingBottom: 16, borderBottomWidth: 1, borderBottomColor: colors.line }}>{children}</View>;
+}
+
 /** V10.1: linha fina de separação (colors.line), usada no lugar de molduras de card. */
 export const Divider = () => <View style={{ height: 1, backgroundColor: colors.line, alignSelf: 'stretch' }} />;
 

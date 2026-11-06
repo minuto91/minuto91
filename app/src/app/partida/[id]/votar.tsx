@@ -16,7 +16,7 @@ import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors, positionLabel } from '../../../lib/theme';
 import { Icon } from '../../../lib/icons';
-import { Body, Button, Card, Chips, ErrorText, Loading, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Chips, ErrorText, Loading, Screen, Sub, Title } from '../../../lib/ui';
 
 const START = 7;
 
@@ -206,7 +206,7 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
     <Screen>
       <Title>Revisão</Title>
       {header}
-      <Card>
+      <Block>
         {targets.map((t) => (
           <View key={t.membership_id} style={{ flexDirection: 'row', alignItems: 'center', gap: 10, minHeight: 48 }}>
             <Avatar path={t.avatar_path} name={t.name} size={32} />
@@ -224,7 +224,7 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
             </Pressable>
           </View>
         ))}
-      </Card>
+      </Block>
       <Resenha v={v} onSaved={(r) => setV(r)} />
       <Awards v={v} onSaved={(r) => setV(r)} />
       <ErrorText>{err}</ErrorText>
@@ -235,7 +235,7 @@ function Flow({ initial, match }: { initial: RatingVote; match: Match | null }) 
 
 function PlayerBox({ t, team }: { t: RatingTarget; team: string }) {
   return (
-    <Card>
+    <Block>
       <View style={{ alignItems: 'center', gap: 6 }}>
         <Avatar path={t.avatar_path} name={t.name} size={88} />
         <Text style={{ fontSize: 20, fontWeight: '800', color: colors.ink, textAlign: 'center' }}>{t.name}</Text>
@@ -246,7 +246,7 @@ function PlayerBox({ t, team }: { t: RatingTarget; team: string }) {
           {t.goals} {t.goals === 1 ? 'gol' : 'gols'} · {t.assists} {t.assists === 1 ? 'assistência' : 'assistências'}
         </Body>
       </View>
-    </Card>
+    </Block>
   );
 }
 
@@ -270,7 +270,7 @@ function Resenha({ v, onSaved }: { v: RatingVote; onSaved: (r: RatingVote) => vo
     onSaved(data as RatingVote);
   }
   return (
-    <Card>
+    <Block>
       <Text style={{ fontWeight: '700', color: colors.ink }}>Quem ficou para a resenha depois do jogo?</Text>
       <Sub>Marque todos que ficaram. Ninguém vê a sua resposta.</Sub>
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
@@ -310,7 +310,7 @@ function Resenha({ v, onSaved }: { v: RatingVote; onSaved: (r: RatingVote) => vo
         disabled={busy || !dirty}
         onPress={save}
       />
-    </Card>
+    </Block>
   );
 }
 
@@ -331,7 +331,7 @@ function Awards({ v, onSaved }: { v: RatingVote; onSaved: (r: RatingVote) => voi
     onSaved({ ...v, my_awards: { craque: c ?? undefined, bola_murcha: b ?? undefined } });
   }
   return (
-    <Card>
+    <Block>
       <Text style={{ fontWeight: '700', color: colors.ink }}>Craque da partida (opcional)</Text>
       <Chips options={options} value={craque} onChange={(x) => { const n = x === craque ? null : x; setCraque(n); void save(n, bola); }} />
       {v.bola_murcha_enabled && (
@@ -341,6 +341,6 @@ function Awards({ v, onSaved }: { v: RatingVote; onSaved: (r: RatingVote) => voi
         </>
       )}
       <ErrorText>{msg}</ErrorText>
-    </Card>
+    </Block>
   );
 }
