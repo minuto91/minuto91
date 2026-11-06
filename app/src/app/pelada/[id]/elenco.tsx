@@ -12,7 +12,7 @@ import { friendly } from '../../../lib/errors';
 import { supabase } from '../../../lib/supabase';
 import { useSticky } from '../../../lib/sticky';
 import { colors, POSITIONS, positionLabel, positionSector, SECTORS } from '../../../lib/theme';
-import { Body, Button, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Segmented, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Chips, EmptyState, ErrorText, Input, LoadingBlock, Screen, Segmented, Sub } from '../../../lib/ui';
 
 type Row = { card: CardData; membershipId: string; name: string; userId: string | null };
 
@@ -124,7 +124,6 @@ export default function Elenco() {
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 12 }}>
         {pelada && <Crest path={pelada.crest_path} name={pelada.name} size={44} />}
         <View style={{ flex: 1 }}>
-          <Title>Elenco</Title>
           {pelada && <Sub>{pelada.name}</Sub>}
         </View>
       </View>

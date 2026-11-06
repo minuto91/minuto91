@@ -303,7 +303,7 @@ export default function CentralDaRodada() {
               mine={myTeam}
               compact
               top={
-                <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: '#9DB8E8' }} numberOfLines={1}>
+                <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.6, color: colors.muted }} numberOfLines={1}>
                   ÚLTIMO JOGO · {fmtDate(lastFinal.played_at).toUpperCase()}
                 </Text>
               }

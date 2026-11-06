@@ -184,7 +184,6 @@ export default function Configuracoes() {
   if (!isAdmin) {
     return (
       <Screen>
-        <Title>Configurações</Title>
         <Sub>Só o administrador altera as configurações.</Sub>
       </Screen>
     );

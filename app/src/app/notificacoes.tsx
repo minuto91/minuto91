@@ -121,9 +121,7 @@ export default function Notificacoes() {
   const header = (
     <View style={{ gap: 12, marginBottom: 8 }}>
       <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-        <Text style={{ ...type.title, flex: 1 }} accessibilityRole="header">
-          Notificações
-        </Text>
+        <View style={{ flex: 1 }} />
         <Pressable
           onPress={markAll}
           disabled={!hasUnread || !canWrite || busy}

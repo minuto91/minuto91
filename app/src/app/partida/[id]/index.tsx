@@ -311,7 +311,7 @@ export default function Partida() {
         scoreB={match.team_b_score}
         mine={(players.find((p) => p.membership_id && p.membership_id === me?.id)?.team as 'A' | 'B' | undefined) ?? null}
         top={
-          <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.4, color: '#9DB8E8' }} numberOfLines={2}>
+          <Text style={{ fontSize: 12, fontWeight: '700', letterSpacing: 0.4, color: colors.muted }} numberOfLines={2}>
             {fmtDate(match.played_at).toUpperCase()} · {(STATUS_LABEL[match.status] ?? match.status).toUpperCase()}
             {match.sheet_version > 1 && !annulled ? ` · SÚMULA V${match.sheet_version}` : ''}
           </Text>

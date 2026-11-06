@@ -273,7 +273,6 @@ export default function Escalacoes() {
 
   return (
     <Screen>
-      <Title>Escalações</Title>
       <Sub>Times antes do jogo.</Sub>
       {comps.map((c) => (
         <Pressable key={c.id} onPress={() => router.push({ pathname: '/pelada/[id]/composicao/[cid]', params: { id, cid: c.id } })} accessibilityRole="button">

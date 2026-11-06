@@ -190,7 +190,6 @@ export default function Conta() {
 
   return (
     <Screen>
-      <Title>Minha conta</Title>
       <ErrorText>{msg}</ErrorText>
       {ok && <Text style={{ color: colors.ink, fontWeight: '600' }}>{ok}</Text>}
 

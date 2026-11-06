@@ -7,7 +7,7 @@ import { confirm, notify } from '../../../lib/dialog';
 import { friendly } from '../../../lib/errors';
 import { SeasonLifecycle } from '../../../lib/seasonlifecycle';
 import { supabase } from '../../../lib/supabase';
-import { Block, Body, Button, Chips, ErrorText, Input, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Chips, ErrorText, Input, LoadingBlock, Screen, Sub } from '../../../lib/ui';
 
 // A19: temporadas da pelada. Todos veem a lista (nome e período não são histórico); personalizar é do
 // administrador com Pelada Premium (customize_season, migração 006). A regra de produto: com temporada em
@@ -98,7 +98,6 @@ export default function Temporadas() {
 
   return (
     <Screen>
-      <Title>Temporadas</Title>
       <ErrorText>{msg}</ErrorText>
       {msg && !seasons && <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />}
       {!seasons && !msg && <LoadingBlock />}

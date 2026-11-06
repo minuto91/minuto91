@@ -8,7 +8,7 @@ import { Stat } from '../../../../lib/financeui';
 import { fmtDay, formatBRL, monthLabel } from '../../../../lib/money';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Block, Body, Button, ErrorText, LinkLabel, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
+import { Block, Body, Button, ErrorText, LinkLabel, LoadingBlock, Screen, Sub } from '../../../../lib/ui';
 
 type Access = {
   can_access: boolean;
@@ -113,7 +113,6 @@ export default function Financeiro() {
   if (!access.can_access) {
     return (
       <Screen>
-        <Title>Financeiro</Title>
         <Sub>O Financeiro é só do administrador e dos assistentes que ele autorizar.</Sub>
       </Screen>
     );
@@ -121,7 +120,6 @@ export default function Financeiro() {
   if (!access.premium) {
     return (
       <Screen>
-        <Title>Financeiro</Title>
         <Block>
           <Body>Recurso da Pelada Premium</Body>
           <Sub>
@@ -137,7 +135,6 @@ export default function Financeiro() {
 
   return (
     <Screen>
-      <Title>Financeiro</Title>
       <Sub>{ov ? `Caixa da pelada · ${monthLabel(ov.month)}` : 'Caixa da pelada'}</Sub>
       <ErrorText>{msg}</ErrorText>
       {!ov && !msg && <LoadingBlock />}

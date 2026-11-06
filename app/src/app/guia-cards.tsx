@@ -5,7 +5,7 @@ import { View } from 'react-native';
 import { ATTRIBUTES_V3_KEEPER, ATTRIBUTES_V3_LINE, TIER } from '../lib/career';
 import { markGuide } from '../lib/careerv2';
 import { TROPHIES, TrophyArt } from '../lib/trophies';
-import { Block, Body, Button, Screen, Sub, Title } from '../lib/ui';
+import { Block, Body, Button, Screen, Sub } from '../lib/ui';
 
 // Guia inicial (V4.4), passo "Entender Cards e premiações": uma tela curta, sem formulário. Abrir conta como visto.
 // Só descreve o que o app já faz (as fórmulas oficiais não mudam e não são detalhadas aqui).
@@ -16,7 +16,6 @@ export default function GuiaCards() {
   }, []);
   return (
     <Screen>
-      <Title>Cards e premiações</Title>
       <Block>
         <Body>Seu Card</Body>
         <Sub>

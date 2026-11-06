@@ -100,7 +100,7 @@ export default function Peladas() {
       {peladas && peladas.length > 0 && (
         <View style={{ gap: 8, marginTop: 4 }}>
           <Button title="Criar Pelada" kind="gold" block onPress={() => router.push('/criar-pelada')} />
-          <Button title="Entrar com convite" kind="ghost" onPress={() => router.push('/entrar')} />
+          <Button title="Entrar com convite" kind="ghost" block onPress={() => router.push('/entrar')} />
         </View>
       )}
     </Screen>

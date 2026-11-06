@@ -3,6 +3,7 @@
 import { View } from 'react-native';
 
 import type { SheetPlayer } from './match';
+import { Icon } from './icons';
 import { Text } from './text';
 import { colors, type } from './theme';
 import { Button, Card } from './ui';
@@ -72,7 +73,10 @@ export function SheetReview({
         </View>
       )}
       {issues.map((i) => (
-        <Text key={i} style={[type.caption, { color: colors.darkGold }]}>{i}</Text>
+        <View key={i} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 6 }}>
+          <Icon name="alerta" size={16} color={colors.darkGold} />
+          <Text style={[type.caption, { color: colors.darkGold, flex: 1 }]}>{i}</Text>
+        </View>
       ))}
       <Button title={correction ? 'Confirmar correção' : 'Confirmar e publicar'} loading={busy} onPress={onConfirm} />
       <Button title="Voltar e editar" kind="ghost" disabled={busy} onPress={onBack} />

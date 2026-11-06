@@ -140,7 +140,6 @@ export default function Mensalistas() {
   const list = all.filter((m) => matches(m, filter));
   return (
     <Screen>
-      <Title>Mensalistas</Title>
       <ErrorText>{msg}</ErrorText>
       <Button title="Novo mensalista" onPress={() => abrir(null)} />
       {all.length > 0 && (

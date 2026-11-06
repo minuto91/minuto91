@@ -7,7 +7,7 @@ import { friendly } from '../../../lib/errors';
 import { loadPremiumPackage, openManageSubscription, priceLabel, restorePurchases, storeAvailable, subscribePelada } from '../../../lib/purchases';
 import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
-import { Block, Body, Button, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, ErrorText, LoadingBlock, Screen, Sub } from '../../../lib/ui';
 
 type Entitlement = {
   is_premium: boolean;
@@ -154,7 +154,6 @@ export default function PeladaPremium() {
 
   return (
     <Screen>
-      <Title>Pelada Premium</Title>
       <Block>
         {ent.source === 'beta' && <Body>Pelada Premium liberada: estamos no beta, sem cobrança.</Body>}
         {ent.source === 'trial' && ent.trial_ends_at && <Body>Teste grátis até {fmtDay(ent.trial_ends_at)}.</Body>}

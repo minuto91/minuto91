@@ -10,7 +10,7 @@ import { csvRow, fmtDay, formatBRL, methodLabel, monthLabel, monthShift } from '
 import { ExportTotal, exportProblems } from '../../../../lib/exportCheck';
 import { supabase } from '../../../../lib/supabase';
 import { colors } from '../../../../lib/theme';
-import { Block, Body, Button, Chips, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../../lib/ui';
+import { Block, Body, Button, Chips, ErrorText, LoadingBlock, Screen, Sub } from '../../../../lib/ui';
 import { Icon } from '../../../../lib/icons';
 
 type Report = {
@@ -167,7 +167,6 @@ export default function Relatorio() {
 
   return (
     <Screen>
-      <Title>Relatórios</Title>
       <Chips options={TABS} value={tab} onChange={(v) => setTab(v as 'mes' | 'historico')} />
       <ErrorText>{msg}</ErrorText>
       {tab === 'mes' && (

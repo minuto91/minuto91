@@ -13,7 +13,7 @@ import { useAuth } from '../../../lib/session';
 import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors } from '../../../lib/theme';
-import { Block, Body, Button, Chips, ErrorText, Input, LoadingBlock, Screen, Sub, Title, LinkLabel } from '../../../lib/ui';
+import { Block, Body, Button, Chips, ErrorText, Input, LoadingBlock, Screen, Sub, LinkLabel } from '../../../lib/ui';
 import { createGate, MATCH_PENDING, MATCH_STATUS, NEXT_ACTION } from '../../../lib/v85';
 
 type Item = {
@@ -116,7 +116,6 @@ export default function Partidas() {
 
   return (
     <Screen>
-      <Title>Partidas</Title>
       <ErrorText>{msg}</ErrorText>
       {isStaff && <Button title="Lançar partida" onPress={lancarPartida} loading={busy === 'new'} />}
       <Chips options={FILTERS} value={filter} onChange={setFilter} />

@@ -16,7 +16,7 @@ import { useAuth } from '../lib/session';
 import { supabase } from '../lib/supabase';
 import { Text } from '../lib/text';
 import { colors, type } from '../lib/theme';
-import { Button, ErrorText, LoadingBlock, Screen, Sub, Title } from '../lib/ui';
+import { Button, ErrorText, LoadingBlock, Screen, Sub } from '../lib/ui';
 import { type BlockId, type Layout, moveBlock, normalizeLayout, sameLayout, toggleHidden } from '../lib/v84logic';
 
 const LABEL: Record<BlockId, { title: string; hint: string }> = {
@@ -91,7 +91,6 @@ export default function PersonalizarCentral() {
   if (!draft || !server) {
     return (
       <Screen>
-        <Title>Personalizar Central</Title>
         <ErrorText>{block.status === 'offline_uncached' ? 'Sem conexão. Conecte-se para personalizar a Central.' : (block.error ?? 'Não foi possível carregar a sua personalização.')}</ErrorText>
         <Button title="Tentar de novo" kind="secondary" onPress={() => setReload((n) => n + 1)} />
       </Screen>
@@ -100,7 +99,6 @@ export default function PersonalizarCentral() {
 
   return (
     <Screen>
-      <Title>Personalizar Central</Title>
       <Sub>Escolha a ordem e o que aparece na sua tela inicial. Vale para todos os seus aparelhos.</Sub>
       {offline || block.stale ? <Notice tone="warn">Sem conexão ou sem confirmação do servidor: não é possível salvar agora.</Notice> : null}
       <ErrorText>{msg}</ErrorText>

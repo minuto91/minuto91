@@ -190,7 +190,6 @@ export default function Lancamentos() {
   const t = list.summary;
   const header = (
     <>
-      <Title>Receitas e despesas</Title>
       <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
         <Pressable accessibilityRole="button" accessibilityLabel="Mês anterior" onPress={() => setMonth(monthShift(month, -1))} style={{ minWidth: 44, minHeight: 44, justifyContent: 'center' }}>
           <Text style={{ color: colors.blue, fontSize: 22, fontWeight: '800' }}>‹</Text>

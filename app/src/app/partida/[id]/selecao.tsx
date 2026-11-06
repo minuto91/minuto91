@@ -16,7 +16,7 @@ import { arrange, type FormationName, isFormation, type Sector } from '../../../
 import { supabase } from '../../../lib/supabase';
 import { Text } from '../../../lib/text';
 import { colors } from '../../../lib/theme';
-import { Body, Button, Card, EmptyState, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Body, Button, Card, EmptyState, ErrorText, LoadingBlock, Screen, Sub } from '../../../lib/ui';
 import { Icon } from '../../../lib/icons';
 
 type Sel = { id: string; match_id: string; status: 'published' | 'superseded' | 'invalidated'; version: number; formation: string };
@@ -183,7 +183,6 @@ export default function SelecaoDaRodada() {
 
   return (
     <Screen>
-      <Title>Seleção da Rodada</Title>
       {match && <Sub>{`${peladaName ? peladaName + ' · ' : ''}${fmtDate(match.played_at)} · ${match.team_a_name} x ${match.team_b_name}`}</Sub>}
       {err && <ErrorText>{err}</ErrorText>}
 

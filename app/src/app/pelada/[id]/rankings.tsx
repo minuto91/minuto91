@@ -10,7 +10,7 @@ import { fmtRating, loadMembers, Member } from '../../../lib/match';
 import { supabase } from '../../../lib/supabase';
 import { useSticky } from '../../../lib/sticky';
 import { colors } from '../../../lib/theme';
-import { Block, Body, Button, Chips, EmptyState, ErrorText, LoadingBlock, Screen, Sub, Title } from '../../../lib/ui';
+import { Block, Body, Button, Chips, EmptyState, ErrorText, LoadingBlock, Screen, Sub } from '../../../lib/ui';
 import { RankingRow } from '../../../lib/domain';
 
 // Em destaque: Artilharia, Assistências e Overall. As demais classificações oficiais continuam em "Mais".
@@ -162,7 +162,6 @@ export default function Rankings() {
 
   return (
     <Screen>
-      <Title>Rankings</Title>
       {seasons.length > 1 && (
         <Chips
           options={seasons.map((s) => ({ value: s.id, label: s.name }))}
